@@ -67,12 +67,15 @@ public record GridSquare(String value) {
                 lat += 0.5;
             }
             case 6 -> {
-                lon += (2.0 / 48.0);
-                lat += (1.0 / 48.0);
+                lon += 2.0 / 48.0;
+                lat += 1.0 / 48.0;
             }
             case 8 -> {
-                lon += (2.0 / 480.0);
-                lat += (1.0 / 480.0);
+                lon += 2.0 / 480.0;
+                lat += 1.0 / 480.0;
+            }
+            default -> {
+                // Default to 4-character precision
             }
         }
 

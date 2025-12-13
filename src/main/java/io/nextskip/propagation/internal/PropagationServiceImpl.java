@@ -25,7 +25,7 @@ import java.util.List;
 @Service
 public class PropagationServiceImpl implements PropagationService {
 
-    private static final Logger log = LoggerFactory.getLogger(PropagationServiceImpl.class);
+    private static final Logger LOG = LoggerFactory.getLogger(PropagationServiceImpl.class);
 
     private final NoaaSwpcClient noaaClient;
     private final HamQslClient hamQslClient;
@@ -53,17 +53,17 @@ public class PropagationServiceImpl implements PropagationService {
                         "NOAA SWPC + HamQSL"
                 );
             } else if (noaaData != null) {
-                log.warn("HamQSL data unavailable, using NOAA data only");
+                LOG.warn("HamQSL data unavailable, using NOAA data only");
                 return noaaData;
             } else if (hamQslData != null) {
-                log.warn("NOAA data unavailable, using HamQSL data only");
+                LOG.warn("NOAA data unavailable, using HamQSL data only");
                 return hamQslData;
             } else {
-                log.error("Both NOAA and HamQSL data unavailable");
+                LOG.error("Both NOAA and HamQSL data unavailable");
                 return null;
             }
         } catch (Exception e) {
-            log.error("Error fetching solar indices", e);
+            LOG.error("Error fetching solar indices", e);
             return null;
         }
     }
@@ -72,10 +72,10 @@ public class PropagationServiceImpl implements PropagationService {
     public List<BandCondition> getBandConditions() {
         try {
             List<BandCondition> conditions = hamQslClient.fetchBandConditions();
-            log.debug("Retrieved {} band conditions", conditions.size());
+            LOG.debug("Retrieved {} band conditions", conditions.size());
             return conditions;
         } catch (Exception e) {
-            log.error("Error fetching band conditions", e);
+            LOG.error("Error fetching band conditions", e);
             return List.of();
         }
     }

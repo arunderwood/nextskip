@@ -21,7 +21,7 @@ import java.util.List;
 @AnonymousAllowed
 public class PropagationEndpoint {
 
-    private static final Logger log = LoggerFactory.getLogger(PropagationEndpoint.class);
+    private static final Logger LOG = LoggerFactory.getLogger(PropagationEndpoint.class);
 
     private final PropagationService propagationService;
 
@@ -37,14 +37,14 @@ public class PropagationEndpoint {
      * @return PropagationResponse with current data
      */
     public PropagationResponse getPropagationData() {
-        log.debug("Fetching propagation data for dashboard");
+        LOG.debug("Fetching propagation data for dashboard");
 
         SolarIndices solarIndices = propagationService.getCurrentSolarIndices();
         List<BandCondition> bandConditions = propagationService.getBandConditions();
 
         PropagationResponse response = new PropagationResponse(solarIndices, bandConditions);
 
-        log.debug("Returning propagation data: {} band conditions",
+        LOG.debug("Returning propagation data: {} band conditions",
                   bandConditions != null ? bandConditions.size() : 0);
 
         return response;
@@ -56,7 +56,7 @@ public class PropagationEndpoint {
      * @return Current solar indices
      */
     public SolarIndices getSolarIndices() {
-        log.debug("Fetching solar indices");
+        LOG.debug("Fetching solar indices");
         return propagationService.getCurrentSolarIndices();
     }
 
@@ -66,7 +66,7 @@ public class PropagationEndpoint {
      * @return List of band conditions
      */
     public List<BandCondition> getBandConditions() {
-        log.debug("Fetching band conditions");
+        LOG.debug("Fetching band conditions");
         return propagationService.getBandConditions();
     }
 }

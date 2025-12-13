@@ -11,7 +11,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientRequestException;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
-import com.fasterxml.jackson.core.JsonProcessingException;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -36,7 +35,7 @@ import java.util.List;
 @Component
 public class NoaaSwpcClient {
 
-    private static final Logger log = LoggerFactory.getLogger(NoaaSwpcClient.class);
+    private static final Logger LOG = LoggerFactory.getLogger(NoaaSwpcClient.class);
 
     private static final String NOAA_URL =
             "https://services.swpc.noaa.gov/json/solar-cycle/observed-solar-cycle-indices.json";
@@ -71,7 +70,7 @@ public class NoaaSwpcClient {
     @Retry(name = "noaa")
     @Cacheable(value = "solarIndices", key = "'latest'", unless = "#result == null")
     public SolarIndices fetchSolarIndices() {
-        log.debug("Fetching solar indices from NOAA SWPC");
+        LOG.debug("Fetching solar indices from NOAA SWPC");
 
         try {
             // Fetch data with type-safe DTO
@@ -83,7 +82,7 @@ public class NoaaSwpcClient {
                     .block();
 
             if (data == null || data.isEmpty()) {
-                log.warn("No data received from NOAA SWPC");
+                LOG.warn("No data received from NOAA SWPC");
                 throw new InvalidApiResponseException("NOAA", "Empty response from NOAA API");
             }
 
@@ -110,30 +109,30 @@ public class NoaaSwpcClient {
                     "NOAA SWPC"
             );
 
-            log.info("Successfully fetched solar indices: SFI={}, Sunspots={}",
+            LOG.info("Successfully fetched solar indices: SFI={}, Sunspots={}",
                     latest.solarFlux(), latest.sunspotNumber());
             return indices;
 
         } catch (WebClientResponseException e) {
             // HTTP error (4xx, 5xx)
-            log.error("HTTP error from NOAA API: {} {}", e.getStatusCode(), e.getStatusText());
+            LOG.error("HTTP error from NOAA API: {} {}", e.getStatusCode(), e.getStatusText());
             throw new ExternalApiException("NOAA",
                     "HTTP " + e.getStatusCode() + " from NOAA API: " + e.getStatusText(), e);
 
         } catch (WebClientRequestException e) {
             // Network error (connection refused, timeout, etc.)
-            log.error("Network error connecting to NOAA API", e);
+            LOG.error("Network error connecting to NOAA API", e);
             throw new ExternalApiException("NOAA",
                     "Network error connecting to NOAA API: " + e.getMessage(), e);
 
         } catch (InvalidApiResponseException e) {
             // Validation error - just rethrow
-            log.error("Invalid response from NOAA API: {}", e.getMessage());
+            LOG.error("Invalid response from NOAA API: {}", e.getMessage());
             throw e;
 
         } catch (Exception e) {
             // Unexpected error
-            log.error("Unexpected error fetching solar indices from NOAA SWPC", e);
+            LOG.error("Unexpected error fetching solar indices from NOAA SWPC", e);
             throw new ExternalApiException("NOAA",
                     "Unexpected error fetching NOAA solar data: " + e.getMessage(), e);
         }
@@ -145,18 +144,18 @@ public class NoaaSwpcClient {
      */
     @SuppressWarnings("unused")
     private SolarIndices getCachedIndices(Exception e) {
-        log.warn("Using cached solar indices due to: {}", e.getMessage());
+        LOG.warn("Using cached solar indices due to: {}", e.getMessage());
 
         var cache = cacheManager.getCache("solarIndices");
         if (cache != null) {
             var cached = cache.get("latest", SolarIndices.class);
             if (cached != null) {
-                log.info("Returning cached solar indices from {}", cached.timestamp());
+                LOG.info("Returning cached solar indices from {}", cached.timestamp());
                 return cached;
             }
         }
 
-        log.error("No cached solar indices available");
+        LOG.error("No cached solar indices available");
         // Return default/degraded data rather than null
         return new SolarIndices(
                 100.0,  // Default SFI
@@ -180,7 +179,7 @@ public class NoaaSwpcClient {
      */
     private Instant parseTimestamp(String timeTag) {
         if (timeTag == null || timeTag.isBlank()) {
-            log.warn("Missing timestamp from NOAA, using current time");
+            LOG.warn("Missing timestamp from NOAA, using current time");
             return Instant.now();
         }
 
@@ -201,7 +200,7 @@ public class NoaaSwpcClient {
                 }
                 return date.atStartOfDay(ZoneOffset.UTC).toInstant();
             } catch (DateTimeParseException e2) {
-                log.warn("Unable to parse timestamp from NOAA: '{}', using current time", timeTag);
+                LOG.warn("Unable to parse timestamp from NOAA: '{}', using current time", timeTag);
                 return Instant.now();
             }
         }

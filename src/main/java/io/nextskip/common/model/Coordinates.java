@@ -26,7 +26,7 @@ public record Coordinates(
      * @return Distance in kilometers
      */
     public double distanceTo(Coordinates other) {
-        final double R = 6371; // Earth's radius in kilometers
+        final double earthRadiusKm = 6371; // Earth's radius in kilometers
 
         double latDistance = Math.toRadians(other.latitude - this.latitude);
         double lonDistance = Math.toRadians(other.longitude - this.longitude);
@@ -37,6 +37,6 @@ public record Coordinates(
 
         double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
-        return R * c;
+        return earthRadiusKm * c;
     }
 }
