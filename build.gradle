@@ -1,0 +1,86 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '3.4.0'
+    id 'io.spring.dependency-management' version '1.1.7'
+    id 'com.vaadin' version '24.9.7'
+}
+
+group = 'io.nextskip'
+version = '0.0.1-SNAPSHOT'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(25)
+    }
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
+}
+
+repositories {
+    mavenCentral()
+    maven { url 'https://maven.vaadin.com/vaadin-addons' }
+    maven { url 'https://repo.spring.io/milestone' }
+}
+
+ext {
+    vaadinVersion = '24.9.7'
+}
+
+dependencyManagement {
+    imports {
+        mavenBom "com.vaadin:vaadin-bom:${vaadinVersion}"
+    }
+}
+
+dependencies {
+    // Vaadin with Hilla for React integration
+    implementation 'com.vaadin:vaadin-spring-boot-starter'
+
+    // Spring Boot
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-cache'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+
+    // Caching
+    implementation 'com.github.ben-manes.caffeine:caffeine'
+
+    // Resilience4j
+    implementation 'io.github.resilience4j:resilience4j-spring-boot3:2.2.0'
+    implementation 'io.github.resilience4j:resilience4j-circuitbreaker:2.2.0'
+    implementation 'io.github.resilience4j:resilience4j-retry:2.2.0'
+
+    // Jackson XML
+    implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-xml'
+
+    // Observability
+    runtimeOnly 'io.micrometer:micrometer-registry-prometheus'
+
+    // WebClient support (reactive client for Spring MVC)
+    implementation 'org.springframework.boot:spring-boot-starter-webflux'
+
+    // Testing
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'io.projectreactor:reactor-test'
+    testImplementation 'org.wiremock:wiremock-standalone:3.10.0'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+    // Java 25 compatibility - override Mockito and ByteBuddy
+    testImplementation 'org.mockito:mockito-core:5.15.2'
+    testImplementation 'net.bytebuddy:byte-buddy:1.15.11'
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+    jvmArgs = [
+        '--add-opens', 'java.base/java.lang=ALL-UNNAMED',
+        '--add-opens', 'java.base/java.util=ALL-UNNAMED',
+        '--add-opens', 'java.base/java.io=ALL-UNNAMED',
+        '-Dnet.bytebuddy.experimental=true'
+    ]
+}
+
+// Vaadin Hilla configuration
+vaadin {
+    productionMode = false
+}

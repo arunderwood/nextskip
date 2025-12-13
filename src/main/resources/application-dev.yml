@@ -1,0 +1,31 @@
+spring:
+  devtools:
+    livereload:
+      enabled: true
+    restart:
+      enabled: true
+
+# More verbose logging in development
+logging:
+  level:
+    root: INFO
+    io.nextskip: DEBUG
+    io.github.resilience4j: DEBUG
+    org.springframework.cache: DEBUG
+    org.springframework.web.reactive.function.client: DEBUG
+
+# Actuator - expose all endpoints in dev
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+      show-details: always
+
+# Vaadin - development mode
+vaadin:
+  productionMode: false
+  frontend:
+    hotdeploy: true
