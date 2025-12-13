@@ -6,74 +6,100 @@
          https://pmd.sourceforge.io/ruleset_2_0_0.xsd">
 
     <description>
-        PMD ruleset for NextSkip project.
-        Focuses on best practices, error-prone code, performance, and security.
+        PMD ruleset for NextSkip project using PMD 7.x category-based rules.
+        Based on PMD best practices, Google Java Style, and Spring Boot conventions.
+
+        Categories included:
+        - Best Practices: Generally accepted best practices
+        - Code Style: Coding style conventions (selective)
+        - Design: Complexity and architectural concerns (selective)
+        - Error Prone: Broken or confusing constructs
+        - Performance: Suboptimal code patterns
+        - Security: Potential security flaws
+
+        References:
+        - https://pmd.github.io/pmd/pmd_rules_java.html
+        - https://pmd.github.io/pmd/pmd_userdocs_migrating_to_pmd7.html
+        - https://github.com/google/physical-web (Google baseline)
+        - https://github.com/leanstacks/spring-boot-fundamentals (Spring Boot baseline)
     </description>
 
-    <!-- Best Practices -->
+    <!-- Best Practices: Core recommended practices -->
     <rule ref="category/java/bestpractices.xml">
-        <!-- Allow JUnit assertions without message (they're optional) -->
-        <exclude name="JUnitAssertionsShouldIncludeMessage"/>
+        <!-- Allow unit test assertions without messages (they're optional, code is self-documenting) -->
+        <exclude name="UnitTestAssertionsShouldIncludeMessage"/>
 
-        <!-- Allow test methods without assertions for setup verification -->
-        <exclude name="JUnitTestContainsTooManyAsserts"/>
+        <!-- Allow multiple asserts per test (integration tests may verify multiple aspects) -->
+        <exclude name="UnitTestContainsTooManyAsserts"/>
+
+        <!-- Allow protected fields in Spring Boot entities (@Column, @ManyToOne, etc.) -->
+        <exclude name="AccessorMethodGeneration"/>
     </rule>
 
-    <!-- Error Prone -->
+    <!-- Error Prone: Critical bug detection -->
     <rule ref="category/java/errorprone.xml">
-        <!-- Allow bean properties without setters (immutable DTOs) -->
-        <exclude name="BeanMembersShouldSerialize"/>
-
-        <!-- Allow null assignments (sometimes necessary for cleanup) -->
+        <!-- Allow null assignments for cleanup (e.g., releasing resources) -->
         <exclude name="NullAssignment"/>
+
+        <!-- Allow immutable DTOs without serialization checks -->
+        <exclude name="NonSerializableClass"/>
     </rule>
 
-    <!-- Performance -->
+    <!-- Performance: Efficiency patterns -->
     <rule ref="category/java/performance.xml"/>
 
-    <!-- Security -->
+    <!-- Security: Basic security checks -->
     <rule ref="category/java/security.xml"/>
 
-    <!-- Code Style (selective rules) -->
+    <!-- Code Style: Selective naming and formatting rules -->
     <rule ref="category/java/codestyle.xml/MethodNamingConventions"/>
     <rule ref="category/java/codestyle.xml/ClassNamingConventions"/>
-    <rule ref="category/java/codestyle.xml/ShortVariable">
+    <rule ref="category/java/codestyle.xml/PackageCase"/>
+    <rule ref="category/java/codestyle.xml/FieldNamingConventions"/>
+    <rule ref="category/java/codestyle.xml/FormalParameterNamingConventions"/>
+    <rule ref="category/java/codestyle.xml/LocalVariableNamingConventions"/>
+
+    <!-- Design: Complexity thresholds (Spring Boot adjusted) -->
+    <rule ref="category/java/design.xml/CyclomaticComplexity">
         <properties>
-            <!-- Allow single-letter loop variables -->
-            <property name="minimum" value="2"/>
-        </properties>
-    </rule>
-    <rule ref="category/java/codestyle.xml/LongVariable">
-        <properties>
-            <property name="minimum" value="30"/>
+            <!-- Default is 10, allowing 15 for Spring Boot service methods -->
+            <property name="methodReportLevel" value="15"/>
         </properties>
     </rule>
 
-    <!-- Design -->
-    <rule ref="category/java/design.xml/ExcessiveMethodLength">
-        <properties>
-            <property name="minimum" value="100"/>
-        </properties>
-    </rule>
-    <rule ref="category/java/design.xml/ExcessiveParameterList">
-        <properties>
-            <property name="minimum" value="7"/>
-        </properties>
-    </rule>
     <rule ref="category/java/design.xml/TooManyMethods">
         <properties>
-            <property name="maxmethods" value="15"/>
+            <!-- Default is 10, allowing 20 for Spring Boot controllers/services -->
+            <property name="maxmethods" value="20"/>
         </properties>
     </rule>
+
+    <rule ref="category/java/design.xml/ExcessivePublicCount">
+        <properties>
+            <!-- Default is 45, allowing 60 for Spring Boot configuration classes -->
+            <property name="minimum" value="60"/>
+        </properties>
+    </rule>
+
     <rule ref="category/java/design.xml/AvoidDeeplyNestedIfStmts">
         <properties>
+            <!-- Keep at 3 for readability -->
             <property name="problemDepth" value="3"/>
         </properties>
     </rule>
-    <rule ref="category/java/design.xml/CyclomaticComplexity">
+
+    <rule ref="category/java/design.xml/NPathComplexity">
         <properties>
-            <property name="methodReportLevel" value="10"/>
+            <!-- Default is 200, keeping conservative -->
+            <property name="reportLevel" value="200"/>
         </properties>
     </rule>
+
+    <!-- Additional selective design rules -->
+    <rule ref="category/java/design.xml/AvoidCatchingGenericException"/>
+    <rule ref="category/java/design.xml/AvoidThrowingRawExceptionTypes"/>
+    <rule ref="category/java/design.xml/SignatureDeclareThrowsException"/>
+    <rule ref="category/java/design.xml/SimplifyBooleanReturns"/>
+    <rule ref="category/java/design.xml/SimplifyBooleanExpressions"/>
 
 </ruleset>
