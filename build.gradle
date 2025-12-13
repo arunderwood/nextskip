@@ -3,6 +3,13 @@ plugins {
     id 'org.springframework.boot' version '3.4.0'
     id 'io.spring.dependency-management' version '1.1.7'
     id 'com.vaadin' version '24.9.7'
+
+    // Code quality plugins
+    id 'checkstyle'
+    id 'pmd'
+    id 'com.github.spotbugs' version '6.0.26'
+    id 'jacoco'
+    id 'info.solidsoft.pitest' version '1.15.0'
 }
 
 group = 'io.nextskip'
@@ -83,4 +90,71 @@ tasks.named('test') {
 // Vaadin Hilla configuration
 vaadin {
     productionMode = false
+}
+
+// Code quality plugin configurations
+
+checkstyle {
+    toolVersion = '10.12.5'
+    configFile = file("${rootDir}/config/checkstyle/checkstyle.xml")
+    maxWarnings = 0  // Fail build on any warnings
+}
+
+pmd {
+    toolVersion = '7.9.0'
+    ruleSets = []  // Empty to use custom ruleset file
+    ruleSetFiles = files("${rootDir}/config/pmd/ruleset.xml")
+    ignoreFailures = false
+}
+
+spotbugs {
+    toolVersion = '4.8.6'
+    effort = 'max'
+    reportLevel = 'medium'
+    ignoreFailures = false
+}
+
+tasks.withType(com.github.spotbugs.snom.SpotBugsTask) {
+    reports {
+        html.required = true
+        xml.required = false
+    }
+}
+
+jacoco {
+    toolVersion = '0.8.12'
+}
+
+jacocoTestReport {
+    dependsOn test
+    reports {
+        xml.required = true
+        html.required = true
+    }
+}
+
+jacocoTestCoverageVerification {
+    violationRules {
+        rule {
+            limit {
+                minimum = 0.80  // 80% coverage requirement
+            }
+        }
+    }
+}
+
+pitest {
+    targetClasses = ['io.nextskip.*']
+    targetTests = ['io.nextskip.*']
+    mutators = ['DEFAULTS']
+    threads = 4
+    outputFormats = ['HTML', 'XML']
+    timestampedReports = false
+}
+
+// Add quality checks to build lifecycle (but don't fail build during development)
+// Run manually with ./gradlew check to include all quality checks
+tasks.named('check') {
+    // Comment out to run quality checks on every build
+    // dependsOn jacocoTestCoverageVerification
 }
