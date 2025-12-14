@@ -96,7 +96,7 @@ vaadin {
 
 configurations.all {
     resolutionStrategy {
-        force 'com.google.guava:guava:33.3.1-jre'
+        force 'com.google.guava:guava:33.5.0-jre'
         // Exclude old google-collections in favor of guava
         exclude group: 'com.google.collections', module: 'google-collections'
     }
