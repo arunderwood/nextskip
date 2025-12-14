@@ -69,7 +69,7 @@ dependencies {
     // Testing
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'io.projectreactor:reactor-test'
-    testImplementation 'org.wiremock:wiremock-standalone:3.10.0'
+    testImplementation 'org.wiremock:wiremock-standalone:3.13.2'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
     // Java 25 compatibility - override Mockito and ByteBuddy
