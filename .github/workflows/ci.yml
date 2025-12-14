@@ -41,12 +41,6 @@ jobs:
 
       - name: Run tests with quality checks
         run: ./gradlew check jacocoTestReport
-        env:
-          JAVA_TOOL_OPTIONS: >-
-            --add-opens java.base/java.lang=ALL-UNNAMED
-            --add-opens java.base/java.util=ALL-UNNAMED
-            --add-opens java.base/java.io=ALL-UNNAMED
-            -Dnet.bytebuddy.experimental=true
 
       - name: Upload test results
         uses: actions/upload-artifact@v4
