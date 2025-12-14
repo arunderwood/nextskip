@@ -2,7 +2,7 @@ plugins {
     id 'java'
     id 'org.springframework.boot' version '4.0.0'
     id 'io.spring.dependency-management' version '1.1.7'
-    id 'com.vaadin' version '24.9.7'
+    id 'com.vaadin' version '25.0.0-rc1'
 
     // Code quality plugins
     id 'checkstyle'
@@ -26,11 +26,12 @@ java {
 repositories {
     mavenCentral()
     maven { url 'https://maven.vaadin.com/vaadin-addons' }
+    maven { url 'https://maven.vaadin.com/vaadin-prereleases' }
     maven { url 'https://repo.spring.io/milestone' }
 }
 
 ext {
-    vaadinVersion = '24.9.7'
+    vaadinVersion = '25.0.0-rc1'
 }
 
 dependencyManagement {
@@ -42,6 +43,8 @@ dependencyManagement {
 dependencies {
     // Vaadin with Hilla for React integration
     implementation 'com.vaadin:vaadin-spring-boot-starter'
+    implementation 'com.vaadin:hilla-spring-boot-starter'
+    developmentOnly 'com.vaadin:vaadin-dev'
 
     // Spring Boot
     implementation 'org.springframework.boot:spring-boot-starter-web'
