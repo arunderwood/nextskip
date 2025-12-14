@@ -1,4 +1,4 @@
-FROM eclipse-temurin:21-jre
+FROM eclipse-temurin:25-jre
 
 # Create non-root user for security
 RUN groupadd -r nextskip && useradd -r -g nextskip nextskip
