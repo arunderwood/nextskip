@@ -55,7 +55,7 @@ Built with Spring Boot, Vaadin Hilla, and React.
 ## Tech Stack
 
 ### Backend
-- Java (targeting Java 21 bytecode)
+- Java
 - Spring Boot
 - Vaadin Hilla (React integration)
 - Resilience4j (circuit breakers, retry)

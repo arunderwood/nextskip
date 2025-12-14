@@ -225,14 +225,14 @@ frontend/
 
 ## Java Version Compatibility
 
-**Critical**: This project uses a recent Java version for compilation but targets Java 21 bytecode for compatibility.
+**Critical**: This project uses Java 25 for both compilation and bytecode target.
 
 **build.gradle configuration**:
-- Check `build.gradle` for current `languageVersion` setting
-- `sourceCompatibility = JavaVersion.VERSION_21` - Target Java 21 bytecode
-- `targetCompatibility = JavaVersion.VERSION_21`
+- `languageVersion = JavaLanguageVersion.of(25)` - Compile with Java 25
+- `sourceCompatibility = JavaVersion.VERSION_25` - Target Java 25 bytecode
+- `targetCompatibility = JavaVersion.VERSION_25`
 
-**Why**: Spring Boot and Vaadin Hilla require Java 17+. Mockito needs ByteBuddy experimental mode for recent Java versions.
+**Why**: Spring Boot and Vaadin Hilla require Java 17+. Mockito needs ByteBuddy experimental mode for Java 25.
 
 **Testing JVM args** (configured in build.gradle):
 ```
