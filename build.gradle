@@ -53,9 +53,9 @@ dependencies {
     implementation 'com.github.ben-manes.caffeine:caffeine'
 
     // Resilience4j
-    implementation 'io.github.resilience4j:resilience4j-spring-boot3:2.2.0'
-    implementation 'io.github.resilience4j:resilience4j-circuitbreaker:2.2.0'
-    implementation 'io.github.resilience4j:resilience4j-retry:2.2.0'
+    implementation 'io.github.resilience4j:resilience4j-spring-boot3:2.3.0'
+    implementation 'io.github.resilience4j:resilience4j-circuitbreaker:2.3.0'
+    implementation 'io.github.resilience4j:resilience4j-retry:2.3.0'
 
     // Jackson XML
     implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-xml'
