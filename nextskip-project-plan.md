@@ -313,7 +313,7 @@ Final scores map to visual hotness tiers:
 **Goal:** Working Spring Boot app with solar/propagation data display
 
 **Tasks:**
-1. Initialize Spring Boot 4.x project with dependencies
+1. Initialize Spring Boot project with dependencies
 2. Set up module structure with propagation as first module
 3. Implement NOAA SWPC client (solar flux, K-index, A-index)
 4. Implement HamQSL XML parser (band conditions)

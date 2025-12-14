@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-NextSkip is a ham radio propagation dashboard providing real-time HF band conditions and solar indices for amateur radio operators. Built as a modular monolith using Spring Boot 3.4, Vaadin Hilla 24.9.7, and React 19.
+NextSkip is a ham radio propagation dashboard providing real-time HF band conditions and solar indices for amateur radio operators. Built as a modular monolith using Spring Boot, Vaadin Hilla, and React.
 
 **Current Status**: Phase 1 complete - Propagation module with NOAA SWPC and HamQSL integration.
 
@@ -13,7 +13,7 @@ NextSkip is a ham radio propagation dashboard providing real-time HF band condit
 ### Essential Commands
 
 ```bash
-# Run all tests (expect 60 Java + 90 TypeScript tests passing)
+# Run all tests
 ./gradlew test
 
 # Build entire project
@@ -62,11 +62,11 @@ npm run test:ui
 npm run test:coverage
 ```
 
-**Test Suite**: 90 comprehensive tests in `frontend/tests/` covering:
-- Priority calculation algorithm (29 tests)
-- Component rendering and behavior (25 tests)
-- Grid sorting and layout (16 tests)
-- WCAG 2.1 AA compliance (20 tests)
+**Test Suite**: Comprehensive tests in `frontend/tests/` covering:
+- Priority calculation algorithm
+- Component rendering and behavior
+- Grid sorting and layout
+- WCAG 2.1 AA compliance
 
 **Configuration**: See `vitest.config.ts` and `frontend/test/setup.ts`
 
@@ -182,14 +182,14 @@ frontend/
 
 ### Backend Tests (JUnit 5)
 
-- **60 tests** covering utilities, external API clients, services, DTOs
+- Tests covering utilities, external API clients, services, DTOs
 - Use **WireMock** for HTTP mocking (see `NoaaSwpcClientTest.java`)
 - Use **Mockito** for dependency mocking
-- Java 25 requires ByteBuddy experimental mode (configured in build.gradle)
+- Recent Java versions require ByteBuddy experimental mode (configured in build.gradle)
 
 ### Frontend Tests (Vitest + React Testing Library)
 
-- **90 tests** in `frontend/tests/` directory
+- Tests in `frontend/tests/` directory
 - Use **jest-axe** for automated WCAG 2.1 AA compliance testing
 - Use **jsdom** environment (faster than browser mode)
 - Import components with `Frontend/` alias (configured in `vitest.config.ts`)
@@ -225,14 +225,14 @@ frontend/
 
 ## Java Version Compatibility
 
-**Critical**: This project uses Java 25 for compilation but targets Java 21 bytecode.
+**Critical**: This project uses a recent Java version for compilation but targets Java 21 bytecode for compatibility.
 
 **build.gradle configuration**:
-- `languageVersion = JavaLanguageVersion.of(25)` - Compile with Java 25
+- Check `build.gradle` for current `languageVersion` setting
 - `sourceCompatibility = JavaVersion.VERSION_21` - Target Java 21 bytecode
 - `targetCompatibility = JavaVersion.VERSION_21`
 
-**Why**: Spring Boot 3.4 and Vaadin Hilla 24.9 require Java 17+. Mockito needs ByteBuddy experimental mode for Java 25.
+**Why**: Spring Boot and Vaadin Hilla require Java 17+. Mockito needs ByteBuddy experimental mode for recent Java versions.
 
 **Testing JVM args** (configured in build.gradle):
 ```

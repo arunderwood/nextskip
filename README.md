@@ -40,7 +40,7 @@ NextSkip focuses on activities with **machine-readable, computable, or predictab
 
 Location-dependent activities (like satellite passes) are planned for later phases.
 
-Built with Spring Boot 3.4, Vaadin Hilla 24.9, and React 19.
+Built with Spring Boot, Vaadin Hilla, and React.
 
 ## Features
 
@@ -55,26 +55,27 @@ Built with Spring Boot 3.4, Vaadin Hilla 24.9, and React 19.
 ## Tech Stack
 
 ### Backend
-- Java 25 (targeting Java 21 bytecode)
-- Spring Boot 3.4.0
-- Vaadin Hilla 24.9.7 (React integration)
+- Java (targeting Java 21 bytecode)
+- Spring Boot
+- Vaadin Hilla (React integration)
 - Resilience4j (circuit breakers, retry)
 - Caffeine (caching)
 
 ### Frontend
-- React 19
+- React
 - TypeScript
 - Vaadin Hilla (type-safe RPC)
-- Vite 6.4.1
+- Vite
 - Vitest + React Testing Library
 
 ### Build
-- Gradle 9.2.1
-- Java Toolchain 25
+- Gradle
+- Java Toolchain
 
 ## Prerequisites
 
-- Java 25 (Amazon Corretto 25.0.1.8.1 recommended)
+- Java (see `.tool-versions` for specific version)
+- Node.js (see `.tool-versions` for specific version)
 - Internet connection (for fetching propagation data)
 
 ## Quick Start
@@ -193,9 +194,9 @@ lsof -ti :8080 | xargs kill -9
 ```
 
 **Test Failures**
-Ensure you have Java 25:
+Ensure you have the correct Java version:
 ```bash
-java -version  # Should show Java 25
+java -version  # Should match version in .tool-versions
 ```
 
 ## API Endpoints
