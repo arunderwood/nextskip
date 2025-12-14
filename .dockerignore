@@ -1,0 +1,38 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# CI/CD
+.github
+
+# Build artifacts (except the JAR we need)
+build/*
+!build/libs/*.jar
+.gradle
+gradle
+
+# Node/Frontend
+node_modules
+frontend/tests
+coverage
+
+# IDE
+.idea
+.vscode
+*.iml
+*.iws
+*.ipr
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Documentation
+*.md
+docs
+
+# Test and config files
+src/test
+.tool-versions
+.claude
