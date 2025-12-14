@@ -10,8 +10,14 @@ import org.springframework.cache.CacheManager;
 import org.springframework.cache.concurrent.ConcurrentMapCacheManager;
 import org.springframework.web.reactive.function.client.WebClient;
 
-import static com.github.tomakehurst.wiremock.client.WireMock.*;
-import static org.junit.jupiter.api.Assertions.*;
+import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
+import static com.github.tomakehurst.wiremock.client.WireMock.get;
+import static com.github.tomakehurst.wiremock.client.WireMock.getRequestedFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
  * Unit tests for NoaaSwpcClient using WireMock.
@@ -151,7 +157,7 @@ class NoaaSwpcClientTest {
      * Test subclass that allows URL override for testing.
      */
     static class TestNoaaSwpcClient extends NoaaSwpcClient {
-        public TestNoaaSwpcClient(WebClient.Builder webClientBuilder, CacheManager cacheManager, String testUrl) {
+        TestNoaaSwpcClient(WebClient.Builder webClientBuilder, CacheManager cacheManager, String testUrl) {
             super(webClientBuilder, cacheManager, testUrl);
         }
     }

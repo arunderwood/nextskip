@@ -15,8 +15,15 @@ import org.springframework.web.reactive.function.client.WebClient;
 
 import java.util.List;
 
-import static com.github.tomakehurst.wiremock.client.WireMock.*;
-import static org.junit.jupiter.api.Assertions.*;
+import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
+import static com.github.tomakehurst.wiremock.client.WireMock.get;
+import static com.github.tomakehurst.wiremock.client.WireMock.getRequestedFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Unit tests for HamQslClient using WireMock.
@@ -276,7 +283,7 @@ class HamQslClientTest {
      * Test subclass that allows URL override for testing.
      */
     static class TestHamQslClient extends HamQslClient {
-        public TestHamQslClient(WebClient.Builder webClientBuilder, CacheManager cacheManager, String testUrl) {
+        TestHamQslClient(WebClient.Builder webClientBuilder, CacheManager cacheManager, String testUrl) {
             super(webClientBuilder, cacheManager, testUrl);
         }
     }
