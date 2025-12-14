@@ -1,0 +1,89 @@
+version: 2
+updates:
+  # GitHub Actions - Keep CI/CD workflows up to date
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "daily"
+      time: "06:00"
+      timezone: "America/New_York"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "github-actions"
+    groups:
+      github-actions:
+        patterns:
+          - "*"
+
+  # Docker - Keep base images secure and up to date
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "daily"
+      time: "06:00"
+      timezone: "America/New_York"
+    open-pull-requests-limit: 3
+    labels:
+      - "dependencies"
+      - "docker"
+
+  # Gradle - Java dependencies (Spring Boot, Vaadin, testing libraries)
+  - package-ecosystem: "gradle"
+    directory: "/"
+    schedule:
+      interval: "daily"
+      time: "06:00"
+      timezone: "America/New_York"
+    open-pull-requests-limit: 10
+    labels:
+      - "dependencies"
+      - "java"
+    groups:
+      spring:
+        patterns:
+          - "org.springframework*"
+      vaadin:
+        patterns:
+          - "com.vaadin*"
+      test-frameworks:
+        patterns:
+          - "org.junit*"
+          - "org.mockito*"
+          - "org.wiremock*"
+      code-quality:
+        patterns:
+          - "com.github.spotbugs*"
+          - "org.jacoco*"
+          - "info.solidsoft.pitest*"
+
+  # npm - Frontend dependencies (React, Vite, Vitest, testing libraries)
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "daily"
+      time: "06:00"
+      timezone: "America/New_York"
+    open-pull-requests-limit: 10
+    labels:
+      - "dependencies"
+      - "frontend"
+    groups:
+      vaadin-hilla:
+        patterns:
+          - "@vaadin/hilla*"
+      react:
+        patterns:
+          - "react*"
+          - "@types/react*"
+      vite:
+        patterns:
+          - "vite*"
+          - "@vitejs/*"
+      vitest:
+        patterns:
+          - "vitest*"
+          - "@vitest/*"
+      testing-library:
+        patterns:
+          - "@testing-library/*"
