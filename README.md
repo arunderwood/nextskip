@@ -1,18 +1,55 @@
 # NextSkip
 
-Ham Radio Propagation Dashboard - Real-time HF band conditions and solar indices for amateur radio operators.
-
 ## Overview
 
-NextSkip aggregates propagation data from multiple authoritative sources to provide ham radio operators with current HF band conditions, solar indices, and propagation forecasts. Built with Spring Boot 3.4, Vaadin Hilla, and React 19.
+**NextSkip answers one question: "What's hot right now?"**
+
+Amateur radio is a hobby with many activities inside it—DX chasing, POTA/SOTA hunting, contesting, satellite work, and more. Each has conditions that make it an optimal time to engage. NextSkip aggregates real-time data from these activities, scores their current conditions, and presents a score-sorted dashboard where the best opportunities float to the top.
+
+### How It Works
+
+1. **Data Aggregation**: Backend modules poll feeds for each activity (NOAA for propagation, POTA API for park activations, contest calendars, etc.)
+2. **Condition Scoring**: Each module calculates a score (0-100) based on current conditions
+3. **Score Ranking**: Cards are arranged in a bento grid with highest-scored activities in the top-left position
+4. **Hotness Indicators**: Cards display "hot," "warm," "neutral," or "cool" styling based on their scores
+
+### Glossary
+
+| Term | Definition |
+|------|------------|
+| **Activity** | A category of ham radio pursuit that NextSkip tracks (DX, POTA, contesting, etc.) |
+| **Conditions** | The current state of an activity - whether it's a good time to engage |
+| **Score** | A numerical rating (0-100) representing how favorable conditions are |
+| **Hotness** | The visual tier derived from score: hot (70+), warm (45-69), neutral (20-44), cool (0-19) |
+| **Card** | A UI component displaying one activity's current conditions |
+| **Module** | A backend package that fetches and scores one activity's data |
+| **Feed** | An external data source that provides activity information |
+
+### Activity Coverage
+
+NextSkip focuses on activities with **machine-readable, computable, or predictable conditions**:
+
+| Activity | Feed | Status |
+|----------|------|--------|
+| HF Propagation | NOAA SWPC, HamQSL | ✅ Phase 1 Complete |
+| Dashboard Infrastructure | Multi-card grid, WebSocket | 🔜 Phase 2 |
+| POTA/SOTA | api.pota.app, SOTA API | 🔜 Phase 3 |
+| Contests | WA7BNM calendar | 🔜 Phase 4 |
+| Band Activity | PSKReporter MQTT | 🔜 Phase 5 |
+| Satellites | N2YO, Celestrak | ⏳ Phase 6 (requires location) |
+
+Location-dependent activities (like satellite passes) are planned for later phases.
+
+Built with Spring Boot 3.4, Vaadin Hilla 24.9, and React 19.
 
 ## Features
 
-- **Real-time Solar Indices**: Solar Flux Index (SFI), K-Index, A-Index, Sunspot Number
-- **HF Band Conditions**: Propagation forecasts for 160m through 6m bands
-- **Multi-source Aggregation**: Data from NOAA SWPC and HamQSL.com
+- **Activity Scoring**: Each activity gets a 0-100 score based on current conditions
+- **Hotness Ranking**: Cards automatically arrange by score - best opportunities float to top
+- **Multi-source Feeds**: Data from NOAA SWPC, HamQSL, POTA API, and more
+- **Real-time Conditions**: Solar indices (SFI, K-Index, A-Index) and HF band forecasts (160m-6m)
 - **Resilient Architecture**: Circuit breakers, retry logic, and graceful fallbacks
-- **Bento Grid UI**: Priority-based card layout showing "hottest" (most favorable) conditions first
+- **Bento Grid UI**: Score-sorted card layout with hot/warm/neutral/cool visual indicators
 - **Responsive Design**: Mobile-first design with 4-column desktop → 2-column tablet → 1-column mobile layout
 
 ## Tech Stack

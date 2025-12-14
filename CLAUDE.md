@@ -113,6 +113,44 @@ io.nextskip/
 **XML Security**: Disable DTD processing to prevent XXE attacks
 - See `HamQslClient.java` for pattern
 
+## Scoring System
+
+NextSkip uses a score-based system to rank activity cards by "hotness."
+
+### Backend Scoring Pattern
+
+Each module's domain models should implement:
+1. `isFavorable()` - Boolean for good conditions
+2. `getScore()` - Integer 0-100 for condition quality
+
+See `SolarIndices.java` and `BandCondition.java` for reference.
+
+### Frontend Score Calculation
+
+Location: `frontend/components/bento/usePriorityCalculation.ts`
+
+Weighted algorithm:
+- 40% favorable flag
+- 35% numeric score
+- 20% rating enum
+- 5% recency (time decay)
+
+### Hotness Levels
+
+| Score | Hotness | Visual Treatment |
+|-------|---------|------------------|
+| 70-100 | hot | Green glow, pulse animation |
+| 45-69 | warm | Orange tint |
+| 20-44 | neutral | Blue tint |
+| 0-19 | cool | Gray, reduced opacity |
+
+### Adding a New Activity Module
+
+1. Create domain models with `isFavorable()` and `getScore()` methods
+2. Expose data via `@BrowserCallable` endpoint
+3. Add card configuration in `useDashboardCards.ts` with scoring inputs
+4. Frontend automatically sorts cards by calculated score
+
 ## Frontend Structure
 
 ```

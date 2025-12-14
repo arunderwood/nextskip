@@ -225,6 +225,88 @@ public void onSpotReceived(SpotReceivedEvent event) {
 
 ---
 
+## Activity Prioritization Philosophy
+
+Not all ham radio activities are equally suited to NextSkip's aggregation model. Activities are prioritized for implementation based on:
+
+### Criteria
+
+1. **Machine Readability**: Does the feed provide structured, parseable data (JSON, XML, API)?
+2. **Geographic Independence**: Can the score be computed without user location?
+3. **Broad Applicability**: Does this activity appeal to a wide segment of the ham radio community?
+4. **Data Freshness**: How often do conditions change? Real-time feeds score higher than static calendars.
+5. **Scoring Clarity**: Can we define clear "favorable" vs "unfavorable" conditions programmatically?
+
+### Implementation Tiers
+
+**Tier 1 - Infrastructure & Core Activities** (location-independent):
+- HF Propagation (Phase 1 ✅) - Universal conditions, machine-readable feeds
+- Dashboard Infrastructure (Phase 2) - Multi-card grid, WebSocket, card registration system
+- POTA/SOTA (Phase 3) - Clear "active now" signal, broad appeal
+- Contests (Phase 4) - Predictable schedule, universal applicability
+
+**Tier 2 - Advanced Activities** (requires aggregation or real-time processing):
+- Band Activity / PSKReporter (Phase 5) - Real-time MQTT, statistical aggregation
+
+**Tier 3 - Personalized Activities** (requires user input):
+- Satellites (Phase 6) - Location-dependent, needs user grid square
+- Spring AI Assistant (Phase 7) - Enhancement layer
+
+**Note:** Each phase (3-6) includes both backend module implementation AND frontend card component, enabling iterative delivery of complete features.
+
+---
+
+## Scoring Architecture
+
+Each activity module must provide scoring data that the frontend uses for card ranking.
+
+### Backend Contract
+
+Domain models should implement:
+- `isFavorable()` - Boolean indicating if conditions are good for this activity
+- `getScore()` - Numeric score (0-100) representing condition quality
+
+Example from `BandCondition.java`:
+```java
+public boolean isFavorable() {
+    return rating == BandConditionRating.GOOD && confidence > 0.5;
+}
+
+public int getScore() {
+    int baseScore = switch (rating) {
+        case GOOD -> 100;
+        case FAIR -> 60;
+        case POOR -> 20;
+        case UNKNOWN -> 0;
+    };
+    return (int) (baseScore * confidence);
+}
+```
+
+### Frontend Score Calculation
+
+The `usePriorityCalculation` hook combines scoring signals into a final score:
+
+| Component | Weight | Description |
+|-----------|--------|-------------|
+| Favorable | 40% | Boolean flag from backend |
+| Score | 35% | Numeric 0-100 from backend |
+| Rating | 20% | Enum mapping (GOOD=100, FAIR=60, etc.) |
+| Recency | 5% | Time decay (fresh data scores higher) |
+
+### Hotness Levels
+
+Final scores map to visual hotness tiers:
+
+| Score | Hotness | Visual Treatment |
+|-------|---------|------------------|
+| 70-100 | hot | Green glow, pulse animation |
+| 45-69 | warm | Orange tint |
+| 20-44 | neutral | Blue tint |
+| 0-19 | cool | Gray, reduced opacity |
+
+---
+
 ## Implementation Phases
 
 ### Phase 1: Project Scaffolding & Propagation Module
@@ -295,17 +377,56 @@ public void onSpotReceived(SpotReceivedEvent event) {
 
 ---
 
-### Phase 2: POTA/SOTA Activations Module
-**Goal:** Display current portable activators with park/summit info
+### Phase 2: Dashboard Infrastructure
+**Goal:** Set up multi-card dashboard infrastructure for adding new activity modules
+
+**Note:** Phase 1 implemented the bento grid with scoring system. This phase extends it to support multiple module types and real-time updates.
 
 **Tasks:**
+1. Create DashboardService to aggregate multiple modules
+2. Implement WebSocket infrastructure for live updates
+3. Extend `useDashboardCards` hook to support multiple activity types dynamically
+4. Add card registration system so new modules can easily add cards
+5. Implement unified live feed component (for future real-time events)
+6. Add loading states and error boundaries for individual cards
+7. Dark mode support
+
+**Key Patterns:**
+```typescript
+// Card registration pattern
+interface ActivityCardFactory {
+  type: string;
+  createCard: (data: ActivityData) => BentoCardConfig;
+}
+
+// Each module registers its card factory
+const cardFactories = new Map<string, ActivityCardFactory>();
+```
+
+**Acceptance Criteria:**
+- Multiple card types can coexist in bento grid
+- Cards can be added/removed dynamically as modules come online
+- WebSocket infrastructure ready for real-time updates
+- Individual card failures don't crash entire dashboard
+- Dark mode toggle works across all cards
+
+---
+
+### Phase 3: POTA/SOTA Activations Module
+**Goal:** Add POTA/SOTA activity tracking (backend + frontend card)
+
+**Backend Tasks:**
 1. Create activations module structure
 2. Implement POTA API client (`https://api.pota.app/spot/activator`)
 3. Implement SOTA API client (`https://api2.sota.org.uk/api/spots`)
-4. Create unified Activation model that normalizes both
-5. Add REST endpoint: `GET /api/v1/activations`
-6. Dashboard tile showing activator count + list
-7. Basic filtering (by band, by program)
+4. Create unified Activation model with `isFavorable()` and `getScore()` methods
+5. Add Hilla endpoint: `@BrowserCallable` in `ActivationEndpoint.java`
+
+**Frontend Tasks:**
+6. Create ActivationsCard component
+7. Implement scoring logic (score based on number of active stations, recency)
+8. Add card factory to dashboard
+9. Display activator count, list with frequencies, and basic filtering (by band, by program)
 
 **Key Models:**
 ```java
@@ -324,71 +445,74 @@ public record Activation(
 ```
 
 **Acceptance Criteria:**
-- Dashboard shows POTA + SOTA activators currently on air
+- Activations card appears in bento grid sorted by score
+- Shows POTA + SOTA activators currently on air
 - Count displayed prominently ("23 POTA / 7 SOTA on air")
-- Click through to see full list with frequencies
-- Auto-refresh every 60 seconds
+- Auto-refresh updates card without page reload
 
 ---
 
-### Phase 3: Satellite Tracking Module
-**Goal:** Display upcoming amateur satellite passes
+### Phase 4: Contest Calendar Module
+**Goal:** Add contest tracking (backend + frontend card)
 
-**Tasks:**
-1. Create satellites module structure
-2. Implement N2YO API client for pass predictions
-3. Implement Celestrak client for TLE data
-4. Integrate predict4java for local pass calculation (reduce API calls)
-5. Define list of active amateur satellites (SO-50, ISS, RS-44, etc.)
-6. Add REST endpoint: `GET /api/v1/satellites/passes?lat=X&lon=Y`
-7. Dashboard tile showing next 3 passes
-8. Geolocation support (browser API or manual entry)
+**Backend Tasks:**
+1. Create contests module structure
+2. Parse WA7BNM iCal feed (or maintain curated JSON)
+3. Implement contest state machine (upcoming/active/ended)
+4. Create Contest model with `isFavorable()` and `getScore()` methods
+5. Add Hilla endpoint: `@BrowserCallable` in `ContestEndpoint.java`
 
-**Dependencies:**
-```xml
-<dependency>
-    <groupId>com.github.davidmoten</groupId>
-    <artifactId>predict4java</artifactId>
-    <version>1.3.1</version>
-</dependency>
-```
+**Frontend Tasks:**
+6. Create ContestsCard component
+7. Implement scoring logic (score high when contest is active, medium when starting soon)
+8. Add card factory to dashboard
+9. Display active contests with "ending soon" visual alerts
+
+**Data Source Options:**
+- WA7BNM iCal: `https://www.contestcalendar.com/calendar.ics` (personal use)
+- Curated JSON file with major contests (fallback)
+- Community-maintained contest list
 
 **Key Models:**
 ```java
-public record SatellitePass(
-    String satelliteName,
-    int noradId,
-    Instant aosTime,        // Acquisition of signal
-    Instant losTime,        // Loss of signal
-    double maxElevation,
-    double aosAzimuth,
-    double losAzimuth,
-    SatelliteType type,     // FM_REPEATER, LINEAR_TRANSPONDER, DIGIPEATER
-    String uplinkFreq,
-    String downlinkFreq,
-    String tone             // CTCSS if applicable
+public record Contest(
+    String name,
+    String sponsor,          // ARRL, CQ, etc.
+    Instant startTime,
+    Instant endTime,
+    ContestStatus status,    // UPCOMING, ACTIVE, ENDED
+    Set<FrequencyBand> bands,
+    Set<String> modes,
+    String rulesUrl,
+    Duration timeRemaining
 ) {}
 ```
 
 **Acceptance Criteria:**
-- Shows passes for user's location (default or specified)
-- Only shows passes with >20° max elevation (actually workable)
-- Displays time until next pass, uplink/downlink frequencies
-- TLEs refresh every 6 hours automatically
+- Contests card appears in bento grid sorted by score
+- Shows active contests with high score, upcoming with medium score
+- Visual alert for "ending soon" contests
+- Lists upcoming contests in next 7 days
 
 ---
 
-### Phase 4: Real-time HF Activity (PSKReporter MQTT)
-**Goal:** Live band activity metrics from PSKReporter
+### Phase 5: Real-time HF Activity (PSKReporter MQTT)
+**Goal:** Add real-time band activity tracking (backend + frontend card)
 
-**Tasks:**
+**Backend Tasks:**
 1. Create spots module structure
 2. Implement PSKReporter MQTT client using Eclipse Paho
 3. Aggregate spots by band in sliding time windows
 4. Detect "band openings" (spot rate >2σ above average)
-5. Add WebSocket endpoint for real-time updates
-6. Dashboard shows per-band activity level (Hot/Moderate/Quiet)
-7. Live feed of interesting events
+5. Create BandActivity model with `isFavorable()` and `getScore()` methods
+6. Add Hilla endpoint: `@BrowserCallable` in `BandActivityEndpoint.java`
+
+**Frontend Tasks:**
+7. Create BandActivityCard component
+8. Implement scoring logic (high score for band openings, medium for active bands)
+9. Add card factory to dashboard
+10. Display per-band activity levels with visual hotness indicators
+11. Use WebSocket for live spot updates (pushes to existing WebSocket infrastructure)
 
 **Dependencies:**
 ```xml
@@ -438,93 +562,60 @@ public record BandActivity(
 
 ---
 
-### Phase 5: Contest Calendar Module
-**Goal:** Display current and upcoming contests
+### Phase 6: Satellite Tracking Module
+**Goal:** Add satellite pass tracking (backend + frontend card)
 
-**Tasks:**
-1. Create contests module structure
-2. Parse WA7BNM iCal feed (or maintain curated JSON)
-3. Implement contest state machine (upcoming/active/ended)
-4. Add REST endpoint: `GET /api/v1/contests`
-5. Dashboard tile for active/upcoming contests
-6. "Last hour" alerts for ending contests
+**Backend Tasks:**
+1. Create satellites module structure
+2. Implement N2YO API client for pass predictions
+3. Implement Celestrak client for TLE data
+4. Integrate predict4java for local pass calculation (reduce API calls)
+5. Define list of active amateur satellites (SO-50, ISS, RS-44, etc.)
+6. Create SatellitePass model with `isFavorable()` and `getScore()` methods
+7. Add Hilla endpoint: `@BrowserCallable` in `SatelliteEndpoint.java`
 
-**Data Source Options:**
-- WA7BNM iCal: `https://www.contestcalendar.com/calendar.ics` (personal use)
-- Curated JSON file with major contests (fallback)
-- Community-maintained contest list
+**Frontend Tasks:**
+8. Create SatellitesCard component
+9. Implement scoring logic (high score for passes happening soon with good elevation)
+10. Add card factory to dashboard
+11. Add geolocation support (browser API or manual grid square entry)
+12. Display next 3 passes with countdown timers
+
+**Dependencies:**
+```xml
+<dependency>
+    <groupId>com.github.davidmoten</groupId>
+    <artifactId>predict4java</artifactId>
+    <version>1.3.1</version>
+</dependency>
+```
 
 **Key Models:**
 ```java
-public record Contest(
-    String name,
-    String sponsor,          // ARRL, CQ, etc.
-    Instant startTime,
-    Instant endTime,
-    ContestStatus status,    // UPCOMING, ACTIVE, ENDED
-    Set<FrequencyBand> bands,
-    Set<String> modes,
-    String rulesUrl,
-    Duration timeRemaining
+public record SatellitePass(
+    String satelliteName,
+    int noradId,
+    Instant aosTime,        // Acquisition of signal
+    Instant losTime,        // Loss of signal
+    double maxElevation,
+    double aosAzimuth,
+    double losAzimuth,
+    SatelliteType type,     // FM_REPEATER, LINEAR_TRANSPONDER, DIGIPEATER
+    String uplinkFreq,
+    String downlinkFreq,
+    String tone             // CTCSS if applicable
 ) {}
 ```
 
 **Acceptance Criteria:**
-- Shows if a major contest is currently active
-- Lists upcoming contests in next 7 days
-- Visual alert for "ending soon" contests
-- Basic contest info (bands, modes, duration)
+- Satellites card appears in bento grid sorted by score
+- Shows passes for user's location (default or specified via geolocation or manual entry)
+- Only shows passes with >20° max elevation (actually workable)
+- Displays time until next pass, uplink/downlink frequencies with countdown
+- TLEs refresh every 6 hours automatically
+- Card score is high when pass is imminent, medium for passes in next few hours
 
----
-
-### Phase 6: Dashboard Aggregation & UI
-**Goal:** Polished single-page dashboard with real-time updates
-
-**Tasks:**
-1. Create DashboardService that aggregates all modules
-2. Implement WebSocket for live updates
-3. Build responsive frontend (React, Vue, or Thymeleaf+HTMX)
-4. Add location awareness (browser geolocation or manual grid)
-5. Unified live feed with filtering
-6. Mobile-responsive design
-7. Dark mode support
-
-**API Design:**
-```
-GET  /api/v1/dashboard              # Full dashboard state
-GET  /api/v1/dashboard/propagation  # Just propagation tile
-GET  /api/v1/dashboard/activations  # Just activations tile
-GET  /api/v1/dashboard/satellites   # Just satellite tile
-GET  /api/v1/dashboard/activity     # Just band activity tile
-GET  /api/v1/dashboard/contests     # Just contests tile
-WS   /ws/live-feed                  # Real-time event stream
-```
-
-**Dashboard State DTO:**
-```java
-public record DashboardState(
-    PropagationSummary propagation,
-    List<Activation> activations,
-    List<SatellitePass> upcomingPasses,
-    Map<FrequencyBand, BandActivity> bandActivity,
-    List<Contest> activeContests,
-    Instant generatedAt
-) {}
-```
-
-**Frontend Options:**
-- **HTMX + Thymeleaf:** Simple, server-rendered, minimal JS
-- **React:** Rich interactivity, familiar ecosystem
-- **Vue 3:** Balance of simplicity and power
-
-**Recommended:** Start with HTMX for rapid iteration, migrate to React if interactivity demands grow.
-
-**Acceptance Criteria:**
-- Single page shows all tiles at a glance
-- Updates without full page refresh
-- Works on mobile devices
-- Loads in <2 seconds
-- Graceful degradation when modules fail
+**Note:** This phase requires user location input, which is why it's prioritized after location-independent activities.
 
 ---
 
