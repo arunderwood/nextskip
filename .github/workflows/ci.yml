@@ -24,12 +24,6 @@ jobs:
   backend-test:
     needs: validate
     runs-on: ubuntu-latest
-    env:
-      JAVA_TOOL_OPTIONS: >-
-        --add-opens java.base/java.lang=ALL-UNNAMED
-        --add-opens java.base/java.util=ALL-UNNAMED
-        --add-opens java.base/java.io=ALL-UNNAMED
-        -Dnet.bytebuddy.experimental=true
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -47,6 +41,12 @@ jobs:
 
       - name: Run tests with quality checks
         run: ./gradlew check jacocoTestReport
+        env:
+          JAVA_TOOL_OPTIONS: >-
+            --add-opens java.base/java.lang=ALL-UNNAMED
+            --add-opens java.base/java.util=ALL-UNNAMED
+            --add-opens java.base/java.io=ALL-UNNAMED
+            -Dnet.bytebuddy.experimental=true
 
       - name: Upload test results
         uses: actions/upload-artifact@v4
@@ -62,7 +62,7 @@ jobs:
             build/reports/spotbugs/
 
       - name: Test Report
-        uses: dorny/test-reporter@v1
+        uses: dorny/test-reporter@v2
         if: always()
         with:
           name: JUnit Tests
