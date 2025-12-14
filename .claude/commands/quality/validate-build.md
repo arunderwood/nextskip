@@ -10,10 +10,11 @@ allowed-tools: Bash, Read, Grep, Glob
 
 This command validates the entire NextSkip stack (Gradle, Spring Boot, Vaadin, React) to ensure:
 - Backend code compiles without errors
-- All backend tests pass (expected: 60/60)
-- All frontend tests pass (expected: 90/90)
+- All backend tests pass
+- All frontend tests pass
 - Quality checks complete successfully
 - Build artifacts are generated
+- **Application starts successfully with no runtime exceptions**
 - No obvious issues that would break the build
 
 ## When to Use
@@ -48,19 +49,19 @@ This runs all frontend tests including:
 
 **Report**:
 - Test result (PASS or FAIL)
-- Test count (X/90 passing)
+- Test count (X passing)
 - Test duration (in seconds or milliseconds)
 - Any test failures with error messages
 
-**Expected**: 90/90 tests passing in ~1 second
+**Expected**: All tests passing in ~1-2 seconds
 
 ### Step 3: Gradle Clean Build
 
 **Execute**: `time ./gradlew clean build`
 
 This runs the full build including:
-- Compilation (Java 25 → Java 21 bytecode)
-- Backend test execution (all 60 tests)
+- Compilation (Java 25 bytecode)
+- Backend test execution (all tests)
 - Quality checks (Checkstyle, PMD, SpotBugs, JaCoCo)
 - JAR packaging
 
@@ -68,7 +69,7 @@ This runs the full build including:
 - Build result (SUCCESS or FAILURE)
 - Build duration (in seconds)
 - Compilation warnings/errors
-- Test results (X/60 passing)
+- Test results (X passing)
 - Quality violation counts:
   - Checkstyle (main + test)
   - PMD (main + test)
@@ -86,14 +87,42 @@ This runs the full build including:
 - JAR file size
 - Existence of test reports at `build/reports/tests/test/`
 
-### Step 5: Check for Port Conflicts (Optional)
+### Step 5: Runtime Validation (Required)
 
-If Spring Boot startup validation is needed:
+**⚠️ CRITICAL**: Starting the application is REQUIRED, not optional. Runtime exceptions (dependency injection issues, configuration errors, bean initialization failures) will NOT be caught by tests alone.
 
-**Execute**: `lsof -ti :8080`
+**Step 5a: Clear Port 8080**
 
-If port 8080 is in use, kill the process:
 **Execute**: `lsof -ti :8080 | xargs kill -9`
+
+(This will silently succeed even if no process is running)
+
+**Step 5b: Start Application in Background**
+
+**Execute**: `./gradlew bootRun > /tmp/bootrun.log 2>&1 &`
+
+**Step 5c: Wait and Check Logs**
+
+**Execute**: `sleep 15 && tail -100 /tmp/bootrun.log`
+
+**Report**:
+- Startup result (SUCCESS or FAILURE)
+- Startup time (in seconds)
+- Any runtime exceptions or errors
+- Spring Boot version and port
+- Vite frontend compilation status
+- TypeScript errors (should be 0)
+- Application URL confirmation
+
+**Step 5d: Stop Application**
+
+**Execute**: `lsof -ti :8080 | xargs kill -9`
+
+**Expected**:
+- Application starts in 5-10 seconds
+- No runtime exceptions
+- TypeScript: 0 errors
+- "Started NextSkipApplication" message in logs
 
 ## Summary Report Format
 
@@ -105,12 +134,13 @@ After executing ALL validation steps, provide this structured summary using ACTU
 📊 Git Status: [Clean / X modified, Y untracked files]
 🎨 Frontend Tests: [SUCCESS/FAILURE] ([actual count]/90 passing, [actual duration])
 🔨 Backend Build: [SUCCESS/FAILURE] ([actual duration]s)
-✅ Backend Tests: [actual count]/60 passing ([test duration]s)
+✅ Backend Tests: [actual count]/91 passing ([test duration]s)
 📋 Quality Violations:
   - Checkstyle: [actual] main, [actual] test
   - PMD: [actual] main, [actual] test
   - SpotBugs: [actual status]
 📦 Artifacts: [actual JAR name] ([actual size])
+🚀 Runtime Validation: [SUCCESS/FAILURE] (started in [X]s, TypeScript: [N] errors)
 
 🎯 Overall Result: [✅ READY TO COMMIT / ❌ NEEDS FIXES]
 
@@ -123,19 +153,21 @@ After executing ALL validation steps, provide this structured summary using ACTU
 ## NextSkip Build Validation Report
 
 📊 Git Status: 1 modified (BentoCard.tsx)
-🎨 Frontend Tests: SUCCESS (90/90 passing, 907ms)
-🔨 Backend Build: SUCCESS (12.4s)
-✅ Backend Tests: 60/60 passing (3.2s)
+🎨 Frontend Tests: SUCCESS (all passing, ~900ms)
+🔨 Backend Build: SUCCESS (~12s)
+✅ Backend Tests: all passing (~7s)
 📋 Quality Violations:
-  - Checkstyle: 5 warnings main, 59 warnings test
-  - PMD: 62 violations main, 70 violations test
-  - SpotBugs: exit code 4 (Java 25 warnings, non-blocking)
-📦 Artifacts: nextskip-0.0.1-SNAPSHOT.jar (89MB)
+  - Checkstyle: low warnings main, moderate warnings test
+  - PMD: moderate violations main and test
+  - SpotBugs: exit code 1 (non-blocking)
+📦 Artifacts: nextskip-0.0.1-SNAPSHOT.jar (~82MB)
+🚀 Runtime Validation: SUCCESS (started in ~7s, TypeScript: 0 errors)
 
 🎯 Overall Result: ✅ READY TO COMMIT
 
 All validation checks passed. Quality violations are within acceptable limits.
 Frontend accessibility tests (WCAG 2.1 AA) passing.
+Application starts without runtime exceptions.
 ```
 
 ## Troubleshooting
@@ -168,6 +200,16 @@ lsof -ti :8080 | xargs kill -9
 - Ensure Node.js and npm are installed
 - Run `npm install` to install dependencies
 
+**Runtime Startup Failures**:
+- Check `/tmp/bootrun.log` for full error messages and stack traces
+- Common issues:
+  - Bean initialization failures (dependency injection errors)
+  - Configuration property errors (missing or invalid application.yml values)
+  - Database connection issues (if using external DB)
+  - Port conflicts (use `lsof -ti :8080` to check)
+- Verify all required environment variables are set
+- Check that gradle.properties settings are compatible with the application
+
 ## Key Principles for Execution
 
 1. **Use Bash tool** - Execute commands with `Bash` tool, don't simulate
@@ -179,14 +221,14 @@ lsof -ti :8080 | xargs kill -9
 
 ## Success Criteria
 
-- ✅ Frontend tests complete with 90/90 passing
+- ✅ Frontend tests complete with all tests passing
 - ✅ Backend build completes with SUCCESS status
-- ✅ All 60 backend tests pass
-- ✅ JAR artifact is generated (~89MB)
-- ✅ Quality violations within acceptable range:
-  - Checkstyle: < 100 total warnings
-  - PMD: < 150 total violations
-  - No critical compilation errors
+- ✅ All backend tests pass
+- ✅ JAR artifact is generated (~80MB)
+- ✅ Quality violations within acceptable range (non-blocking)
+- ✅ **Application starts successfully without runtime exceptions**
+- ✅ TypeScript: 0 errors
+- ✅ No critical compilation errors
 
 ## Related Commands
 
