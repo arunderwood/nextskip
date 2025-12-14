@@ -1,0 +1,64 @@
+/* BentoGrid Component Styles */
+
+.bento-grid {
+  display: grid;
+  grid-template-columns: repeat(var(--bento-columns-desktop), 1fr);
+  gap: var(--bento-gap);
+  width: 100%;
+}
+
+/* Card size variants using grid-column and grid-row */
+.bento-grid__card--standard {
+  grid-column: span var(--bento-card-standard-cols);
+  grid-row: span var(--bento-card-standard-rows);
+}
+
+.bento-grid__card--wide {
+  grid-column: span var(--bento-card-wide-cols);
+  grid-row: span var(--bento-card-wide-rows);
+}
+
+.bento-grid__card--tall {
+  grid-column: span var(--bento-card-tall-cols);
+  grid-row: span var(--bento-card-tall-rows);
+}
+
+.bento-grid__card--hero {
+  grid-column: span var(--bento-card-hero-cols);
+  grid-row: span var(--bento-card-hero-rows);
+}
+
+/* Animation wrapper for reordering */
+.bento-grid__card-wrapper {
+  transition: transform var(--bento-transition-duration) var(--bento-transition-timing),
+    opacity var(--bento-transition-duration) var(--bento-transition-timing);
+}
+
+/* Responsive breakpoints */
+@media (max-width: 1024px) {
+  .bento-grid {
+    grid-template-columns: repeat(var(--bento-columns-tablet), 1fr);
+  }
+
+  /* Wide cards span full width on tablet */
+  .bento-grid__card--wide,
+  .bento-grid__card--hero {
+    grid-column: span var(--bento-columns-tablet);
+  }
+}
+
+@media (max-width: 768px) {
+  .bento-grid {
+    grid-template-columns: repeat(var(--bento-columns-mobile), 1fr);
+    gap: calc(var(--bento-gap) * 0.67); /* 16px gap on mobile */
+  }
+
+  /* All cards span full width on mobile */
+  .bento-grid__card--standard,
+  .bento-grid__card--wide,
+  .bento-grid__card--tall,
+  .bento-grid__card--hero {
+    grid-column: 1 / -1;
+    grid-row: span 1; /* No multi-row on mobile */
+  }
+}
