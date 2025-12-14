@@ -1,16 +1,17 @@
 ---
-description: Comprehensive pre-commit validation (Gradle, tests, Spring Boot, Vaadin)
+description: Comprehensive pre-commit validation (Gradle, tests, Spring Boot, Vaadin, frontend)
 argument-hint: ""
 allowed-tools: Bash, Read, Grep, Glob
 ---
 
-**⚠️ CRITICAL EXECUTION INSTRUCTION**: This command requires you to EXECUTE actual validation steps using the Bash tool. DO NOT just show example output or documentation. You MUST run real Gradle commands and report actual results.
+**⚠️ CRITICAL EXECUTION INSTRUCTION**: This command requires you to EXECUTE actual validation steps using the Bash tool. DO NOT just show example output or documentation. You MUST run real Gradle commands and npm commands, and report actual results.
 
 ## Purpose
 
-This command validates the entire NextSkip stack (Gradle, Spring Boot, Vaadin) to ensure:
-- Code compiles without errors
-- All tests pass (expected: 60/60)
+This command validates the entire NextSkip stack (Gradle, Spring Boot, Vaadin, React) to ensure:
+- Backend code compiles without errors
+- All backend tests pass (expected: 60/60)
+- All frontend tests pass (expected: 90/90)
 - Quality checks complete successfully
 - Build artifacts are generated
 - No obvious issues that would break the build
@@ -35,13 +36,31 @@ Execute these steps IN ORDER. Use the Bash tool to run each command and report a
 - Untracked files (if any)
 - Working tree state (clean/dirty)
 
-### Step 2: Gradle Clean Build
+### Step 2: Frontend Tests
+
+**Execute**: `npm run test:run`
+
+This runs all frontend tests including:
+- Unit tests (priority calculation algorithm)
+- Component tests (BentoCard, BentoGrid)
+- Accessibility tests (WCAG 2.1 AA compliance)
+- Integration tests
+
+**Report**:
+- Test result (PASS or FAIL)
+- Test count (X/90 passing)
+- Test duration (in seconds or milliseconds)
+- Any test failures with error messages
+
+**Expected**: 90/90 tests passing in ~1 second
+
+### Step 3: Gradle Clean Build
 
 **Execute**: `time ./gradlew clean build`
 
 This runs the full build including:
-- Compilation (Java 21 → Java 21 bytecode)
-- Test execution (all 60 tests)
+- Compilation (Java 25 → Java 21 bytecode)
+- Backend test execution (all 60 tests)
 - Quality checks (Checkstyle, PMD, SpotBugs, JaCoCo)
 - JAR packaging
 
@@ -58,7 +77,7 @@ This runs the full build including:
 
 **Expected**: BUILD SUCCESSFUL in 10-15 seconds
 
-### Step 3: Verify Build Artifacts
+### Step 4: Verify Build Artifacts
 
 **Execute**: `ls -lh build/libs/*.jar`
 
@@ -67,7 +86,7 @@ This runs the full build including:
 - JAR file size
 - Existence of test reports at `build/reports/tests/test/`
 
-### Step 4: Check for Port Conflicts (Optional)
+### Step 5: Check for Port Conflicts (Optional)
 
 If Spring Boot startup validation is needed:
 
@@ -84,8 +103,9 @@ After executing ALL validation steps, provide this structured summary using ACTU
 ## NextSkip Build Validation Report
 
 📊 Git Status: [Clean / X modified, Y untracked files]
-🔨 Build: [SUCCESS/FAILURE] ([actual duration]s)
-✅ Tests: [actual count]/60 passing ([test duration]s)
+🎨 Frontend Tests: [SUCCESS/FAILURE] ([actual count]/90 passing, [actual duration])
+🔨 Backend Build: [SUCCESS/FAILURE] ([actual duration]s)
+✅ Backend Tests: [actual count]/60 passing ([test duration]s)
 📋 Quality Violations:
   - Checkstyle: [actual] main, [actual] test
   - PMD: [actual] main, [actual] test
@@ -102,9 +122,10 @@ After executing ALL validation steps, provide this structured summary using ACTU
 ```
 ## NextSkip Build Validation Report
 
-📊 Git Status: 1 modified (GridSquare.java)
-🔨 Build: SUCCESS (12.4s)
-✅ Tests: 60/60 passing (3.2s)
+📊 Git Status: 1 modified (BentoCard.tsx)
+🎨 Frontend Tests: SUCCESS (90/90 passing, 907ms)
+🔨 Backend Build: SUCCESS (12.4s)
+✅ Backend Tests: 60/60 passing (3.2s)
 📋 Quality Violations:
   - Checkstyle: 5 warnings main, 59 warnings test
   - PMD: 62 violations main, 70 violations test
@@ -114,6 +135,7 @@ After executing ALL validation steps, provide this structured summary using ACTU
 🎯 Overall Result: ✅ READY TO COMMIT
 
 All validation checks passed. Quality violations are within acceptable limits.
+Frontend accessibility tests (WCAG 2.1 AA) passing.
 ```
 
 ## Troubleshooting
@@ -128,13 +150,23 @@ lsof -ti :8080 | xargs kill -9
 ./gradlew clean
 ```
 
-**Test Failures**:
+**Frontend Test Failures**:
+- Check for import path issues (should use `Frontend/` alias)
+- Verify vitest.config.ts is correctly configured
+- Check that test files are in `frontend/tests/` directory
+- Run `npm test` in watch mode to see detailed errors
+
+**Backend Test Failures**:
 - Use `/java-test-debugger` to investigate specific test failures
 - Check recent git changes that might have broken tests
 
 **Quality Check Failures**:
 - Checkstyle/PMD violations are reported but don't fail the build (ignoreFailures = true)
 - SpotBugs may show Java 25 compatibility warnings (non-blocking)
+
+**npm Command Not Found**:
+- Ensure Node.js and npm are installed
+- Run `npm install` to install dependencies
 
 ## Key Principles for Execution
 
@@ -143,11 +175,13 @@ lsof -ti :8080 | xargs kill -9
 3. **Be specific** - If failures occur, include actual error messages and stack traces
 4. **Provide evidence** - Include relevant snippets from command output
 5. **Give clear verdict** - State clearly: READY TO COMMIT or NEEDS FIXES
+6. **Run frontend tests first** - Catch quick failures early before running longer Gradle build
 
 ## Success Criteria
 
-- ✅ Build completes with SUCCESS status
-- ✅ All 60 tests pass
+- ✅ Frontend tests complete with 90/90 passing
+- ✅ Backend build completes with SUCCESS status
+- ✅ All 60 backend tests pass
 - ✅ JAR artifact is generated (~89MB)
 - ✅ Quality violations within acceptable range:
   - Checkstyle: < 100 total warnings
@@ -160,6 +194,19 @@ After successful validation:
 - `/commit` - Create conventional commit for your changes
 
 If validation fails:
-- `/java-test-debugger` - Debug specific test failures
+- `/java-test-debugger` - Debug specific backend test failures
 - `/find-refactor-candidates` - Identify code quality issues
 - `/plan-tests` - Plan additional test coverage
+
+## Notes
+
+**Frontend Test Details**:
+- Tests located in: `frontend/tests/`
+- Test configuration: `vitest.config.ts`
+- Test setup: `frontend/test/setup.ts`
+- Coverage target: 80%+ statements/functions/lines
+
+**Backend Test Details**:
+- Tests located in: `src/test/java/`
+- Test configuration: `build.gradle` (JUnit 5 platform)
+- Coverage target: 80%+ (JaCoCo)
