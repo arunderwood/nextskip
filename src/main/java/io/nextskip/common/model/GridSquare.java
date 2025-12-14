@@ -1,11 +1,37 @@
 package io.nextskip.common.model;
 
+/*
+ * Implementation Note: Custom Maidenhead Grid Square Implementation
+ *
+ * The algorithm follows the IARU Maidenhead Locator System specification
+ * (adopted 1980, clarified 1999 with WGS-84 reference).
+ * See GridSquareTest.java for comprehensive verification.
+ */
+
 /**
  * Maidenhead Grid Square Locator System representation.
  *
- * The Maidenhead locator system is a geographic coordinate system
+ * <p>The Maidenhead locator system is a geographic coordinate system
  * used by amateur radio operators. It compresses latitude/longitude
  * into a short alphanumeric string (e.g., "CN87" or "FN31pr").
+ *
+ * <h2>System Structure</h2>
+ * <ul>
+ *   <li><b>Field (2 chars):</b> Letters A-R, 20° lon × 10° lat (~1000 km)</li>
+ *   <li><b>Square (2 chars):</b> Digits 0-9, 2° lon × 1° lat (~100 km)</li>
+ *   <li><b>Subsquare (2 chars):</b> Letters A-X, 5' lon × 2.5' lat (~5 km)</li>
+ *   <li><b>Extended (2 chars):</b> Digits 0-9, 30" lon × 15" lat (~500 m)</li>
+ * </ul>
+ *
+ * <h2>Examples</h2>
+ * <pre>
+ * GridSquare field = new GridSquare("CN");           // Seattle area, field
+ * GridSquare square = new GridSquare("CN87");        // Seattle area, square
+ * GridSquare subsquare = new GridSquare("CN87ts");   // Seattle downtown
+ * GridSquare extended = new GridSquare("CN87ts50");  // Precise location
+ * </pre>
+ *
+ * <p><b>Reference:</b> IARU Maidenhead Locator System (1980), WGS-84 (1999)
  *
  * @param value The grid square string (e.g., "CN87", "FN31pr")
  */
@@ -27,6 +53,19 @@ public record GridSquare(String value) {
 
     /**
      * Convert grid square to approximate center coordinates.
+     *
+     * <p>Returns the geographic center point of the grid square. Precision
+     * depends on grid square length:
+     * <ul>
+     *   <li>2 chars: Center of ~1000 km × 1000 km field</li>
+     *   <li>4 chars: Center of ~100 km × 100 km square</li>
+     *   <li>6 chars: Center of ~5 km × 5 km subsquare</li>
+     *   <li>8 chars: Center of ~500 m × 500 m extended square</li>
+     * </ul>
+     *
+     * <p><b>Algorithm:</b> Decodes each precision level by calculating offsets
+     * from the origin (-180°, -90°) then adds half the grid square dimensions
+     * to obtain the center point.
      *
      * @return Coordinates representing the center of the grid square
      */
