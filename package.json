@@ -44,7 +44,7 @@
     "@testing-library/user-event": "14.5.2",
     "@types/react": "18.3.27",
     "@types/react-dom": "18.3.7",
-    "@vitest/ui": "2.1.8",
+    "@vitest/ui": "4.0.15",
     "@vaadin/hilla-generator-cli": "24.9.7",
     "@vaadin/hilla-generator-core": "24.9.7",
     "@vaadin/hilla-generator-plugin-backbone": "24.9.7",
@@ -68,7 +68,7 @@
     "typescript": "5.8.3",
     "vite": "6.4.1",
     "vite-plugin-checker": "0.10.3",
-    "vitest": "2.1.8",
+    "vitest": "4.0.15",
     "workbox-build": "7.3.0",
     "workbox-core": "7.3.0",
     "workbox-precaching": "7.3.0"
