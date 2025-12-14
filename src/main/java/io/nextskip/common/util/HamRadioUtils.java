@@ -183,9 +183,6 @@ public final class HamRadioUtils {
         double g = (357.528 + 0.9856003 * n) % 360.0;
         double lambda = l + 1.915 * Math.sin(Math.toRadians(g)) + 0.020 * Math.sin(Math.toRadians(2 * g));
         double epsilon = 23.439 - 0.0000004 * n;
-        double alpha = Math.toDegrees(Math.atan2(
-                Math.cos(Math.toRadians(epsilon)) * Math.sin(Math.toRadians(lambda)),
-                Math.cos(Math.toRadians(lambda))));
         double delta = Math.asin(Math.sin(Math.toRadians(epsilon)) * Math.sin(Math.toRadians(lambda)));
 
         double cosH = -Math.tan(lat) * Math.tan(delta);
