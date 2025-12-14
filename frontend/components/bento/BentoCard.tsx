@@ -43,7 +43,7 @@ export function BentoCard({
       aria-label={ariaLabel || title}
       tabIndex={onClick ? 0 : undefined}
     >
-      <header className="bento-card__header">
+      <div className="bento-card__header">
         <div className="bento-card__header-left">
           {icon && (
             <span className="bento-card__icon" aria-hidden="true">
@@ -62,11 +62,11 @@ export function BentoCard({
         >
           {getHotnessLabel(hotness)}
         </div>
-      </header>
+      </div>
 
       <div className="bento-card__content">{children}</div>
 
-      {footer && <footer className="bento-card__footer">{footer}</footer>}
+      {footer && <div className="bento-card__footer">{footer}</div>}
     </CardElement>
   );
 }

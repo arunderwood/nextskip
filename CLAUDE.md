@@ -13,7 +13,7 @@ NextSkip is a ham radio propagation dashboard providing real-time HF band condit
 ### Essential Commands
 
 ```bash
-# Run all tests (expect 60 passing)
+# Run all tests (expect 60 Java + 90 TypeScript tests passing)
 ./gradlew test
 
 # Build entire project
@@ -29,22 +29,8 @@ NextSkip is a ham radio propagation dashboard providing real-time HF band condit
 ./gradlew clean
 ```
 
-### Running Specific Tests
-
-```bash
-# Run single test class
-./gradlew test --tests NoaaSwpcClientTest
-
-# Run single test method
-./gradlew test --tests NoaaSwpcClientTest.testFetchSolarIndices_Success
-
-# Run tests with debug output
-./gradlew test --info
-```
-
 ### Port 8080 Conflicts
 
-If port 8080 is already in use:
 ```bash
 lsof -ti :8080 | xargs kill -9
 ```
@@ -55,347 +41,162 @@ lsof -ti :8080 | xargs kill -9
 # Run all quality checks (Checkstyle, PMD, SpotBugs, JaCoCo)
 ./gradlew check
 
-# Individual quality tools
-./gradlew checkstyleMain checkstyleTest  # Code style
-./gradlew pmdMain pmdTest                # Programming errors
-./gradlew spotbugsMain spotbugsTest      # Bug detection
-./gradlew jacocoTestReport               # Coverage report (80% target)
-./gradlew pitest                         # Mutation testing
-
-# View reports
+# View test reports
 open build/reports/tests/test/index.html
 open build/reports/jacoco/test/html/index.html
 ```
 
-## Architecture
+### Frontend Testing
+
+```bash
+# Watch mode (re-runs on file changes)
+npm test
+
+# Run once (CI mode)
+npm run test:run
+
+# Interactive UI
+npm run test:ui
+
+# With coverage
+npm run test:coverage
+```
+
+**Test Suite**: 90 comprehensive tests in `frontend/tests/` covering:
+- Priority calculation algorithm (29 tests)
+- Component rendering and behavior (25 tests)
+- Grid sorting and layout (16 tests)
+- WCAG 2.1 AA compliance (20 tests)
+
+**Configuration**: See `vitest.config.ts` and `frontend/test/setup.ts`
+
+**Test Location**: Per Vaadin Hilla documentation, tests are in `frontend/tests/` directory structure (not co-located)
+
+## Architecture Guidelines
 
 ### Modular Monolith Design
 
-NextSkip uses a modular monolith structure designed for future microservices extraction. Each module has:
-- Clean public API (Java interface in `api/` package)
-- Internal implementations (`internal/` package - not exposed)
-- Module-specific models (`model/` package)
+- Each module has clean public API (Java interface in `api/` package)
+- Internal implementations in `internal/` package (not exposed)
+- Module-specific models in `model/` package
 - Isolated external dependencies
 
-**Current Modules:**
-- **common**: Shared domain models (Coordinates, GridSquare, FrequencyBand) and utilities
-- **propagation**: Solar indices and HF band conditions (Phase 1 - COMPLETE)
-
-**Planned Modules** (see nextskip-project-plan.md):
-- **spots**: Real-time HF activity (PSKReporter MQTT, RBN)
-- **activations**: POTA/SOTA portable operations
-- **satellites**: Amateur satellite pass predictions
-- **contests**: Contest calendar
-- **ai**: Spring AI conversational assistant
+**Current Modules**: common, propagation
+**Planned Modules**: See `nextskip-project-plan.md`
 
 ### Package Structure
 
 ```
 io.nextskip/
-├── common/
-│   ├── config/          # Shared configs (Cache, Async, Resilience)
-│   ├── model/           # Domain models (Coordinates, GridSquare, FrequencyBand)
-│   └── util/            # Utilities (HamRadioUtils for callsign/grid validation)
-│
-├── propagation/         # Phase 1 module
-│   ├── api/            # Public interface
-│   │   ├── PropagationService.java      # Service contract
-│   │   ├── PropagationEndpoint.java     # Vaadin Hilla @BrowserCallable endpoint
-│   │   └── PropagationResponse.java     # DTO for frontend
-│   ├── internal/       # Implementation details (not exposed)
-│   │   ├── PropagationServiceImpl.java  # Service implementation
-│   │   ├── NoaaSwpcClient.java          # NOAA API client
-│   │   ├── HamQslClient.java            # HamQSL XML parser
-│   │   ├── NoaaSolarCycleEntry.java     # Type-safe DTO for NOAA
-│   │   ├── ExternalApiException.java    # Custom exception hierarchy
-│   │   └── InvalidApiResponseException.java
-│   ├── model/          # Domain models
-│   │   ├── SolarIndices.java            # Solar data (SFI, K-index, A-index, sunspots)
-│   │   ├── BandCondition.java           # Band propagation forecast
-│   │   └── BandConditionRating.java     # GOOD/FAIR/POOR/UNKNOWN
-│   └── PropagationModule.java           # Module marker
-│
-├── config/
-│   └── WebClientConfig.java             # Global WebClient config
-│
-└── NextSkipApplication.java             # Spring Boot main
+├── common/           # Shared models and utilities
+├── propagation/      # Phase 1 module (solar indices, band conditions)
+│   ├── api/          # Public contracts (@BrowserCallable endpoints)
+│   ├── internal/     # Implementations (clients, services)
+│   └── model/        # Domain models
+├── config/           # Global configuration
+└── NextSkipApplication.java
 ```
 
 ### Key Design Patterns
 
-#### 1. Resilience Pattern (Circuit Breaker + Retry + Cache Fallback)
+**Resilience Pattern**: All external API clients use Circuit Breaker + Retry + Cache Fallback
+- Configuration in `application.yml`
+- See `NoaaSwpcClient.java` and `HamQslClient.java` for reference implementations
 
-Every external API client follows this pattern:
+**Type-Safe DTOs**: Java records with built-in validation
+- See `NoaaSolarCycleEntry.java` for pattern
 
-```java
-@CircuitBreaker(name = "noaa", fallbackMethod = "getCachedIndices")
-@Retry(name = "noaa")
-@Cacheable(value = "solarIndices", key = "'latest'", unless = "#result == null")
-public SolarIndices fetchSolarIndices() {
-    // HTTP call to external API
-}
+**Vaadin Hilla Integration**: Type-safe RPC between Java backend and React frontend
+- Backend: `@BrowserCallable` methods in `api/` package
+- Frontend: Auto-generated TypeScript clients in `src/main/frontend/generated/`
 
-private SolarIndices getCachedIndices(Exception e) {
-    // Fallback to cached data when circuit is open
-    return cacheManager.getCache("solarIndices").get("latest", SolarIndices.class);
-}
-```
-
-**Configuration** in `application.yml`:
-- Circuit breaker: 50% failure rate threshold, 60s open state
-- Retry: 3 attempts, 500ms wait between attempts
-- Cache: Caffeine with 10m expiry
-
-#### 2. Type-Safe DTOs with Validation
-
-All external API responses use Java records with built-in validation:
-
-```java
-@JsonIgnoreProperties(ignoreUnknown = true)
-record NoaaSolarCycleEntry(
-    @JsonProperty("time-tag") String timeTag,
-    @JsonProperty("f10.7") Double solarFlux,
-    @JsonProperty("ssn") Integer sunspotNumber
-) {
-    public void validate() {
-        if (solarFlux < 0 || solarFlux > 1000) {
-            throw new InvalidApiResponseException("NOAA",
-                "Solar flux out of range: " + solarFlux);
-        }
-        // More validation...
-    }
-}
-```
-
-#### 3. Vaadin Hilla Integration (React + Type-Safe RPC)
-
-Hilla provides type-safe RPC between Java backend and React frontend:
-
-**Backend** (`@BrowserCallable` methods):
-```java
-@BrowserCallable
-@AnonymousAllowed
-public class PropagationEndpoint {
-    public PropagationResponse getPropagationData() {
-        // Returns data to React
-    }
-}
-```
-
-**Frontend** (auto-generated TypeScript client):
-```typescript
-// Generated at: src/main/frontend/generated/PropagationEndpoint.ts
-import { PropagationEndpoint } from 'Frontend/generated/endpoints';
-
-const data = await PropagationEndpoint.getPropagationData();
-// Fully typed - no manual API contracts needed
-```
-
-#### 4. XML Security (HamQSL Client)
-
-HamQSL returns XML with sometimes malformed DOCTYPE. The client uses secure XML parsing:
-
-```java
-private static XmlMapper createXmlMapper() {
-    XMLInputFactory xmlInputFactory = XMLInputFactory.newFactory();
-
-    // Disable DTD processing to prevent XXE attacks
-    xmlInputFactory.setProperty(XMLInputFactory.SUPPORT_DTD, false);
-    xmlInputFactory.setProperty(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES, false);
-
-    XmlMapper mapper = XmlMapper.builder().defaultUseWrapper(false).build();
-    mapper.getFactory().setXMLInputFactory(xmlInputFactory);
-    return mapper;
-}
-```
+**XML Security**: Disable DTD processing to prevent XXE attacks
+- See `HamQslClient.java` for pattern
 
 ## Frontend Structure
 
-### Vaadin Hilla + React Architecture
-
 ```
-frontend/                      # Root-level frontend source
-├── views/                    # React components
-│   └── dashboard/
-│       └── DashboardView.tsx # Main dashboard component
-├── themes/                   # Vaadin themes
-└── index.ts                  # Entry point
-
-src/main/frontend/            # Vaadin integration directory
-└── generated/                # Auto-generated Hilla TypeScript clients
-    ├── PropagationEndpoint.ts
-    └── jar-resources/        # Vaadin runtime resources
-```
-
-**Generated Files** (do not edit manually):
-- `src/main/frontend/generated/` - Hilla generates TypeScript clients from `@BrowserCallable` endpoints
-- `vite.generated.ts` - Vaadin generates Vite configuration
-- `index.html` - Vaadin generates entry point
-
-**Development Mode**:
-- Hot reload enabled for React components
-- Source maps available for debugging
-- Vaadin dev tools overlay shows component tree
-
-## Testing Strategy
-
-### Current Test Suite
-
-**60 comprehensive tests** covering:
-- Utility functions (callsign validation, grid square conversion, frequency band parsing)
-- External API clients (NOAA, HamQSL) with **WireMock** for mocking HTTP
-- Service layer with **Mockito** for dependency mocking
-- DTO validation and parsing edge cases
-
-### Test Patterns
-
-**WireMock for External APIs**:
-```java
-@BeforeEach
-void setUp() {
-    wireMockServer = new WireMockServer(WireMockConfiguration.options().dynamicPort());
-    wireMockServer.start();
-
-    String baseUrl = "http://localhost:" + wireMockServer.port();
-    client = new TestNoaaSwpcClient(webClientBuilder, cacheManager, baseUrl);
-}
-
-@Test
-void testFetchSolarIndices_Success() {
-    wireMockServer.stubFor(get(urlEqualTo("/"))
-        .willReturn(aResponse()
-            .withStatus(200)
-            .withBody(jsonResponse)));
-
-    SolarIndices result = client.fetchSolarIndices();
-    assertNotNull(result);
-}
+frontend/
+├── components/       # Reusable React components
+│   ├── bento/        # Bento grid system (priority-based layout)
+│   └── cards/        # Activity card content components
+├── hooks/            # Custom React hooks
+├── types/            # TypeScript type definitions
+├── views/            # Page-level components (routes)
+├── styles/           # Global styles and design tokens
+├── docs/             # Frontend documentation
+│   ├── DESIGN_SYSTEM.md
+│   ├── COMPONENT_PATTERNS.md
+│   └── ACCESSIBILITY.md
+├── test/             # Test configuration
+└── tests/            # Test files (per Hilla documentation)
 ```
 
-**Testing Custom Exceptions**:
-```java
-@Test
-void testFetchSolarIndices_EmptyResponse() {
-    // Empty response should throw InvalidApiResponseException
-    assertThrows(InvalidApiResponseException.class,
-                () -> client.fetchSolarIndices());
-}
-```
+**Bento Grid System**:
+- Priority-based card layout (highest priority = top-left position)
+- Hotness visual indicators (hot/warm/neutral/cool based on priority)
+- Responsive: 4 columns (desktop) → 2 columns (tablet) → 1 column (mobile)
+- WCAG 2.1 AA compliant with keyboard navigation
 
-### Test Configuration
+**Documentation**: See `frontend/docs/` for design tokens, component patterns, and accessibility requirements
 
-Tests use Java 25 with ByteBuddy experimental mode for Mockito:
-```gradle
-tasks.named('test') {
-    useJUnitPlatform()
-    jvmArgs = [
-        '--add-opens', 'java.base/java.lang=ALL-UNNAMED',
-        '--add-opens', 'java.base/java.util=ALL-UNNAMED',
-        '-Dnet.bytebuddy.experimental=true'
-    ]
-}
-```
+## Testing Guidelines
+
+### Backend Tests (JUnit 5)
+
+- **60 tests** covering utilities, external API clients, services, DTOs
+- Use **WireMock** for HTTP mocking (see `NoaaSwpcClientTest.java`)
+- Use **Mockito** for dependency mocking
+- Java 25 requires ByteBuddy experimental mode (configured in build.gradle)
+
+### Frontend Tests (Vitest + React Testing Library)
+
+- **90 tests** in `frontend/tests/` directory
+- Use **jest-axe** for automated WCAG 2.1 AA compliance testing
+- Use **jsdom** environment (faster than browser mode)
+- Import components with `Frontend/` alias (configured in `vitest.config.ts`)
+
+**Test Patterns**: See existing test files for reference:
+- `frontend/tests/components/bento/BentoCard.test.tsx` - Component testing
+- `frontend/tests/components/bento/usePriorityCalculation.test.ts` - Hook testing
+- `frontend/tests/components/bento/BentoSystem.a11y.test.tsx` - Accessibility testing
+
+**Coverage Targets**: 80%+ statements/functions/lines, 75%+ branches
 
 ## External Data Sources
 
-### 1. NOAA Space Weather Prediction Center
+### NOAA Space Weather Prediction Center
+- **Endpoint**: `https://services.swpc.noaa.gov/json/solar-cycle/observed-solar-cycle-indices.json`
+- **Data**: Solar Flux Index (SFI), Sunspot Number
+- **Cache TTL**: 5 minutes
+- **Known Issues**: Sometimes returns partial dates - client has fallback parsing
 
-**Endpoint**: `https://services.swpc.noaa.gov/json/solar-cycle/observed-solar-cycle-indices.json`
-
-**Data**: Solar Flux Index (SFI), Sunspot Number
-**Update Frequency**: ~30 minutes
-**Cache TTL**: 5 minutes (via `@Cacheable`)
-**Circuit Breaker**: `noaa` (60s open state)
-
-**Response Format**:
-```json
-[
-  {
-    "time-tag": "2025-01",
-    "f10.7": 150.5,
-    "ssn": 120
-  }
-]
-```
-
-**Known Issues**:
-- Sometimes returns partial dates ("2025-11" instead of "2025-11-01T00:00:00Z")
-- Client has fallback date parsing to handle this
-
-### 2. HamQSL Solar XML Feed
-
-**Endpoint**: `http://www.hamqsl.com/solarxml.php`
-
-**Data**: Solar indices (SFI, K-index, A-index, Sunspots) + band-by-band conditions
-**Update Frequency**: ~30 minutes (per HamQSL guidance)
-**Cache TTL**: 30 minutes (longer than NOAA due to slower update cycle)
-**Circuit Breaker**: `hamqsl` (120s open state)
-
-**Response Format** (XML):
-```xml
-<solar>
-  <solardata>
-    <solarflux>145.5</solarflux>
-    <aindex>8</aindex>
-    <kindex>3</kindex>
-    <sunspots>115</sunspots>
-    <calculatedconditions>
-      <band name="80m-40m" time="day">Poor</band>
-      <band name="30m-20m" time="day">Good</band>
-      <band name="17m-15m" time="day">Fair</band>
-      <band name="12m-10m" time="day">Poor</band>
-    </calculatedconditions>
-  </solardata>
-</solar>
-```
-
-**Known Issues**:
-- Sometimes has malformed DOCTYPE declaration
-- Client disables DTD processing entirely for security and robustness
+### HamQSL Solar XML Feed
+- **Endpoint**: `http://www.hamqsl.com/solarxml.php`
+- **Data**: Solar indices + band-by-band conditions
+- **Cache TTL**: 30 minutes
+- **Known Issues**: Malformed DOCTYPE - client disables DTD processing
 
 ## Configuration
 
-### Application Properties
-
-Primary config: `src/main/resources/application.yml`
-
-**Key settings**:
-- Cache: Caffeine with 500 entry max, 10m expiry
-- Circuit breakers: 50% failure threshold, automatic half-open transition
-- Retry: 3 attempts, 500ms wait (2 attempts for slower HamQSL)
-- Actuator: Health, metrics, Prometheus exposed
-
-**Development profile**: `src/main/resources/application-dev.yml` (create for local overrides)
-
-### Environment Variables
-
-Currently none required (all defaults provided).
-
-Future phases may need:
-- `N2YO_API_KEY` - Satellite tracking API (Phase 4)
-- `SPRING_AI_OPENAI_API_KEY` - AI assistant (Phase 7)
+- **Primary config**: `src/main/resources/application.yml`
+- **Development profile**: `src/main/resources/application-dev.yml` (create for local overrides)
+- **Circuit breakers**: 50% failure threshold, automatic half-open transition
+- **Retry**: 3 attempts, 500ms wait (2 attempts for HamQSL)
+- **Cache**: Caffeine with 500 entry max, 10m expiry
 
 ## Java Version Compatibility
 
 **Critical**: This project uses Java 25 for compilation but targets Java 21 bytecode.
 
 **build.gradle configuration**:
-```gradle
-java {
-    toolchain {
-        languageVersion = JavaLanguageVersion.of(25)  // Compile with Java 25
-    }
-    sourceCompatibility = JavaVersion.VERSION_21     // Target Java 21 bytecode
-    targetCompatibility = JavaVersion.VERSION_21
-}
-```
+- `languageVersion = JavaLanguageVersion.of(25)` - Compile with Java 25
+- `sourceCompatibility = JavaVersion.VERSION_21` - Target Java 21 bytecode
+- `targetCompatibility = JavaVersion.VERSION_21`
 
-**Why this matters**:
-- Spring Boot 3.4 requires Java 17+ (tested up to Java 24)
-- Vaadin Hilla 24.9 requires Java 17+
-- Mockito needs ByteBuddy experimental mode for Java 25
+**Why**: Spring Boot 3.4 and Vaadin Hilla 24.9 require Java 17+. Mockito needs ByteBuddy experimental mode for Java 25.
 
-**Testing on Java 25**: Tests require special JVM args (configured in build.gradle):
+**Testing JVM args** (configured in build.gradle):
 ```
 --add-opens java.base/java.lang=ALL-UNNAMED
 --add-opens java.base/java.util=ALL-UNNAMED
@@ -406,108 +207,46 @@ java {
 
 This repository includes specialized agents and commands in `.claude/`:
 
-### Agents (70-80% token reduction via specialization)
+### Agents
 
-**`java-test-debugger`**: Debug JUnit failures with structured approach
-- Tools: Read, Grep, Glob, Bash only
-- Pattern: Test → Analyze → Hypothesize → Fix → Verify
-
-**`gradle-build-validator`**: Full-stack build validation
-- Validates: Gradle → Tests → Spring Boot → Vaadin → Integration
-- Auto-kills port 8080 conflicts
-
-**`code-refactoring`**: SOLID-focused refactoring
-- Pre-flight: Clean git + passing tests required
-- 4 phases: Analysis → Planning → Implementation → Validation
-- Spring Boot aware (constructor injection, @ConfigurationProperties)
+- **`java-test-debugger`**: Debug JUnit failures (Test → Analyze → Hypothesize → Fix → Verify)
+- **`gradle-build-validator`**: Full-stack build validation (auto-kills port 8080 conflicts)
+- **`code-refactoring`**: SOLID-focused refactoring (requires clean git + passing tests)
 
 ### Commands
 
-**Quality Commands** (`.claude/commands/quality/`):
-- `/validate-build` - Pre-commit validation workflow
-- `/plan-tests` - 5-layer test pyramid planning (unit → integration → E2E → property → mutation)
-- `/find-refactor-candidates` - Data-driven priorities (complexity, git history, smells, static analysis, coverage)
+- **`/validate-build`**: Pre-commit validation workflow
+- **`/plan-tests`**: 5-layer test pyramid planning
+- **`/find-refactor-candidates`**: Data-driven refactoring priorities
+- **`/commit`**: Conventional commits with NextSkip scopes
 
-**Git Commands** (`.claude/commands/git/`):
-- `/commit` - Conventional commits with NextSkip scopes (propagation, api, dashboard, config, dto, test)
-
-**Usage**: Commands invoked via `/command-name` or natural language matching their domain.
+**Usage**: Invoke via `/command-name` or natural language matching their domain
 
 ## Common Development Patterns
 
 ### Adding a New External API Client
 
-1. Create DTO with validation:
-```java
-@JsonIgnoreProperties(ignoreUnknown = true)
-record NewSourceEntry(
-    @JsonProperty("field") String field
-) {
-    public void validate() {
-        // Validate fields
-    }
-}
-```
-
-2. Create client with resilience pattern:
-```java
-@Component
-public class NewSourceClient {
-    @CircuitBreaker(name = "newsource", fallbackMethod = "getCached")
-    @Retry(name = "newsource")
-    @Cacheable(value = "cacheName", unless = "#result == null")
-    public Data fetch() {
-        // WebClient call
-    }
-}
-```
-
-3. Configure circuit breaker in `application.yml`:
-```yaml
-resilience4j:
-  circuitbreaker:
-    instances:
-      newsource:
-        baseConfig: default
-```
-
-4. Write WireMock tests:
-```java
-@Test
-void testFetch_Success() {
-    wireMockServer.stubFor(get(urlEqualTo("/endpoint"))
-        .willReturn(aResponse().withStatus(200).withBody(json)));
-
-    Data result = client.fetch();
-    assertNotNull(result);
-}
-```
+1. Create DTO with validation (see `NoaaSolarCycleEntry.java`)
+2. Create client with Circuit Breaker + Retry + Cache (see `NoaaSwpcClient.java`)
+3. Configure circuit breaker in `application.yml`
+4. Write WireMock tests (see `NoaaSwpcClientTest.java`)
 
 ### Adding a New Hilla Endpoint
 
-1. Create endpoint with `@BrowserCallable`:
-```java
-@BrowserCallable
-@AnonymousAllowed
-public class NewEndpoint {
-    public ResponseType getData() {
-        return service.getData();
-    }
-}
-```
+1. Create endpoint with `@BrowserCallable` in `api/` package
+2. Hilla auto-generates TypeScript client in `src/main/frontend/generated/`
+3. Use generated client in React components
 
-2. Hilla auto-generates TypeScript client at `src/main/frontend/generated/NewEndpoint.ts`
+### Adding Frontend Components
 
-3. Use in React:
-```typescript
-import { NewEndpoint } from 'Frontend/generated/endpoints';
-
-const data = await NewEndpoint.getData();
-```
+1. Follow bento grid patterns (see `frontend/components/bento/`)
+2. Use design tokens from `frontend/styles/global.css`
+3. Write tests in `frontend/tests/` directory
+4. Ensure WCAG 2.1 AA compliance with jest-axe
 
 ## Future Development
 
-See `nextskip-project-plan.md` for detailed roadmap. Next phases:
+See `nextskip-project-plan.md` for detailed roadmap:
 - **Phase 2**: POTA/SOTA activations module
 - **Phase 3**: Satellite tracking (N2YO, Celestrak)
 - **Phase 4**: Real-time HF activity (PSKReporter MQTT)
