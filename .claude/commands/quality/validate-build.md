@@ -1,15 +1,18 @@
 ---
 description: Comprehensive pre-commit validation (Gradle, tests, Spring Boot, Vaadin)
-allowed-tools: Read, Grep, Glob, Bash
+argument-hint: ""
+allowed-tools: Bash, Read, Grep, Glob
 ---
+
+**⚠️ CRITICAL EXECUTION INSTRUCTION**: This command requires you to EXECUTE actual validation steps using the Bash tool. DO NOT just show example output or documentation. You MUST run real Gradle commands and report actual results.
 
 ## Purpose
 
 This command validates the entire NextSkip stack (Gradle, Spring Boot, Vaadin) to ensure:
 - Code compiles without errors
-- All tests pass
-- Spring Boot application starts successfully
-- Vaadin frontend builds correctly
+- All tests pass (expected: 60/60)
+- Quality checks complete successfully
+- Build artifacts are generated
 - No obvious issues that would break the build
 
 ## When to Use
@@ -17,126 +20,146 @@ This command validates the entire NextSkip stack (Gradle, Spring Boot, Vaadin) t
 - ✅ **Before committing changes** - Pre-commit safety check
 - ✅ **After merging branches** - Ensure integration is clean
 - ✅ **Before creating pull requests** - Verify PR is ready for review
-- ✅ **When troubleshooting "works on my machine" issues** - Validate environment
+- ✅ **When troubleshooting builds** - Validate environment
 
-## Usage
+## Validation Workflow
 
-Simply invoke this command:
+Execute these steps IN ORDER. Use the Bash tool to run each command and report actual results:
 
-```
-/validate-build
-```
+### Step 1: Git Status Check
 
-Or in conversation:
-```
-User: Validate the build
-```
+**Execute**: `git status`
 
-## What This Command Does
+**Report**:
+- Modified files (if any)
+- Untracked files (if any)
+- Working tree state (clean/dirty)
 
-This command delegates to the **gradle-build-validator** agent to execute a systematic validation workflow:
+### Step 2: Gradle Clean Build
 
-### 1. Git Status Check
-- Report any uncommitted changes
-- List untracked files that should be committed (new source files)
-- Warn if working tree is dirty
+**Execute**: `time ./gradlew clean build`
 
-### 2. Gradle Clean Build
-- Run `./gradlew clean build`
-- Report build time
-- Capture and display warnings
-- Expected: Build SUCCESS
+This runs the full build including:
+- Compilation (Java 21 → Java 21 bytecode)
+- Test execution (all 60 tests)
+- Quality checks (Checkstyle, PMD, SpotBugs, JaCoCo)
+- JAR packaging
 
-### 3. Test Execution
-- Run `./gradlew test`
-- Expected: 60/60 passing
-- Report any failures with stack traces
-- Display test execution time
+**Report**:
+- Build result (SUCCESS or FAILURE)
+- Build duration (in seconds)
+- Compilation warnings/errors
+- Test results (X/60 passing)
+- Quality violation counts:
+  - Checkstyle (main + test)
+  - PMD (main + test)
+  - SpotBugs status
+- Any build failures with error messages
 
-### 4. Spring Boot Startup Validation
-- Check for port 8080 conflicts (kill if necessary)
-- Start application with `./gradlew bootRun`
-- Monitor logs for successful startup
-- Verify "Started NextskipApplication" message appears
-- Gracefully stop application
+**Expected**: BUILD SUCCESSFUL in 10-15 seconds
 
-### 5. Frontend Build Validation
-- Verify `node_modules/` exists (run `npm install` if missing)
-- Check for `vite.generated.ts` and `index.html`
-- Verify no frontend console errors
-- Confirm Vaadin build artifacts present
+### Step 3: Verify Build Artifacts
 
-### 6. Summary Report
+**Execute**: `ls -lh build/libs/*.jar`
 
-The validator will provide a summary like:
+**Report**:
+- JAR filename (should be `nextskip-0.0.1-SNAPSHOT.jar`)
+- JAR file size
+- Existence of test reports at `build/reports/tests/test/`
+
+### Step 4: Check for Port Conflicts (Optional)
+
+If Spring Boot startup validation is needed:
+
+**Execute**: `lsof -ti :8080`
+
+If port 8080 is in use, kill the process:
+**Execute**: `lsof -ti :8080 | xargs kill -9`
+
+## Summary Report Format
+
+After executing ALL validation steps, provide this structured summary using ACTUAL results:
 
 ```
 ## NextSkip Build Validation Report
 
-✅ Git Status: Clean working tree
-✅ Build: SUCCESS (1m 23s)
-✅ Tests: 60/60 passing (12s)
-✅ Spring Boot: Starts successfully (8s)
-✅ Frontend: Builds without errors
+📊 Git Status: [Clean / X modified, Y untracked files]
+🔨 Build: [SUCCESS/FAILURE] ([actual duration]s)
+✅ Tests: [actual count]/60 passing ([test duration]s)
+📋 Quality Violations:
+  - Checkstyle: [actual] main, [actual] test
+  - PMD: [actual] main, [actual] test
+  - SpotBugs: [actual status]
+📦 Artifacts: [actual JAR name] ([actual size])
+
+🎯 Overall Result: [✅ READY TO COMMIT / ❌ NEEDS FIXES]
+
+[Provide specific recommendations based on actual results]
+```
+
+### Example of Actual Report (Not Documentation):
+
+```
+## NextSkip Build Validation Report
+
+📊 Git Status: 1 modified (GridSquare.java)
+🔨 Build: SUCCESS (12.4s)
+✅ Tests: 60/60 passing (3.2s)
+📋 Quality Violations:
+  - Checkstyle: 5 warnings main, 59 warnings test
+  - PMD: 62 violations main, 70 violations test
+  - SpotBugs: exit code 4 (Java 25 warnings, non-blocking)
+📦 Artifacts: nextskip-0.0.1-SNAPSHOT.jar (89MB)
 
 🎯 Overall Result: ✅ READY TO COMMIT
 
-All validation checks passed. The build is healthy and ready for commit.
+All validation checks passed. Quality violations are within acceptable limits.
 ```
-
-Or if issues are found:
-
-```
-## NextSkip Build Validation Report
-
-✅ Git Status: Clean working tree
-✅ Build: SUCCESS (1m 23s)
-❌ Tests: 58/60 passing (2 failures)
-  - NoaaSwpcClientTest.testFetchSolarIndices_Success
-  - HamQslClientTest.testFetchBandConditions_Success
-
-🎯 Overall Result: ❌ NEEDS FIXES
-
-Please fix the test failures before committing.
-Recommendation: Use /java-test-debugger to investigate failures.
-```
-
-## Expected Behavior
-
-The command will:
-1. Run the gradle-build-validator agent with full validation workflow
-2. Present a clear summary of results (✅ for pass, ❌ for fail)
-3. Provide actionable recommendations if issues are found
-4. Give a final verdict: "READY TO COMMIT" or "NEEDS FIXES"
 
 ## Troubleshooting
 
 **Port 8080 Already in Use**:
-- The validator automatically kills conflicting processes
-- If this fails, manually run: `lsof -ti :8080 | xargs kill -9`
+```bash
+lsof -ti :8080 | xargs kill -9
+```
 
-**Tests Failing**:
-- Use `/java-test-debugger` command to investigate root cause
+**Stale Build Artifacts**:
+```bash
+./gradlew clean
+```
+
+**Test Failures**:
+- Use `/java-test-debugger` to investigate specific test failures
 - Check recent git changes that might have broken tests
 
-**Frontend Build Issues**:
-- Run `npm install` to ensure dependencies are present
-- Verify Node.js version is 18+ with `node --version`
-- Check `package.json` exists in project root
+**Quality Check Failures**:
+- Checkstyle/PMD violations are reported but don't fail the build (ignoreFailures = true)
+- SpotBugs may show Java 25 compatibility warnings (non-blocking)
 
-**Spring Boot Won't Start**:
-- Check application logs in `/tmp/nextskip-boot.log`
-- Look for exceptions or configuration errors
-- Verify `application.properties` is correct
+## Key Principles for Execution
+
+1. **Use Bash tool** - Execute commands with `Bash` tool, don't simulate
+2. **Report real data** - Show actual build times, test counts, violation numbers from command output
+3. **Be specific** - If failures occur, include actual error messages and stack traces
+4. **Provide evidence** - Include relevant snippets from command output
+5. **Give clear verdict** - State clearly: READY TO COMMIT or NEEDS FIXES
+
+## Success Criteria
+
+- ✅ Build completes with SUCCESS status
+- ✅ All 60 tests pass
+- ✅ JAR artifact is generated (~89MB)
+- ✅ Quality violations within acceptable range:
+  - Checkstyle: < 100 total warnings
+  - PMD: < 150 total violations
+  - No critical compilation errors
 
 ## Related Commands
 
+After successful validation:
+- `/commit` - Create conventional commit for your changes
+
+If validation fails:
 - `/java-test-debugger` - Debug specific test failures
-- `/plan-tests` - Plan additional test coverage
 - `/find-refactor-candidates` - Identify code quality issues
-- `/commit` - Create conventional commit after validation passes
-
-## Example Workflow
-
-```
-User: I've finished implementing NOAA client improvements
+- `/plan-tests` - Plan additional test coverage
