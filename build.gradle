@@ -95,12 +95,6 @@ tasks.named('test') {
     ]
 }
 
-// Vaadin Hilla configuration
-vaadin {
-    productionMode = project.hasProperty('vaadin.productionMode') ?
-        project.property('vaadin.productionMode').toBoolean() : false
-}
-
 // Code quality plugin configurations
 
 configurations.all {
