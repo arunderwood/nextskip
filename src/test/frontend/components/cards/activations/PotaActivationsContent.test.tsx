@@ -145,4 +145,109 @@ describe('PotaActivationsContent', () => {
     const results = await axe(container);
     expect(results).toHaveNoViolations();
   });
+
+  it('should format time as "Just now" for spots under 1 minute', () => {
+    const now = new Date('2025-01-15T12:00:00Z');
+    vi.setSystemTime(now);
+
+    const thirtySecondsAgo = new Date('2025-01-15T11:59:30Z');
+    const activations = [
+      createMockActivation({ spottedAt: thirtySecondsAgo.toISOString() }),
+    ];
+
+    render(<PotaActivationsContent activations={activations} />);
+
+    expect(screen.getByText('Just now')).toBeInTheDocument();
+
+    vi.useRealTimers();
+  });
+
+  it('should format time as "1 min ago" for exactly 1 minute', () => {
+    const now = new Date('2025-01-15T12:00:00Z');
+    vi.setSystemTime(now);
+
+    const oneMinuteAgo = new Date('2025-01-15T11:59:00Z');
+    const activations = [
+      createMockActivation({ spottedAt: oneMinuteAgo.toISOString() }),
+    ];
+
+    render(<PotaActivationsContent activations={activations} />);
+
+    expect(screen.getByText('1 min ago')).toBeInTheDocument();
+
+    vi.useRealTimers();
+  });
+
+  it('should format time in hours for spots over 60 minutes', () => {
+    const now = new Date('2025-01-15T12:00:00Z');
+    vi.setSystemTime(now);
+
+    const twoHoursAgo = new Date('2025-01-15T10:00:00Z');
+    const activations = [
+      createMockActivation({ spottedAt: twoHoursAgo.toISOString() }),
+    ];
+
+    render(<PotaActivationsContent activations={activations} />);
+
+    expect(screen.getByText('2 hours ago')).toBeInTheDocument();
+
+    vi.useRealTimers();
+  });
+
+  it('should format time as "1 hour ago" for exactly 60 minutes', () => {
+    const now = new Date('2025-01-15T12:00:00Z');
+    vi.setSystemTime(now);
+
+    const oneHourAgo = new Date('2025-01-15T11:00:00Z');
+    const activations = [
+      createMockActivation({ spottedAt: oneHourAgo.toISOString() }),
+    ];
+
+    render(<PotaActivationsContent activations={activations} />);
+
+    expect(screen.getByText('1 hour ago')).toBeInTheDocument();
+
+    vi.useRealTimers();
+  });
+
+  it('should display "Unknown" for null timestamp', () => {
+    const activations = [
+      createMockActivation({ spottedAt: undefined }),
+    ];
+
+    render(<PotaActivationsContent activations={activations} />);
+
+    expect(screen.getByText('Unknown')).toBeInTheDocument();
+  });
+
+  it('should display "Unknown" for null frequency', () => {
+    const activations = [
+      createMockActivation({ frequency: undefined }),
+    ];
+
+    render(<PotaActivationsContent activations={activations} />);
+
+    expect(screen.getByText('Unknown')).toBeInTheDocument();
+  });
+
+  it('should handle missing park name gracefully', () => {
+    const activations = [
+      createMockActivation({ referenceName: undefined }),
+    ];
+
+    const { container } = render(<PotaActivationsContent activations={activations} />);
+
+    // Should not display park-name div when referenceName is undefined
+    expect(container.querySelector('.park-name')).not.toBeInTheDocument();
+  });
+
+  it('should display "Unknown" for null mode', () => {
+    const activations = [
+      createMockActivation({ mode: undefined }),
+    ];
+
+    render(<PotaActivationsContent activations={activations} />);
+
+    expect(screen.getByText('Unknown')).toBeInTheDocument();
+  });
 });

@@ -134,4 +134,109 @@ describe('SotaActivationsContent', () => {
     const results = await axe(container);
     expect(results).toHaveNoViolations();
   });
+
+  it('should format time as "Just now" for spots under 1 minute', () => {
+    const now = new Date('2025-01-15T12:00:00Z');
+    vi.setSystemTime(now);
+
+    const fortyFiveSecondsAgo = new Date('2025-01-15T11:59:15Z');
+    const activations = [
+      createMockActivation({ spottedAt: fortyFiveSecondsAgo.toISOString() }),
+    ];
+
+    render(<SotaActivationsContent activations={activations} />);
+
+    expect(screen.getByText('Just now')).toBeInTheDocument();
+
+    vi.useRealTimers();
+  });
+
+  it('should format time as "1 min ago" for exactly 1 minute', () => {
+    const now = new Date('2025-01-15T12:00:00Z');
+    vi.setSystemTime(now);
+
+    const oneMinuteAgo = new Date('2025-01-15T11:59:00Z');
+    const activations = [
+      createMockActivation({ spottedAt: oneMinuteAgo.toISOString() }),
+    ];
+
+    render(<SotaActivationsContent activations={activations} />);
+
+    expect(screen.getByText('1 min ago')).toBeInTheDocument();
+
+    vi.useRealTimers();
+  });
+
+  it('should format time in hours for spots over 60 minutes', () => {
+    const now = new Date('2025-01-15T12:00:00Z');
+    vi.setSystemTime(now);
+
+    const threeHoursAgo = new Date('2025-01-15T09:00:00Z');
+    const activations = [
+      createMockActivation({ spottedAt: threeHoursAgo.toISOString() }),
+    ];
+
+    render(<SotaActivationsContent activations={activations} />);
+
+    expect(screen.getByText('3 hours ago')).toBeInTheDocument();
+
+    vi.useRealTimers();
+  });
+
+  it('should format time as "1 hour ago" for exactly 60 minutes', () => {
+    const now = new Date('2025-01-15T12:00:00Z');
+    vi.setSystemTime(now);
+
+    const oneHourAgo = new Date('2025-01-15T11:00:00Z');
+    const activations = [
+      createMockActivation({ spottedAt: oneHourAgo.toISOString() }),
+    ];
+
+    render(<SotaActivationsContent activations={activations} />);
+
+    expect(screen.getByText('1 hour ago')).toBeInTheDocument();
+
+    vi.useRealTimers();
+  });
+
+  it('should display "Unknown" for null timestamp', () => {
+    const activations = [
+      createMockActivation({ spottedAt: undefined }),
+    ];
+
+    render(<SotaActivationsContent activations={activations} />);
+
+    expect(screen.getByText('Unknown')).toBeInTheDocument();
+  });
+
+  it('should display "Unknown" for null frequency', () => {
+    const activations = [
+      createMockActivation({ frequency: undefined }),
+    ];
+
+    render(<SotaActivationsContent activations={activations} />);
+
+    expect(screen.getByText('Unknown')).toBeInTheDocument();
+  });
+
+  it('should handle missing summit name gracefully', () => {
+    const activations = [
+      createMockActivation({ referenceName: undefined }),
+    ];
+
+    const { container } = render(<SotaActivationsContent activations={activations} />);
+
+    // Should not display summit-name div when referenceName is undefined
+    expect(container.querySelector('.summit-name')).not.toBeInTheDocument();
+  });
+
+  it('should display "Unknown" for null mode', () => {
+    const activations = [
+      createMockActivation({ mode: undefined }),
+    ];
+
+    render(<SotaActivationsContent activations={activations} />);
+
+    expect(screen.getByText('Unknown')).toBeInTheDocument();
+  });
 });
