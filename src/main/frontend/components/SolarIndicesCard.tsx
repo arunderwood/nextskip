@@ -1,5 +1,5 @@
 import React from 'react';
-import type { SolarIndices } from 'Frontend/generated/io/nextskip/propagation/model/SolarIndices';
+import type SolarIndices from 'Frontend/generated/io/nextskip/propagation/model/SolarIndices';
 import './SolarIndicesCard.css';
 
 interface Props {

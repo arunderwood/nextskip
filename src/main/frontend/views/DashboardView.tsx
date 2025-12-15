@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { PropagationEndpoint } from 'Frontend/generated/endpoints';
-import type { PropagationResponse } from 'Frontend/generated/io/nextskip/propagation/api/PropagationEndpoint';
+import type PropagationResponse from 'Frontend/generated/io/nextskip/propagation/api/PropagationResponse';
 import { BentoGrid, BentoCard } from '../components/bento';
 import { useDashboardCards } from '../hooks/useDashboardCards';
 import SolarIndicesContent from '../components/cards/SolarIndicesContent';
@@ -10,7 +10,7 @@ import BandConditionsContent, {
 import './DashboardView.css';
 
 function DashboardView() {
-  const [data, setData] = useState<PropagationResponse | null>(null);
+  const [data, setData] = useState<PropagationResponse | undefined>(undefined);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
@@ -38,6 +38,9 @@ function DashboardView() {
 
     return () => clearInterval(interval);
   }, []);
+
+  // Get card configurations from dashboard data (must be called before any conditional returns)
+  const cardConfigs = useDashboardCards(data);
 
   if (loading && !data) {
     return (
@@ -67,9 +70,6 @@ function DashboardView() {
       </div>
     );
   }
-
-  // Get card configurations from dashboard data
-  const cardConfigs = useDashboardCards(data);
 
   // Build bento grid cards
   const bentoCards = cardConfigs.map((config) => {
@@ -112,6 +112,7 @@ function DashboardView() {
 
       case 'band-conditions':
         if (data?.bandConditions && data.bandConditions.length > 0) {
+          const validBandConditions = data.bandConditions.filter((c): c is import('Frontend/generated/io/nextskip/propagation/model/BandCondition').default => c !== undefined);
           component = (
             <BentoCard
               config={config}
@@ -120,7 +121,7 @@ function DashboardView() {
               subtitle="Current propagation by amateur radio band"
               footer={<BandConditionsLegend />}
             >
-              <BandConditionsContent bandConditions={data.bandConditions} />
+              <BandConditionsContent bandConditions={validBandConditions} />
             </BentoCard>
           );
         }

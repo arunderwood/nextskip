@@ -6,7 +6,7 @@
  */
 
 import React from 'react';
-import type { BandCondition } from 'Frontend/generated/io/nextskip/propagation/model/BandCondition';
+import type BandCondition from 'Frontend/generated/io/nextskip/propagation/model/BandCondition';
 import '../BandConditionsTable.css'; // Reuse existing styles
 
 interface Props {
