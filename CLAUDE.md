@@ -97,6 +97,16 @@ io.nextskip/
 └── NextSkipApplication.java
 ```
 
+### SOLID Principles
+
+All code should adhere to SOLID design principles:
+
+- **Single Responsibility Principle**: Each class has one reason to change (e.g., `PotaClient` only handles POTA API communication)
+- **Open-Closed Principle**: Classes are open for extension, closed for modification (e.g., `CardRegistry` allows new cards without modifying core dashboard code)
+- **Liskov Substitution Principle**: Derived classes are substitutable for their base types (e.g., all `ExternalDataClient` implementations can be used interchangeably)
+- **Interface Segregation Principle**: Clients depend only on methods they use (e.g., `Scoreable` interface exposes only scoring methods, not internal implementation)
+- **Dependency Inversion Principle**: Depend on abstractions, not concretions (e.g., `ActivationsServiceImpl` depends on `ExternalDataClient<T>` interface, not specific client classes)
+
 ### Key Design Patterns
 
 **Resilience Pattern**: All external API clients use Circuit Breaker + Retry + Cache Fallback

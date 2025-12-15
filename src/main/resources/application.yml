@@ -31,6 +31,12 @@ resilience4j:
       hamqsl:
         baseConfig: default
         waitDurationInOpenState: 120s  # HamQSL less frequent updates
+      pota:
+        baseConfig: default
+        waitDurationInOpenState: 60s  # POTA real-time spots
+      sota:
+        baseConfig: default
+        waitDurationInOpenState: 60s  # SOTA real-time spots
 
   retry:
     configs:
@@ -46,6 +52,12 @@ resilience4j:
       hamqsl:
         baseConfig: default
         maxAttempts: 2  # HamQSL is slower, fewer retries
+      pota:
+        baseConfig: default
+        maxAttempts: 2  # POTA spots - fewer retries for freshness
+      sota:
+        baseConfig: default
+        maxAttempts: 2  # SOTA spots - fewer retries for freshness
 
 # Actuator Configuration
 management:

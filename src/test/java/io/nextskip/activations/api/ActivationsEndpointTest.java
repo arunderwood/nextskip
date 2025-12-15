@@ -1,0 +1,284 @@
+package io.nextskip.activations.api;
+
+import io.nextskip.activations.model.Activation;
+import io.nextskip.activations.model.ActivationsSummary;
+import io.nextskip.activations.model.ActivationType;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.time.Instant;
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
+/**
+ * Unit tests for ActivationsEndpoint.
+ */
+@ExtendWith(MockitoExtension.class)
+class ActivationsEndpointTest {
+
+    @Mock
+    private ActivationsService activationsService;
+
+    private ActivationsEndpoint endpoint;
+
+    @BeforeEach
+    void setUp() {
+        endpoint = new ActivationsEndpoint(activationsService);
+    }
+
+    @Test
+    void shouldReturnActivationsResponseWithBothPotaAndSota() {
+        // Given: Service returns summary with both POTA and SOTA activations
+        Instant now = Instant.now();
+        List<Activation> activations = List.of(
+                createPotaActivation("1"),
+                createPotaActivation("2"),
+                createSotaActivation("3"),
+                createSotaActivation("4")
+        );
+        ActivationsSummary summary = new ActivationsSummary(activations, 2, 2, now);
+
+        when(activationsService.getActivationsSummary()).thenReturn(summary);
+
+        // When: Get activations
+        ActivationsResponse response = endpoint.getActivations();
+
+        // Then: Should separate POTA and SOTA correctly
+        assertNotNull(response);
+        assertEquals(2, response.potaActivations().size(), "Should have 2 POTA activations");
+        assertEquals(2, response.sotaActivations().size(), "Should have 2 SOTA activations");
+        assertEquals(4, response.totalCount(), "Should have 4 total activations");
+        assertEquals(now, response.lastUpdated());
+
+        // Verify all POTA activations
+        response.potaActivations().forEach(a ->
+                assertEquals(ActivationType.POTA, a.type()));
+
+        // Verify all SOTA activations
+        response.sotaActivations().forEach(a ->
+                assertEquals(ActivationType.SOTA, a.type()));
+
+        verify(activationsService).getActivationsSummary();
+    }
+
+    @Test
+    void shouldReturnOnlyPotaActivationsWhenNoSota() {
+        // Given: Service returns summary with only POTA activations
+        Instant now = Instant.now();
+        List<Activation> activations = List.of(
+                createPotaActivation("1"),
+                createPotaActivation("2"),
+                createPotaActivation("3")
+        );
+        ActivationsSummary summary = new ActivationsSummary(activations, 3, 0, now);
+
+        when(activationsService.getActivationsSummary()).thenReturn(summary);
+
+        // When: Get activations
+        ActivationsResponse response = endpoint.getActivations();
+
+        // Then: Should return only POTA activations
+        assertNotNull(response);
+        assertEquals(3, response.potaActivations().size(), "Should have 3 POTA activations");
+        assertEquals(0, response.sotaActivations().size(), "Should have 0 SOTA activations");
+        assertEquals(3, response.totalCount(), "Should have 3 total activations");
+        assertEquals(now, response.lastUpdated());
+
+        verify(activationsService).getActivationsSummary();
+    }
+
+    @Test
+    void shouldReturnOnlySotaActivationsWhenNoPota() {
+        // Given: Service returns summary with only SOTA activations
+        Instant now = Instant.now();
+        List<Activation> activations = List.of(
+                createSotaActivation("1"),
+                createSotaActivation("2")
+        );
+        ActivationsSummary summary = new ActivationsSummary(activations, 0, 2, now);
+
+        when(activationsService.getActivationsSummary()).thenReturn(summary);
+
+        // When: Get activations
+        ActivationsResponse response = endpoint.getActivations();
+
+        // Then: Should return only SOTA activations
+        assertNotNull(response);
+        assertEquals(0, response.potaActivations().size(), "Should have 0 POTA activations");
+        assertEquals(2, response.sotaActivations().size(), "Should have 2 SOTA activations");
+        assertEquals(2, response.totalCount(), "Should have 2 total activations");
+        assertEquals(now, response.lastUpdated());
+
+        verify(activationsService).getActivationsSummary();
+    }
+
+    @Test
+    void shouldReturnEmptyListsWhenNoActivations() {
+        // Given: Service returns empty summary
+        Instant now = Instant.now();
+        ActivationsSummary summary = new ActivationsSummary(List.of(), 0, 0, now);
+
+        when(activationsService.getActivationsSummary()).thenReturn(summary);
+
+        // When: Get activations
+        ActivationsResponse response = endpoint.getActivations();
+
+        // Then: Should return empty lists
+        assertNotNull(response);
+        assertEquals(0, response.potaActivations().size(), "Should have 0 POTA activations");
+        assertEquals(0, response.sotaActivations().size(), "Should have 0 SOTA activations");
+        assertEquals(0, response.totalCount(), "Should have 0 total activations");
+        assertEquals(now, response.lastUpdated());
+
+        verify(activationsService).getActivationsSummary();
+    }
+
+    @Test
+    void shouldCalculateTotalCountCorrectly() {
+        // Given: Service returns summary with mixed activations
+        Instant now = Instant.now();
+        List<Activation> activations = List.of(
+                createPotaActivation("1"),
+                createSotaActivation("2"),
+                createPotaActivation("3"),
+                createSotaActivation("4"),
+                createPotaActivation("5")
+        );
+        ActivationsSummary summary = new ActivationsSummary(activations, 3, 2, now);
+
+        when(activationsService.getActivationsSummary()).thenReturn(summary);
+
+        // When: Get activations
+        ActivationsResponse response = endpoint.getActivations();
+
+        // Then: Total count should match sum of POTA and SOTA
+        assertEquals(3, response.potaActivations().size());
+        assertEquals(2, response.sotaActivations().size());
+        assertEquals(5, response.totalCount(), "Total count should equal POTA + SOTA");
+
+        verify(activationsService).getActivationsSummary();
+    }
+
+    @Test
+    void shouldPreserveActivationDetails() {
+        // Given: Service returns activation with all details
+        Instant now = Instant.now();
+        Activation detailed = new Activation(
+                "12345",
+                "W1ABC",
+                "US-0001",
+                "Test Park",
+                ActivationType.POTA,
+                14250.0,
+                "SSB",
+                "FN42",
+                42.5,
+                -71.3,
+                now,
+                15,
+                "POTA API"
+        );
+        ActivationsSummary summary = new ActivationsSummary(List.of(detailed), 1, 0, now);
+
+        when(activationsService.getActivationsSummary()).thenReturn(summary);
+
+        // When: Get activations
+        ActivationsResponse response = endpoint.getActivations();
+
+        // Then: Should preserve all activation details
+        assertNotNull(response);
+        assertEquals(1, response.potaActivations().size());
+
+        Activation returned = response.potaActivations().get(0);
+        assertEquals("12345", returned.spotId());
+        assertEquals("W1ABC", returned.activatorCallsign());
+        assertEquals("US-0001", returned.reference());
+        assertEquals("Test Park", returned.referenceName());
+        assertEquals(ActivationType.POTA, returned.type());
+        assertEquals(14250.0, returned.frequency());
+        assertEquals("SSB", returned.mode());
+        assertEquals("FN42", returned.grid());
+        assertEquals(42.5, returned.latitude());
+        assertEquals(-71.3, returned.longitude());
+        assertEquals(now, returned.spottedAt());
+        assertEquals(15, returned.qsoCount());
+        assertEquals("POTA API", returned.source());
+
+        verify(activationsService).getActivationsSummary();
+    }
+
+    @Test
+    void shouldHandleMixedActivationsWithCorrectCounts() {
+        // Given: Uneven distribution of POTA and SOTA
+        Instant now = Instant.now();
+        List<Activation> activations = List.of(
+                createPotaActivation("1"),
+                createPotaActivation("2"),
+                createPotaActivation("3"),
+                createPotaActivation("4"),
+                createPotaActivation("5"),
+                createSotaActivation("6"),
+                createSotaActivation("7")
+        );
+        ActivationsSummary summary = new ActivationsSummary(activations, 5, 2, now);
+
+        when(activationsService.getActivationsSummary()).thenReturn(summary);
+
+        // When: Get activations
+        ActivationsResponse response = endpoint.getActivations();
+
+        // Then: Should correctly separate by type
+        assertEquals(5, response.potaActivations().size());
+        assertEquals(2, response.sotaActivations().size());
+        assertEquals(7, response.totalCount());
+
+        verify(activationsService).getActivationsSummary();
+    }
+
+    /**
+     * Helper method to create a test POTA activation.
+     */
+    private Activation createPotaActivation(String id) {
+        return new Activation(
+                id,
+                "W1ABC",
+                "US-0001",
+                "Test Park",
+                ActivationType.POTA,
+                14250.0,
+                "SSB",
+                "FN42",
+                42.5,
+                -71.3,
+                Instant.now(),
+                10,
+                "POTA API"
+        );
+    }
+
+    /**
+     * Helper method to create a test SOTA activation.
+     */
+    private Activation createSotaActivation(String id) {
+        return new Activation(
+                id,
+                "K2DEF/P",
+                "W7W/LC-001",
+                "Test Summit",
+                ActivationType.SOTA,
+                7200.0,
+                "CW",
+                null,
+                null,
+                null,
+                Instant.now(),
+                null,
+                "SOTA API"
+        );
+    }
+}
