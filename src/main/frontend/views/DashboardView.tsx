@@ -1,12 +1,16 @@
 import React, { useEffect, useState } from 'react';
-import { getPropagationData } from 'Frontend/generated/PropagationEndpoint.js';
-import type PropagationResponse from 'Frontend/generated/io/nextskip/propagation/api/PropagationResponse.js';
-import SolarIndicesCard from '../components/SolarIndicesCard';
-import BandConditionsTable from '../components/BandConditionsTable';
+import { PropagationEndpoint } from 'Frontend/generated/endpoints';
+import type PropagationResponse from 'Frontend/generated/io/nextskip/propagation/api/PropagationResponse';
+import { BentoGrid, BentoCard } from '../components/bento';
+import { useDashboardCards } from '../hooks/useDashboardCards';
+import SolarIndicesContent from '../components/cards/SolarIndicesContent';
+import BandConditionsContent, {
+  BandConditionsLegend,
+} from '../components/cards/BandConditionsContent';
 import './DashboardView.css';
 
 function DashboardView() {
-  const [data, setData] = useState<PropagationResponse | null>(null);
+  const [data, setData] = useState<PropagationResponse | undefined>(undefined);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
@@ -14,8 +18,8 @@ function DashboardView() {
   const fetchData = async () => {
     try {
       setError(null);
-      const response = await getPropagationData();
-      setData(response ?? null);
+      const response = await PropagationEndpoint.getPropagationData();
+      setData(response);
       setLastUpdate(new Date());
     } catch (err) {
       console.error('Error fetching propagation data:', err);
@@ -35,10 +39,8 @@ function DashboardView() {
     return () => clearInterval(interval);
   }, []);
 
-  const handleRefresh = () => {
-    setLoading(true);
-    fetchData();
-  };
+  // Get card configurations from dashboard data (must be called before any conditional returns)
+  const cardConfigs = useDashboardCards(data);
 
   if (loading && !data) {
     return (
@@ -56,48 +58,109 @@ function DashboardView() {
       <div className="error">
         <h3>⚠️ Error</h3>
         <p>{error}</p>
-        <button onClick={handleRefresh} className="retry-button">
+        <button
+          onClick={() => {
+            setLoading(true);
+            fetchData();
+          }}
+          className="retry-button"
+        >
           Retry
         </button>
       </div>
     );
   }
 
+  // Build bento grid cards
+  const bentoCards = cardConfigs.map((config) => {
+    let component: React.ReactNode;
+
+    switch (config.type) {
+      case 'solar-indices':
+        if (data?.solarIndices) {
+          component = (
+            <BentoCard
+              config={config}
+              title="Solar Indices"
+              icon="☀️"
+              subtitle={data.solarIndices.source}
+              footer={
+                <div className="info-box">
+                  <strong>What this means:</strong>
+                  <ul>
+                    <li>
+                      <strong>SFI:</strong> Higher values (150+) indicate better
+                      HF propagation
+                    </li>
+                    <li>
+                      <strong>K-Index:</strong> Lower values (0-2) mean quieter,
+                      more stable conditions
+                    </li>
+                    <li>
+                      <strong>A-Index:</strong> 24-hour average geomagnetic
+                      activity (lower is better)
+                    </li>
+                  </ul>
+                </div>
+              }
+            >
+              <SolarIndicesContent solarIndices={data.solarIndices} />
+            </BentoCard>
+          );
+        }
+        break;
+
+      case 'band-conditions':
+        if (data?.bandConditions && data.bandConditions.length > 0) {
+          const validBandConditions = data.bandConditions.filter((c): c is import('Frontend/generated/io/nextskip/propagation/model/BandCondition').default => c !== undefined);
+          component = (
+            <BentoCard
+              config={config}
+              title="HF Band Conditions"
+              icon="📻"
+              subtitle="Current propagation by amateur radio band"
+              footer={<BandConditionsLegend />}
+            >
+              <BandConditionsContent bandConditions={validBandConditions} />
+            </BentoCard>
+          );
+        }
+        break;
+    }
+
+    return {
+      config,
+      component,
+    };
+  });
+
   return (
     <div className="dashboard">
-      <div className="dashboard-header">
+      <header className="dashboard-header">
         <div className="header-info">
-          <h2>Current Conditions</h2>
-          <p className="last-update">
-            Last updated: {lastUpdate.toLocaleTimeString()}
+          <h1 className="dashboard-title">
+            <span className="dashboard-icon" aria-hidden="true">📡</span>
+            NextSkip
+          </h1>
+          <p className="dashboard-subtitle">
+            HF Propagation Dashboard
+            <span className="last-update" aria-live="polite" aria-atomic="true">
+              Updated {lastUpdate.toLocaleTimeString()}
+            </span>
           </p>
         </div>
-        <button
-          onClick={handleRefresh}
-          disabled={loading}
-          className="refresh-button"
-          title="Refresh data"
-        >
-          {loading ? '⟳' : '↻'} Refresh
-        </button>
-      </div>
+      </header>
 
       {error && (
-        <div className="error-banner">
+        <div className="error-banner" role="alert">
           <p>{error}</p>
         </div>
       )}
 
       <div className="dashboard-content">
-        {data?.solarIndices && (
-          <SolarIndicesCard solarIndices={data.solarIndices} />
-        )}
-
-        {data?.bandConditions && data.bandConditions.length > 0 && (
-          <BandConditionsTable bandConditions={data.bandConditions.filter((c): c is NonNullable<typeof c> => c !== undefined && c !== null)} />
-        )}
-
-        {(!data?.solarIndices && !data?.bandConditions) && (
+        {bentoCards.length > 0 ? (
+          <BentoGrid cards={bentoCards} />
+        ) : (
           <div className="no-data">
             <p>No propagation data available at this time.</p>
           </div>

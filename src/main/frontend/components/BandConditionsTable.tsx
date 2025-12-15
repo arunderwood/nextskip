@@ -1,5 +1,5 @@
 import React from 'react';
-import type BandCondition from 'Frontend/generated/io/nextskip/propagation/model/BandCondition.js';
+import type BandCondition from 'Frontend/generated/io/nextskip/propagation/model/BandCondition';
 import './BandConditionsTable.css';
 
 interface Props {

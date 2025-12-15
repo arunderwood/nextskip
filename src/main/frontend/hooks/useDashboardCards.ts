@@ -6,9 +6,9 @@
  */
 
 import { useMemo } from 'react';
-import type { PropagationResponse } from 'Frontend/generated/io/nextskip/propagation/api/PropagationEndpoint';
+import type PropagationResponse from 'Frontend/generated/io/nextskip/propagation/api/PropagationResponse';
 import type { BentoCardConfig } from '../types/bento';
-import { usePriorityCalculation } from '../components/bento';
+import { calculatePriority, priorityToHotness } from '../components/bento/usePriorityCalculation';
 
 /**
  * Create card configurations from dashboard data
@@ -20,37 +20,33 @@ import { usePriorityCalculation } from '../components/bento';
  * @returns Array of card configurations
  */
 export function useDashboardCards(
-  data: PropagationResponse | null
+  data: PropagationResponse | undefined
 ): BentoCardConfig[] {
-  // Solar indices card configuration
-  const solarIndicesConfig = useMemo((): BentoCardConfig | null => {
-    if (!data?.solarIndices) return null;
+  // Prepare solar indices input (always calculate, even if no data)
+  const solarInput = useMemo(() => {
+    if (!data?.solarIndices) {
+      return { favorable: false, score: undefined, rating: 'UNKNOWN' as const };
+    }
 
-    const { priority, hotness } = usePriorityCalculation({
+    return {
       favorable: data.solarIndices.favorable ?? false,
       score: data.solarIndices.solarFluxIndex,
       rating:
         data.solarIndices.solarFluxIndex !== undefined
           ? data.solarIndices.solarFluxIndex >= 150
-            ? 'GOOD'
+            ? ('GOOD' as const)
             : data.solarIndices.solarFluxIndex >= 100
-              ? 'FAIR'
-              : 'POOR'
-          : 'UNKNOWN',
-    });
-
-    return {
-      id: 'solar-indices',
-      type: 'solar-indices',
-      size: 'standard', // 1x1 for compact display
-      priority,
-      hotness,
+              ? ('FAIR' as const)
+              : ('POOR' as const)
+          : ('UNKNOWN' as const),
     };
   }, [data?.solarIndices]);
 
-  // Band conditions card configuration
-  const bandConditionsConfig = useMemo((): BentoCardConfig | null => {
-    if (!data?.bandConditions || data.bandConditions.length === 0) return null;
+  // Prepare band conditions input (always calculate, even if no data)
+  const bandInput = useMemo(() => {
+    if (!data?.bandConditions || data.bandConditions.length === 0) {
+      return { favorable: false, score: undefined, rating: 'UNKNOWN' as const };
+    }
 
     // Calculate average score from all bands
     const validConditions = data.bandConditions.filter((c) => c !== undefined);
@@ -67,13 +63,37 @@ export function useDashboardCards(
     // Use best rating among bands
     const hasGood = validConditions.some((c) => c?.rating === 'GOOD');
     const hasFair = validConditions.some((c) => c?.rating === 'FAIR');
-    const bestRating = hasGood ? 'GOOD' : hasFair ? 'FAIR' : 'POOR';
+    const bestRating = hasGood ? ('GOOD' as const) : hasFair ? ('FAIR' as const) : ('POOR' as const);
 
-    const { priority, hotness } = usePriorityCalculation({
+    return {
       favorable: isFavorable,
       score: avgScore,
       rating: bestRating,
-    });
+    };
+  }, [data?.bandConditions]);
+
+  // Solar indices card configuration
+  const solarIndicesConfig = useMemo((): BentoCardConfig | null => {
+    if (!data?.solarIndices) return null;
+
+    const priority = calculatePriority(solarInput);
+    const hotness = priorityToHotness(priority);
+
+    return {
+      id: 'solar-indices',
+      type: 'solar-indices',
+      size: 'standard', // 1x1 for compact display
+      priority,
+      hotness,
+    };
+  }, [data?.solarIndices, solarInput]);
+
+  // Band conditions card configuration
+  const bandConditionsConfig = useMemo((): BentoCardConfig | null => {
+    if (!data?.bandConditions || data.bandConditions.length === 0) return null;
+
+    const priority = calculatePriority(bandInput);
+    const hotness = priorityToHotness(priority);
 
     return {
       id: 'band-conditions',
@@ -82,7 +102,7 @@ export function useDashboardCards(
       priority,
       hotness,
     };
-  }, [data?.bandConditions]);
+  }, [data?.bandConditions, bandInput]);
 
   // Combine all card configs (filter out null values)
   return useMemo(() => {

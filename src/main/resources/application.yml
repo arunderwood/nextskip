@@ -77,4 +77,4 @@ logging:
 vaadin:
   productionMode: false
   pnpm:
-    enable: true
+    enable: false
