@@ -1,5 +1,7 @@
 package io.nextskip.propagation.model;
 
+import io.nextskip.common.api.Scoreable;
+
 import java.time.Instant;
 
 /**
@@ -19,14 +21,42 @@ public record SolarIndices(
         int sunspotNumber,
         Instant timestamp,
         String source
-) {
+) implements Scoreable {
     /**
      * Determine if conditions are generally favorable for HF propagation.
      *
      * Good conditions: High SFI (>100), low K-index (<4), low A-index (<20)
      */
+    @Override
     public boolean isFavorable() {
         return solarFluxIndex > 100 && kIndex < 4 && aIndex < 20;
+    }
+
+    /**
+     * Calculate a 0-100 score based on solar conditions.
+     *
+     * <p>Score is weighted combination of:
+     * <ul>
+     *     <li>60% Solar Flux (normalized to 0-100 from typical 50-200 range)</li>
+     *     <li>30% K-Index (inverted - lower is better)</li>
+     *     <li>10% A-Index (inverted - lower is better)</li>
+     * </ul>
+     *
+     * @return score from 0-100 representing overall propagation quality
+     */
+    @Override
+    public int getScore() {
+        // Normalize SFI from typical 50-200 range to 0-100
+        double sfiScore = Math.max(0, Math.min(100, ((solarFluxIndex - 50) / 150.0) * 100));
+
+        // K-index: 0-9 scale, invert it (0 is best, 9 is worst)
+        double kScore = Math.max(0, (9 - kIndex) / 9.0 * 100);
+
+        // A-index: typical range 0-50, invert it (0 is best)
+        double aScore = Math.max(0, Math.min(100, (50 - Math.min(aIndex, 50)) / 50.0 * 100));
+
+        // Weighted combination
+        return (int) Math.round(sfiScore * 0.6 + kScore * 0.3 + aScore * 0.1);
     }
 
     /**

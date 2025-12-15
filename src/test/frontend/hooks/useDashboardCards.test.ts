@@ -8,9 +8,13 @@
 import { describe, it, expect } from 'vitest';
 import { renderHook } from '@testing-library/react';
 import { useDashboardCards } from 'Frontend/hooks/useDashboardCards';
+import type { DashboardData } from 'Frontend/components/cards/types';
 import type PropagationResponse from 'Frontend/generated/io/nextskip/propagation/api/PropagationResponse';
 import type SolarIndices from 'Frontend/generated/io/nextskip/propagation/model/SolarIndices';
 import type BandCondition from 'Frontend/generated/io/nextskip/propagation/model/BandCondition';
+
+// Import card registrations to ensure they're loaded for tests
+import 'Frontend/components/cards/propagation';
 
 // Mock data factories
 const createMockSolarIndices = (overrides: Partial<SolarIndices> = {}): SolarIndices => ({
@@ -46,29 +50,33 @@ const createMockPropagationResponse = (
 describe('useDashboardCards', () => {
   describe('with undefined data', () => {
     it('should return empty array', () => {
-      const { result } = renderHook(() => useDashboardCards(undefined));
+      const { result } = renderHook(() => useDashboardCards({} as DashboardData));
       expect(result.current).toEqual([]);
     });
   });
 
   describe('solarInput calculation', () => {
     it('should return UNKNOWN rating when solarIndices undefined', () => {
-      const data = createMockPropagationResponse({
-        solarIndices: undefined,
-        bandConditions: undefined,
-      });
-      const { result } = renderHook(() => useDashboardCards(data));
+      const dashboardData: DashboardData = {
+        propagation: createMockPropagationResponse({
+          solarIndices: undefined,
+          bandConditions: undefined,
+        }),
+      };
+      const { result } = renderHook(() => useDashboardCards(dashboardData));
 
       // Should return empty array when no solar indices
       expect(result.current).toEqual([]);
     });
 
     it('should return GOOD rating when solarFluxIndex >= 150', () => {
-      const data = createMockPropagationResponse({
-        solarIndices: createMockSolarIndices({ solarFluxIndex: 150 }),
-        bandConditions: undefined,
-      });
-      const { result } = renderHook(() => useDashboardCards(data));
+      const dashboardData: DashboardData = {
+        propagation: createMockPropagationResponse({
+          solarIndices: createMockSolarIndices({ solarFluxIndex: 150 }),
+          bandConditions: undefined,
+        }),
+      };
+      const { result } = renderHook(() => useDashboardCards(dashboardData));
 
       expect(result.current).toHaveLength(1);
       expect(result.current[0].id).toBe('solar-indices');
@@ -77,11 +85,13 @@ describe('useDashboardCards', () => {
     });
 
     it('should return FAIR rating when solarFluxIndex >= 100 and < 150', () => {
-      const data = createMockPropagationResponse({
-        solarIndices: createMockSolarIndices({ solarFluxIndex: 125 }),
-        bandConditions: undefined,
-      });
-      const { result } = renderHook(() => useDashboardCards(data));
+      const dashboardData: DashboardData = {
+        propagation: createMockPropagationResponse({
+          solarIndices: createMockSolarIndices({ solarFluxIndex: 125 }),
+          bandConditions: undefined,
+        }),
+      };
+      const { result } = renderHook(() => useDashboardCards(dashboardData));
 
       expect(result.current).toHaveLength(1);
       expect(result.current[0].id).toBe('solar-indices');
@@ -91,11 +101,13 @@ describe('useDashboardCards', () => {
     });
 
     it('should return POOR rating when solarFluxIndex < 100', () => {
-      const data = createMockPropagationResponse({
-        solarIndices: createMockSolarIndices({ solarFluxIndex: 80, favorable: false }),
-        bandConditions: undefined,
-      });
-      const { result } = renderHook(() => useDashboardCards(data));
+      const dashboardData: DashboardData = {
+        propagation: createMockPropagationResponse({
+          solarIndices: createMockSolarIndices({ solarFluxIndex: 80, favorable: false }),
+          bandConditions: undefined,
+        }),
+      };
+      const { result } = renderHook(() => useDashboardCards(dashboardData));
 
       expect(result.current).toHaveLength(1);
       expect(result.current[0].id).toBe('solar-indices');
@@ -104,11 +116,13 @@ describe('useDashboardCards', () => {
     });
 
     it('should return UNKNOWN rating when solarFluxIndex undefined', () => {
-      const data = createMockPropagationResponse({
-        solarIndices: createMockSolarIndices({ solarFluxIndex: undefined }),
-        bandConditions: undefined,
-      });
-      const { result } = renderHook(() => useDashboardCards(data));
+      const dashboardData: DashboardData = {
+        propagation: createMockPropagationResponse({
+          solarIndices: createMockSolarIndices({ solarFluxIndex: undefined }),
+          bandConditions: undefined,
+        }),
+      };
+      const { result } = renderHook(() => useDashboardCards(dashboardData));
 
       expect(result.current).toHaveLength(1);
       expect(result.current[0].id).toBe('solar-indices');
@@ -117,14 +131,18 @@ describe('useDashboardCards', () => {
     });
 
     it('should pass favorable flag from backend', () => {
-      const favorableData = createMockPropagationResponse({
-        solarIndices: createMockSolarIndices({ favorable: true, solarFluxIndex: 100 }),
-        bandConditions: undefined,
-      });
-      const unfavorableData = createMockPropagationResponse({
-        solarIndices: createMockSolarIndices({ favorable: false, solarFluxIndex: 100 }),
-        bandConditions: undefined,
-      });
+      const favorableData: DashboardData = {
+        propagation: createMockPropagationResponse({
+          solarIndices: createMockSolarIndices({ favorable: true, solarFluxIndex: 100 }),
+          bandConditions: undefined,
+        }),
+      };
+      const unfavorableData: DashboardData = {
+        propagation: createMockPropagationResponse({
+          solarIndices: createMockSolarIndices({ favorable: false, solarFluxIndex: 100 }),
+          bandConditions: undefined,
+        }),
+      };
 
       const { result: favorableResult } = renderHook(() =>
         useDashboardCards(favorableData)
@@ -145,25 +163,29 @@ describe('useDashboardCards', () => {
 
   describe('bandInput calculation', () => {
     it('should return UNKNOWN when bandConditions empty', () => {
-      const data = createMockPropagationResponse({
-        solarIndices: undefined,
-        bandConditions: [],
-      });
-      const { result } = renderHook(() => useDashboardCards(data));
+      const dashboardData: DashboardData = {
+        propagation: createMockPropagationResponse({
+          solarIndices: undefined,
+          bandConditions: [],
+        }),
+      };
+      const { result } = renderHook(() => useDashboardCards(dashboardData));
 
       expect(result.current).toEqual([]);
     });
 
     it('should calculate average score correctly', () => {
-      const data = createMockPropagationResponse({
-        solarIndices: undefined,
-        bandConditions: [
-          createMockBandCondition({ score: 60 }),
-          createMockBandCondition({ score: 80 }),
-          createMockBandCondition({ score: 100 }),
-        ],
-      });
-      const { result } = renderHook(() => useDashboardCards(data));
+      const dashboardData: DashboardData = {
+        propagation: createMockPropagationResponse({
+          solarIndices: undefined,
+          bandConditions: [
+            createMockBandCondition({ score: 60 }),
+            createMockBandCondition({ score: 80 }),
+            createMockBandCondition({ score: 100 }),
+          ],
+        }),
+      };
+      const { result } = renderHook(() => useDashboardCards(dashboardData));
 
       expect(result.current).toHaveLength(1);
       expect(result.current[0].id).toBe('band-conditions');
@@ -173,15 +195,17 @@ describe('useDashboardCards', () => {
     });
 
     it('should set favorable=true when majority favorable', () => {
-      const data = createMockPropagationResponse({
-        solarIndices: undefined,
-        bandConditions: [
-          createMockBandCondition({ favorable: true, score: 80 }),
-          createMockBandCondition({ favorable: true, score: 75 }),
-          createMockBandCondition({ favorable: false, score: 50 }),
-        ],
-      });
-      const { result } = renderHook(() => useDashboardCards(data));
+      const dashboardData: DashboardData = {
+        propagation: createMockPropagationResponse({
+          solarIndices: undefined,
+          bandConditions: [
+            createMockBandCondition({ favorable: true, score: 80 }),
+            createMockBandCondition({ favorable: true, score: 75 }),
+            createMockBandCondition({ favorable: false, score: 50 }),
+          ],
+        }),
+      };
+      const { result } = renderHook(() => useDashboardCards(dashboardData));
 
       expect(result.current).toHaveLength(1);
       // Majority favorable (2/3) should add 40 points to priority
@@ -189,15 +213,17 @@ describe('useDashboardCards', () => {
     });
 
     it('should set favorable=false when minority favorable', () => {
-      const data = createMockPropagationResponse({
-        solarIndices: undefined,
-        bandConditions: [
-          createMockBandCondition({ favorable: true, score: 80 }),
-          createMockBandCondition({ favorable: false, score: 50 }),
-          createMockBandCondition({ favorable: false, score: 40 }),
-        ],
-      });
-      const { result } = renderHook(() => useDashboardCards(data));
+      const dashboardData: DashboardData = {
+        propagation: createMockPropagationResponse({
+          solarIndices: undefined,
+          bandConditions: [
+            createMockBandCondition({ favorable: true, score: 80 }),
+            createMockBandCondition({ favorable: false, score: 50 }),
+            createMockBandCondition({ favorable: false, score: 40 }),
+          ],
+        }),
+      };
+      const { result } = renderHook(() => useDashboardCards(dashboardData));
 
       expect(result.current).toHaveLength(1);
       // Minority favorable (1/3) should NOT add 40 points
@@ -205,15 +231,17 @@ describe('useDashboardCards', () => {
     });
 
     it('should select GOOD as best rating when present', () => {
-      const data = createMockPropagationResponse({
-        solarIndices: undefined,
-        bandConditions: [
-          createMockBandCondition({ rating: 'GOOD', score: 80 }),
-          createMockBandCondition({ rating: 'FAIR', score: 60 }),
-          createMockBandCondition({ rating: 'POOR', score: 30 }),
-        ],
-      });
-      const { result } = renderHook(() => useDashboardCards(data));
+      const dashboardData: DashboardData = {
+        propagation: createMockPropagationResponse({
+          solarIndices: undefined,
+          bandConditions: [
+            createMockBandCondition({ rating: 'GOOD', score: 80 }),
+            createMockBandCondition({ rating: 'FAIR', score: 60 }),
+            createMockBandCondition({ rating: 'POOR', score: 30 }),
+          ],
+        }),
+      };
+      const { result } = renderHook(() => useDashboardCards(dashboardData));
 
       expect(result.current).toHaveLength(1);
       // GOOD rating adds 20 points, so priority should reflect this
@@ -221,20 +249,24 @@ describe('useDashboardCards', () => {
     });
 
     it('should select FAIR as best rating when no GOOD', () => {
-      const dataWithFair = createMockPropagationResponse({
-        solarIndices: undefined,
-        bandConditions: [
-          createMockBandCondition({ rating: 'FAIR', score: 60, favorable: true }),
-          createMockBandCondition({ rating: 'POOR', score: 30, favorable: true }),
-        ],
-      });
-      const dataWithPoor = createMockPropagationResponse({
-        solarIndices: undefined,
-        bandConditions: [
-          createMockBandCondition({ rating: 'POOR', score: 60, favorable: true }),
-          createMockBandCondition({ rating: 'POOR', score: 30, favorable: true }),
-        ],
-      });
+      const dataWithFair: DashboardData = {
+        propagation: createMockPropagationResponse({
+          solarIndices: undefined,
+          bandConditions: [
+            createMockBandCondition({ rating: 'FAIR', score: 60, favorable: true }),
+            createMockBandCondition({ rating: 'POOR', score: 30, favorable: true }),
+          ],
+        }),
+      };
+      const dataWithPoor: DashboardData = {
+        propagation: createMockPropagationResponse({
+          solarIndices: undefined,
+          bandConditions: [
+            createMockBandCondition({ rating: 'POOR', score: 60, favorable: true }),
+            createMockBandCondition({ rating: 'POOR', score: 30, favorable: true }),
+          ],
+        }),
+      };
 
       const { result: fairResult } = renderHook(() => useDashboardCards(dataWithFair));
       const { result: poorResult } = renderHook(() => useDashboardCards(dataWithPoor));
@@ -246,15 +278,17 @@ describe('useDashboardCards', () => {
     });
 
     it('should handle undefined values in band conditions', () => {
-      const data = createMockPropagationResponse({
-        solarIndices: undefined,
-        bandConditions: [
-          createMockBandCondition({ score: 80 }),
-          createMockBandCondition({ score: undefined, favorable: true }),
-          createMockBandCondition({ score: 60 }),
-        ],
-      });
-      const { result } = renderHook(() => useDashboardCards(data));
+      const dashboardData: DashboardData = {
+        propagation: createMockPropagationResponse({
+          solarIndices: undefined,
+          bandConditions: [
+            createMockBandCondition({ score: 80 }),
+            createMockBandCondition({ score: undefined, favorable: true }),
+            createMockBandCondition({ score: 60 }),
+          ],
+        }),
+      };
+      const { result } = renderHook(() => useDashboardCards(dashboardData));
 
       expect(result.current).toHaveLength(1);
       expect(result.current[0].id).toBe('band-conditions');
@@ -265,11 +299,13 @@ describe('useDashboardCards', () => {
 
   describe('solarIndicesConfig', () => {
     it('should return null config when no solarIndices', () => {
-      const data = createMockPropagationResponse({
-        solarIndices: undefined,
-        bandConditions: [createMockBandCondition()],
-      });
-      const { result } = renderHook(() => useDashboardCards(data));
+      const dashboardData: DashboardData = {
+        propagation: createMockPropagationResponse({
+          solarIndices: undefined,
+          bandConditions: [createMockBandCondition()],
+        }),
+      };
+      const { result } = renderHook(() => useDashboardCards(dashboardData));
 
       // Only band-conditions card should be present
       expect(result.current).toHaveLength(1);
@@ -277,11 +313,13 @@ describe('useDashboardCards', () => {
     });
 
     it('should have correct id, type, size', () => {
-      const data = createMockPropagationResponse({
-        solarIndices: createMockSolarIndices(),
-        bandConditions: undefined,
-      });
-      const { result } = renderHook(() => useDashboardCards(data));
+      const dashboardData: DashboardData = {
+        propagation: createMockPropagationResponse({
+          solarIndices: createMockSolarIndices(),
+          bandConditions: undefined,
+        }),
+      };
+      const { result } = renderHook(() => useDashboardCards(dashboardData));
 
       expect(result.current).toHaveLength(1);
       expect(result.current[0]).toMatchObject({
@@ -292,14 +330,16 @@ describe('useDashboardCards', () => {
     });
 
     it('should calculate priority correctly', () => {
-      const data = createMockPropagationResponse({
-        solarIndices: createMockSolarIndices({
-          favorable: true,
-          solarFluxIndex: 150,
+      const dashboardData: DashboardData = {
+        propagation: createMockPropagationResponse({
+          solarIndices: createMockSolarIndices({
+            favorable: true,
+            solarFluxIndex: 150,
+          }),
+          bandConditions: undefined,
         }),
-        bandConditions: undefined,
-      });
-      const { result } = renderHook(() => useDashboardCards(data));
+      };
+      const { result } = renderHook(() => useDashboardCards(dashboardData));
 
       expect(result.current).toHaveLength(1);
       // favorable(40) + score clamped to 100(35) + GOOD rating(20) = 95
@@ -307,20 +347,24 @@ describe('useDashboardCards', () => {
     });
 
     it('should calculate hotness correctly', () => {
-      const hotData = createMockPropagationResponse({
-        solarIndices: createMockSolarIndices({
-          favorable: true,
-          solarFluxIndex: 150,
+      const hotData: DashboardData = {
+        propagation: createMockPropagationResponse({
+          solarIndices: createMockSolarIndices({
+            favorable: true,
+            solarFluxIndex: 150,
+          }),
+          bandConditions: undefined,
         }),
-        bandConditions: undefined,
-      });
-      const coolData = createMockPropagationResponse({
-        solarIndices: createMockSolarIndices({
-          favorable: false,
-          solarFluxIndex: 20, // Low score to ensure priority < 20
+      };
+      const coolData: DashboardData = {
+        propagation: createMockPropagationResponse({
+          solarIndices: createMockSolarIndices({
+            favorable: false,
+            solarFluxIndex: 20, // Low score to ensure priority < 20
+          }),
+          bandConditions: undefined,
         }),
-        bandConditions: undefined,
-      });
+      };
 
       const { result: hotResult } = renderHook(() => useDashboardCards(hotData));
       const { result: coolResult } = renderHook(() => useDashboardCards(coolData));
@@ -332,11 +376,13 @@ describe('useDashboardCards', () => {
 
   describe('bandConditionsConfig', () => {
     it('should return null config when no bandConditions', () => {
-      const data = createMockPropagationResponse({
-        solarIndices: createMockSolarIndices(),
-        bandConditions: undefined,
-      });
-      const { result } = renderHook(() => useDashboardCards(data));
+      const dashboardData: DashboardData = {
+        propagation: createMockPropagationResponse({
+          solarIndices: createMockSolarIndices(),
+          bandConditions: undefined,
+        }),
+      };
+      const { result } = renderHook(() => useDashboardCards(dashboardData));
 
       // Only solar-indices card should be present
       expect(result.current).toHaveLength(1);
@@ -344,11 +390,13 @@ describe('useDashboardCards', () => {
     });
 
     it('should have correct id, type, size=wide', () => {
-      const data = createMockPropagationResponse({
-        solarIndices: undefined,
-        bandConditions: [createMockBandCondition()],
-      });
-      const { result } = renderHook(() => useDashboardCards(data));
+      const dashboardData: DashboardData = {
+        propagation: createMockPropagationResponse({
+          solarIndices: undefined,
+          bandConditions: [createMockBandCondition()],
+        }),
+      };
+      const { result } = renderHook(() => useDashboardCards(dashboardData));
 
       expect(result.current).toHaveLength(1);
       expect(result.current[0]).toMatchObject({
@@ -359,14 +407,16 @@ describe('useDashboardCards', () => {
     });
 
     it('should calculate priority correctly', () => {
-      const data = createMockPropagationResponse({
-        solarIndices: undefined,
-        bandConditions: [
-          createMockBandCondition({ favorable: true, score: 100, rating: 'GOOD' }),
-          createMockBandCondition({ favorable: true, score: 100, rating: 'GOOD' }),
-        ],
-      });
-      const { result } = renderHook(() => useDashboardCards(data));
+      const dashboardData: DashboardData = {
+        propagation: createMockPropagationResponse({
+          solarIndices: undefined,
+          bandConditions: [
+            createMockBandCondition({ favorable: true, score: 100, rating: 'GOOD' }),
+            createMockBandCondition({ favorable: true, score: 100, rating: 'GOOD' }),
+          ],
+        }),
+      };
+      const { result } = renderHook(() => useDashboardCards(dashboardData));
 
       expect(result.current).toHaveLength(1);
       // favorable(40) + avg score 100(35) + GOOD rating(20) = 95
@@ -374,20 +424,24 @@ describe('useDashboardCards', () => {
     });
 
     it('should calculate hotness correctly', () => {
-      const hotData = createMockPropagationResponse({
-        solarIndices: undefined,
-        bandConditions: [
-          createMockBandCondition({ favorable: true, score: 100, rating: 'GOOD' }),
-          createMockBandCondition({ favorable: true, score: 100, rating: 'GOOD' }),
-        ],
-      });
-      const coolData = createMockPropagationResponse({
-        solarIndices: undefined,
-        bandConditions: [
-          createMockBandCondition({ favorable: false, score: 20, rating: 'POOR' }),
-          createMockBandCondition({ favorable: false, score: 10, rating: 'POOR' }),
-        ],
-      });
+      const hotData: DashboardData = {
+        propagation: createMockPropagationResponse({
+          solarIndices: undefined,
+          bandConditions: [
+            createMockBandCondition({ favorable: true, score: 100, rating: 'GOOD' }),
+            createMockBandCondition({ favorable: true, score: 100, rating: 'GOOD' }),
+          ],
+        }),
+      };
+      const coolData: DashboardData = {
+        propagation: createMockPropagationResponse({
+          solarIndices: undefined,
+          bandConditions: [
+            createMockBandCondition({ favorable: false, score: 20, rating: 'POOR' }),
+            createMockBandCondition({ favorable: false, score: 10, rating: 'POOR' }),
+          ],
+        }),
+      };
 
       const { result: hotResult } = renderHook(() => useDashboardCards(hotData));
       const { result: coolResult } = renderHook(() => useDashboardCards(coolData));
@@ -399,8 +453,10 @@ describe('useDashboardCards', () => {
 
   describe('combined output', () => {
     it('should return both cards when all data present', () => {
-      const data = createMockPropagationResponse();
-      const { result } = renderHook(() => useDashboardCards(data));
+      const dashboardData: DashboardData = {
+        propagation: createMockPropagationResponse(),
+      };
+      const { result } = renderHook(() => useDashboardCards(dashboardData));
 
       expect(result.current).toHaveLength(2);
       expect(result.current[0].id).toBe('solar-indices');
@@ -408,31 +464,37 @@ describe('useDashboardCards', () => {
     });
 
     it('should return only solar card when bands missing', () => {
-      const data = createMockPropagationResponse({
-        bandConditions: undefined,
-      });
-      const { result } = renderHook(() => useDashboardCards(data));
+      const dashboardData: DashboardData = {
+        propagation: createMockPropagationResponse({
+          bandConditions: undefined,
+        }),
+      };
+      const { result } = renderHook(() => useDashboardCards(dashboardData));
 
       expect(result.current).toHaveLength(1);
       expect(result.current[0].id).toBe('solar-indices');
     });
 
     it('should return only band card when solar missing', () => {
-      const data = createMockPropagationResponse({
-        solarIndices: undefined,
-      });
-      const { result } = renderHook(() => useDashboardCards(data));
+      const dashboardData: DashboardData = {
+        propagation: createMockPropagationResponse({
+          solarIndices: undefined,
+        }),
+      };
+      const { result } = renderHook(() => useDashboardCards(dashboardData));
 
       expect(result.current).toHaveLength(1);
       expect(result.current[0].id).toBe('band-conditions');
     });
 
     it('should filter null configs correctly', () => {
-      const data = createMockPropagationResponse({
-        solarIndices: undefined,
-        bandConditions: undefined,
-      });
-      const { result } = renderHook(() => useDashboardCards(data));
+      const dashboardData: DashboardData = {
+        propagation: createMockPropagationResponse({
+          solarIndices: undefined,
+          bandConditions: undefined,
+        }),
+      };
+      const { result } = renderHook(() => useDashboardCards(dashboardData));
 
       expect(result.current).toEqual([]);
       expect(Array.isArray(result.current)).toBe(true);

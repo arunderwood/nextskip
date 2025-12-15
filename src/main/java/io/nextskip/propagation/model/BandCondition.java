@@ -1,5 +1,6 @@
 package io.nextskip.propagation.model;
 
+import io.nextskip.common.api.Scoreable;
 import io.nextskip.common.model.FrequencyBand;
 
 /**
@@ -15,7 +16,7 @@ public record BandCondition(
         BandConditionRating rating,
         double confidence,
         String notes
-) {
+) implements Scoreable {
     public BandCondition {
         if (confidence < 0.0 || confidence > 1.0) {
             throw new IllegalArgumentException("Confidence must be between 0.0 and 1.0");
@@ -39,6 +40,7 @@ public record BandCondition(
     /**
      * Check if this band is currently favorable for propagation.
      */
+    @Override
     public boolean isFavorable() {
         return rating == BandConditionRating.GOOD && confidence > 0.5;
     }
@@ -47,6 +49,7 @@ public record BandCondition(
      * Get a score for this band condition (0-100).
      * Used for sorting or prioritizing bands.
      */
+    @Override
     public int getScore() {
         return switch (rating) {
             case GOOD -> (int) (100 * confidence);

@@ -174,10 +174,10 @@ For each group, create a commit message with:
 **Scope**: Which area (propagation, api, dashboard, etc.)
 **Description**: What was done (imperative mood, <50 chars)
 
-**Optional Body** (if needed to explain why):
-- Wrap at 72 characters
-- Explain motivation for change
-- Reference issues if applicable
+**Optional Body** (only when needed):
+- Keep to 1-3 sentences maximum
+- Explain why, not what (the diff shows what)
+- Focus on context the diff can't convey
 
 **Optional Footer** (for breaking changes or issue refs):
 - `BREAKING CHANGE: description`
@@ -192,16 +192,12 @@ git add [files]
 git commit -m "feat(propagation): add K-index alerting"
 ```
 
-**Commit with Body**:
+**Commit with Body** (use sparingly):
 ```bash
 git commit -m "$(cat <<'EOF'
 refactor(api): extract XML parsing to utility class
 
-The XML parsing logic in HamQslClient was duplicated and hard to test.
-This extracts it to a dedicated XmlParsingUtil class for reusability
-and better test coverage.
-
-Reduces HamQslClient from 390 to 280 lines.
+Removes duplication and improves testability.
 EOF
 )"
 ```
@@ -211,12 +207,8 @@ EOF
 git commit -m "$(cat <<'EOF'
 feat(api)!: change SolarIndices to return Optional
 
-BREAKING CHANGE: fetchSolarIndices() now returns Optional<SolarIndices>
-instead of nullable SolarIndices. Consumers must update to use .orElse()
-or .orElseThrow().
-
-This improves null safety and makes the API more explicit about the
-possibility of missing data.
+BREAKING CHANGE: fetchSolarIndices() now returns Optional<SolarIndices>.
+Update consumers to use .orElse() or .orElseThrow().
 EOF
 )"
 ```
@@ -230,9 +222,7 @@ EOF
 ```
 feat(propagation): add VOACAP propagation prediction
 
-Integrates with VOACAP API to provide HF propagation predictions
-based on solar conditions. Adds new VoacapClient with circuit
-breaker and caching.
+Integrates VOACAP API for HF propagation predictions. Includes VoacapClient with circuit breaker and caching.
 
 Closes #42
 ```
@@ -242,9 +232,7 @@ Closes #42
 ```
 fix(api): handle NOAA partial date formats
 
-NOAA API sometimes returns dates as "2025-11" (year-month only)
-instead of full ISO-8601. Added fallback parsing to handle this
-by treating partial dates as first day of the month.
+NOAA sometimes returns "2025-11" instead of full ISO-8601. Added fallback parsing using first day of month.
 
 Fixes #67
 ```
@@ -254,12 +242,7 @@ Fixes #67
 ```
 refactor(api): extract XML parsing logic
 
-Moved XML parsing from HamQslClient to XmlParsingUtil for:
-- Reusability across multiple clients
-- Easier unit testing
-- Separation of concerns
-
-No behavior change. All 60 tests still passing.
+Moved to XmlParsingUtil for reusability and better testability.
 ```
 
 ### Performance Improvement
@@ -267,11 +250,7 @@ No behavior change. All 60 tests still passing.
 ```
 perf(cache): increase TTL from 5 to 30 minutes
 
-Reduces API calls to NOAA/HamQSL by caching results longer.
-NOAA data updates every 30 minutes, so 30-minute cache is safe
-and reduces load on external services.
-
-Measured 80% reduction in API calls during testing.
+NOAA updates every 30 minutes, so longer cache is safe. Reduces API calls by 80%.
 ```
 
 ### Test Addition
@@ -279,11 +258,7 @@ Measured 80% reduction in API calls during testing.
 ```
 test(api): add property-based tests for date parsing
 
-Uses jqwik to test date parsing with randomly generated valid
-ISO-8601 dates. Covers edge cases like leap years, partial dates,
-and timezone offsets.
-
-Increases confidence in date parsing robustness.
+Uses jqwik to test with random ISO-8601 dates including leap years and timezone offsets.
 ```
 
 ### Documentation
@@ -291,12 +266,7 @@ Increases confidence in date parsing robustness.
 ```
 docs(readme): add architecture decision records
 
-Documents key design decisions:
-- Why we use reactive WebClient over RestTemplate
-- Circuit breaker configuration rationale
-- Caching strategy for solar data
-
-Helps onboard new contributors and maintain context.
+Documents WebClient choice, circuit breaker config, and caching strategy for contributor onboarding.
 ```
 
 ### Build System
@@ -304,10 +274,7 @@ Helps onboard new contributors and maintain context.
 ```
 build(gradle): add static analysis plugins
 
-Adds Checkstyle, PMD, SpotBugs for automated code quality checks.
-Configured with default rulesets and integrated into ./gradlew check.
-
-Will help catch issues early in development.
+Adds Checkstyle, PMD, SpotBugs with default rulesets integrated into ./gradlew check.
 ```
 
 ---
@@ -331,10 +298,11 @@ Keep commit messages clean and professional. Attribution should reflect actual h
 1. **Commit often** - Small, focused commits are easier to review and revert
 2. **Use imperative mood** - "Add feature" not "Added feature" or "Adds feature"
 3. **Keep description <50 chars** - Readable in git log one-liners
-4. **Wrap body at 72 chars** - Readable in terminal
-5. **Explain why, not what** - Code shows what changed, message explains why
-6. **Reference issues** - Use `Fixes #123` or `Closes #456` in footer
-7. **Group related changes** - Don't mix unrelated changes in one commit
+4. **Prefer one-liners** - Add body only when diff needs context
+5. **Keep bodies brief** - 1-3 sentences max, focus on why
+6. **Explain why, not what** - Code shows what changed, message explains why
+7. **Reference issues** - Use `Fixes #123` or `Closes #456` in footer
+8. **Group related changes** - Don't mix unrelated changes in one commit
 
 ## Benefits
 
@@ -358,14 +326,11 @@ User: I've finished implementing NOAA client improvements
 
 Agent:
 1. Run git status to see changed files
-2. Group by scope:
-   - API client changes → refactor(api)
-   - DTO changes → feat(dto)
-   - Test changes → test(api)
-3. Create 3 separate commits:
+2. Group by scope (separate commits):
    - refactor(api): extract date parsing logic
    - feat(dto): add validation to NoaaSolarCycleEntry
    - test(api): update tests for new exceptions
-4. Verify all commits follow conventional format
-5. Recommend: Push to remote
+3. Keep each commit message concise (one-liner if diff is clear)
+4. Add brief body only when context is needed
+5. Push to remote
 ```

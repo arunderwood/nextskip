@@ -1,16 +1,24 @@
 import React, { useEffect, useState } from 'react';
-import { PropagationEndpoint } from 'Frontend/generated/endpoints';
+import { PropagationEndpoint, ActivationsEndpoint } from 'Frontend/generated/endpoints';
 import type PropagationResponse from 'Frontend/generated/io/nextskip/propagation/api/PropagationResponse';
-import { BentoGrid, BentoCard } from '../components/bento';
+import type ActivationsResponse from 'Frontend/generated/io/nextskip/activations/api/ActivationsResponse';
+import type { DashboardData } from '../components/cards/types';
+import { BentoGrid } from '../components/bento';
 import { useDashboardCards } from '../hooks/useDashboardCards';
-import SolarIndicesContent from '../components/cards/SolarIndicesContent';
-import BandConditionsContent, {
-  BandConditionsLegend,
-} from '../components/cards/BandConditionsContent';
+import { getRegisteredCards } from '../components/cards/CardRegistry';
 import './DashboardView.css';
 
+// Import card modules to trigger registration
+import '../components/cards/propagation';
+import '../components/cards/activations';
+
 function DashboardView() {
-  const [data, setData] = useState<PropagationResponse | undefined>(undefined);
+  const [propagationData, setPropagationData] = useState<PropagationResponse | undefined>(
+    undefined
+  );
+  const [activationsData, setActivationsData] = useState<ActivationsResponse | undefined>(
+    undefined
+  );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
@@ -18,12 +26,19 @@ function DashboardView() {
   const fetchData = async () => {
     try {
       setError(null);
-      const response = await PropagationEndpoint.getPropagationData();
-      setData(response);
+
+      // Fetch data from all modules in parallel
+      const [propagation, activations] = await Promise.all([
+        PropagationEndpoint.getPropagationData(),
+        ActivationsEndpoint.getActivations(),
+      ]);
+
+      setPropagationData(propagation);
+      setActivationsData(activations);
       setLastUpdate(new Date());
     } catch (err) {
-      console.error('Error fetching propagation data:', err);
-      setError('Failed to fetch propagation data. Please try again later.');
+      console.error('Error fetching dashboard data:', err);
+      setError('Failed to fetch dashboard data. Please try again later.');
     } finally {
       setLoading(false);
     }
@@ -39,10 +54,19 @@ function DashboardView() {
     return () => clearInterval(interval);
   }, []);
 
-  // Get card configurations from dashboard data (must be called before any conditional returns)
-  const cardConfigs = useDashboardCards(data);
+  // Combine all module data into DashboardData structure
+  const dashboardData: DashboardData = {
+    propagation: propagationData,
+    activations: activationsData,
+    // Future modules will add their data here:
+    // contests: contestsData,
+    // satellites: satellitesData,
+  };
 
-  if (loading && !data) {
+  // Get card configurations from registry (must be called before conditional returns)
+  const cardConfigs = useDashboardCards(dashboardData);
+
+  if (loading && !propagationData) {
     return (
       <div className="loading">
         <div className="loading-spinner">
@@ -53,7 +77,7 @@ function DashboardView() {
     );
   }
 
-  if (error && !data) {
+  if (error && !propagationData) {
     return (
       <div className="error">
         <h3>⚠️ Error</h3>
@@ -71,62 +95,20 @@ function DashboardView() {
     );
   }
 
-  // Build bento grid cards
+  // Build bento grid cards using the registry
+  const cards = getRegisteredCards();
   const bentoCards = cardConfigs.map((config) => {
-    let component: React.ReactNode;
+    // Match the card definition by checking if its createConfig produces this config's ID
+    const cardDef = cards.find((c) => {
+      const cfg = c.createConfig(dashboardData);
+      return cfg?.id === config.id;
+    });
 
-    switch (config.type) {
-      case 'solar-indices':
-        if (data?.solarIndices) {
-          component = (
-            <BentoCard
-              config={config}
-              title="Solar Indices"
-              icon="☀️"
-              subtitle={data.solarIndices.source}
-              footer={
-                <div className="info-box">
-                  <strong>What this means:</strong>
-                  <ul>
-                    <li>
-                      <strong>SFI:</strong> Higher values (150+) indicate better
-                      HF propagation
-                    </li>
-                    <li>
-                      <strong>K-Index:</strong> Lower values (0-2) mean quieter,
-                      more stable conditions
-                    </li>
-                    <li>
-                      <strong>A-Index:</strong> 24-hour average geomagnetic
-                      activity (lower is better)
-                    </li>
-                  </ul>
-                </div>
-              }
-            >
-              <SolarIndicesContent solarIndices={data.solarIndices} />
-            </BentoCard>
-          );
-        }
-        break;
-
-      case 'band-conditions':
-        if (data?.bandConditions && data.bandConditions.length > 0) {
-          const validBandConditions = data.bandConditions.filter((c): c is import('Frontend/generated/io/nextskip/propagation/model/BandCondition').default => c !== undefined);
-          component = (
-            <BentoCard
-              config={config}
-              title="HF Band Conditions"
-              icon="📻"
-              subtitle="Current propagation by amateur radio band"
-              footer={<BandConditionsLegend />}
-            >
-              <BandConditionsContent bandConditions={validBandConditions} />
-            </BentoCard>
-          );
-        }
-        break;
+    if (!cardDef) {
+      return { config, component: null };
     }
+
+    const component = cardDef.render(dashboardData, config);
 
     return {
       config,
@@ -139,7 +121,9 @@ function DashboardView() {
       <header className="dashboard-header">
         <div className="header-info">
           <h1 className="dashboard-title">
-            <span className="dashboard-icon" aria-hidden="true">📡</span>
+            <span className="dashboard-icon" aria-hidden="true">
+              📡
+            </span>
             NextSkip
           </h1>
           <p className="dashboard-subtitle">
