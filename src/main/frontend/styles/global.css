@@ -13,6 +13,52 @@
   --border-radius: 4px;
   --shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   --shadow-elevated: 0 4px 8px rgba(0, 0, 0, 0.15);
+
+  /* === Bento Grid Tokens === */
+  /* Grid Configuration */
+  --bento-columns-desktop: 4;
+  --bento-columns-tablet: 2;
+  --bento-columns-mobile: 1;
+  --bento-gap: calc(var(--spacing-unit) * 3);  /* 24px */
+  --bento-card-min-height: 200px;
+
+  /* Card Sizes (in grid units) */
+  --bento-card-standard-cols: 1;
+  --bento-card-standard-rows: 1;
+  --bento-card-wide-cols: 2;
+  --bento-card-wide-rows: 1;
+  --bento-card-tall-cols: 1;
+  --bento-card-tall-rows: 2;
+  --bento-card-hero-cols: 2;
+  --bento-card-hero-rows: 2;
+
+  /* Hotness Indicator Colors */
+  --hotness-hot-color: var(--success-color);         /* #4caf50 - Green */
+  --hotness-hot-glow: rgba(76, 175, 80, 0.3);
+  --hotness-hot-border: rgba(76, 175, 80, 0.6);
+
+  --hotness-warm-color: var(--warning-color);        /* #ff9800 - Orange */
+  --hotness-warm-glow: rgba(255, 152, 0, 0.25);
+  --hotness-warm-border: rgba(255, 152, 0, 0.5);
+
+  --hotness-neutral-color: var(--primary-color);     /* #1976d2 - Blue */
+  --hotness-neutral-glow: rgba(25, 118, 210, 0.15);
+  --hotness-neutral-border: rgba(25, 118, 210, 0.3);
+
+  --hotness-cool-color: var(--text-secondary);       /* Gray */
+  --hotness-cool-glow: rgba(0, 0, 0, 0.05);
+  --hotness-cool-border: var(--border-color);
+
+  /* Animation Tokens */
+  --bento-transition-duration: 300ms;
+  --bento-transition-timing: cubic-bezier(0.4, 0, 0.2, 1);  /* Material ease-out */
+  --bento-hover-lift: -4px;
+  --bento-hover-scale: 1.02;
+
+  /* Focus State (Accessibility) */
+  --bento-focus-ring-width: 3px;
+  --bento-focus-ring-color: var(--primary-color);
+  --bento-focus-ring-offset: 2px;
 }
 
 * {
