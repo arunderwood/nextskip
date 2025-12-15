@@ -23,6 +23,11 @@ java {
     targetCompatibility = JavaVersion.VERSION_25
 }
 
+// Disable plain JAR generation - we only need the Spring Boot executable JAR
+tasks.named('jar') {
+    enabled = false
+}
+
 repositories {
     mavenCentral()
     maven { url 'https://maven.vaadin.com/vaadin-addons' }
