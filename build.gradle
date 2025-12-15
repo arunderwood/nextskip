@@ -28,6 +28,22 @@ tasks.named('jar') {
     enabled = false
 }
 
+// Ensure Vaadin production resources are included in bootJar
+// The vaadinBuildFrontend task writes to build/resources/main/ AFTER processResources,
+// so we need to explicitly include these files in the bootJar
+tasks.named('bootJar') {
+    dependsOn 'vaadinBuildFrontend'
+
+    // Explicitly copy Vaadin production files into the JAR
+    into('BOOT-INF/classes') {
+        from('build/resources/main') {
+            include 'META-INF/VAADIN/**'
+            include 'META-INF/resources/**'
+        }
+        duplicatesStrategy = DuplicatesStrategy.INCLUDE
+    }
+}
+
 repositories {
     mavenCentral()
     maven { url 'https://maven.vaadin.com/vaadin-addons' }

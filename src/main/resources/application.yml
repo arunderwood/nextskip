@@ -87,6 +87,5 @@ logging:
 
 # Vaadin Hilla Configuration
 vaadin:
-  productionMode: false
   pnpm:
     enable: false
