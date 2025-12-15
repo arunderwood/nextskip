@@ -31,7 +31,7 @@ repositories {
 }
 
 ext {
-    vaadinVersion = '25.0.0-rc1'
+    vaadinVersion = '25.1-SNAPSHOT'
 }
 
 dependencyManagement {
