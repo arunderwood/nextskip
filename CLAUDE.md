@@ -62,15 +62,15 @@ npm run test:ui
 npm run test:coverage
 ```
 
-**Test Suite**: Comprehensive tests in `frontend/tests/` covering:
+**Test Suite**: Comprehensive tests in `src/test/frontend/` covering:
 - Priority calculation algorithm
 - Component rendering and behavior
 - Grid sorting and layout
 - WCAG 2.1 AA compliance
 
-**Configuration**: See `vitest.config.ts` and `frontend/test/setup.ts`
+**Configuration**: See `vitest.config.ts` and `src/test/frontend/setup.ts`
 
-**Test Location**: Per Vaadin Hilla documentation, tests are in `frontend/tests/` directory structure (not co-located)
+**Test Location**: Following Maven/Gradle conventions and Vaadin's official example repos, tests are in `src/test/frontend/` (parallel to `src/main/frontend/`)
 
 ## Architecture Guidelines
 
@@ -154,20 +154,24 @@ Weighted algorithm:
 ## Frontend Structure
 
 ```
-frontend/
-├── components/       # Reusable React components
-│   ├── bento/        # Bento grid system (priority-based layout)
-│   └── cards/        # Activity card content components
-├── hooks/            # Custom React hooks
-├── types/            # TypeScript type definitions
-├── views/            # Page-level components (routes)
-├── styles/           # Global styles and design tokens
-├── docs/             # Frontend documentation
+src/main/frontend/         # Production frontend code
+├── components/            # Reusable React components
+│   ├── bento/             # Bento grid system (priority-based layout)
+│   └── cards/             # Activity card content components
+├── hooks/                 # Custom React hooks
+├── types/                 # TypeScript type definitions
+├── views/                 # Page-level components (routes)
+├── styles/                # Global styles and design tokens
+├── docs/                  # Frontend documentation
 │   ├── DESIGN_SYSTEM.md
 │   ├── COMPONENT_PATTERNS.md
 │   └── ACCESSIBILITY.md
-├── test/             # Test configuration
-└── tests/            # Test files (per Hilla documentation)
+└── generated/             # Hilla auto-generated TypeScript clients
+
+src/test/frontend/         # Frontend tests (parallel to src/main)
+├── components/            # Component tests
+│   └── bento/             # Bento grid system tests
+└── setup.ts               # Vitest test setup
 ```
 
 **Bento Grid System**:
@@ -176,7 +180,7 @@ frontend/
 - Responsive: 4 columns (desktop) → 2 columns (tablet) → 1 column (mobile)
 - WCAG 2.1 AA compliant with keyboard navigation
 
-**Documentation**: See `frontend/docs/` for design tokens, component patterns, and accessibility requirements
+**Documentation**: See `src/main/frontend/docs/` for design tokens, component patterns, and accessibility requirements
 
 ## Testing Guidelines
 
@@ -189,15 +193,15 @@ frontend/
 
 ### Frontend Tests (Vitest + React Testing Library)
 
-- Tests in `frontend/tests/` directory
+- Tests in `src/test/frontend/` directory (parallel to `src/main/frontend/`)
 - Use **jest-axe** for automated WCAG 2.1 AA compliance testing
 - Use **jsdom** environment (faster than browser mode)
 - Import components with `Frontend/` alias (configured in `vitest.config.ts`)
 
 **Test Patterns**: See existing test files for reference:
-- `frontend/tests/components/bento/BentoCard.test.tsx` - Component testing
-- `frontend/tests/components/bento/usePriorityCalculation.test.ts` - Hook testing
-- `frontend/tests/components/bento/BentoSystem.a11y.test.tsx` - Accessibility testing
+- `src/test/frontend/components/bento/BentoCard.test.tsx` - Component testing
+- `src/test/frontend/components/bento/usePriorityCalculation.test.ts` - Hook testing
+- `src/test/frontend/components/bento/BentoSystem.a11y.test.tsx` - Accessibility testing
 
 **Coverage Targets**: 80%+ statements/functions/lines, 75%+ branches
 
@@ -277,9 +281,9 @@ This repository includes specialized agents and commands in `.claude/`:
 
 ### Adding Frontend Components
 
-1. Follow bento grid patterns (see `frontend/components/bento/`)
-2. Use design tokens from `frontend/styles/global.css`
-3. Write tests in `frontend/tests/` directory
+1. Follow bento grid patterns (see `src/main/frontend/components/bento/`)
+2. Use design tokens from `src/main/frontend/styles/global.css`
+3. Write tests in `src/test/frontend/` directory
 4. Ensure WCAG 2.1 AA compliance with jest-axe
 
 ## Future Development

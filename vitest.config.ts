@@ -7,16 +7,15 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'jsdom',
-    setupFiles: './frontend/test/setup.ts',
-    include: ['frontend/tests/**/*.{test,spec}.{ts,tsx}'],
+    setupFiles: './src/test/frontend/setup.ts',
+    include: ['src/test/frontend/**/*.{test,spec}.{ts,tsx}'],
     css: true,
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html', 'lcov'],
       exclude: [
         'node_modules/',
-        'frontend/test/',
-        'frontend/tests/',
+        'src/test/',
         '**/*.d.ts',
         '**/*.config.*',
         '**/mockData',
@@ -26,7 +25,7 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      Frontend: resolve(__dirname, './frontend'),
+      Frontend: resolve(__dirname, './src/main/frontend'),
     },
   },
 });
