@@ -66,6 +66,11 @@ drivers/
 error-screenshots/
 .playwright-mcp/
 
+# Playwright E2E tests
+/playwright-report/
+/build/playwright-reports/
+/test-results/
+
 # Vaadin theme editor
 frontend/themes/hilla-react-app/theme-editor.css
 
