@@ -39,6 +39,9 @@ pnpm-lock.yaml
 # Vaadin Hilla auto-generated files (CRITICAL)
 src/main/frontend/generated/
 
+# Vaadin production bundles (build artifacts)
+src/main/bundles/
+
 # Vite generated files
 vite.generated.ts
 webpack.generated.js
