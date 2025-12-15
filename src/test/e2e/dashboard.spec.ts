@@ -9,9 +9,13 @@ test.describe('Dashboard', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
     await page.waitForLoadState('networkidle');
+    // Wait for Vaadin to fully initialize by checking for the outlet div to have content
+    await page.waitForSelector('#outlet > *', { timeout: 10000 });
   });
 
   test('page loads successfully', async ({ page }) => {
+    // Give Vaadin time to set the title dynamically if needed
+    await page.waitForFunction(() => document.title !== '', { timeout: 5000 });
     await expect(page).toHaveTitle(/NextSkip/i);
   });
 
