@@ -62,3 +62,15 @@
     grid-row: span 1; /* No multi-row on mobile */
   }
 }
+
+/* Wide desktop breakpoint - 6 columns for full utilization */
+@media (min-width: 1400px) {
+  .bento-grid {
+    grid-template-columns: repeat(var(--bento-columns-wide, 6), 1fr);
+  }
+
+  /* Hero cards span 3 columns on wide screens */
+  .bento-grid__card--hero {
+    grid-column: span 3;
+  }
+}

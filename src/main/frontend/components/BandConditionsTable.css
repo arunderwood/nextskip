@@ -10,13 +10,13 @@
 
 .table-container {
   overflow-x: auto;
-  margin: calc(var(--spacing-unit) * 2) 0;
+  margin: 0;  /* Remove margins for compact mode */
 }
 
 .conditions-table {
   width: 100%;
   border-collapse: collapse;
-  background: white;
+  background: var(--surface-color);
   border-radius: var(--border-radius);
   overflow: hidden;
 }
@@ -27,12 +27,12 @@
 }
 
 .conditions-table th {
-  padding: calc(var(--spacing-unit) * 2);
+  padding: calc(var(--spacing-unit) * 1) calc(var(--spacing-unit) * 1.25);  /* Reduced padding */
   text-align: left;
   font-weight: 500;
   text-transform: uppercase;
-  font-size: 0.875rem;
-  letter-spacing: 0.5px;
+  font-size: 0.6875rem;  /* Smaller header text */
+  letter-spacing: 0.3px;
 }
 
 .conditions-table tbody tr {
@@ -49,7 +49,7 @@
 }
 
 .conditions-table td {
-  padding: calc(var(--spacing-unit) * 2);
+  padding: calc(var(--spacing-unit) * 0.75) calc(var(--spacing-unit) * 1.25);  /* Reduced padding */
 }
 
 .band-name {
@@ -59,27 +59,27 @@
 
 .band-label {
   display: inline-block;
-  padding: calc(var(--spacing-unit) * 0.5) calc(var(--spacing-unit) * 1.5);
+  padding: calc(var(--spacing-unit) * 0.25) calc(var(--spacing-unit) * 0.75);
   background: rgba(25, 118, 210, 0.1);
   border-radius: calc(var(--border-radius) * 2);
   color: var(--primary-color);
   font-family: 'Monaco', 'Courier New', monospace;
-  font-size: 0.95rem;
+  font-size: 0.8125rem;  /* Reduced from 0.95rem */
 }
 
 .rating-badge {
   display: inline-flex;
   align-items: center;
-  gap: calc(var(--spacing-unit) * 0.75);
-  padding: calc(var(--spacing-unit) * 0.75) calc(var(--spacing-unit) * 1.5);
+  gap: calc(var(--spacing-unit) * 0.5);
+  padding: calc(var(--spacing-unit) * 0.5) calc(var(--spacing-unit) * 1);  /* Reduced padding */
   border-radius: calc(var(--border-radius) * 2);
   font-weight: 500;
-  font-size: 0.95rem;
+  font-size: 0.8125rem;  /* Reduced from 0.95rem */
   text-transform: capitalize;
 }
 
 .rating-icon {
-  font-size: 1.1rem;
+  font-size: 0.9375rem;  /* Reduced from 1.1rem */
   font-weight: bold;
 }
 
@@ -116,21 +116,22 @@
 .legend {
   background: rgba(25, 118, 210, 0.05);
   border-left: 4px solid var(--primary-color);
-  padding: calc(var(--spacing-unit) * 2);
+  padding: calc(var(--spacing-unit) * 1.25);
   border-radius: var(--border-radius);
+  font-size: var(--font-size-compact-sm);
 }
 
 .legend-title {
   font-weight: 600;
   color: var(--primary-color);
-  margin-bottom: calc(var(--spacing-unit) * 1.5);
-  font-size: 0.95rem;
+  margin-bottom: calc(var(--spacing-unit) * 0.75);
+  font-size: 0.8125rem;
 }
 
 .legend-items {
   display: flex;
   flex-wrap: wrap;
-  gap: calc(var(--spacing-unit) * 2);
+  gap: calc(var(--spacing-unit) * 1.25);
 }
 
 .legend-item {
@@ -141,7 +142,7 @@
 
 .legend-desc {
   color: var(--text-secondary);
-  font-size: 0.875rem;
+  font-size: 0.75rem;
 }
 
 @media (max-width: 768px) {

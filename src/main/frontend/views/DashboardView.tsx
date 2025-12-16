@@ -6,6 +6,7 @@ import type { DashboardData } from '../components/cards/types';
 import { BentoGrid } from '../components/bento';
 import { useDashboardCards } from '../hooks/useDashboardCards';
 import { getRegisteredCards } from '../components/cards/CardRegistry';
+import { ThemeToggle } from '../components/ThemeToggle';
 import './DashboardView.css';
 
 // Import card modules to trigger registration
@@ -123,12 +124,15 @@ function DashboardView() {
     <div className="dashboard">
       <header className="dashboard-header">
         <div className="header-info">
-          <h1 className="dashboard-title">
-            <span className="dashboard-icon" aria-hidden="true">
-              📡
-            </span>
-            NextSkip
-          </h1>
+          <div className="header-row">
+            <h1 className="dashboard-title">
+              <span className="dashboard-icon" aria-hidden="true">
+                📡
+              </span>
+              NextSkip
+            </h1>
+            <ThemeToggle />
+          </div>
           <p className="dashboard-subtitle">
             HF Propagation Dashboard
             <span className="last-update" aria-live="polite" aria-atomic="true">

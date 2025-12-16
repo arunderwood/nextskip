@@ -1,4 +1,7 @@
 :root {
+  /* Support both light and dark color schemes */
+  color-scheme: light dark;
+
   --primary-color: #1976d2;
   --secondary-color: #dc004e;
   --success-color: #4caf50;
@@ -11,16 +14,21 @@
   --border-color: #e0e0e0;
   --spacing-unit: 8px;
   --border-radius: 4px;
-  --shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  --shadow-elevated: 0 4px 8px rgba(0, 0, 0, 0.15);
+
+  /* Refined shadow system for depth hierarchy */
+  --shadow-subtle: 0 1px 2px rgba(0, 0, 0, 0.06);
+  --shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.06);
+  --shadow-elevated: 0 4px 6px rgba(0, 0, 0, 0.07), 0 2px 4px rgba(0, 0, 0, 0.06);
+  --shadow-high: 0 10px 15px rgba(0, 0, 0, 0.1), 0 4px 6px rgba(0, 0, 0, 0.08);
 
   /* === Bento Grid Tokens === */
   /* Grid Configuration */
   --bento-columns-desktop: 4;
   --bento-columns-tablet: 2;
   --bento-columns-mobile: 1;
+  --bento-columns-wide: 6;  /* Wide screens (>1400px) */
   --bento-gap: calc(var(--spacing-unit) * 3);  /* 24px */
-  --bento-card-min-height: 200px;
+  --bento-card-min-height: 160px;  /* Reduced from 200px for compact mode */
 
   /* Card Sizes (in grid units) */
   --bento-card-standard-cols: 1;
@@ -32,22 +40,26 @@
   --bento-card-hero-cols: 2;
   --bento-card-hero-rows: 2;
 
-  /* Hotness Indicator Colors */
-  --hotness-hot-color: var(--success-color);         /* #4caf50 - Green */
-  --hotness-hot-glow: rgba(76, 175, 80, 0.3);
-  --hotness-hot-border: rgba(76, 175, 80, 0.6);
+  /* Hotness Indicator Colors - Refined for Visual Polish */
+  --hotness-hot-color: #2e7d32;                      /* Darker green for text */
+  --hotness-hot-bg: rgba(76, 175, 80, 0.12);         /* Subtle background */
+  --hotness-hot-glow: rgba(76, 175, 80, 0.2);        /* Reduced glow intensity */
+  --hotness-hot-border: rgba(76, 175, 80, 0.5);      /* Refined border */
 
-  --hotness-warm-color: var(--warning-color);        /* #ff9800 - Orange */
-  --hotness-warm-glow: rgba(255, 152, 0, 0.25);
-  --hotness-warm-border: rgba(255, 152, 0, 0.5);
+  --hotness-warm-color: #e65100;                     /* Darker orange for text */
+  --hotness-warm-bg: rgba(255, 152, 0, 0.1);
+  --hotness-warm-glow: rgba(255, 152, 0, 0.15);      /* Reduced glow intensity */
+  --hotness-warm-border: rgba(255, 152, 0, 0.4);
 
-  --hotness-neutral-color: var(--primary-color);     /* #1976d2 - Blue */
-  --hotness-neutral-glow: rgba(25, 118, 210, 0.15);
-  --hotness-neutral-border: rgba(25, 118, 210, 0.3);
+  --hotness-neutral-color: #1565c0;                  /* Slightly darker blue */
+  --hotness-neutral-bg: rgba(25, 118, 210, 0.08);
+  --hotness-neutral-glow: rgba(25, 118, 210, 0.1);
+  --hotness-neutral-border: rgba(25, 118, 210, 0.25);
 
-  --hotness-cool-color: var(--text-secondary);       /* Gray */
-  --hotness-cool-glow: rgba(0, 0, 0, 0.05);
-  --hotness-cool-border: var(--border-color);
+  --hotness-cool-color: #757575;                     /* Medium gray */
+  --hotness-cool-bg: rgba(0, 0, 0, 0.03);
+  --hotness-cool-glow: transparent;
+  --hotness-cool-border: rgba(0, 0, 0, 0.12);
 
   /* Animation Tokens */
   --bento-transition-duration: 300ms;
@@ -59,6 +71,111 @@
   --bento-focus-ring-width: 3px;
   --bento-focus-ring-color: var(--primary-color);
   --bento-focus-ring-offset: 2px;
+
+  /* === Compact/Operator Mode Tokens === */
+  --compact-spacing-factor: 0.625;  /* 62.5% of normal spacing */
+  --compact-font-factor: 0.875;     /* 87.5% of normal font size */
+
+  /* Compact spacing values */
+  --spacing-compact-xs: calc(var(--spacing-unit) * 0.25);  /* 2px */
+  --spacing-compact-sm: calc(var(--spacing-unit) * 0.5);   /* 4px */
+  --spacing-compact-md: calc(var(--spacing-unit) * 0.75);  /* 6px */
+  --spacing-compact-lg: var(--spacing-unit);               /* 8px */
+
+  /* Compact typography */
+  --font-size-compact-xs: 0.6875rem;   /* 11px */
+  --font-size-compact-sm: 0.75rem;     /* 12px */
+  --font-size-compact-md: 0.8125rem;   /* 13px */
+  --font-size-compact-lg: 0.875rem;    /* 14px */
+
+  /* Tighter line heights for density */
+  --line-height-compact: 1.3;
+}
+
+/* === Dark Mode (System Preference) === */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    /* Base colors */
+    --background-color: #0d1117;
+    --surface-color: #161b22;
+    --surface-elevated: #21262d;
+    --border-color: #30363d;
+
+    /* Text colors */
+    --text-primary: rgba(255, 255, 255, 0.92);
+    --text-secondary: rgba(255, 255, 255, 0.65);
+    --text-tertiary: rgba(255, 255, 255, 0.45);
+
+    /* Semantic colors - adjusted for dark mode */
+    --success-color: #3fb950;
+    --warning-color: #d29922;
+    --error-color: #f85149;
+    --primary-color: #58a6ff;
+    --secondary-color: #f778ba;
+
+    /* Shadows for dark mode */
+    --shadow: 0 1px 3px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.04);
+    --shadow-elevated: 0 4px 12px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.06);
+
+    /* Hotness colors - dark mode variants */
+    --hotness-hot-color: #3fb950;
+    --hotness-hot-glow: rgba(63, 185, 80, 0.25);
+    --hotness-hot-border: rgba(63, 185, 80, 0.4);
+
+    --hotness-warm-color: #d29922;
+    --hotness-warm-glow: rgba(210, 153, 34, 0.2);
+    --hotness-warm-border: rgba(210, 153, 34, 0.35);
+
+    --hotness-neutral-color: #58a6ff;
+    --hotness-neutral-glow: rgba(88, 166, 255, 0.12);
+    --hotness-neutral-border: rgba(88, 166, 255, 0.25);
+
+    --hotness-cool-color: #8b949e;
+    --hotness-cool-glow: transparent;
+    --hotness-cool-border: rgba(139, 148, 158, 0.2);
+  }
+}
+
+/* === Dark Mode (Manual Override) === */
+:root[data-theme="dark"] {
+  /* Base colors */
+  --background-color: #0d1117;
+  --surface-color: #161b22;
+  --surface-elevated: #21262d;
+  --border-color: #30363d;
+
+  /* Text colors */
+  --text-primary: rgba(255, 255, 255, 0.92);
+  --text-secondary: rgba(255, 255, 255, 0.65);
+  --text-tertiary: rgba(255, 255, 255, 0.45);
+
+  /* Semantic colors - adjusted for dark mode */
+  --success-color: #3fb950;
+  --warning-color: #d29922;
+  --error-color: #f85149;
+  --primary-color: #58a6ff;
+  --secondary-color: #f778ba;
+
+  /* Shadows for dark mode */
+  --shadow: 0 1px 3px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.04);
+  --shadow-elevated: 0 4px 12px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.06);
+
+  /* Hotness colors - dark mode variants */
+  --hotness-hot-color: #3fb950;
+  --hotness-hot-glow: rgba(63, 185, 80, 0.25);
+  --hotness-hot-border: rgba(63, 185, 80, 0.4);
+
+  --hotness-warm-color: #d29922;
+  --hotness-warm-glow: rgba(210, 153, 34, 0.2);
+  --hotness-warm-border: rgba(210, 153, 34, 0.35);
+
+  --hotness-neutral-color: #58a6ff;
+  --hotness-neutral-glow: rgba(88, 166, 255, 0.12);
+  --hotness-neutral-border: rgba(88, 166, 255, 0.25);
+
+  --hotness-cool-color: #8b949e;
+  --hotness-cool-glow: transparent;
+  --hotness-cool-border: rgba(139, 148, 158, 0.2);
 }
 
 * {
