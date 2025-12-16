@@ -6,20 +6,17 @@
 # CI/CD
 .github
 
-# Build artifacts (except the JAR we need)
-build/*
-!build/libs/*.jar
-.gradle
-gradle
+# Build output (will be created during build)
+build/
+.gradle/
+target/
 
-# Node/Frontend
-node_modules
-frontend/tests
-coverage
+# Node modules (npm install runs during build)
+node_modules/
 
 # IDE
-.idea
-.vscode
+.idea/
+.vscode/
 *.iml
 *.iws
 *.ipr
@@ -28,11 +25,14 @@ coverage
 .DS_Store
 Thumbs.db
 
-# Documentation
-*.md
-docs
-
-# Test and config files
-src/test
+# Development config
+.claude/
 .tool-versions
-.claude
+*.md
+!README.md
+
+# Test artifacts (not needed for production build)
+src/test/e2e/
+playwright-report/
+test-results/
+coverage/
