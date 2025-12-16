@@ -39,8 +39,8 @@ function PotaActivationsContent({ activations }: Props) {
     return `${freqMhz.toFixed(3)} MHz`;
   };
 
-  // Show up to 5 most recent activations
-  const displayActivations = activations.slice(0, 5);
+  // Show up to 8 most recent activations (increased for compact mode)
+  const displayActivations = activations.slice(0, 8);
 
   return (
     <div className="pota-content">
@@ -81,9 +81,9 @@ function PotaActivationsContent({ activations }: Props) {
         </ul>
       )}
 
-      {activations.length > 5 && (
+      {activations.length > 8 && (
         <div className="more-activations">
-          +{activations.length - 5} more activations
+          +{activations.length - 8} more activations
         </div>
       )}
     </div>

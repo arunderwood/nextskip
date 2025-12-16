@@ -6,10 +6,22 @@
 
 .app-main {
   flex: 1;
-  max-width: 1200px;
   width: 100%;
-  margin: 0 auto;
-  padding: calc(var(--spacing-unit) * 2) calc(var(--spacing-unit) * 2);
+  /* Use comfortable padding that scales with viewport */
+  padding: calc(var(--spacing-unit) * 2) calc(var(--spacing-unit) * 3);
+}
+
+/* Increase padding on wide screens for better visual balance */
+@media (min-width: 1400px) {
+  .app-main {
+    padding: calc(var(--spacing-unit) * 2) calc(var(--spacing-unit) * 6);
+  }
+}
+
+@media (min-width: 1920px) {
+  .app-main {
+    padding: calc(var(--spacing-unit) * 2) calc(var(--spacing-unit) * 8);
+  }
 }
 
 .app-footer {
@@ -28,6 +40,21 @@
 .footer-note {
   font-size: 0.75rem;
   opacity: 0.8;
+}
+
+/* Dark mode footer styles */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .app-footer {
+    background: var(--surface-color);
+    border-top-color: var(--border-color);
+    color: var(--text-secondary);
+  }
+}
+
+:root[data-theme="dark"] .app-footer {
+  background: var(--surface-color);
+  border-top-color: var(--border-color);
+  color: var(--text-secondary);
 }
 
 @media (max-width: 768px) {

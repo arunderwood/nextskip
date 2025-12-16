@@ -102,22 +102,22 @@ describe('SotaActivationsContent', () => {
     vi.useRealTimers();
   });
 
-  it('should limit display to 5 activations with overflow message', () => {
-    const manyActivations = Array.from({ length: 8 }, (_, i) =>
+  it('should limit display to 8 activations with overflow message', () => {
+    const manyActivations = Array.from({ length: 10 }, (_, i) =>
       createMockActivation({ spotId: `${i + 1}`, activatorCallsign: `K${i}DEF/P` })
     );
 
     render(<SotaActivationsContent activations={manyActivations} />);
 
-    // Should show count of 8
-    expect(screen.getByText('8')).toBeInTheDocument();
+    // Should show count of 10
+    expect(screen.getByText('10')).toBeInTheDocument();
 
-    // Should show "+3 more activations" message
-    expect(screen.getByText('+3 more activations')).toBeInTheDocument();
+    // Should show "+2 more activations" message (10 total - 8 displayed)
+    expect(screen.getByText('+2 more activations')).toBeInTheDocument();
 
-    // Should render exactly 5 callsign links
+    // Should render exactly 8 callsign links
     const links = screen.getAllByRole('link');
-    expect(links).toHaveLength(5);
+    expect(links).toHaveLength(8);
   });
 
   it('should be WCAG 2.1 AA compliant', async () => {
