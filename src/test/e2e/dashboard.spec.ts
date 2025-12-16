@@ -38,4 +38,59 @@ test.describe('Dashboard', () => {
     await page.waitForSelector('.loading', { state: 'hidden', timeout: 10000 });
     await expect(page.locator('.last-update')).toContainText('Updated');
   });
+
+  test('theme toggle button is visible', async ({ page }) => {
+    const themeToggle = page.locator('.theme-toggle');
+    await expect(themeToggle).toBeVisible();
+  });
+
+  test('can switch to dark mode', async ({ page }) => {
+    const themeToggle = page.locator('.theme-toggle');
+
+    // Click the toggle to switch to dark mode
+    await themeToggle.click();
+
+    // Verify the document has dark theme applied
+    const theme = await page.evaluate(() => document.documentElement.getAttribute('data-theme'));
+    expect(theme).toBe('dark');
+
+    // Verify localStorage was updated
+    const storedTheme = await page.evaluate(() => localStorage.getItem('nextskip-theme'));
+    expect(storedTheme).toBe('dark');
+  });
+
+  test('can switch to light mode', async ({ page }) => {
+    const themeToggle = page.locator('.theme-toggle');
+
+    // Click once to go to dark
+    await themeToggle.click();
+    await page.waitForTimeout(100);
+
+    // Click again to go to light
+    await themeToggle.click();
+
+    // Verify the document has light theme applied
+    const theme = await page.evaluate(() => document.documentElement.getAttribute('data-theme'));
+    expect(theme).toBe('light');
+
+    // Verify localStorage was updated
+    const storedTheme = await page.evaluate(() => localStorage.getItem('nextskip-theme'));
+    expect(storedTheme).toBe('light');
+  });
+
+  test('theme persists after page reload', async ({ page }) => {
+    const themeToggle = page.locator('.theme-toggle');
+
+    // Switch to dark mode
+    await themeToggle.click();
+
+    // Reload the page
+    await page.reload();
+    await page.waitForLoadState('networkidle');
+    await page.waitForSelector('#outlet > *', { timeout: 10000 });
+
+    // Verify dark theme is still applied
+    const theme = await page.evaluate(() => document.documentElement.getAttribute('data-theme'));
+    expect(theme).toBe('dark');
+  });
 });
