@@ -96,17 +96,20 @@ class PotaClientTest {
         Activation first = result.get(0);
         assertEquals("123456", first.spotId());
         assertEquals("W1ABC", first.activatorCallsign());
-        assertEquals("US-0001", first.reference());
-        assertEquals("Test Park", first.referenceName());
         assertEquals(ActivationType.POTA, first.type());
         assertEquals(14250.0, first.frequency());
         assertEquals("SSB", first.mode());
-        assertEquals("FN42", first.grid());
-        assertEquals(42.5, first.latitude());
-        assertEquals(-71.3, first.longitude());
         assertEquals(15, first.qsoCount());
         assertEquals("POTA API", first.source());
         assertNotNull(first.spottedAt());
+
+        // Verify location data (Park object)
+        assertNotNull(first.location());
+        assertEquals("US-0001", first.location().reference());
+        assertEquals("Test Park", first.location().name());
+        assertEquals("FN42", ((io.nextskip.activations.model.Park) first.location()).grid());
+        assertEquals(42.5, ((io.nextskip.activations.model.Park) first.location()).latitude());
+        assertEquals(-71.3, ((io.nextskip.activations.model.Park) first.location()).longitude());
 
         Activation second = result.get(1);
         assertEquals("123457", second.spotId());
@@ -167,10 +170,13 @@ class PotaClientTest {
         Activation activation = result.get(0);
         assertEquals("W1ABC", activation.activatorCallsign());
         assertNull(activation.frequency());
-        assertNull(activation.grid());
-        assertNull(activation.latitude());
-        assertNull(activation.longitude());
         assertNull(activation.qsoCount());
+
+        // Verify location object exists but has null coordinate/grid fields
+        assertNotNull(activation.location());
+        assertNull(((io.nextskip.activations.model.Park) activation.location()).grid());
+        assertNull(((io.nextskip.activations.model.Park) activation.location()).latitude());
+        assertNull(((io.nextskip.activations.model.Park) activation.location()).longitude());
     }
 
     @Test

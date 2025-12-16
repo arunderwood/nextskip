@@ -11,17 +11,17 @@ describe('PotaActivationsContent', () => {
   const createMockActivation = (overrides?: Partial<Activation>): Activation => ({
     spotId: '123456',
     activatorCallsign: 'W1ABC',
-    reference: 'US-0001',
-    referenceName: 'Test Park',
     type: 'POTA',
     frequency: 14250,
     mode: 'SSB',
-    grid: 'FN42',
-    latitude: 42.5,
-    longitude: -71.3,
     spottedAt: new Date().toISOString(),
     qsoCount: 15,
     source: 'POTA API',
+    location: {
+      reference: 'US-0001',
+      name: 'Test Park',
+      regionCode: 'MA',
+    },
     ...overrides,
   });
 
@@ -52,15 +52,18 @@ describe('PotaActivationsContent', () => {
   it('should display park reference and name', () => {
     const activations = [
       createMockActivation({
-        reference: 'US-0001',
-        referenceName: 'Yellowstone National Park',
+        location: {
+          reference: 'US-0001',
+          name: 'Yellowstone National Park',
+          regionCode: 'WY',
+        },
       }),
     ];
 
     render(<PotaActivationsContent activations={activations} />);
 
     expect(screen.getByText('US-0001')).toBeInTheDocument();
-    expect(screen.getByText('Yellowstone National Park')).toBeInTheDocument();
+    expect(screen.getByText('Yellowstone National Park, WY')).toBeInTheDocument();
   });
 
   it('should display frequency and mode', () => {
@@ -136,7 +139,11 @@ describe('PotaActivationsContent', () => {
       createMockActivation({
         spotId: '1',
         activatorCallsign: 'W1ABC',
-        reference: 'US-0001',
+        location: {
+          reference: 'US-0001',
+          name: 'Test Park',
+          regionCode: 'MA',
+        },
       }),
     ];
 
@@ -232,12 +239,18 @@ describe('PotaActivationsContent', () => {
 
   it('should handle missing park name gracefully', () => {
     const activations = [
-      createMockActivation({ referenceName: undefined }),
+      createMockActivation({
+        location: {
+          reference: 'US-0001',
+          name: undefined,
+          regionCode: 'MA',
+        },
+      }),
     ];
 
     const { container } = render(<PotaActivationsContent activations={activations} />);
 
-    // Should not display park-name div when referenceName is undefined
+    // Should not display park-name div when name is undefined
     expect(container.querySelector('.park-name')).not.toBeInTheDocument();
   });
 

@@ -33,6 +33,7 @@ public record PotaSpotDto(
         @JsonProperty("frequency") String frequency,
         @JsonProperty("mode") String mode,
         @JsonProperty("name") String name,
+        @JsonProperty("locationDesc") String locationDesc,
         @JsonProperty("grid6") String grid6,
         @JsonProperty("latitude") String latitude,
         @JsonProperty("longitude") String longitude,

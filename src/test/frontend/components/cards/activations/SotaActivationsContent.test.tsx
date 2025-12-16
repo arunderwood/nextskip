@@ -11,17 +11,17 @@ describe('SotaActivationsContent', () => {
   const createMockActivation = (overrides?: Partial<Activation>): Activation => ({
     spotId: '654321',
     activatorCallsign: 'K2DEF/P',
-    reference: 'W7W/LC-001',
-    referenceName: 'Mount Test',
     type: 'SOTA',
     frequency: 7200,
     mode: 'CW',
-    grid: undefined,
-    latitude: undefined,
-    longitude: undefined,
     spottedAt: new Date().toISOString(),
     qsoCount: undefined,
     source: 'SOTA API',
+    location: {
+      reference: 'W7W/LC-001',
+      name: 'Mount Test',
+      regionCode: 'WA',
+    },
     ...overrides,
   });
 
@@ -51,15 +51,18 @@ describe('SotaActivationsContent', () => {
   it('should display summit reference and name', () => {
     const activations = [
       createMockActivation({
-        reference: 'W7W/LC-001',
-        referenceName: 'Mount Rainier',
+        location: {
+          reference: 'W7W/LC-001',
+          name: 'Mount Rainier',
+          regionCode: 'WA',
+        },
       }),
     ];
 
     render(<SotaActivationsContent activations={activations} />);
 
     expect(screen.getByText('W7W/LC-001')).toBeInTheDocument();
-    expect(screen.getByText('Mount Rainier')).toBeInTheDocument();
+    expect(screen.getByText('Mount Rainier, WA')).toBeInTheDocument();
   });
 
   it('should display frequency and mode', () => {
@@ -125,7 +128,11 @@ describe('SotaActivationsContent', () => {
       createMockActivation({
         spotId: '1',
         activatorCallsign: 'K2DEF/P',
-        reference: 'W7W/LC-001',
+        location: {
+          reference: 'W7W/LC-001',
+          name: 'Mount Test',
+          regionCode: 'WA',
+        },
       }),
     ];
 
@@ -221,12 +228,18 @@ describe('SotaActivationsContent', () => {
 
   it('should handle missing summit name gracefully', () => {
     const activations = [
-      createMockActivation({ referenceName: undefined }),
+      createMockActivation({
+        location: {
+          reference: 'W7W/LC-001',
+          name: undefined,
+          regionCode: 'WA',
+        },
+      }),
     ];
 
     const { container } = render(<SotaActivationsContent activations={activations} />);
 
-    // Should not display summit-name div when referenceName is undefined
+    // Should not display summit-name div when name is undefined
     expect(container.querySelector('.summit-name')).not.toBeInTheDocument();
   });
 

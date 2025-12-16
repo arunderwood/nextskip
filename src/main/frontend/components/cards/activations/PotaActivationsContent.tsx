@@ -8,6 +8,7 @@
 
 import React from 'react';
 import type Activation from 'Frontend/generated/io/nextskip/activations/model/Activation';
+import type { ActivationLocationExt } from 'Frontend/types/ActivationLocation';
 import './PotaActivationsContent.css';
 
 interface Props {
@@ -66,15 +67,18 @@ function PotaActivationsContent({ activations }: Props) {
                 >
                   {activation.activatorCallsign}
                 </a>
-                <span className="reference-code">{activation.reference}</span>
+                <span className="reference-code">{(activation.location as ActivationLocationExt)?.reference}</span>
               </div>
               <div className="activation-details">
                 <span className="frequency">{formatFrequency(activation.frequency)}</span>
                 <span className="mode">{activation.mode || 'Unknown'}</span>
                 <span className="time-since">{formatTimeSince(activation.spottedAt)}</span>
               </div>
-              {activation.referenceName && (
-                <div className="park-name">{activation.referenceName}</div>
+              {(activation.location as ActivationLocationExt)?.name && (
+                <div className="park-name">
+                  {(activation.location as ActivationLocationExt).name}
+                  {(activation.location as ActivationLocationExt).regionCode && `, ${(activation.location as ActivationLocationExt).regionCode}`}
+                </div>
               )}
             </li>
           ))}

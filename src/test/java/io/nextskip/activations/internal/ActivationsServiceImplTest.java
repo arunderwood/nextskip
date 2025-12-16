@@ -169,20 +169,26 @@ class ActivationsServiceImplTest {
      * Helper method to create a test POTA activation.
      */
     private Activation createPotaActivation(String id, String callsign) {
+        io.nextskip.activations.model.Park park = new io.nextskip.activations.model.Park(
+                "US-0001",
+                "Test Park",
+                "CO",
+                "US",
+                "FN42",
+                42.5,
+                -71.3
+        );
+
         return new Activation(
                 id,
                 callsign,
-                "US-0001",
-                "Test Park",
                 ActivationType.POTA,
                 14250.0,
                 "SSB",
-                "FN42",
-                42.5,
-                -71.3,
                 Instant.now(),
                 10,
-                "POTA API"
+                "POTA API",
+                park
         );
     }
 
@@ -190,20 +196,23 @@ class ActivationsServiceImplTest {
      * Helper method to create a test SOTA activation.
      */
     private Activation createSotaActivation(String id, String callsign) {
+        io.nextskip.activations.model.Summit summit = new io.nextskip.activations.model.Summit(
+                "W7W/LC-001",
+                "Test Summit",
+                "WA",
+                "W7W"
+        );
+
         return new Activation(
                 id,
                 callsign,
-                "W7W/LC-001",
-                "Test Summit",
                 ActivationType.SOTA,
                 7200.0,
                 "CW",
-                null,
-                null,
-                null,
                 Instant.now(),
                 null,
-                "SOTA API"
+                "SOTA API",
+                summit
         );
     }
 }
