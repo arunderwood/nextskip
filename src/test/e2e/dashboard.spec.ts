@@ -25,8 +25,8 @@ test.describe('Dashboard', () => {
   });
 
   test('dashboard cards render after loading', async ({ page }) => {
-    // Wait for loading to complete
-    await page.waitForSelector('.loading', { state: 'hidden', timeout: 30000 });
+    // Wait for loading to complete (should be < 10 seconds)
+    await page.waitForSelector('.loading', { state: 'hidden', timeout: 10000 });
 
     // Verify BentoGrid has cards
     const cards = page.locator('.bento-card');
@@ -35,7 +35,7 @@ test.describe('Dashboard', () => {
   });
 
   test('shows last update timestamp', async ({ page }) => {
-    await page.waitForSelector('.loading', { state: 'hidden', timeout: 30000 });
+    await page.waitForSelector('.loading', { state: 'hidden', timeout: 10000 });
     await expect(page.locator('.last-update')).toContainText('Updated');
   });
 });
