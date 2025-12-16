@@ -124,6 +124,28 @@ This runs the full build including:
 - TypeScript: 0 errors
 - "Started NextSkipApplication" message in logs
 
+### Step 6: E2E Tests (Playwright)
+
+**⚠️ OPTIONAL**: E2E tests are optional for pre-commit validation but recommended before creating pull requests.
+
+**Execute**: `npm run e2e`
+
+This runs Playwright E2E tests including:
+- Dashboard loads successfully
+- Page title and header rendering
+- Dashboard cards render after loading
+- Last update timestamp display
+
+**Report**:
+- Test result (PASS or FAIL)
+- Test count (X passing)
+- Test duration (in seconds)
+- Any test failures with error messages
+
+**Expected**: All 4 tests passing in ~5-15 seconds
+
+**Note**: Playwright will automatically start the application via `./gradlew bootRun` before running tests in local development mode. In CI, tests run against the production JAR artifact.
+
 ## Summary Report Format
 
 After executing ALL validation steps, provide this structured summary using ACTUAL results:
@@ -141,6 +163,7 @@ After executing ALL validation steps, provide this structured summary using ACTU
   - SpotBugs: [actual status]
 📦 Artifacts: [actual JAR name] ([actual size])
 🚀 Runtime Validation: [SUCCESS/FAILURE] (started in [X]s, TypeScript: [N] errors)
+🎭 E2E Tests (Optional): [SUCCESS/FAILURE/SKIPPED] ([actual count] passing, [actual duration])
 
 🎯 Overall Result: [✅ READY TO COMMIT / ❌ NEEDS FIXES]
 
@@ -162,12 +185,14 @@ After executing ALL validation steps, provide this structured summary using ACTU
   - SpotBugs: exit code 1 (non-blocking)
 📦 Artifacts: nextskip-0.0.1-SNAPSHOT.jar (~82MB)
 🚀 Runtime Validation: SUCCESS (started in ~7s, TypeScript: 0 errors)
+🎭 E2E Tests (Optional): SUCCESS (4/4 passing, ~12s)
 
 🎯 Overall Result: ✅ READY TO COMMIT
 
 All validation checks passed. Quality violations are within acceptable limits.
 Frontend accessibility tests (WCAG 2.1 AA) passing.
 Application starts without runtime exceptions.
+E2E tests verify dashboard loads correctly.
 ```
 
 ## Troubleshooting

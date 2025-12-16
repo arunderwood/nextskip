@@ -6,7 +6,10 @@
     "test": "vitest",
     "test:ui": "vitest --ui",
     "test:run": "vitest run",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "e2e": "playwright test",
+    "e2e:ui": "playwright test --ui",
+    "e2e:headed": "playwright test --headed"
   },
   "dependencies": {
     "@vaadin/aura": "25.0.0-rc1",
@@ -33,6 +36,7 @@
   },
   "devDependencies": {
     "@babel/preset-react": "^7.28.5",
+    "@playwright/test": "^1.51.1",
     "@preact/signals-react-transform": "0.6.0",
     "@rollup/plugin-replace": "6.0.3",
     "@rollup/pluginutils": "5.3.0",
@@ -126,7 +130,7 @@
       "vite-plugin-checker": "0.12.0",
       "workbox-build": "7.4.0"
     },
-    "hash": "5ea3206fa3635ad0357e4115621cbb3a142378e8fe67a08c6d456e5c4c6c318a"
+    "hash": "6a9763361def0bc91f871a7fa80788728d5fbebab7d0e78ba308c2cd2ad0f954"
   },
   "overrides": {
     "@vaadin/vaadin-development-mode-detector": "$@vaadin/vaadin-development-mode-detector",

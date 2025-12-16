@@ -45,6 +45,9 @@ function DashboardView() {
   };
 
   useEffect(() => {
+    // Set document title
+    document.title = 'NextSkip - HF Propagation Dashboard';
+
     // Initial fetch
     fetchData();
 

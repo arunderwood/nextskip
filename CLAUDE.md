@@ -48,6 +48,8 @@ open build/reports/jacoco/test/html/index.html
 
 ### Frontend Testing
 
+#### Unit/Component Tests (Vitest)
+
 ```bash
 # Watch mode (re-runs on file changes)
 npm test
@@ -71,6 +73,31 @@ npm run test:coverage
 **Configuration**: See `vitest.config.ts` and `src/test/frontend/setup.ts`
 
 **Test Location**: Following Maven/Gradle conventions and Vaadin's official example repos, tests are in `src/test/frontend/` (parallel to `src/main/frontend/`)
+
+#### End-to-End Tests (Playwright)
+
+```bash
+# Run E2E tests
+npm run e2e
+
+# Run with Playwright UI (for debugging)
+npm run e2e:ui
+
+# Run in headed mode (see browser)
+npm run e2e:headed
+```
+
+**Test Suite**: E2E tests in `src/test/e2e/` covering:
+- Dashboard loads successfully
+- Page title rendering
+- Dashboard cards render
+- Last update timestamp display
+
+**Configuration**: See `playwright.config.ts`
+
+**Local Development**: Playwright automatically starts the application via `./gradlew bootRun` before running tests
+
+**CI Mode**: Tests run against the production JAR artifact to validate the actual deployable build
 
 ## Architecture Guidelines
 

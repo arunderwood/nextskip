@@ -126,6 +126,24 @@ npm run test:coverage
 
 **Coverage Reports**: `coverage/index.html`
 
+### E2E Tests
+Playwright tests validating complete user workflows in the browser.
+
+```bash
+# Run E2E tests
+npm run e2e
+
+# Run with Playwright UI (for debugging)
+npm run e2e:ui
+
+# Run in headed mode (see browser)
+npm run e2e:headed
+```
+
+**Test Suite**: Tests in `src/test/e2e/` covering dashboard loading, rendering, and user interactions.
+
+**Configuration**: See `playwright.config.ts`
+
 ## Architecture
 
 NextSkip uses a modular monolith structure with clean module boundaries:

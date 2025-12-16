@@ -106,30 +106,56 @@ class PropagationServiceIntegrationTest {
 
 ### Layer 3: End-to-End Tests
 
-**Purpose**: Test complete user workflows
+**Purpose**: Test complete user workflows in the browser
 
 **For NextSkip**:
 - Test dashboard loads and displays propagation data
-- Test band condition table renders correctly
+- Test page title and header rendering
+- Test dashboard cards render after loading
+- Test last update timestamp displays
 - Test error states when APIs are unavailable
-- Test caching prevents excessive API calls
 - Test UI responds to data updates
 
-**Framework**: Selenium WebDriver or Playwright (Java bindings)
+**Framework**: Playwright
+**Location**: `src/test/e2e/`
 **Coverage Target**: Happy paths + critical error scenarios
 
-**Example E2E Test**:
-```java
-@Test
-void testDashboard_DisplaysSolarIndices() {
-    driver.get("http://localhost:8080");
+**Example E2E Tests**:
+```typescript
+// src/test/e2e/dashboard.spec.ts
+import { test, expect } from '@playwright/test';
 
-    var solarFluxElement = driver.findElement(By.id("solar-flux-value"));
-    assertNotNull(solarFluxElement);
+test.describe('Dashboard', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/');
+    await page.waitForLoadState('networkidle');
+    await page.waitForSelector('#outlet > *', { timeout: 10000 });
+  });
 
-    var solarFlux = Double.parseDouble(solarFluxElement.getText());
-    assertTrue(solarFlux > 0 && solarFlux < 1000);
-}
+  test('page loads successfully', async ({ page }) => {
+    await page.waitForFunction(() => document.title !== '', { timeout: 5000 });
+    await expect(page).toHaveTitle(/NextSkip/i);
+  });
+
+  test('dashboard cards render after loading', async ({ page }) => {
+    await page.waitForSelector('.loading', { state: 'hidden', timeout: 30000 });
+    const cards = page.locator('.bento-card');
+    await expect(cards.first()).toBeVisible();
+    expect(await cards.count()).toBeGreaterThan(0);
+  });
+});
+```
+
+**Running E2E Tests**:
+```bash
+# Run all E2E tests
+npm run e2e
+
+# Run with Playwright UI for debugging
+npm run e2e:ui
+
+# Run in headed mode (see browser)
+npm run e2e:headed
 ```
 
 ### Layer 4: Property-Based Tests (Optional, Advanced)
@@ -206,7 +232,7 @@ Provide a structured test plan:
 - 6 unit tests in NoaaSwpcClientTest
 - 8 unit tests in HamQslClientTest
 - 0 integration tests
-- 0 E2E tests
+- 4 E2E tests (Playwright in src/test/e2e/)
 - 0 property-based tests
 - Mutation testing not configured
 
@@ -228,8 +254,12 @@ Provide a structured test plan:
 - ❌ Cache integration not tested
 
 **Layer 3 (E2E)**:
-- ❌ No automated UI tests
-- ❌ Dashboard rendering not validated
+- ✅ Dashboard loads successfully (Playwright)
+- ✅ Page title and header rendering validated
+- ✅ Dashboard cards render after loading
+- ✅ Last update timestamp displays
+- ❌ Error states when APIs are unavailable not tested
+- ❌ UI response to data updates not tested
 
 **Layer 4 (Property)**:
 - ❌ Not implemented
@@ -252,9 +282,10 @@ Provide a structured test plan:
 3. Test circuit breaker opens after failures (est: 25 min)
 
 **Layer 3 - E2E Tests**:
-1. Test dashboard loads and displays solar flux (est: 45 min)
-2. Test band condition table renders 8 bands (est: 30 min)
-3. Test error message shown when API unavailable (est: 30 min)
+1. ✅ IMPLEMENTED: Dashboard loads and displays content (4 tests in dashboard.spec.ts)
+2. Test error message shown when API unavailable (est: 30 min)
+3. Test UI responds to data updates (est: 40 min)
+4. Test navigation between different views (est: 25 min)
 
 #### Medium Priority (Schedule for Later)
 
@@ -287,8 +318,9 @@ Provide a structured test plan:
 ### Dependencies
 
 **For E2E Tests**:
-- Add Selenium or Playwright dependency to build.gradle
-- Configure WebDriver (ChromeDriver for Chrome)
+- ✅ CONFIGURED: Playwright (@playwright/test v1.51.1) already installed
+- ✅ Configuration file: playwright.config.ts
+- Run: `npm run e2e` (local dev) or `npx playwright test` (CI)
 
 **For Property Tests**:
 - Add jqwik dependency to build.gradle
@@ -301,8 +333,8 @@ Provide a structured test plan:
 
 1. Implement high-priority unit tests (Layer 1)
 2. Add integration tests for Spring Boot context (Layer 2)
-3. Setup E2E testing framework (Selenium/Playwright)
-4. Implement dashboard rendering tests (Layer 3)
+3. ✅ COMPLETE: E2E testing framework (Playwright) set up with 4 dashboard tests
+4. Add additional E2E tests for error states and data updates (Layer 3)
 5. Configure mutation testing (Layer 5)
 6. Review mutation score and improve weak tests
 7. Consider property-based tests for critical invariants (Layer 4)
