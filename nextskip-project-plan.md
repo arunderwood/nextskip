@@ -241,16 +241,17 @@ Not all ham radio activities are equally suited to NextSkip's aggregation model.
 
 **Tier 1 - Infrastructure & Core Activities** (location-independent):
 - HF Propagation (Phase 1 ✅) - Universal conditions, machine-readable feeds
-- Dashboard Infrastructure (Phase 2) - Multi-card grid, WebSocket, card registration system
-- POTA/SOTA (Phase 3) - Clear "active now" signal, broad appeal
+- Dashboard Infrastructure (Phase 2 ✅) - Multi-card grid, WebSocket, card registration system
+- POTA/SOTA (Phase 3 ✅) - Clear "active now" signal, broad appeal
 - Contests (Phase 4) - Predictable schedule, universal applicability
 
 **Tier 2 - Advanced Activities** (requires aggregation or real-time processing):
 - Band Activity / PSKReporter (Phase 5) - Real-time MQTT, statistical aggregation
+- Meteor Scatter (Phase 6) - Meteor shower tracking for MS propagation opportunities
 
 **Tier 3 - Personalized Activities** (requires user input):
-- Satellites (Phase 6) - Location-dependent, needs user grid square
-- Spring AI Assistant (Phase 7) - Enhancement layer
+- Satellites (Phase 7) - Location-dependent, needs user grid square (was Phase 6)
+- Spring AI Assistant (Phase 8) - Enhancement layer (was Phase 7)
 
 **Note:** Each phase (3-6) includes both backend module implementation AND frontend card component, enabling iterative delivery of complete features.
 
@@ -562,7 +563,53 @@ public record BandActivity(
 
 ---
 
-### Phase 6: Satellite Tracking Module
+### Phase 6: Meteor Scatter Module
+**Goal:** Add meteor shower tracking for MS propagation opportunities (backend + frontend card)
+
+**Backend Tasks:**
+1. Create `meteors/` module structure following established patterns
+2. Implement meteor shower data client (IMO data or curated JSON)
+3. Create `MeteorShower` record implementing `Event` interface
+4. Calculate current activity level based on peak date and ZHR (Zenithal Hourly Rate)
+5. Add `MeteorEndpoint` with `@BrowserCallable`
+
+**Frontend Tasks:**
+6. Create `MeteorShowerCard` component
+7. Implement scoring logic (high score during peak, medium before/after)
+8. Add card factory to dashboard
+9. Display current shower activity level and peak timing
+
+**Key Meteor Showers:**
+- Quadrantids (Jan 3-4): ZHR 110
+- Perseids (Aug 12-13): ZHR 100
+- Geminids (Dec 13-14): ZHR 150
+- Leonids (Nov 17-18): ZHR 15
+
+**Key Models:**
+```java
+public record MeteorShower(
+    String name,
+    Instant peakStart,
+    Instant peakEnd,
+    Instant visibilityStart,    // Active period start
+    Instant visibilityEnd,      // Active period end
+    int peakZhr,                // Zenithal Hourly Rate at peak
+    int currentZhr,             // Calculated current ZHR
+    EventStatus status,
+    Duration timeToPeak
+) implements Event {}
+```
+
+**Acceptance Criteria:**
+- Meteor shower card appears in bento grid sorted by score
+- Shows active showers with high score during peak
+- Shows upcoming showers (next 7 days) with medium score
+- Displays ZHR and time to/from peak
+- Reuses `Event` abstraction from Phase 4
+
+---
+
+### Phase 7: Satellite Tracking Module
 **Goal:** Add satellite pass tracking (backend + frontend card)
 
 **Backend Tasks:**
@@ -619,7 +666,7 @@ public record SatellitePass(
 
 ---
 
-### Phase 7: Spring AI Integration
+### Phase 8: Spring AI Integration
 **Goal:** Add conversational AI assistant for natural language queries
 
 **Tasks:**
