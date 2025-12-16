@@ -17,8 +17,8 @@ import type { BentoCardConfig } from 'Frontend/types/bento';
 export interface DashboardData {
   propagation?: import('Frontend/generated/io/nextskip/propagation/api/PropagationResponse').default;
   activations?: import('Frontend/generated/io/nextskip/activations/api/ActivationsResponse').default;
+  contests?: import('Frontend/generated/io/nextskip/contests/api/ContestsResponse').default;
   // Future modules will add their types here as they're implemented:
-  // contests?: ContestsResponse;
   // satellites?: SatellitesResponse;
   // pskreporter?: PskReporterResponse;
 }

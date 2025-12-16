@@ -84,6 +84,12 @@ dependencies {
     // Jackson XML
     implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-xml'
 
+    // iCal4j for calendar/event parsing
+    implementation 'org.mnode.ical4j:ical4j:4.0.3'
+
+    // Jsoup for HTML parsing/scraping
+    implementation 'org.jsoup:jsoup:1.18.3'
+
     // Observability
     runtimeOnly 'io.micrometer:micrometer-registry-prometheus'
 

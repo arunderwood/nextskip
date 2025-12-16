@@ -37,6 +37,9 @@ resilience4j:
       sota:
         baseConfig: default
         waitDurationInOpenState: 60s  # SOTA real-time spots
+      contests:
+        baseConfig: default
+        waitDurationInOpenState: 120s  # Contests update less frequently
 
   retry:
     configs:
@@ -58,6 +61,9 @@ resilience4j:
       sota:
         baseConfig: default
         maxAttempts: 2  # SOTA spots - fewer retries for freshness
+      contests:
+        baseConfig: default
+        maxAttempts: 2  # Contests - fewer retries, data changes infrequently
 
 # Actuator Configuration
 management:

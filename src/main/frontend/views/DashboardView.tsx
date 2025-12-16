@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { PropagationEndpoint, ActivationsEndpoint } from 'Frontend/generated/endpoints';
+import { PropagationEndpoint, ActivationsEndpoint, ContestEndpoint } from 'Frontend/generated/endpoints';
 import type PropagationResponse from 'Frontend/generated/io/nextskip/propagation/api/PropagationResponse';
 import type ActivationsResponse from 'Frontend/generated/io/nextskip/activations/api/ActivationsResponse';
+import type ContestsResponse from 'Frontend/generated/io/nextskip/contests/api/ContestsResponse';
 import type { DashboardData } from '../components/cards/types';
 import { BentoGrid } from '../components/bento';
 import { useDashboardCards } from '../hooks/useDashboardCards';
@@ -12,12 +13,16 @@ import './DashboardView.css';
 // Import card modules to trigger registration
 import '../components/cards/propagation';
 import '../components/cards/activations';
+import '../components/cards/contests';
 
 function DashboardView() {
   const [propagationData, setPropagationData] = useState<PropagationResponse | undefined>(
     undefined
   );
   const [activationsData, setActivationsData] = useState<ActivationsResponse | undefined>(
+    undefined
+  );
+  const [contestsData, setContestsData] = useState<ContestsResponse | undefined>(
     undefined
   );
   const [loading, setLoading] = useState(true);
@@ -29,13 +34,15 @@ function DashboardView() {
       setError(null);
 
       // Fetch data from all modules in parallel
-      const [propagation, activations] = await Promise.all([
+      const [propagation, activations, contests] = await Promise.all([
         PropagationEndpoint.getPropagationData(),
         ActivationsEndpoint.getActivations(),
+        ContestEndpoint.getContests(),
       ]);
 
       setPropagationData(propagation);
       setActivationsData(activations);
+      setContestsData(contests);
       setLastUpdate(new Date());
     } catch (err) {
       console.error('Error fetching dashboard data:', err);
@@ -62,8 +69,8 @@ function DashboardView() {
   const dashboardData: DashboardData = {
     propagation: propagationData,
     activations: activationsData,
+    contests: contestsData,
     // Future modules will add their data here:
-    // contests: contestsData,
     // satellites: satellitesData,
   };
 

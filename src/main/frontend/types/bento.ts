@@ -36,6 +36,7 @@ export type ActivityType =
   | 'band-conditions'
   | 'pota-activations'
   | 'sota-activations'
+  | 'contests'
   | 'satellite-passes'
   | 'contest-calendar'
   | 'real-time-spots';
