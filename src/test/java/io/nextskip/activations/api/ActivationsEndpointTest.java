@@ -168,20 +168,26 @@ class ActivationsEndpointTest {
     void shouldPreserveActivationDetails() {
         // Given: Service returns activation with all details
         Instant now = Instant.now();
+        io.nextskip.activations.model.Park park = new io.nextskip.activations.model.Park(
+                "US-0001",
+                "Test Park",
+                "CO",
+                "US",
+                "FN42",
+                42.5,
+                -71.3
+        );
+
         Activation detailed = new Activation(
                 "12345",
                 "W1ABC",
-                "US-0001",
-                "Test Park",
                 ActivationType.POTA,
                 14250.0,
                 "SSB",
-                "FN42",
-                42.5,
-                -71.3,
                 now,
                 15,
-                "POTA API"
+                "POTA API",
+                park
         );
         ActivationsSummary summary = new ActivationsSummary(List.of(detailed), 1, 0, now);
 
@@ -197,17 +203,20 @@ class ActivationsEndpointTest {
         Activation returned = response.potaActivations().get(0);
         assertEquals("12345", returned.spotId());
         assertEquals("W1ABC", returned.activatorCallsign());
-        assertEquals("US-0001", returned.reference());
-        assertEquals("Test Park", returned.referenceName());
         assertEquals(ActivationType.POTA, returned.type());
         assertEquals(14250.0, returned.frequency());
         assertEquals("SSB", returned.mode());
-        assertEquals("FN42", returned.grid());
-        assertEquals(42.5, returned.latitude());
-        assertEquals(-71.3, returned.longitude());
         assertEquals(now, returned.spottedAt());
         assertEquals(15, returned.qsoCount());
         assertEquals("POTA API", returned.source());
+
+        // Verify location data
+        assertNotNull(returned.location());
+        assertEquals("US-0001", returned.location().reference());
+        assertEquals("Test Park", returned.location().name());
+        assertEquals("FN42", ((io.nextskip.activations.model.Park) returned.location()).grid());
+        assertEquals(42.5, ((io.nextskip.activations.model.Park) returned.location()).latitude());
+        assertEquals(-71.3, ((io.nextskip.activations.model.Park) returned.location()).longitude());
 
         verify(activationsService).getActivationsSummary();
     }
@@ -244,20 +253,26 @@ class ActivationsEndpointTest {
      * Helper method to create a test POTA activation.
      */
     private Activation createPotaActivation(String id) {
+        io.nextskip.activations.model.Park park = new io.nextskip.activations.model.Park(
+                "US-0001",
+                "Test Park",
+                "CO",
+                "US",
+                "FN42",
+                42.5,
+                -71.3
+        );
+
         return new Activation(
                 id,
                 "W1ABC",
-                "US-0001",
-                "Test Park",
                 ActivationType.POTA,
                 14250.0,
                 "SSB",
-                "FN42",
-                42.5,
-                -71.3,
                 Instant.now(),
                 10,
-                "POTA API"
+                "POTA API",
+                park
         );
     }
 
@@ -265,20 +280,23 @@ class ActivationsEndpointTest {
      * Helper method to create a test SOTA activation.
      */
     private Activation createSotaActivation(String id) {
+        io.nextskip.activations.model.Summit summit = new io.nextskip.activations.model.Summit(
+                "W7W/LC-001",
+                "Test Summit",
+                "WA",
+                "W7W"
+        );
+
         return new Activation(
                 id,
                 "K2DEF/P",
-                "W7W/LC-001",
-                "Test Summit",
                 ActivationType.SOTA,
                 7200.0,
                 "CW",
-                null,
-                null,
-                null,
                 Instant.now(),
                 null,
-                "SOTA API"
+                "SOTA API",
+                summit
         );
     }
 }

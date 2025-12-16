@@ -96,17 +96,19 @@ class SotaClientTest {
         Activation activation = result.get(0);
         assertEquals("123456", activation.spotId());
         assertEquals("W1ABC/P", activation.activatorCallsign());
-        assertEquals("W7W/LC-001", activation.reference());
-        assertEquals("Mount Test", activation.referenceName());
         assertEquals(ActivationType.SOTA, activation.type());
         assertEquals(14250.0, activation.frequency(), "Frequency should be converted from MHz to kHz");
         assertEquals("SSB", activation.mode());
-        assertNull(activation.grid(), "SOTA doesn't provide grid");
-        assertNull(activation.latitude(), "SOTA doesn't provide coordinates");
-        assertNull(activation.longitude(), "SOTA doesn't provide coordinates");
         assertNull(activation.qsoCount(), "SOTA doesn't provide QSO count");
         assertEquals("SOTA API", activation.source());
         assertNotNull(activation.spottedAt());
+
+        // Verify location data (Summit object)
+        assertNotNull(activation.location());
+        assertEquals("W7W/LC-001", activation.location().reference());
+        assertEquals("Mount Test", activation.location().name());
+        assertEquals("WA", activation.location().regionCode(), "Should map W7W association to WA state");
+        assertEquals("W7W", ((io.nextskip.activations.model.Summit) activation.location()).associationCode());
     }
 
     @Test

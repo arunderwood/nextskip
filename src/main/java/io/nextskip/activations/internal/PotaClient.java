@@ -5,6 +5,7 @@ import io.github.resilience4j.retry.annotation.Retry;
 import io.nextskip.activations.internal.dto.PotaSpotDto;
 import io.nextskip.activations.model.Activation;
 import io.nextskip.activations.model.ActivationType;
+import io.nextskip.activations.model.Park;
 import io.nextskip.common.client.ExternalDataClient;
 import io.nextskip.propagation.internal.ExternalApiException;
 import org.slf4j.Logger;
@@ -165,20 +166,31 @@ public class PotaClient implements ExternalDataClient<List<Activation>> {
             Double latitude = parseDouble(dto.latitude());
             Double longitude = parseDouble(dto.longitude());
 
+            // Parse location info from locationDesc (e.g., "US-CO" -> countryCode="US", regionCode="CO")
+            String regionCode = parseRegionCode(dto.locationDesc());
+            String countryCode = parseCountryCode(dto.locationDesc());
+
+            // Create Park object with all location data
+            Park park = new Park(
+                    dto.reference(),
+                    dto.name(),
+                    regionCode,
+                    countryCode,
+                    dto.grid6(),
+                    latitude,
+                    longitude
+            );
+
             return new Activation(
                     dto.spotId() != null ? dto.spotId().toString() : null,
                     dto.activator(),
-                    dto.reference(),
-                    dto.name(),
                     ActivationType.POTA,
                     frequency,
                     dto.mode(),
-                    dto.grid6(),
-                    latitude,
-                    longitude,
                     spottedAt,
                     dto.qsos(),
-                    getSourceName()
+                    getSourceName(),
+                    park
             );
 
         } catch (Exception e) {
@@ -199,6 +211,48 @@ public class PotaClient implements ExternalDataClient<List<Activation>> {
         } catch (NumberFormatException e) {
             return null;
         }
+    }
+
+    /**
+     * Parse region code from POTA locationDesc field.
+     *
+     * <p>Format: "{country}-{region}" (e.g., "US-CO" → "CO", "K-0817" → null)
+     *
+     * @param locationDesc Location descriptor from POTA API
+     * @return Region code (state abbreviation), or null if not parseable
+     */
+    private String parseRegionCode(String locationDesc) {
+        if (locationDesc == null || locationDesc.isBlank()) {
+            return null;
+        }
+
+        int hyphenIndex = locationDesc.indexOf('-');
+        if (hyphenIndex > 0 && hyphenIndex < locationDesc.length() - 1) {
+            return locationDesc.substring(hyphenIndex + 1);
+        }
+
+        return null;
+    }
+
+    /**
+     * Parse country code from POTA locationDesc field.
+     *
+     * <p>Format: "{country}-{region}" (e.g., "US-CO" → "US", "JP-ST" → "JP")
+     *
+     * @param locationDesc Location descriptor from POTA API
+     * @return Country code, or null if not parseable
+     */
+    private String parseCountryCode(String locationDesc) {
+        if (locationDesc == null || locationDesc.isBlank()) {
+            return null;
+        }
+
+        int hyphenIndex = locationDesc.indexOf('-');
+        if (hyphenIndex > 0) {
+            return locationDesc.substring(0, hyphenIndex);
+        }
+
+        return null;
     }
 
     /**

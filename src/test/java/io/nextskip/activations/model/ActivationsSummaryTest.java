@@ -222,20 +222,26 @@ class ActivationsSummaryTest {
      * Helper method to create a test Activation.
      */
     private Activation createActivation(String id, Instant spottedAt) {
+        io.nextskip.activations.model.Park park = new io.nextskip.activations.model.Park(
+                "US-0001",
+                "Test Park",
+                "CO",
+                "US",
+                "FN42",
+                42.5,
+                -71.3
+        );
+
         return new Activation(
                 id,
                 "W1ABC",
-                "US-0001",
-                "Test Park",
                 ActivationType.POTA,
                 14250.0,
                 "SSB",
-                "FN42",
-                42.5,
-                -71.3,
                 spottedAt,
                 10,
-                "Test Source"
+                "Test Source",
+                park
         );
     }
 }

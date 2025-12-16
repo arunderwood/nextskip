@@ -5,6 +5,7 @@ import io.github.resilience4j.retry.annotation.Retry;
 import io.nextskip.activations.internal.dto.SotaSpotDto;
 import io.nextskip.activations.model.Activation;
 import io.nextskip.activations.model.ActivationType;
+import io.nextskip.activations.model.Summit;
 import io.nextskip.common.client.ExternalDataClient;
 import io.nextskip.propagation.internal.ExternalApiException;
 import org.slf4j.Logger;
@@ -30,7 +31,7 @@ import java.util.List;
  * <p>Fetches recent SOTA activations from https://api2.sota.org.uk/api/spots/50
  *
  * <p>Note: SOTA API returns the last 50 spots (historical), so we filter to
- * only spots from the last 30 minutes to show current activations.
+ * only spots from the last 45 minutes to show current activations.
  *
  * <p>Features:
  * <ul>
@@ -38,7 +39,7 @@ import java.util.List;
  *   <li>Retry logic for transient failures</li>
  *   <li>60-second cache TTL for real-time data</li>
  *   <li>Fallback to cached data on failures</li>
- *   <li>Filters to recent spots only (last 30 minutes)</li>
+ *   <li>Filters to recent spots only (last 45 minutes)</li>
  * </ul>
  */
 @Component
@@ -48,7 +49,7 @@ public class SotaClient implements ExternalDataClient<List<Activation>> {
 
     private static final String SOTA_URL = "https://api2.sota.org.uk/api/spots/50";
     private static final Duration REQUEST_TIMEOUT = Duration.ofSeconds(10);
-    private static final Duration RECENCY_THRESHOLD = Duration.ofMinutes(30);
+    private static final Duration RECENCY_THRESHOLD = Duration.ofMinutes(45);
 
     private final WebClient webClient;
     private final CacheManager cacheManager;
@@ -73,7 +74,7 @@ public class SotaClient implements ExternalDataClient<List<Activation>> {
     }
 
     /**
-     * Fetch recent SOTA activations (last 30 minutes only).
+     * Fetch recent SOTA activations (last 45 minutes only).
      *
      * @return List of recent SOTA spots, or empty list if unavailable
      * @throws ExternalApiException if the API call fails
@@ -174,24 +175,27 @@ public class SotaClient implements ExternalDataClient<List<Activation>> {
                 }
             }
 
-            // Build reference from summit code (e.g., "W7W/LC-001")
-            String reference = dto.summitCode();
-            String referenceName = dto.summitDetails();
+            // Map association code to state abbreviation using static mapper
+            String regionCode = SotaAssociationMapper.toStateCode(dto.associationCode()).orElse(null);
+
+            // Create Summit object with all location data
+            Summit summit = new Summit(
+                    dto.summitCode(),
+                    dto.summitDetails(),
+                    regionCode,
+                    dto.associationCode()
+            );
 
             return new Activation(
                     dto.id() != null ? dto.id().toString() : null,
                     dto.activatorCallsign(),
-                    reference,
-                    referenceName,
                     ActivationType.SOTA,
                     frequency,
                     dto.mode(),
-                    null, // SOTA doesn't provide grid
-                    null, // SOTA doesn't provide coordinates in spots API
-                    null,
                     spottedAt,
                     null, // SOTA doesn't provide QSO count in spots
-                    getSourceName()
+                    getSourceName(),
+                    summit
             );
 
         } catch (Exception e) {

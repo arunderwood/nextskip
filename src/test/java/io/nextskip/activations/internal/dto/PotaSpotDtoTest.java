@@ -127,6 +127,7 @@ class PotaSpotDtoTest {
                 "14.250",
                 "SSB",
                 "Test Park",
+                "US-CO",  // locationDesc
                 "FN42",
                 "42.5",
                 "-71.3",

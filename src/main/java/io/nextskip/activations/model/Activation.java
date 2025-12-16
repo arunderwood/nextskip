@@ -5,39 +5,35 @@ import java.time.Instant;
 import java.time.Duration;
 
 /**
- * Represents an individual amateur radio activation (POTA or SOTA).
+ * Represents an individual amateur radio activation event (POTA or SOTA).
  *
  * <p>Implements scoring based on recency - newer activations score higher
  * as they're more likely to be currently active.</p>
  *
+ * <p>Follows SOLID principles by separating activation events from location data.
+ * Location-specific information is encapsulated in {@link ActivationLocation}
+ * implementations ({@link Park} or {@link Summit}).</p>
+ *
  * @param spotId Unique identifier for the spot
  * @param activatorCallsign Callsign of the activator
- * @param reference Park or summit reference code (e.g., "K-0817" for POTA, "W7W/LC-001" for SOTA)
- * @param referenceName Human-readable name of the park or summit
  * @param type Type of activation (POTA or SOTA)
  * @param frequency Operating frequency in kHz
  * @param mode Operating mode (e.g., "SSB", "CW", "FT8")
- * @param grid Maidenhead grid locator
- * @param latitude Latitude in decimal degrees
- * @param longitude Longitude in decimal degrees
  * @param spottedAt Timestamp when the activation was spotted
  * @param qsoCount Number of QSOs completed (if available)
  * @param source Data source identifier
+ * @param location Location being activated (Park for POTA, Summit for SOTA)
  */
 public record Activation(
         String spotId,
         String activatorCallsign,
-        String reference,
-        String referenceName,
         ActivationType type,
         Double frequency,
         String mode,
-        String grid,
-        Double latitude,
-        Double longitude,
         Instant spottedAt,
         Integer qsoCount,
-        String source
+        String source,
+        ActivationLocation location
 ) implements Scoreable {
 
     /**
