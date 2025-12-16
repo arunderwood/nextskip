@@ -30,10 +30,16 @@ export function useDashboardCards(data: DashboardData): BentoCardConfig[] {
         continue;
       }
 
-      // Create the card configuration
-      const config = card.createConfig(data);
-      if (config) {
-        configs.push(config);
+      // Create the card configuration(s)
+      const configResult = card.createConfig(data);
+
+      if (configResult) {
+        // Handle both single config and array of configs
+        if (Array.isArray(configResult)) {
+          configs.push(...configResult);
+        } else {
+          configs.push(configResult);
+        }
       }
     }
 

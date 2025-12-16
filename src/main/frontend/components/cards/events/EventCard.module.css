@@ -1,0 +1,106 @@
+/**
+ * EventCard Styles
+ *
+ * Styles for generic event cards displaying time-bound activities
+ */
+
+.event-card-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-3);
+  padding: var(--spacing-2);
+}
+
+.event-status {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: var(--spacing-2);
+}
+
+.status-badge {
+  display: inline-block;
+  padding: var(--spacing-1) var(--spacing-2);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  text-align: center;
+}
+
+.status-active {
+  background-color: var(--color-success-muted);
+  color: var(--color-success);
+}
+
+.status-ending-soon {
+  background-color: var(--color-warning-muted);
+  color: var(--color-warning);
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.status-upcoming {
+  background-color: var(--color-info-muted);
+  color: var(--color-info);
+}
+
+.status-ended {
+  background-color: var(--color-neutral-muted);
+  color: var(--color-neutral);
+  opacity: 0.6;
+}
+
+.event-details {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+  font-size: var(--font-size-sm);
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--spacing-2);
+}
+
+.detail-label {
+  color: var(--color-text-secondary);
+  font-weight: var(--font-weight-medium);
+  flex-shrink: 0;
+}
+
+.detail-value {
+  color: var(--color-text-primary);
+  text-align: right;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.event-link {
+  margin-top: var(--spacing-2);
+  padding-top: var(--spacing-2);
+  border-top: 1px solid var(--color-border);
+}
+
+.details-link {
+  display: inline-block;
+  color: var(--color-primary);
+  text-decoration: none;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  transition: color 0.2s ease;
+}
+
+.details-link:hover {
+  color: var(--color-primary-hover);
+  text-decoration: underline;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}

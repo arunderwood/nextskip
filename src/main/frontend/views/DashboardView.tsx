@@ -111,8 +111,12 @@ function DashboardView() {
   const bentoCards = cardConfigs.map((config) => {
     // Match the card definition by checking if its createConfig produces this config's ID
     const cardDef = cards.find((c) => {
-      const cfg = c.createConfig(dashboardData);
-      return cfg?.id === config.id;
+      const cfgResult = c.createConfig(dashboardData);
+      // Handle both single config and array of configs
+      if (Array.isArray(cfgResult)) {
+        return cfgResult.some((cfg) => cfg.id === config.id);
+      }
+      return cfgResult?.id === config.id;
     });
 
     if (!cardDef) {

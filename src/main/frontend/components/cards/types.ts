@@ -41,14 +41,16 @@ export interface CardDefinition<TData = unknown> {
   canRender: (data: DashboardData) => boolean;
 
   /**
-   * Create a BentoCardConfig from the dashboard data.
+   * Create BentoCardConfig(s) from the dashboard data.
    *
    * This calculates the card's priority and hotness based on the data.
+   * Can return a single config, an array of configs (for individual items),
+   * or null if cannot create.
    *
    * @param data - The combined dashboard data from all modules
-   * @returns Card configuration with priority/hotness, or null if cannot create
+   * @returns Card configuration(s) with priority/hotness, or null if cannot create
    */
-  createConfig: (data: DashboardData) => BentoCardConfig | null;
+  createConfig: (data: DashboardData) => BentoCardConfig | BentoCardConfig[] | null;
 
   /**
    * Render the card's content within a BentoCard wrapper.

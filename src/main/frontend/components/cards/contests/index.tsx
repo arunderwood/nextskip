@@ -1,110 +1,97 @@
 /**
- * Contests Card - Card registration for upcoming amateur radio contests.
+ * Contests Card - Individual card registration for each amateur radio contest.
  *
- * This module registers the contests activity card with the global registry,
- * enabling it to appear in the dashboard without modifying core files.
+ * This module registers individual contest cards with the global registry,
+ * enabling each contest to be sorted independently by its own score.
+ *
+ * SOLID Compliance:
+ * - Single Responsibility: Each card represents one contest
+ * - Open-Closed: New event types can be added without modifying this code
+ * - Liskov Substitution: All Event implementations work with EventCard
+ * - Dependency Inversion: Depends on Event abstraction, not Contest concrete type
  */
 
 import React from 'react';
 import { registerCard } from '../CardRegistry';
 import type { CardDefinition, DashboardData } from '../types';
 import type { BentoCardConfig } from 'Frontend/types/bento';
-import { BentoCard } from '../../bento';
-import { calculatePriority, priorityToHotness } from '../../bento/usePriorityCalculation';
-import ContestsContent from './ContestsContent';
+import { priorityToHotness } from '../../bento/usePriorityCalculation';
+import { EventCard } from '../events/EventCard';
 import EventStatus from 'Frontend/generated/io/nextskip/common/model/EventStatus';
+import type Contest from 'Frontend/generated/io/nextskip/contests/model/Contest';
 
 /* eslint-disable react/jsx-key */
 
 /**
- * Contests Card Definition
+ * Convert backend score (0-100) to rating enum for consistency
+ */
+function scoreToRating(score: number): 'GOOD' | 'FAIR' | 'POOR' {
+  if (score >= 70) return 'GOOD';
+  if (score >= 40) return 'FAIR';
+  return 'POOR';
+}
+
+/**
+ * Contests Card Definition - Creates individual cards for each contest
  */
 const contestsCard: CardDefinition = {
   canRender: (data: DashboardData) => {
-    return !!(data.contests?.contests);
+    return !!(data.contests?.contests && data.contests.contests.length > 0);
   },
 
-  createConfig: (data: DashboardData) => {
+  createConfig: (data: DashboardData): BentoCardConfig[] | null => {
     const contests = data.contests?.contests;
-    if (!contests) return null;
+    if (!contests || contests.length === 0) return null;
 
-    const activeCount = data.contests?.activeCount ?? 0;
-    const upcomingCount = data.contests?.upcomingCount ?? 0;
+    // Filter out ended contests and undefined values
+    const activeContests = contests.filter(
+      (c): c is Contest => c !== undefined && c.status !== EventStatus.ENDED
+    );
 
-    // Calculate priority based on active and upcoming contests
-    // Score: active contests are worth more (10 points each), upcoming worth 5
-    const score = Math.min(100, (activeCount * 10) + (upcomingCount * 5));
+    if (activeContests.length === 0) return null;
 
-    // Favorable: any active contest or 2+ upcoming
-    const isFavorable = activeCount > 0 || upcomingCount >= 2;
+    // Create individual card config for each contest
+    // Use name + startTime as unique identifier to avoid index mismatches
+    return activeContests.map((contest) => {
+      // Use the contest's own score directly from the backend
+      // Contest.getScore() returns 0-100 based on timing and status
+      const score = contest.score ?? 0;
 
-    // Rating based on active/upcoming counts
-    const rating =
-      activeCount > 0 ? ('GOOD' as const) :
-      upcomingCount >= 2 ? ('FAIR' as const) :
-      ('POOR' as const);
+      // Priority for individual event cards: use backend score more directly
+      // The backend already calculated the score based on activity and timing
+      const priority = score;
 
-    const priority = calculatePriority({
-      favorable: isFavorable,
-      score,
-      rating,
+      // Use name + startTime for unique ID to safely look up contest later
+      const uniqueId = `contest-${contest.name}-${contest.startTime}`.replace(/[^a-zA-Z0-9-]/g, '-');
+
+      return {
+        id: uniqueId,
+        type: 'contests',
+        size: 'standard' as const,
+        priority,
+        hotness: priorityToHotness(priority),
+      };
     });
-
-    const hotness = priorityToHotness(priority);
-
-    return {
-      id: 'contests',
-      type: 'contests',
-      size: 'standard',
-      priority,
-      hotness,
-    };
   },
 
   render: (data: DashboardData, config: BentoCardConfig) => {
-    const contestsData = data.contests;
-    if (!contestsData?.contests) return null;
+    const contests = data.contests?.contests;
+    if (!contests) return null;
 
-    // Filter out undefined values to ensure type safety
-    const validContests = contestsData.contests.filter((c) => c !== undefined);
+    // Filter to only active contests (same filter as createConfig)
+    const activeContests = contests.filter(
+      (c): c is Contest => c !== undefined && c.status !== EventStatus.ENDED
+    );
 
-    // Sort contests: Active first, then upcoming, then ended
-    const sortedContests = [...validContests].sort((a, b) => {
-      // Active contests first
-      if (a.status === EventStatus.ACTIVE && b.status !== EventStatus.ACTIVE) return -1;
-      if (a.status !== EventStatus.ACTIVE && b.status === EventStatus.ACTIVE) return 1;
-
-      // Among active contests, ending soon comes first
-      if (a.status === EventStatus.ACTIVE && b.status === EventStatus.ACTIVE) {
-        if (a.endingSoon && !b.endingSoon) return -1;
-        if (!a.endingSoon && b.endingSoon) return 1;
-      }
-
-      // Then by score (higher first)
-      return (b.score ?? 0) - (a.score ?? 0);
+    // Find the contest by matching the config ID
+    const contest = activeContests.find((c) => {
+      const uniqueId = `contest-${c.name}-${c.startTime}`.replace(/[^a-zA-Z0-9-]/g, '-');
+      return uniqueId === config.id;
     });
 
-    return (
-      <BentoCard
-        config={config}
-        title="Contests"
-        icon="🏆"
-        subtitle="Amateur Radio Competitions"
-        footer={
-          <div className="info-box">
-            <strong>About Contests:</strong> Amateur radio contests are competitive
-            operating events where participants make as many contacts as possible.
-            Higher counts indicate more contest activity and opportunities.
-          </div>
-        }
-      >
-        <ContestsContent
-          contests={sortedContests}
-          activeCount={contestsData.activeCount}
-          upcomingCount={contestsData.upcomingCount}
-        />
-      </BentoCard>
-    );
+    if (!contest) return null;
+
+    return <EventCard event={contest} eventType="contest" config={config} />;
   },
 };
 
