@@ -6,6 +6,7 @@
  */
 
 import React from 'react';
+import { Sun, Radio } from 'lucide-react';
 import { registerCard } from '../CardRegistry';
 import type { CardDefinition, DashboardData } from '../types';
 import type { BentoCardConfig } from 'Frontend/types/bento';
@@ -62,7 +63,7 @@ const solarIndicesCard: CardDefinition = {
       <BentoCard
         config={config}
         title="Solar Indices"
-        icon="☀️"
+        icon={<Sun size={20} />}
         subtitle={solarIndices.source}
         footer={
           <div className="info-box">
@@ -147,7 +148,7 @@ const bandConditionsCard: CardDefinition = {
       <BentoCard
         config={config}
         title="HF Band Conditions"
-        icon="📻"
+        icon={<Radio size={20} />}
         subtitle="Current propagation by amateur radio band"
         footer={<BandConditionsLegend />}
       >

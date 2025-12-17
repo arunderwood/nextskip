@@ -12,6 +12,7 @@
  */
 
 import React from 'react';
+import { Trophy, Sparkles, Tent } from 'lucide-react';
 import type { BentoCardConfig } from 'Frontend/types/bento';
 import type Contest from 'Frontend/generated/io/nextskip/contests/model/Contest';
 import EventStatus from 'Frontend/generated/io/nextskip/common/model/EventStatus';
@@ -90,19 +91,19 @@ function getEventMetadata(eventType: EventType) {
   switch (eventType) {
     case 'contest':
       return {
-        icon: '🏆',
+        icon: <Trophy size={20} />,
         typeLabel: 'Contest',
         description: 'Amateur radio competition'
       };
     case 'meteor-shower':
       return {
-        icon: '☄️',
+        icon: <Sparkles size={20} />,
         typeLabel: 'Meteor Shower',
         description: 'Meteor scatter propagation opportunity'
       };
     case 'field-day':
       return {
-        icon: '⛺',
+        icon: <Tent size={20} />,
         typeLabel: 'Field Day',
         description: 'Special operating event'
       };

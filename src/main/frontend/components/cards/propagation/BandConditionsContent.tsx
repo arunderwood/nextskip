@@ -6,6 +6,7 @@
  */
 
 import React from 'react';
+import { Check, Minus, X } from 'lucide-react';
 import type BandCondition from 'Frontend/generated/io/nextskip/propagation/model/BandCondition';
 import '../../BandConditionsTable.css'; // Reuse existing styles
 
@@ -27,16 +28,16 @@ function BandConditionsContent({ bandConditions }: Props) {
     }
   };
 
-  const getRatingIcon = (rating: string): string => {
+  const getRatingIcon = (rating: string): React.ReactElement => {
     switch (rating?.toUpperCase()) {
       case 'GOOD':
-        return '✓';
+        return <Check size={14} />;
       case 'FAIR':
-        return '~';
+        return <Minus size={14} />;
       case 'POOR':
-        return '✗';
+        return <X size={14} />;
       default:
-        return '?';
+        return <span>?</span>;
     }
   };
 
@@ -130,19 +131,19 @@ export function BandConditionsLegend() {
       <div className="legend-items">
         <div className="legend-item">
           <span className="rating-badge rating-good">
-            <span className="rating-icon">✓</span> Good
+            <span className="rating-icon"><Check size={14} /></span> Good
           </span>
           <span className="legend-desc">Excellent propagation</span>
         </div>
         <div className="legend-item">
           <span className="rating-badge rating-fair">
-            <span className="rating-icon">~</span> Fair
+            <span className="rating-icon"><Minus size={14} /></span> Fair
           </span>
           <span className="legend-desc">Moderate propagation</span>
         </div>
         <div className="legend-item">
           <span className="rating-badge rating-poor">
-            <span className="rating-icon">✗</span> Poor
+            <span className="rating-icon"><X size={14} /></span> Poor
           </span>
           <span className="legend-desc">Limited propagation</span>
         </div>

@@ -2,11 +2,15 @@
   /* Support both light and dark color schemes */
   color-scheme: light dark;
 
-  --primary-color: #1976d2;
+  /* Modern Indigo/Cyan Color Palette */
+  --primary-color: #6366f1;
+  --primary-dark: #4f46e5;
+  --primary-light: #818cf8;
+  --accent-color: #22d3ee;
   --secondary-color: #dc004e;
-  --success-color: #4caf50;
-  --warning-color: #ff9800;
-  --error-color: #f44336;
+  --success-color: #10b981;
+  --warning-color: #f59e0b;
+  --error-color: #ef4444;
   --background-color: #f5f5f5;
   --surface-color: #ffffff;
   --text-primary: rgba(0, 0, 0, 0.87);
@@ -14,6 +18,13 @@
   --border-color: #e0e0e0;
   --spacing-unit: 8px;
   --border-radius: 4px;
+
+  /* Typography */
+  --font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-family-mono: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
 
   /* Refined shadow system for depth hierarchy */
   --shadow-subtle: 0 1px 2px rgba(0, 0, 0, 0.06);
@@ -40,28 +51,32 @@
   --bento-card-hero-cols: 2;
   --bento-card-hero-rows: 2;
 
-  /* Hotness Indicator Colors - Refined for Visual Polish */
-  --hotness-hot-color: #2e7d32;                      /* Darker green for text */
-  --hotness-hot-bg: rgba(76, 175, 80, 0.12);         /* Subtle background */
-  --hotness-hot-glow: rgba(76, 175, 80, 0.2);        /* Reduced glow intensity */
-  --hotness-hot-border: rgba(76, 175, 80, 0.5);      /* Refined border */
+  /* Hotness Indicator Colors - Enhanced for Modern Design */
+  --hotness-hot-color: #059669;                      /* Emerald green for text */
+  --hotness-hot-bg: rgba(16, 185, 129, 0.12);         /* Subtle background */
+  --hotness-hot-glow: rgba(16, 185, 129, 0.3);        /* Enhanced glow intensity */
+  --hotness-hot-border: rgba(16, 185, 129, 0.5);      /* Stronger border */
 
-  --hotness-warm-color: #e65100;                     /* Darker orange for text */
-  --hotness-warm-bg: rgba(255, 152, 0, 0.1);
-  --hotness-warm-glow: rgba(255, 152, 0, 0.15);      /* Reduced glow intensity */
-  --hotness-warm-border: rgba(255, 152, 0, 0.4);
+  --hotness-warm-color: #d97706;                     /* Amber for text */
+  --hotness-warm-bg: rgba(245, 158, 11, 0.1);
+  --hotness-warm-glow: rgba(245, 158, 11, 0.2);      /* Enhanced glow */
+  --hotness-warm-border: rgba(245, 158, 11, 0.4);
 
-  --hotness-neutral-color: #1565c0;                  /* Slightly darker blue */
-  --hotness-neutral-bg: rgba(25, 118, 210, 0.08);
-  --hotness-neutral-glow: rgba(25, 118, 210, 0.1);
-  --hotness-neutral-border: rgba(25, 118, 210, 0.25);
+  --hotness-neutral-color: #4f46e5;                  /* Indigo for text */
+  --hotness-neutral-bg: rgba(99, 102, 241, 0.08);
+  --hotness-neutral-glow: rgba(99, 102, 241, 0.15);
+  --hotness-neutral-border: rgba(99, 102, 241, 0.25);
 
-  --hotness-cool-color: #757575;                     /* Medium gray */
+  --hotness-cool-color: #6b7280;                     /* Gray for text */
   --hotness-cool-bg: rgba(0, 0, 0, 0.03);
   --hotness-cool-glow: transparent;
   --hotness-cool-border: rgba(0, 0, 0, 0.12);
 
   /* Animation Tokens */
+  --transition-fast: 150ms ease-out;
+  --transition-base: 200ms ease-out;
+  --transition-slow: 300ms ease-out;
+  --transition-spring: 300ms cubic-bezier(0.34, 1.56, 0.64, 1);
   --bento-transition-duration: 300ms;
   --bento-transition-timing: cubic-bezier(0.4, 0, 0.2, 1);  /* Material ease-out */
   --bento-hover-lift: -4px;
@@ -107,10 +122,13 @@
     --text-tertiary: rgba(255, 255, 255, 0.45);
 
     /* Semantic colors - adjusted for dark mode */
-    --success-color: #3fb950;
-    --warning-color: #d29922;
-    --error-color: #f85149;
-    --primary-color: #58a6ff;
+    --success-color: #34d399;
+    --warning-color: #fbbf24;
+    --error-color: #f87171;
+    --primary-color: #818cf8;
+    --primary-dark: #6366f1;
+    --primary-light: #a5b4fc;
+    --accent-color: #67e8f9;
     --secondary-color: #f778ba;
 
     /* Shadows for dark mode */
@@ -118,21 +136,21 @@
     --shadow-elevated: 0 4px 12px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.06);
 
     /* Hotness colors - dark mode variants */
-    --hotness-hot-color: #3fb950;
-    --hotness-hot-glow: rgba(63, 185, 80, 0.25);
-    --hotness-hot-border: rgba(63, 185, 80, 0.4);
+    --hotness-hot-color: #34d399;
+    --hotness-hot-glow: rgba(52, 211, 153, 0.35);
+    --hotness-hot-border: rgba(52, 211, 153, 0.5);
 
-    --hotness-warm-color: #d29922;
-    --hotness-warm-glow: rgba(210, 153, 34, 0.2);
-    --hotness-warm-border: rgba(210, 153, 34, 0.35);
+    --hotness-warm-color: #fbbf24;
+    --hotness-warm-glow: rgba(251, 191, 36, 0.25);
+    --hotness-warm-border: rgba(251, 191, 36, 0.4);
 
-    --hotness-neutral-color: #58a6ff;
-    --hotness-neutral-glow: rgba(88, 166, 255, 0.12);
-    --hotness-neutral-border: rgba(88, 166, 255, 0.25);
+    --hotness-neutral-color: #a5b4fc;
+    --hotness-neutral-glow: rgba(165, 180, 252, 0.2);
+    --hotness-neutral-border: rgba(165, 180, 252, 0.3);
 
-    --hotness-cool-color: #8b949e;
+    --hotness-cool-color: #9ca3af;
     --hotness-cool-glow: transparent;
-    --hotness-cool-border: rgba(139, 148, 158, 0.2);
+    --hotness-cool-border: rgba(156, 163, 175, 0.2);
   }
 }
 
@@ -150,10 +168,13 @@
   --text-tertiary: rgba(255, 255, 255, 0.45);
 
   /* Semantic colors - adjusted for dark mode */
-  --success-color: #3fb950;
-  --warning-color: #d29922;
-  --error-color: #f85149;
-  --primary-color: #58a6ff;
+  --success-color: #34d399;
+  --warning-color: #fbbf24;
+  --error-color: #f87171;
+  --primary-color: #818cf8;
+  --primary-dark: #6366f1;
+  --primary-light: #a5b4fc;
+  --accent-color: #67e8f9;
   --secondary-color: #f778ba;
 
   /* Shadows for dark mode */
@@ -161,21 +182,21 @@
   --shadow-elevated: 0 4px 12px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.06);
 
   /* Hotness colors - dark mode variants */
-  --hotness-hot-color: #3fb950;
-  --hotness-hot-glow: rgba(63, 185, 80, 0.25);
-  --hotness-hot-border: rgba(63, 185, 80, 0.4);
+  --hotness-hot-color: #34d399;
+  --hotness-hot-glow: rgba(52, 211, 153, 0.35);
+  --hotness-hot-border: rgba(52, 211, 153, 0.5);
 
-  --hotness-warm-color: #d29922;
-  --hotness-warm-glow: rgba(210, 153, 34, 0.2);
-  --hotness-warm-border: rgba(210, 153, 34, 0.35);
+  --hotness-warm-color: #fbbf24;
+  --hotness-warm-glow: rgba(251, 191, 36, 0.25);
+  --hotness-warm-border: rgba(251, 191, 36, 0.4);
 
-  --hotness-neutral-color: #58a6ff;
-  --hotness-neutral-glow: rgba(88, 166, 255, 0.12);
-  --hotness-neutral-border: rgba(88, 166, 255, 0.25);
+  --hotness-neutral-color: #a5b4fc;
+  --hotness-neutral-glow: rgba(165, 180, 252, 0.2);
+  --hotness-neutral-border: rgba(165, 180, 252, 0.3);
 
-  --hotness-cool-color: #8b949e;
+  --hotness-cool-color: #9ca3af;
   --hotness-cool-glow: transparent;
-  --hotness-cool-border: rgba(139, 148, 158, 0.2);
+  --hotness-cool-border: rgba(156, 163, 175, 0.2);
 }
 
 * {
@@ -187,6 +208,7 @@ body {
   padding: 0;
   background-color: var(--background-color);
   color: var(--text-primary);
+  font-family: var(--font-family);
 }
 
 #root {
@@ -257,4 +279,47 @@ h3 {
   background: rgba(244, 67, 54, 0.1);
   border-radius: var(--border-radius);
   border-left: 4px solid var(--error-color);
+}
+
+/* === Animations === */
+@keyframes cardEntrance {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.6;
+    transform: scale(1.1);
+  }
+}
+
+/* Respect user's motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

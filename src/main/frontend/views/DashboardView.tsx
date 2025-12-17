@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { Radio, AlertTriangle } from 'lucide-react';
 import { PropagationEndpoint, ActivationsEndpoint, ContestEndpoint } from 'Frontend/generated/endpoints';
 import type PropagationResponse from 'Frontend/generated/io/nextskip/propagation/api/PropagationResponse';
 import type ActivationsResponse from 'Frontend/generated/io/nextskip/activations/api/ActivationsResponse';
@@ -91,7 +92,7 @@ function DashboardView() {
   if (error && !propagationData) {
     return (
       <div className="error">
-        <h3>⚠️ Error</h3>
+        <h3><AlertTriangle size={20} style={{ verticalAlign: 'middle', marginRight: '8px' }} />Error</h3>
         <p>{error}</p>
         <button
           onClick={() => {
@@ -137,9 +138,7 @@ function DashboardView() {
         <div className="header-info">
           <div className="header-row">
             <h1 className="dashboard-title">
-              <span className="dashboard-icon" aria-hidden="true">
-                📡
-              </span>
+              <Radio className="dashboard-icon" size={28} aria-hidden="true" />
               NextSkip
             </h1>
             <ThemeToggle />
