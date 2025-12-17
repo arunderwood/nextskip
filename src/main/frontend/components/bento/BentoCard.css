@@ -3,6 +3,7 @@
 .bento-card {
   display: flex;
   flex-direction: column;
+  height: 100%; /* Fill the masonry Frame container */
   min-height: var(--bento-card-min-height);
   /* Glassmorphism effect */
   background: rgba(255, 255, 255, 0.7);

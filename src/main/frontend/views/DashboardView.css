@@ -1,5 +1,6 @@
 .dashboard {
   width: 100%;
+  overflow-x: hidden; /* Prevent horizontal scroll from header negative margins */
 }
 
 /* Modern header - animated gradient mesh with decorative elements */
