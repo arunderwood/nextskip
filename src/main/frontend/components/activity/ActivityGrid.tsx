@@ -1,5 +1,5 @@
 /**
- * BentoGrid - Grid container component for bento layout
+ * ActivityGrid - Grid container component for activity card layout
  *
  * Displays cards in a responsive masonry layout, automatically sorting
  * by priority (highest priority cards appear first/top-left).
@@ -7,11 +7,11 @@
 
 import React, { useMemo, useEffect, useState } from 'react';
 import { RegularMasonryGrid, Frame } from '@masonry-grid/react';
-import type { BentoGridProps, BentoCardSize } from '../../types/bento';
-import './BentoGrid.css';
+import type { ActivityGridProps, ActivityCardSize } from '../../types/activity';
+import './ActivityGrid.css';
 
 // Map card size to Frame aspect ratio
-const SIZE_TO_ASPECT: Record<BentoCardSize, { width: number; height: number }> = {
+const SIZE_TO_ASPECT: Record<ActivityCardSize, { width: number; height: number }> = {
   standard: { width: 1, height: 1 },
   wide: { width: 2, height: 1 },
   tall: { width: 1, height: 2 },
@@ -27,7 +27,7 @@ function useResponsiveFrameWidth(baseColumns: number): number {
   useEffect(() => {
     const calculateWidth = () => {
       // Get container width or fallback to window width
-      const container = document.querySelector('.bento-grid');
+      const container = document.querySelector('.activity-grid');
       const containerWidth = container?.clientWidth || window.innerWidth;
       const gap = 24; // Default gap in pixels
 
@@ -55,14 +55,14 @@ function useResponsiveFrameWidth(baseColumns: number): number {
   return frameWidth;
 }
 
-export function BentoGrid({
+export function ActivityGrid({
   cards,
   columns = 4,
   gap = 3,
   animateReorder = true,
   animationDuration = 300,
   className = '',
-}: BentoGridProps) {
+}: ActivityGridProps) {
   // Sort cards by priority (descending) - highest priority first
   const sortedCards = useMemo(() => {
     return [...cards].sort((a, b) => b.config.priority - a.config.priority);
@@ -76,11 +76,11 @@ export function BentoGrid({
 
   return (
     <div
-      className={`bento-grid ${className}`}
+      className={`activity-grid ${className}`}
       role="list"
       aria-label="Dashboard activity cards"
       style={{
-        '--bento-transition-duration': `${animationDuration}ms`,
+        '--activity-transition-duration': `${animationDuration}ms`,
       } as React.CSSProperties}
     >
       <RegularMasonryGrid frameWidth={frameWidth} gap={gapPx}>
@@ -89,7 +89,7 @@ export function BentoGrid({
           return (
             <Frame key={config.id} width={aspect.width} height={aspect.height}>
               <div
-                className={`bento-grid__card-wrapper bento-grid__card--${config.size}`}
+                className={`activity-grid__card-wrapper activity-grid__card--${config.size}`}
                 role="listitem"
               >
                 {component}
@@ -102,4 +102,4 @@ export function BentoGrid({
   );
 }
 
-export default BentoGrid;
+export default ActivityGrid;

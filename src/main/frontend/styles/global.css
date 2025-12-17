@@ -32,24 +32,24 @@
   --shadow-elevated: 0 4px 6px rgba(0, 0, 0, 0.07), 0 2px 4px rgba(0, 0, 0, 0.06);
   --shadow-high: 0 10px 15px rgba(0, 0, 0, 0.1), 0 4px 6px rgba(0, 0, 0, 0.08);
 
-  /* === Bento Grid Tokens === */
+  /* === Activity Grid Tokens === */
   /* Grid Configuration */
-  --bento-columns-desktop: 4;
-  --bento-columns-tablet: 2;
-  --bento-columns-mobile: 1;
-  --bento-columns-wide: 6;  /* Wide screens (>1400px) */
-  --bento-gap: calc(var(--spacing-unit) * 3);  /* 24px */
-  --bento-card-min-height: 160px;  /* Reduced from 200px for compact mode */
+  --activity-columns-desktop: 4;
+  --activity-columns-tablet: 2;
+  --activity-columns-mobile: 1;
+  --activity-columns-wide: 6;  /* Wide screens (>1400px) */
+  --activity-gap: calc(var(--spacing-unit) * 3);  /* 24px */
+  --activity-card-min-height: 160px;  /* Reduced from 200px for compact mode */
 
   /* Card Sizes (in grid units) */
-  --bento-card-standard-cols: 1;
-  --bento-card-standard-rows: 1;
-  --bento-card-wide-cols: 2;
-  --bento-card-wide-rows: 1;
-  --bento-card-tall-cols: 1;
-  --bento-card-tall-rows: 2;
-  --bento-card-hero-cols: 2;
-  --bento-card-hero-rows: 2;
+  --activity-card-standard-cols: 1;
+  --activity-card-standard-rows: 1;
+  --activity-card-wide-cols: 2;
+  --activity-card-wide-rows: 1;
+  --activity-card-tall-cols: 1;
+  --activity-card-tall-rows: 2;
+  --activity-card-hero-cols: 2;
+  --activity-card-hero-rows: 2;
 
   /* Hotness Indicator Colors - Enhanced for Modern Design */
   --hotness-hot-color: #059669;                      /* Emerald green for text */
@@ -77,15 +77,15 @@
   --transition-base: 200ms ease-out;
   --transition-slow: 300ms ease-out;
   --transition-spring: 300ms cubic-bezier(0.34, 1.56, 0.64, 1);
-  --bento-transition-duration: 300ms;
-  --bento-transition-timing: cubic-bezier(0.4, 0, 0.2, 1);  /* Material ease-out */
-  --bento-hover-lift: -4px;
-  --bento-hover-scale: 1.02;
+  --activity-transition-duration: 300ms;
+  --activity-transition-timing: cubic-bezier(0.4, 0, 0.2, 1);  /* Material ease-out */
+  --activity-hover-lift: -4px;
+  --activity-hover-scale: 1.02;
 
   /* Focus State (Accessibility) */
-  --bento-focus-ring-width: 3px;
-  --bento-focus-ring-color: var(--primary-color);
-  --bento-focus-ring-offset: 2px;
+  --activity-focus-ring-width: 3px;
+  --activity-focus-ring-color: var(--primary-color);
+  --activity-focus-ring-offset: 2px;
 
   /* === Compact/Operator Mode Tokens === */
   --compact-spacing-factor: 0.625;  /* 62.5% of normal spacing */

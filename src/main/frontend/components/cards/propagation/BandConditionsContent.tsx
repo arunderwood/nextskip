@@ -1,7 +1,7 @@
 /**
  * BandConditionsContent - Content component for band conditions card
  *
- * Extracted from BandConditionsTable.tsx to work with BentoCard wrapper.
+ * Extracted from BandConditionsTable.tsx to work with ActivityCard wrapper.
  * Displays HF band propagation conditions in table format.
  */
 
@@ -123,7 +123,7 @@ function BandConditionsContent({ bandConditions }: Props) {
 
 export default BandConditionsContent;
 
-/** Legend component for use in BentoCard footer */
+/** Legend component for use in ActivityCard footer */
 export function BandConditionsLegend() {
   return (
     <div className="legend">

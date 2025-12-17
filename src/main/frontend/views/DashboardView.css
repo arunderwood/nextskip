@@ -187,9 +187,9 @@
   color: var(--error-color);
 }
 
-/* Remove display: grid to let BentoGrid control layout */
+/* Remove display: grid to let ActivityGrid control layout */
 .dashboard-content {
-  /* BentoGrid component handles its own grid layout */
+  /* ActivityGrid component handles its own grid layout */
 }
 
 .loading-spinner {

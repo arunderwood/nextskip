@@ -14,8 +14,8 @@ import {
   calculatePriority,
   priorityToHotness,
   usePriorityCalculation,
-} from 'Frontend/components/bento/usePriorityCalculation';
-import type { PriorityInput } from 'Frontend/types/bento';
+} from "Frontend/components/activity/usePriorityCalculation";
+import type { PriorityInput } from "Frontend/components/activity";
 
 describe('calculatePriority', () => {
   describe('favorable flag (40% weight)', () => {

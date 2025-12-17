@@ -164,7 +164,7 @@ See `SolarIndices.java` and `BandCondition.java` for reference.
 
 ### Frontend Score Calculation
 
-Location: `frontend/components/bento/usePriorityCalculation.ts`
+Location: `frontend/components/activity/usePriorityCalculation.ts`
 
 Weighted algorithm:
 - 40% favorable flag
@@ -207,11 +207,11 @@ src/main/frontend/         # Production frontend code
 
 src/test/frontend/         # Frontend tests (parallel to src/main)
 ├── components/            # Component tests
-│   └── bento/             # Bento grid system tests
+│   └── activity/          # Activity grid system tests
 └── setup.ts               # Vitest test setup
 ```
 
-**Bento Grid System**:
+**Activity Grid System**:
 - Priority-based card layout (highest priority = top-left position)
 - Hotness visual indicators (hot/warm/neutral/cool based on priority)
 - Responsive: 4 columns (desktop) → 2 columns (tablet) → 1 column (mobile)
@@ -236,9 +236,9 @@ src/test/frontend/         # Frontend tests (parallel to src/main)
 - Import components with `Frontend/` alias (configured in `vitest.config.ts`)
 
 **Test Patterns**: See existing test files for reference:
-- `src/test/frontend/components/bento/BentoCard.test.tsx` - Component testing
-- `src/test/frontend/components/bento/usePriorityCalculation.test.ts` - Hook testing
-- `src/test/frontend/components/bento/BentoSystem.a11y.test.tsx` - Accessibility testing
+- `src/test/frontend/components/activity/ActivityCard.test.tsx` - Component testing
+- `src/test/frontend/components/activity/usePriorityCalculation.test.ts` - Hook testing
+- `src/test/frontend/components/activity/ActivitySystem.a11y.test.tsx` - Accessibility testing
 
 **Coverage Targets**: 80%+ statements/functions/lines, 75%+ branches
 
@@ -318,7 +318,7 @@ This repository includes specialized agents and commands in `.claude/`:
 
 ### Adding Frontend Components
 
-1. Follow bento grid patterns (see `src/main/frontend/components/bento/`)
+1. Follow activity grid patterns (see `src/main/frontend/components/activity/`)
 2. Use design tokens from `src/main/frontend/styles/global.css`
 3. Write tests in `src/test/frontend/` directory
 4. Ensure WCAG 2.1 AA compliance with jest-axe

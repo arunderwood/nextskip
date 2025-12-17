@@ -1,7 +1,7 @@
 /**
  * SolarIndicesContent - Content component for solar indices card
  *
- * Extracted from SolarIndicesCard.tsx to work with BentoCard wrapper.
+ * Extracted from SolarIndicesCard.tsx to work with ActivityCard wrapper.
  * Displays solar weather data: SFI, K-index, A-index, Sunspot Number.
  */
 

@@ -1,0 +1,25 @@
+/* ActivityGrid Component Styles - Masonry Layout */
+
+.activity-grid {
+  width: 100%;
+  /* Masonry grid handles layout via RegularMasonryGrid component */
+}
+
+/* Card wrapper - masonry handles positioning and sizing via Frame */
+.activity-grid__card-wrapper {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  transition: transform var(--activity-transition-duration) var(--activity-transition-timing),
+    opacity var(--activity-transition-duration) var(--activity-transition-timing);
+}
+
+/* Card size classes - kept for backwards compatibility with ActivityCard styling */
+/* Actual sizing is handled by Frame component width/height aspect ratios */
+.activity-grid__card--standard,
+.activity-grid__card--wide,
+.activity-grid__card--tall,
+.activity-grid__card--hero {
+  /* Frame component handles sizing */
+}

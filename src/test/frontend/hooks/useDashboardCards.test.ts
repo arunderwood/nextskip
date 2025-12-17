@@ -1,7 +1,7 @@
 /**
  * Unit tests for useDashboardCards hook
  *
- * Tests the orchestration of PropagationResponse data into BentoCardConfig
+ * Tests the orchestration of PropagationResponse data into ActivityCardConfig
  * objects with calculated priorities and hotness levels.
  */
 

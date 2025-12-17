@@ -1,20 +1,20 @@
 /**
- * Type definitions for the NextSkip Bento Grid Design System
+ * Type definitions for the NextSkip Activity Grid Design System
  *
- * The bento grid displays dashboard cards arranged by "hotness" -
+ * The activity grid displays dashboard cards arranged by "hotness" -
  * how favorable conditions are for each activity at the moment.
  */
 
 import type { ReactNode } from 'react';
 
 /**
- * Card size variants for bento grid layout
+ * Card size variants for activity grid layout
  * - standard: 1x1 (single cell) - Single metrics, utilities
  * - wide: 2x1 (spans 2 columns) - Charts, tables
  * - tall: 1x2 (spans 2 rows) - Lists, activity feeds
  * - hero: 2x2 (spans 2 columns and 2 rows) - Primary KPIs, featured metrics
  */
-export type BentoCardSize = 'standard' | 'wide' | 'tall' | 'hero';
+export type ActivityCardSize = 'standard' | 'wide' | 'tall' | 'hero';
 
 /**
  * Hotness level determines visual emphasis and border glow intensity
@@ -45,15 +45,15 @@ export type ActivityType =
   | 'real-time-spots';
 
 /**
- * Configuration for a single bento card
+ * Configuration for a single activity card
  */
-export interface BentoCardConfig {
+export interface ActivityCardConfig {
   /** Unique identifier for the card */
   id: string;
   /** Type of activity this card displays */
   type: ActivityType;
   /** Card size variant */
-  size: BentoCardSize;
+  size: ActivityCardSize;
   /** Priority score (0-100) - higher = more important/favorable */
   priority: number;
   /** Computed hotness level based on priority */
@@ -63,11 +63,11 @@ export interface BentoCardConfig {
 }
 
 /**
- * Props for BentoCard base component
+ * Props for ActivityCard base component
  */
-export interface BentoCardProps {
+export interface ActivityCardProps {
   /** Card configuration */
-  config: BentoCardConfig;
+  config: ActivityCardConfig;
   /** Title displayed in card header */
   title: string;
   /** Optional subtitle/source label */
@@ -87,12 +87,12 @@ export interface BentoCardProps {
 }
 
 /**
- * Props for BentoGrid container component
+ * Props for ActivityGrid container component
  */
-export interface BentoGridProps {
+export interface ActivityGridProps {
   /** Array of card configurations with components */
   cards: Array<{
-    config: BentoCardConfig;
+    config: ActivityCardConfig;
     component: ReactNode;
   }>;
   /** Number of columns at desktop breakpoint (default: 4) */

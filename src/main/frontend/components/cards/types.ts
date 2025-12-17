@@ -6,7 +6,7 @@
  */
 
 import type { ReactNode } from 'react';
-import type { BentoCardConfig } from 'Frontend/types/bento';
+import type { ActivityCardConfig } from 'Frontend/types/activity';
 
 /**
  * Combined dashboard data from all activity modules.
@@ -41,7 +41,7 @@ export interface CardDefinition<TData = unknown> {
   canRender: (data: DashboardData) => boolean;
 
   /**
-   * Create BentoCardConfig(s) from the dashboard data.
+   * Create ActivityCardConfig(s) from the dashboard data.
    *
    * This calculates the card's priority and hotness based on the data.
    * Can return a single config, an array of configs (for individual items),
@@ -50,14 +50,14 @@ export interface CardDefinition<TData = unknown> {
    * @param data - The combined dashboard data from all modules
    * @returns Card configuration(s) with priority/hotness, or null if cannot create
    */
-  createConfig: (data: DashboardData) => BentoCardConfig | BentoCardConfig[] | null;
+  createConfig: (data: DashboardData) => ActivityCardConfig | ActivityCardConfig[] | null;
 
   /**
-   * Render the card's content within a BentoCard wrapper.
+   * Render the card's content within an ActivityCard wrapper.
    *
    * @param data - The combined dashboard data from all modules
    * @param config - The card configuration created by createConfig
-   * @returns React element for the complete card (including BentoCard wrapper)
+   * @returns React element for the complete card (including ActivityCard wrapper)
    */
-  render: (data: DashboardData, config: BentoCardConfig) => ReactNode;
+  render: (data: DashboardData, config: ActivityCardConfig) => ReactNode;
 }

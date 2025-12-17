@@ -1,17 +1,17 @@
 /**
- * Accessibility integration tests for Bento Grid system
+ * Accessibility integration tests for Activity Grid system
  *
  * Tests WCAG 2.1 AA compliance, keyboard navigation, screen reader support,
- * and focus management across the entire bento grid system
+ * and focus management across the entire activity grid system
  */
 
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { axe, toHaveNoViolations } from 'jest-axe';
-import BentoGrid from 'Frontend/components/bento/BentoGrid';
-import BentoCard from 'Frontend/components/bento/BentoCard';
-import type { BentoCardConfig } from 'Frontend/types/bento';
+import ActivityGrid from "Frontend/components/activity/ActivityGrid";
+import ActivityCard from "Frontend/components/activity/ActivityCard";
+import type { ActivityCardConfig } from "Frontend/components/activity";
 
 expect.extend(toHaveNoViolations);
 
@@ -21,7 +21,7 @@ const createTestCard = (
   title: string,
   interactive = false
 ) => {
-  const config: BentoCardConfig = {
+  const config: ActivityCardConfig = {
     id,
     type: 'solar-indices',
     size: 'standard',
@@ -32,7 +32,7 @@ const createTestCard = (
   return {
     config,
     component: (
-      <BentoCard
+      <ActivityCard
         config={config}
         title={title}
         subtitle="Test subtitle"
@@ -40,12 +40,12 @@ const createTestCard = (
         onClick={interactive ? vi.fn() : undefined}
       >
         <div>{title} content</div>
-      </BentoCard>
+      </ActivityCard>
     ),
   };
 };
 
-describe('Bento System Accessibility', () => {
+describe('Activity System Accessibility', () => {
   describe('WCAG 2.1 AA Compliance', () => {
     it('should have no accessibility violations with standard cards', async () => {
       const cards = [
@@ -54,7 +54,7 @@ describe('Bento System Accessibility', () => {
         createTestCard('card-3', 30, 'Propagation'),
       ];
 
-      const { container } = render(<BentoGrid cards={cards} />);
+      const { container } = render(<ActivityGrid cards={cards} />);
 
       const results = await axe(container);
       expect(results).toHaveNoViolations();
@@ -66,7 +66,7 @@ describe('Bento System Accessibility', () => {
         createTestCard('card-2', 60, 'Band Conditions', true),
       ];
 
-      const { container } = render(<BentoGrid cards={cards} />);
+      const { container } = render(<ActivityGrid cards={cards} />);
 
       const results = await axe(container);
       expect(results).toHaveNoViolations();
@@ -78,7 +78,7 @@ describe('Bento System Accessibility', () => {
         createTestCard('card-2', 60, 'Static Card', false),
       ];
 
-      const { container } = render(<BentoGrid cards={cards} />);
+      const { container } = render(<ActivityGrid cards={cards} />);
 
       const results = await axe(container);
       expect(results).toHaveNoViolations();
@@ -92,7 +92,7 @@ describe('Bento System Accessibility', () => {
         createTestCard('cool', 15, 'Cool Card'),
       ];
 
-      const { container } = render(<BentoGrid cards={cards} />);
+      const { container } = render(<ActivityGrid cards={cards} />);
 
       const results = await axe(container);
       expect(results).toHaveNoViolations();
@@ -108,7 +108,7 @@ describe('Bento System Accessibility', () => {
         createTestCard('medium', 60, 'Medium Priority', true),
       ];
 
-      render(<BentoGrid cards={cards} />);
+      render(<ActivityGrid cards={cards} />);
 
       // Cards should be in DOM in priority order
       const highButton = screen.getByRole('button', { name: 'High Priority' });
@@ -136,7 +136,7 @@ describe('Bento System Accessibility', () => {
         createTestCard('static-2', 30, 'Static Low', false),
       ];
 
-      render(<BentoGrid cards={cards} />);
+      render(<ActivityGrid cards={cards} />);
 
       const button = screen.getByRole('button', { name: 'Interactive' });
 
@@ -149,7 +149,7 @@ describe('Bento System Accessibility', () => {
       const user = userEvent.setup();
       const handleClick = vi.fn();
 
-      const config: BentoCardConfig = {
+      const config: ActivityCardConfig = {
         id: 'test',
         type: 'solar-indices',
         size: 'standard',
@@ -158,9 +158,9 @@ describe('Bento System Accessibility', () => {
       };
 
       render(
-        <BentoCard config={config} title="Test Card" onClick={handleClick}>
+        <ActivityCard config={config} title="Test Card" onClick={handleClick}>
           <div>Content</div>
-        </BentoCard>
+        </ActivityCard>
       );
 
       const button = screen.getByRole('button', { name: 'Test Card' });
@@ -176,7 +176,7 @@ describe('Bento System Accessibility', () => {
       const user = userEvent.setup();
       const handleClick = vi.fn();
 
-      const config: BentoCardConfig = {
+      const config: ActivityCardConfig = {
         id: 'test',
         type: 'solar-indices',
         size: 'standard',
@@ -185,9 +185,9 @@ describe('Bento System Accessibility', () => {
       };
 
       render(
-        <BentoCard config={config} title="Test Card" onClick={handleClick}>
+        <ActivityCard config={config} title="Test Card" onClick={handleClick}>
           <div>Content</div>
-        </BentoCard>
+        </ActivityCard>
       );
 
       const button = screen.getByRole('button', { name: 'Test Card' });
@@ -204,7 +204,7 @@ describe('Bento System Accessibility', () => {
     it('should announce grid as a list', () => {
       const cards = [createTestCard('card-1', 75, 'Test Card')];
 
-      render(<BentoGrid cards={cards} />);
+      render(<ActivityGrid cards={cards} />);
 
       const list = screen.getByRole('list');
       expect(list).toBeInTheDocument();
@@ -217,7 +217,7 @@ describe('Bento System Accessibility', () => {
         createTestCard('card-3', 30, 'Card 3'),
       ];
 
-      const { container } = render(<BentoGrid cards={cards} />);
+      const { container } = render(<ActivityGrid cards={cards} />);
 
       const list = screen.getByRole('list');
       const items = list.querySelectorAll('[role="listitem"]');
@@ -228,26 +228,26 @@ describe('Bento System Accessibility', () => {
     it('should have accessible labels on cards', () => {
       const cards = [createTestCard('card-1', 75, 'Solar Indices')];
 
-      render(<BentoGrid cards={cards} />);
+      render(<ActivityGrid cards={cards} />);
 
       const card = screen.getByLabelText('Solar Indices');
       expect(card).toBeInTheDocument();
     });
 
     it('should announce hotness level to screen readers', () => {
-      const config1: BentoCardConfig = { id: 'hot', type: 'solar-indices', size: 'standard', priority: 85, hotness: 'hot' };
-      const config2: BentoCardConfig = { id: 'warm', type: 'solar-indices', size: 'standard', priority: 55, hotness: 'warm' };
-      const config3: BentoCardConfig = { id: 'neutral', type: 'solar-indices', size: 'standard', priority: 35, hotness: 'neutral' };
-      const config4: BentoCardConfig = { id: 'cool', type: 'solar-indices', size: 'standard', priority: 15, hotness: 'cool' };
+      const config1: ActivityCardConfig = { id: 'hot', type: 'solar-indices', size: 'standard', priority: 85, hotness: 'hot' };
+      const config2: ActivityCardConfig = { id: 'warm', type: 'solar-indices', size: 'standard', priority: 55, hotness: 'warm' };
+      const config3: ActivityCardConfig = { id: 'neutral', type: 'solar-indices', size: 'standard', priority: 35, hotness: 'neutral' };
+      const config4: ActivityCardConfig = { id: 'cool', type: 'solar-indices', size: 'standard', priority: 15, hotness: 'cool' };
 
       const cards = [
-        { config: config1, component: <BentoCard config={config1} title="Hot Card" subtitle="Test" icon="📊"><div>Hot Card content</div></BentoCard> },
-        { config: config2, component: <BentoCard config={config2} title="Warm Card" subtitle="Test" icon="📊"><div>Warm Card content</div></BentoCard> },
-        { config: config3, component: <BentoCard config={config3} title="Neutral Card" subtitle="Test" icon="📊"><div>Neutral Card content</div></BentoCard> },
-        { config: config4, component: <BentoCard config={config4} title="Cool Card" subtitle="Test" icon="📊"><div>Cool Card content</div></BentoCard> },
+        { config: config1, component: <ActivityCard config={config1} title="Hot Card" subtitle="Test" icon="📊"><div>Hot Card content</div></ActivityCard> },
+        { config: config2, component: <ActivityCard config={config2} title="Warm Card" subtitle="Test" icon="📊"><div>Warm Card content</div></ActivityCard> },
+        { config: config3, component: <ActivityCard config={config3} title="Neutral Card" subtitle="Test" icon="📊"><div>Neutral Card content</div></ActivityCard> },
+        { config: config4, component: <ActivityCard config={config4} title="Cool Card" subtitle="Test" icon="📊"><div>Cool Card content</div></ActivityCard> },
       ];
 
-      const { container } = render(<BentoGrid cards={cards} />);
+      const { container } = render(<ActivityGrid cards={cards} />);
 
       expect(container).toHaveTextContent('Excellent'); // hot
       expect(container).toHaveTextContent('Good'); // warm
@@ -261,7 +261,7 @@ describe('Bento System Accessibility', () => {
         createTestCard('card-2', 60, 'Secondary Card'),
       ];
 
-      render(<BentoGrid cards={cards} />);
+      render(<ActivityGrid cards={cards} />);
 
       const heading1 = screen.getByRole('heading', { name: 'Main Card' });
       const heading2 = screen.getByRole('heading', { name: 'Secondary Card' });
@@ -276,7 +276,7 @@ describe('Bento System Accessibility', () => {
       const user = userEvent.setup();
       const cards = [createTestCard('card-1', 75, 'Test Card', true)];
 
-      const { container } = render(<BentoGrid cards={cards} />);
+      const { container } = render(<ActivityGrid cards={cards} />);
 
       const button = screen.getByRole('button', { name: 'Test Card' });
 
@@ -284,7 +284,7 @@ describe('Bento System Accessibility', () => {
       expect(button).toHaveFocus();
 
       // Check that focus styles are applied (class-based check)
-      const card = container.querySelector('.bento-card');
+      const card = container.querySelector('.activity-card');
       expect(card).toContainElement(button);
     });
 
@@ -298,7 +298,7 @@ describe('Bento System Accessibility', () => {
       render(
         <div>
           <button>Before</button>
-          <BentoGrid cards={cards} />
+          <ActivityGrid cards={cards} />
           <button>After</button>
         </div>
       );
@@ -327,23 +327,23 @@ describe('Bento System Accessibility', () => {
     it('should use article element for non-interactive cards', () => {
       const cards = [createTestCard('card-1', 75, 'Test Card', false)];
 
-      const { container } = render(<BentoGrid cards={cards} />);
+      const { container } = render(<ActivityGrid cards={cards} />);
 
-      const article = container.querySelector('article.bento-card');
+      const article = container.querySelector('article.activity-card');
       expect(article).toBeInTheDocument();
     });
 
     it('should use button element for interactive cards', () => {
       const cards = [createTestCard('card-1', 75, 'Test Card', true)];
 
-      const { container } = render(<BentoGrid cards={cards} />);
+      const { container } = render(<ActivityGrid cards={cards} />);
 
-      const button = container.querySelector('button.bento-card');
+      const button = container.querySelector('button.activity-card');
       expect(button).toBeInTheDocument();
     });
 
     it('should use proper sectioning divs', () => {
-      const config: BentoCardConfig = {
+      const config: ActivityCardConfig = {
         id: 'test',
         type: 'solar-indices',
         size: 'standard',
@@ -352,47 +352,47 @@ describe('Bento System Accessibility', () => {
       };
 
       const { container } = render(
-        <BentoCard
+        <ActivityCard
           config={config}
           title="Test"
           footer={<div>Footer</div>}
         >
           <div>Content</div>
-        </BentoCard>
+        </ActivityCard>
       );
 
-      expect(container.querySelector('.bento-card__header')).toBeInTheDocument();
-      expect(container.querySelector('.bento-card__footer')).toBeInTheDocument();
+      expect(container.querySelector('.activity-card__header')).toBeInTheDocument();
+      expect(container.querySelector('.activity-card__footer')).toBeInTheDocument();
     });
   });
 
   describe('Color Contrast', () => {
     it('should use semantic color classes for hotness indicators', () => {
-      const config1: BentoCardConfig = { id: 'hot', type: 'solar-indices', size: 'standard', priority: 85, hotness: 'hot' };
-      const config2: BentoCardConfig = { id: 'warm', type: 'solar-indices', size: 'standard', priority: 55, hotness: 'warm' };
-      const config3: BentoCardConfig = { id: 'neutral', type: 'solar-indices', size: 'standard', priority: 35, hotness: 'neutral' };
-      const config4: BentoCardConfig = { id: 'cool', type: 'solar-indices', size: 'standard', priority: 15, hotness: 'cool' };
+      const config1: ActivityCardConfig = { id: 'hot', type: 'solar-indices', size: 'standard', priority: 85, hotness: 'hot' };
+      const config2: ActivityCardConfig = { id: 'warm', type: 'solar-indices', size: 'standard', priority: 55, hotness: 'warm' };
+      const config3: ActivityCardConfig = { id: 'neutral', type: 'solar-indices', size: 'standard', priority: 35, hotness: 'neutral' };
+      const config4: ActivityCardConfig = { id: 'cool', type: 'solar-indices', size: 'standard', priority: 15, hotness: 'cool' };
 
       const cards = [
-        { config: config1, component: <BentoCard config={config1} title="Hot"><div>Hot</div></BentoCard> },
-        { config: config2, component: <BentoCard config={config2} title="Warm"><div>Warm</div></BentoCard> },
-        { config: config3, component: <BentoCard config={config3} title="Neutral"><div>Neutral</div></BentoCard> },
-        { config: config4, component: <BentoCard config={config4} title="Cool"><div>Cool</div></BentoCard> },
+        { config: config1, component: <ActivityCard config={config1} title="Hot"><div>Hot</div></ActivityCard> },
+        { config: config2, component: <ActivityCard config={config2} title="Warm"><div>Warm</div></ActivityCard> },
+        { config: config3, component: <ActivityCard config={config3} title="Neutral"><div>Neutral</div></ActivityCard> },
+        { config: config4, component: <ActivityCard config={config4} title="Cool"><div>Cool</div></ActivityCard> },
       ];
 
-      const { container } = render(<BentoGrid cards={cards} />);
+      const { container } = render(<ActivityGrid cards={cards} />);
 
       expect(
-        container.querySelector('.bento-card--hot')
+        container.querySelector('.activity-card--hot')
       ).toBeInTheDocument();
       expect(
-        container.querySelector('.bento-card--warm')
+        container.querySelector('.activity-card--warm')
       ).toBeInTheDocument();
       expect(
-        container.querySelector('.bento-card--neutral')
+        container.querySelector('.activity-card--neutral')
       ).toBeInTheDocument();
       expect(
-        container.querySelector('.bento-card--cool')
+        container.querySelector('.activity-card--cool')
       ).toBeInTheDocument();
     });
   });
@@ -404,7 +404,7 @@ describe('Bento System Accessibility', () => {
         createTestCard('card-2', 60, 'Card 2'),
       ];
 
-      const { container } = render(<BentoGrid cards={cards} />);
+      const { container } = render(<ActivityGrid cards={cards} />);
 
       // Desktop viewport
       window.matchMedia = vi.fn().mockImplementation((query) => ({

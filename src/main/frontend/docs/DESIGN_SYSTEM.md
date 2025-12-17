@@ -178,18 +178,18 @@ Pre-defined utility classes for band condition ratings:
 }
 ```
 
-## Bento Grid System
+## Activity Grid System
 
-The bento grid is a layout system where cards are arranged by "hotness" - how favorable conditions are for each activity at the moment.
+The activity grid is a layout system where cards are arranged by "hotness" - how favorable conditions are for each activity at the moment.
 
 ### Grid Configuration
 
 ```css
---bento-columns-desktop: 4;    /* 4 columns on desktop */
---bento-columns-tablet: 2;     /* 2 columns on tablet */
---bento-columns-mobile: 1;     /* 1 column on mobile */
---bento-gap: calc(var(--spacing-unit) * 3);  /* 24px gap */
---bento-card-min-height: 200px;
+--activity-columns-desktop: 4;    /* 4 columns on desktop */
+--activity-columns-tablet: 2;     /* 2 columns on tablet */
+--activity-columns-mobile: 1;     /* 1 column on mobile */
+--activity-gap: calc(var(--spacing-unit) * 3);  /* 24px gap */
+--activity-card-min-height: 200px;
 ```
 
 ### Card Sizes
@@ -239,8 +239,8 @@ Higher priority cards appear first in the grid (top-left position).
 ### Animation
 
 ```css
---bento-transition-duration: 300ms;
---bento-transition-timing: cubic-bezier(0.4, 0, 0.2, 1);  /* Material ease-out */
+--activity-transition-duration: 300ms;
+--activity-transition-timing: cubic-bezier(0.4, 0, 0.2, 1);  /* Material ease-out */
 ```
 
 Cards smoothly transition when:
@@ -251,14 +251,14 @@ Cards smoothly transition when:
 ### Usage Example
 
 ```tsx
-import { BentoGrid, BentoCard } from '../components/bento';
+import { ActivityGrid, ActivityCard } from '../components/activity';
 
-<BentoGrid cards={[
+<ActivityGrid cards={[
   {
     config: { id: 'solar', type: 'solar-indices', size: 'standard', priority: 85, hotness: 'hot' },
-    component: <BentoCard config={config} title="Solar Indices" icon="☀️">
+    component: <ActivityCard config={config} title="Solar Indices" icon="☀️">
       <SolarIndicesContent data={solarData} />
-    </BentoCard>
+    </ActivityCard>
   }
 ]} />
 ```

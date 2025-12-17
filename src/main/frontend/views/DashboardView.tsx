@@ -5,7 +5,7 @@ import type PropagationResponse from 'Frontend/generated/io/nextskip/propagation
 import type ActivationsResponse from 'Frontend/generated/io/nextskip/activations/api/ActivationsResponse';
 import type ContestsResponse from 'Frontend/generated/io/nextskip/contests/api/ContestsResponse';
 import type { DashboardData } from '../components/cards/types';
-import { BentoGrid } from '../components/bento';
+import { ActivityGrid } from '../components/activity';
 import { useDashboardCards } from '../hooks/useDashboardCards';
 import { getRegisteredCards } from '../components/cards/CardRegistry';
 import { ThemeToggle } from '../components/ThemeToggle';
@@ -107,9 +107,9 @@ function DashboardView() {
     );
   }
 
-  // Build bento grid cards using the registry
+  // Build activity grid cards using the registry
   const cards = getRegisteredCards();
-  const bentoCards = cardConfigs.map((config) => {
+  const activityCards = cardConfigs.map((config) => {
     // Match the card definition by checking if its createConfig produces this config's ID
     const cardDef = cards.find((c) => {
       const cfgResult = c.createConfig(dashboardData);
@@ -159,8 +159,8 @@ function DashboardView() {
       )}
 
       <div className="dashboard-content">
-        {bentoCards.length > 0 ? (
-          <BentoGrid cards={bentoCards} />
+        {activityCards.length > 0 ? (
+          <ActivityGrid cards={activityCards} />
         ) : (
           <div className="no-data">
             <p>No propagation data available at this time.</p>

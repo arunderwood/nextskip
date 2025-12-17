@@ -1,10 +1,10 @@
-/* BentoCard Component Styles */
+/* ActivityCard Component Styles */
 
-.bento-card {
+.activity-card {
   display: flex;
   flex-direction: column;
   height: 100%; /* Fill the masonry Frame container */
-  min-height: var(--bento-card-min-height);
+  min-height: var(--activity-card-min-height);
   /* Glassmorphism effect */
   background: rgba(255, 255, 255, 0.7);
   backdrop-filter: blur(12px);
@@ -23,7 +23,7 @@
 
 /* Dark mode glass */
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) .bento-card {
+  :root:not([data-theme="light"]) .activity-card {
     background: rgba(22, 27, 34, 0.8);
     border: 1px solid rgba(255, 255, 255, 0.1);
     box-shadow:
@@ -32,7 +32,7 @@
   }
 }
 
-:root[data-theme="dark"] .bento-card {
+:root[data-theme="dark"] .activity-card {
   background: rgba(22, 27, 34, 0.8);
   border: 1px solid rgba(255, 255, 255, 0.1);
   box-shadow:
@@ -41,7 +41,7 @@
 }
 
 /* Remove button default styles for interactive cards */
-.bento-card--interactive {
+.activity-card--interactive {
   cursor: pointer;
   text-align: left;
   font-family: inherit;
@@ -50,7 +50,7 @@
 }
 
 /* Hotness variants - enhanced with stronger glows and gradients */
-.bento-card--hot {
+.activity-card--hot {
   background: linear-gradient(135deg,
     rgba(16, 185, 129, 0.1) 0%,
     rgba(255, 255, 255, 0.7) 100%);
@@ -61,7 +61,7 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.6);
 }
 
-.bento-card--warm {
+.activity-card--warm {
   background: linear-gradient(135deg,
     rgba(245, 158, 11, 0.08) 0%,
     rgba(255, 255, 255, 0.7) 100%);
@@ -72,7 +72,7 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.6);
 }
 
-.bento-card--neutral {
+.activity-card--neutral {
   background: linear-gradient(135deg,
     rgba(99, 102, 241, 0.06) 0%,
     rgba(255, 255, 255, 0.7) 100%);
@@ -82,7 +82,7 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.6);
 }
 
-.bento-card--cool {
+.activity-card--cool {
   border-color: var(--hotness-cool-border);
   box-shadow:
     0 2px 4px -1px rgba(0, 0, 0, 0.06),
@@ -92,7 +92,7 @@
 
 /* Dark mode hotness variants */
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) .bento-card--hot {
+  :root:not([data-theme="light"]) .activity-card--hot {
     background: linear-gradient(135deg,
       rgba(52, 211, 153, 0.15) 0%,
       rgba(22, 27, 34, 0.8) 100%);
@@ -102,7 +102,7 @@
       inset 0 1px 0 rgba(255, 255, 255, 0.05);
   }
 
-  :root:not([data-theme="light"]) .bento-card--warm {
+  :root:not([data-theme="light"]) .activity-card--warm {
     background: linear-gradient(135deg,
       rgba(251, 191, 36, 0.12) 0%,
       rgba(22, 27, 34, 0.8) 100%);
@@ -112,14 +112,14 @@
       inset 0 1px 0 rgba(255, 255, 255, 0.05);
   }
 
-  :root:not([data-theme="light"]) .bento-card--neutral {
+  :root:not([data-theme="light"]) .activity-card--neutral {
     background: linear-gradient(135deg,
       rgba(165, 180, 252, 0.08) 0%,
       rgba(22, 27, 34, 0.8) 100%);
   }
 }
 
-:root[data-theme="dark"] .bento-card--hot {
+:root[data-theme="dark"] .activity-card--hot {
   background: linear-gradient(135deg,
     rgba(52, 211, 153, 0.15) 0%,
     rgba(22, 27, 34, 0.8) 100%);
@@ -129,7 +129,7 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
-:root[data-theme="dark"] .bento-card--warm {
+:root[data-theme="dark"] .activity-card--warm {
   background: linear-gradient(135deg,
     rgba(251, 191, 36, 0.12) 0%,
     rgba(22, 27, 34, 0.8) 100%);
@@ -139,14 +139,14 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
-:root[data-theme="dark"] .bento-card--neutral {
+:root[data-theme="dark"] .activity-card--neutral {
   background: linear-gradient(135deg,
     rgba(165, 180, 252, 0.08) 0%,
     rgba(22, 27, 34, 0.8) 100%);
 }
 
 /* Enhanced hover states */
-.bento-card:hover {
+.activity-card:hover {
   transform: translateY(-4px) scale(1.01);
   box-shadow:
     0 10px 15px -3px rgba(0, 0, 0, 0.1),
@@ -154,14 +154,14 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.8);
 }
 
-.bento-card--hot:hover {
+.activity-card--hot:hover {
   box-shadow:
     0 0 30px rgba(16, 185, 129, 0.4),
     0 10px 15px -3px rgba(0, 0, 0, 0.1),
     inset 0 1px 0 rgba(255, 255, 255, 0.8);
 }
 
-.bento-card--warm:hover {
+.activity-card--warm:hover {
   box-shadow:
     0 0 24px rgba(245, 158, 11, 0.3),
     0 10px 15px -3px rgba(0, 0, 0, 0.1),
@@ -169,18 +169,18 @@
 }
 
 /* Focus state (accessibility) */
-.bento-card:focus-visible {
-  outline: var(--bento-focus-ring-width) solid var(--bento-focus-ring-color);
-  outline-offset: var(--bento-focus-ring-offset);
+.activity-card:focus-visible {
+  outline: var(--activity-focus-ring-width) solid var(--activity-focus-ring-color);
+  outline-offset: var(--activity-focus-ring-offset);
 }
 
 /* Active state for interactive cards */
-.bento-card--interactive:active {
+.activity-card--interactive:active {
   transform: translateY(-2px) scale(0.99);
 }
 
 /* Card internal structure */
-.bento-card__header {
+.activity-card__header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -195,7 +195,7 @@
   );
 }
 
-.bento-card__header-left {
+.activity-card__header-left {
   display: flex;
   align-items: center;
   gap: calc(var(--spacing-unit) * 1.5);
@@ -203,19 +203,19 @@
   min-width: 0; /* Allow text truncation */
 }
 
-.bento-card__icon {
+.activity-card__icon {
   font-size: 1.25rem; /* Reduced from 1.5rem */
   line-height: 1;
   flex-shrink: 0;
   opacity: 0.9; /* Subtle opacity for refinement */
 }
 
-.bento-card__title-wrapper {
+.activity-card__title-wrapper {
   min-width: 0;
   overflow: hidden;
 }
 
-.bento-card__title {
+.activity-card__title {
   margin: 0;
   font-size: 0.9375rem;  /* Reduced from 1.125rem */
   font-weight: 600;  /* Slightly bolder for clarity */
@@ -225,7 +225,7 @@
   white-space: nowrap;
 }
 
-.bento-card__subtitle {
+.activity-card__subtitle {
   font-size: 0.6875rem;  /* Reduced from 0.75rem */
   color: var(--text-secondary);
   margin-top: 1px;
@@ -236,7 +236,7 @@
 }
 
 /* Hotness indicator badge in header */
-.bento-card__hotness-indicator {
+.activity-card__hotness-indicator {
   display: flex;
   align-items: center;
   gap: calc(var(--spacing-unit) * 0.5);
@@ -250,22 +250,22 @@
   white-space: nowrap;
 }
 
-.bento-card__hotness-indicator--hot {
+.activity-card__hotness-indicator--hot {
   background: rgba(76, 175, 80, 0.15);
   color: var(--success-color);
 }
 
-.bento-card__hotness-indicator--warm {
+.activity-card__hotness-indicator--warm {
   background: rgba(255, 152, 0, 0.15);
   color: #ef6c00; /* Darker orange for better contrast */
 }
 
-.bento-card__hotness-indicator--neutral {
+.activity-card__hotness-indicator--neutral {
   background: rgba(25, 118, 210, 0.1);
   color: var(--primary-color);
 }
 
-.bento-card__hotness-indicator--cool {
+.activity-card__hotness-indicator--cool {
   background: rgba(0, 0, 0, 0.05);
   color: var(--text-secondary);
 }
@@ -283,7 +283,7 @@
   }
 }
 
-.bento-card__hotness-indicator--hot::before {
+.activity-card__hotness-indicator--hot::before {
   content: '';
   width: 6px; /* Reduced from 8px */
   height: 6px;
@@ -292,14 +292,14 @@
   animation: hotness-pulse 2.5s ease-in-out infinite; /* Slower animation */
 }
 
-.bento-card__content {
+.activity-card__content {
   flex: 1;
   padding: calc(var(--spacing-unit) * 1.5);  /* Reduced from 2 */
   overflow: auto;
   line-height: var(--line-height-compact, 1.4);
 }
 
-.bento-card__footer {
+.activity-card__footer {
   padding: calc(var(--spacing-unit) * 1) calc(var(--spacing-unit) * 1.5);  /* Reduced */
   border-top: 1px solid var(--border-color);
   background: rgba(0, 0, 0, 0.02);
@@ -307,35 +307,35 @@
 }
 
 /* Size-specific adjustments */
-.bento-card--tall .bento-card__content {
+.activity-card--tall .activity-card__content {
   padding: calc(var(--spacing-unit) * 2.5);
 }
 
-.bento-card--hero .bento-card__header {
+.activity-card--hero .activity-card__header {
   padding: calc(var(--spacing-unit) * 2.5);
 }
 
-.bento-card--hero .bento-card__title {
+.activity-card--hero .activity-card__title {
   font-size: 1.375rem;
 }
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
-  .bento-card__header {
+  .activity-card__header {
     flex-direction: column;
     align-items: flex-start;
     gap: calc(var(--spacing-unit) * 1);
   }
 
-  .bento-card__hotness-indicator {
+  .activity-card__hotness-indicator {
     align-self: flex-end;
   }
 
-  .bento-card__title {
+  .activity-card__title {
     font-size: 1rem;
   }
 
-  .bento-card--hero .bento-card__title {
+  .activity-card--hero .activity-card__title {
     font-size: 1.125rem;
   }
 }

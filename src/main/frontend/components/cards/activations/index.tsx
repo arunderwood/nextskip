@@ -9,9 +9,9 @@
 import React from 'react';
 import { registerCard } from '../CardRegistry';
 import type { CardDefinition, DashboardData } from '../types';
-import type { BentoCardConfig } from 'Frontend/types/bento';
-import { BentoCard } from '../../bento';
-import { calculatePriority, priorityToHotness } from '../../bento/usePriorityCalculation';
+import type { ActivityCardConfig } from 'Frontend/types/activity';
+import { ActivityCard } from '../../activity';
+import { calculatePriority, priorityToHotness } from '../../activity/usePriorityCalculation';
 import PotaActivationsContent from './PotaActivationsContent';
 import SotaActivationsContent from './SotaActivationsContent';
 
@@ -58,7 +58,7 @@ const potaActivationsCard: CardDefinition = {
     };
   },
 
-  render: (data: DashboardData, config: BentoCardConfig) => {
+  render: (data: DashboardData, config: ActivityCardConfig) => {
     const potaActivations = data.activations?.potaActivations;
     if (!potaActivations) return null;
 
@@ -66,7 +66,7 @@ const potaActivationsCard: CardDefinition = {
     const validActivations = potaActivations.filter((a) => a !== undefined);
 
     return (
-      <BentoCard
+      <ActivityCard
         config={config}
         title="POTA Activations"
         icon="🌲"
@@ -80,7 +80,7 @@ const potaActivationsCard: CardDefinition = {
         }
       >
         <PotaActivationsContent activations={validActivations} />
-      </BentoCard>
+      </ActivityCard>
     );
   },
 };
@@ -126,7 +126,7 @@ const sotaActivationsCard: CardDefinition = {
     };
   },
 
-  render: (data: DashboardData, config: BentoCardConfig) => {
+  render: (data: DashboardData, config: ActivityCardConfig) => {
     const sotaActivations = data.activations?.sotaActivations;
     if (!sotaActivations) return null;
 
@@ -134,7 +134,7 @@ const sotaActivationsCard: CardDefinition = {
     const validActivations = sotaActivations.filter((a) => a !== undefined);
 
     return (
-      <BentoCard
+      <ActivityCard
         config={config}
         title="SOTA Activations"
         icon="⛰️"
@@ -148,7 +148,7 @@ const sotaActivationsCard: CardDefinition = {
         }
       >
         <SotaActivationsContent activations={validActivations} />
-      </BentoCard>
+      </ActivityCard>
     );
   },
 };

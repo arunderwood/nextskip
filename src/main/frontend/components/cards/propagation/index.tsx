@@ -9,9 +9,9 @@ import React from 'react';
 import { Sun, Radio } from 'lucide-react';
 import { registerCard } from '../CardRegistry';
 import type { CardDefinition, DashboardData } from '../types';
-import type { BentoCardConfig } from 'Frontend/types/bento';
-import { BentoCard } from '../../bento';
-import { calculatePriority, priorityToHotness } from '../../bento/usePriorityCalculation';
+import type { ActivityCardConfig } from 'Frontend/types/activity';
+import { ActivityCard } from '../../activity';
+import { calculatePriority, priorityToHotness } from '../../activity/usePriorityCalculation';
 import SolarIndicesContent from './SolarIndicesContent';
 import BandConditionsContent, { BandConditionsLegend } from './BandConditionsContent';
 
@@ -55,12 +55,12 @@ const solarIndicesCard: CardDefinition = {
     };
   },
 
-  render: (data: DashboardData, config: BentoCardConfig) => {
+  render: (data: DashboardData, config: ActivityCardConfig) => {
     const solarIndices = data.propagation?.solarIndices;
     if (!solarIndices) return null;
 
     return (
-      <BentoCard
+      <ActivityCard
         config={config}
         title="Solar Indices"
         icon={<Sun size={20} />}
@@ -83,7 +83,7 @@ const solarIndicesCard: CardDefinition = {
         }
       >
         <SolarIndicesContent solarIndices={solarIndices} />
-      </BentoCard>
+      </ActivityCard>
     );
   },
 };
@@ -135,7 +135,7 @@ const bandConditionsCard: CardDefinition = {
     };
   },
 
-  render: (data: DashboardData, config: BentoCardConfig) => {
+  render: (data: DashboardData, config: ActivityCardConfig) => {
     const bandConditions = data.propagation?.bandConditions;
     if (!bandConditions || bandConditions.length === 0) return null;
 
@@ -145,7 +145,7 @@ const bandConditionsCard: CardDefinition = {
     );
 
     return (
-      <BentoCard
+      <ActivityCard
         config={config}
         title="HF Band Conditions"
         icon={<Radio size={20} />}
@@ -153,7 +153,7 @@ const bandConditionsCard: CardDefinition = {
         footer={<BandConditionsLegend />}
       >
         <BandConditionsContent bandConditions={validBandConditions} />
-      </BentoCard>
+      </ActivityCard>
     );
   },
 };

@@ -13,10 +13,10 @@
 
 import React from 'react';
 import { Trophy, Sparkles, Tent } from 'lucide-react';
-import type { BentoCardConfig } from 'Frontend/types/bento';
+import type { ActivityCardConfig } from 'Frontend/types/activity';
 import type Contest from 'Frontend/generated/io/nextskip/contests/model/Contest';
 import EventStatus from 'Frontend/generated/io/nextskip/common/model/EventStatus';
-import { BentoCard } from '../../bento';
+import { ActivityCard } from '../../activity';
 import './EventCard.module.css';
 
 /**
@@ -39,7 +39,7 @@ export type EventType = 'contest' | 'meteor-shower' | 'field-day';
 interface EventCardProps {
   event: Event;
   eventType: EventType;
-  config: BentoCardConfig;
+  config: ActivityCardConfig;
 }
 
 /**
@@ -151,7 +151,7 @@ export function EventCard({ event, eventType, config }: EventCardProps) {
   const sourceUrl = (event as any).calendarSourceUrl;
 
   return (
-    <BentoCard
+    <ActivityCard
       config={config}
       title={event.name || 'Unknown Event'}
       icon={metadata.icon}
@@ -181,7 +181,7 @@ export function EventCard({ event, eventType, config }: EventCardProps) {
           </div>
         )}
       </div>
-    </BentoCard>
+    </ActivityCard>
   );
 }
 

@@ -1,5 +1,5 @@
 /**
- * Component tests for BentoGrid
+ * Component tests for ActivityGrid
  *
  * Tests grid rendering, card sorting by priority, responsive behavior,
  * and accessibility
@@ -8,9 +8,9 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen, within } from '@testing-library/react';
 import { axe, toHaveNoViolations } from 'jest-axe';
-import BentoGrid from 'Frontend/components/bento/BentoGrid';
-import BentoCard from 'Frontend/components/bento/BentoCard';
-import type { BentoCardConfig } from 'Frontend/types/bento';
+import ActivityGrid from "Frontend/components/activity/ActivityGrid";
+import ActivityCard from "Frontend/components/activity/ActivityCard";
+import type { ActivityCardConfig } from "Frontend/components/activity";
 
 expect.extend(toHaveNoViolations);
 
@@ -19,7 +19,7 @@ const createCard = (
   priority: number,
   hotness: 'hot' | 'warm' | 'neutral' | 'cool',
   size: 'standard' | 'wide' | 'tall' | 'hero' = 'standard'
-): BentoCardConfig => ({
+): ActivityCardConfig => ({
   id,
   type: 'solar-indices',
   size,
@@ -27,16 +27,16 @@ const createCard = (
   hotness,
 });
 
-describe('BentoGrid', () => {
+describe('ActivityGrid', () => {
   describe('rendering', () => {
     it('should render empty grid with no cards', () => {
-      const { container } = render(<BentoGrid cards={[]} />);
+      const { container } = render(<ActivityGrid cards={[]} />);
 
-      const grid = container.querySelector('.bento-grid');
+      const grid = container.querySelector('.activity-grid');
       expect(grid).toBeInTheDocument();
 
       // Masonry grid creates a wrapper, so check that no card wrappers exist
-      const cardWrappers = container.querySelectorAll('.bento-grid__card-wrapper');
+      const cardWrappers = container.querySelectorAll('.activity-grid__card-wrapper');
       expect(cardWrappers).toHaveLength(0);
     });
 
@@ -45,17 +45,17 @@ describe('BentoGrid', () => {
         {
           config: createCard('card-1', 75, 'hot'),
           component: (
-            <BentoCard
+            <ActivityCard
               config={createCard('card-1', 75, 'hot')}
               title="Card 1"
             >
               <div>Content 1</div>
-            </BentoCard>
+            </ActivityCard>
           ),
         },
       ];
 
-      render(<BentoGrid cards={cards} />);
+      render(<ActivityGrid cards={cards} />);
 
       expect(screen.getByText('Card 1')).toBeInTheDocument();
       expect(screen.getByText('Content 1')).toBeInTheDocument();
@@ -66,39 +66,39 @@ describe('BentoGrid', () => {
         {
           config: createCard('card-1', 75, 'hot'),
           component: (
-            <BentoCard
+            <ActivityCard
               config={createCard('card-1', 75, 'hot')}
               title="Card 1"
             >
               <div>Content 1</div>
-            </BentoCard>
+            </ActivityCard>
           ),
         },
         {
           config: createCard('card-2', 50, 'warm'),
           component: (
-            <BentoCard
+            <ActivityCard
               config={createCard('card-2', 50, 'warm')}
               title="Card 2"
             >
               <div>Content 2</div>
-            </BentoCard>
+            </ActivityCard>
           ),
         },
         {
           config: createCard('card-3', 25, 'neutral'),
           component: (
-            <BentoCard
+            <ActivityCard
               config={createCard('card-3', 25, 'neutral')}
               title="Card 3"
             >
               <div>Content 3</div>
-            </BentoCard>
+            </ActivityCard>
           ),
         },
       ];
 
-      render(<BentoGrid cards={cards} />);
+      render(<ActivityGrid cards={cards} />);
 
       expect(screen.getByText('Card 1')).toBeInTheDocument();
       expect(screen.getByText('Card 2')).toBeInTheDocument();
@@ -110,21 +110,21 @@ describe('BentoGrid', () => {
         {
           config: createCard('card-1', 75, 'hot'),
           component: (
-            <BentoCard
+            <ActivityCard
               config={createCard('card-1', 75, 'hot')}
               title="Card 1"
             >
               <div>Content</div>
-            </BentoCard>
+            </ActivityCard>
           ),
         },
       ];
 
       const { container } = render(
-        <BentoGrid cards={cards} className="custom-grid" />
+        <ActivityGrid cards={cards} className="custom-grid" />
       );
 
-      const grid = container.querySelector('.bento-grid');
+      const grid = container.querySelector('.activity-grid');
       expect(grid).toHaveClass('custom-grid');
     });
   });
@@ -135,36 +135,36 @@ describe('BentoGrid', () => {
         {
           config: createCard('low', 20, 'neutral'),
           component: (
-            <BentoCard config={createCard('low', 20, 'neutral')} title="Low">
+            <ActivityCard config={createCard('low', 20, 'neutral')} title="Low">
               <div>Low priority</div>
-            </BentoCard>
+            </ActivityCard>
           ),
         },
         {
           config: createCard('high', 90, 'hot'),
           component: (
-            <BentoCard config={createCard('high', 90, 'hot')} title="High">
+            <ActivityCard config={createCard('high', 90, 'hot')} title="High">
               <div>High priority</div>
-            </BentoCard>
+            </ActivityCard>
           ),
         },
         {
           config: createCard('medium', 50, 'warm'),
           component: (
-            <BentoCard
+            <ActivityCard
               config={createCard('medium', 50, 'warm')}
               title="Medium"
             >
               <div>Medium priority</div>
-            </BentoCard>
+            </ActivityCard>
           ),
         },
       ];
 
-      const { container } = render(<BentoGrid cards={cards} />);
+      const { container } = render(<ActivityGrid cards={cards} />);
 
-      const grid = container.querySelector('.bento-grid');
-      const items = grid?.querySelectorAll('.bento-grid__card-wrapper');
+      const grid = container.querySelector('.activity-grid');
+      const items = grid?.querySelectorAll('.activity-grid__card-wrapper');
 
       expect(items).toHaveLength(3);
 
@@ -179,33 +179,33 @@ describe('BentoGrid', () => {
         {
           config: createCard('card-a', 50, 'warm'),
           component: (
-            <BentoCard config={createCard('card-a', 50, 'warm')} title="A">
+            <ActivityCard config={createCard('card-a', 50, 'warm')} title="A">
               <div>Card A</div>
-            </BentoCard>
+            </ActivityCard>
           ),
         },
         {
           config: createCard('card-b', 50, 'warm'),
           component: (
-            <BentoCard config={createCard('card-b', 50, 'warm')} title="B">
+            <ActivityCard config={createCard('card-b', 50, 'warm')} title="B">
               <div>Card B</div>
-            </BentoCard>
+            </ActivityCard>
           ),
         },
         {
           config: createCard('card-c', 50, 'warm'),
           component: (
-            <BentoCard config={createCard('card-c', 50, 'warm')} title="C">
+            <ActivityCard config={createCard('card-c', 50, 'warm')} title="C">
               <div>Card C</div>
-            </BentoCard>
+            </ActivityCard>
           ),
         },
       ];
 
-      const { container } = render(<BentoGrid cards={cards} />);
+      const { container } = render(<ActivityGrid cards={cards} />);
 
-      const grid = container.querySelector('.bento-grid');
-      const items = grid?.querySelectorAll('.bento-grid__card-wrapper');
+      const grid = container.querySelector('.activity-grid');
+      const items = grid?.querySelectorAll('.activity-grid__card-wrapper');
 
       // Order should be preserved when priorities are equal
       expect(items?.[0]).toHaveTextContent('Card A');
@@ -218,29 +218,29 @@ describe('BentoGrid', () => {
         {
           config: createCard('card-1', 30, 'neutral'),
           component: (
-            <BentoCard
+            <ActivityCard
               config={createCard('card-1', 30, 'neutral')}
               title="Card 1"
             >
               <div>Content 1</div>
-            </BentoCard>
+            </ActivityCard>
           ),
         },
         {
           config: createCard('card-2', 70, 'hot'),
           component: (
-            <BentoCard config={createCard('card-2', 70, 'hot')} title="Card 2">
+            <ActivityCard config={createCard('card-2', 70, 'hot')} title="Card 2">
               <div>Content 2</div>
-            </BentoCard>
+            </ActivityCard>
           ),
         },
       ];
 
       const { container, rerender } = render(
-        <BentoGrid cards={initialCards} />
+        <ActivityGrid cards={initialCards} />
       );
 
-      let items = container.querySelectorAll('.bento-grid__card-wrapper');
+      let items = container.querySelectorAll('.activity-grid__card-wrapper');
       expect(items[0]).toHaveTextContent('Content 2'); // Higher priority first
 
       // Update priorities (swap them)
@@ -248,27 +248,27 @@ describe('BentoGrid', () => {
         {
           config: createCard('card-1', 80, 'hot'),
           component: (
-            <BentoCard config={createCard('card-1', 80, 'hot')} title="Card 1">
+            <ActivityCard config={createCard('card-1', 80, 'hot')} title="Card 1">
               <div>Content 1</div>
-            </BentoCard>
+            </ActivityCard>
           ),
         },
         {
           config: createCard('card-2', 40, 'neutral'),
           component: (
-            <BentoCard
+            <ActivityCard
               config={createCard('card-2', 40, 'neutral')}
               title="Card 2"
             >
               <div>Content 2</div>
-            </BentoCard>
+            </ActivityCard>
           ),
         },
       ];
 
-      rerender(<BentoGrid cards={updatedCards} />);
+      rerender(<ActivityGrid cards={updatedCards} />);
 
-      items = container.querySelectorAll('.bento-grid__card-wrapper');
+      items = container.querySelectorAll('.activity-grid__card-wrapper');
       expect(items[0]).toHaveTextContent('Content 1'); // Now card-1 has higher priority
     });
   });
@@ -279,56 +279,56 @@ describe('BentoGrid', () => {
         {
           config: createCard('standard', 90, 'hot', 'standard'),
           component: (
-            <BentoCard
+            <ActivityCard
               config={createCard('standard', 90, 'hot', 'standard')}
               title="Standard"
             >
               <div>Standard</div>
-            </BentoCard>
+            </ActivityCard>
           ),
         },
         {
           config: createCard('wide', 80, 'hot', 'wide'),
           component: (
-            <BentoCard
+            <ActivityCard
               config={createCard('wide', 80, 'hot', 'wide')}
               title="Wide"
             >
               <div>Wide</div>
-            </BentoCard>
+            </ActivityCard>
           ),
         },
         {
           config: createCard('tall', 70, 'hot', 'tall'),
           component: (
-            <BentoCard
+            <ActivityCard
               config={createCard('tall', 70, 'hot', 'tall')}
               title="Tall"
             >
               <div>Tall</div>
-            </BentoCard>
+            </ActivityCard>
           ),
         },
         {
           config: createCard('hero', 60, 'warm', 'hero'),
           component: (
-            <BentoCard
+            <ActivityCard
               config={createCard('hero', 60, 'warm', 'hero')}
               title="Hero"
             >
               <div>Hero</div>
-            </BentoCard>
+            </ActivityCard>
           ),
         },
       ];
 
-      const { container } = render(<BentoGrid cards={cards} />);
+      const { container } = render(<ActivityGrid cards={cards} />);
 
-      const wrappers = container.querySelectorAll('.bento-grid__card-wrapper');
-      expect(wrappers[0]).toHaveClass('bento-grid__card--standard');
-      expect(wrappers[1]).toHaveClass('bento-grid__card--wide');
-      expect(wrappers[2]).toHaveClass('bento-grid__card--tall');
-      expect(wrappers[3]).toHaveClass('bento-grid__card--hero');
+      const wrappers = container.querySelectorAll('.activity-grid__card-wrapper');
+      expect(wrappers[0]).toHaveClass('activity-grid__card--standard');
+      expect(wrappers[1]).toHaveClass('activity-grid__card--wide');
+      expect(wrappers[2]).toHaveClass('activity-grid__card--tall');
+      expect(wrappers[3]).toHaveClass('activity-grid__card--hero');
     });
   });
 
@@ -338,20 +338,20 @@ describe('BentoGrid', () => {
         {
           config: createCard('card-1', 75, 'hot'),
           component: (
-            <BentoCard
+            <ActivityCard
               config={createCard('card-1', 75, 'hot')}
               title="Card 1"
             >
               <div>Content</div>
-            </BentoCard>
+            </ActivityCard>
           ),
         },
       ];
 
       // Just verify it renders without error - masonry handles columns internally
-      const { container } = render(<BentoGrid cards={cards} columns={6} />);
+      const { container } = render(<ActivityGrid cards={cards} columns={6} />);
 
-      const grid = container.querySelector('.bento-grid');
+      const grid = container.querySelector('.activity-grid');
       expect(grid).toBeInTheDocument();
       expect(screen.getByText('Card 1')).toBeInTheDocument();
     });
@@ -361,20 +361,20 @@ describe('BentoGrid', () => {
         {
           config: createCard('card-1', 75, 'hot'),
           component: (
-            <BentoCard
+            <ActivityCard
               config={createCard('card-1', 75, 'hot')}
               title="Card 1"
             >
               <div>Content</div>
-            </BentoCard>
+            </ActivityCard>
           ),
         },
       ];
 
       // Just verify it renders without error - masonry handles gap internally
-      const { container } = render(<BentoGrid cards={cards} gap={5} />);
+      const { container } = render(<ActivityGrid cards={cards} gap={5} />);
 
-      const grid = container.querySelector('.bento-grid');
+      const grid = container.querySelector('.activity-grid');
       expect(grid).toBeInTheDocument();
       expect(screen.getByText('Card 1')).toBeInTheDocument();
     });
@@ -384,24 +384,24 @@ describe('BentoGrid', () => {
         {
           config: createCard('card-1', 75, 'hot'),
           component: (
-            <BentoCard
+            <ActivityCard
               config={createCard('card-1', 75, 'hot')}
               title="Card 1"
             >
               <div>Content</div>
-            </BentoCard>
+            </ActivityCard>
           ),
         },
       ];
 
       const { container } = render(
-        <BentoGrid cards={cards} animationDuration={500} />
+        <ActivityGrid cards={cards} animationDuration={500} />
       );
 
-      const grid = container.querySelector('.bento-grid') as HTMLElement;
+      const grid = container.querySelector('.activity-grid') as HTMLElement;
       const style = grid?.style;
 
-      expect(style.getPropertyValue('--bento-transition-duration')).toBe(
+      expect(style.getPropertyValue('--activity-transition-duration')).toBe(
         '500ms'
       );
     });
@@ -413,25 +413,25 @@ describe('BentoGrid', () => {
         {
           config: createCard('card-1', 90, 'hot'),
           component: (
-            <BentoCard config={createCard('card-1', 90, 'hot')} title="Card 1">
+            <ActivityCard config={createCard('card-1', 90, 'hot')} title="Card 1">
               <div>Content 1</div>
-            </BentoCard>
+            </ActivityCard>
           ),
         },
         {
           config: createCard('card-2', 50, 'warm'),
           component: (
-            <BentoCard
+            <ActivityCard
               config={createCard('card-2', 50, 'warm')}
               title="Card 2"
             >
               <div>Content 2</div>
-            </BentoCard>
+            </ActivityCard>
           ),
         },
       ];
 
-      const { container } = render(<BentoGrid cards={cards} />);
+      const { container } = render(<ActivityGrid cards={cards} />);
 
       const results = await axe(container);
       expect(results).toHaveNoViolations();
@@ -442,21 +442,21 @@ describe('BentoGrid', () => {
         {
           config: createCard('card-1', 75, 'hot'),
           component: (
-            <BentoCard
+            <ActivityCard
               config={createCard('card-1', 75, 'hot')}
               title="Card 1"
             >
               <div>Content</div>
-            </BentoCard>
+            </ActivityCard>
           ),
         },
       ];
 
-      render(<BentoGrid cards={cards} />);
+      render(<ActivityGrid cards={cards} />);
 
       const list = screen.getByRole('list');
       expect(list).toBeInTheDocument();
-      expect(list).toHaveClass('bento-grid');
+      expect(list).toHaveClass('activity-grid');
     });
 
     it('should have role="listitem" on card wrappers', () => {
@@ -464,28 +464,28 @@ describe('BentoGrid', () => {
         {
           config: createCard('card-1', 75, 'hot'),
           component: (
-            <BentoCard
+            <ActivityCard
               config={createCard('card-1', 75, 'hot')}
               title="Card 1"
             >
               <div>Content</div>
-            </BentoCard>
+            </ActivityCard>
           ),
         },
         {
           config: createCard('card-2', 50, 'warm'),
           component: (
-            <BentoCard
+            <ActivityCard
               config={createCard('card-2', 50, 'warm')}
               title="Card 2"
             >
               <div>Content</div>
-            </BentoCard>
+            </ActivityCard>
           ),
         },
       ];
 
-      render(<BentoGrid cards={cards} />);
+      render(<ActivityGrid cards={cards} />);
 
       const list = screen.getByRole('list');
       const items = within(list).getAllByRole('listitem');
@@ -500,30 +500,30 @@ describe('BentoGrid', () => {
         {
           config: createCard('card-zero', 0, 'cool'),
           component: (
-            <BentoCard
+            <ActivityCard
               config={createCard('card-zero', 0, 'cool')}
               title="Zero Priority"
             >
               <div>Zero</div>
-            </BentoCard>
+            </ActivityCard>
           ),
         },
         {
           config: createCard('card-low', 10, 'cool'),
           component: (
-            <BentoCard
+            <ActivityCard
               config={createCard('card-low', 10, 'cool')}
               title="Low Priority"
             >
               <div>Low</div>
-            </BentoCard>
+            </ActivityCard>
           ),
         },
       ];
 
-      const { container } = render(<BentoGrid cards={cards} />);
+      const { container } = render(<ActivityGrid cards={cards} />);
 
-      const items = container.querySelectorAll('.bento-grid__card-wrapper');
+      const items = container.querySelectorAll('.activity-grid__card-wrapper');
       expect(items[0]).toHaveTextContent('Low'); // 10 > 0
       expect(items[1]).toHaveTextContent('Zero');
     });
@@ -533,30 +533,30 @@ describe('BentoGrid', () => {
         {
           config: createCard('card-max', 100, 'hot'),
           component: (
-            <BentoCard
+            <ActivityCard
               config={createCard('card-max', 100, 'hot')}
               title="Max Priority"
             >
               <div>Max</div>
-            </BentoCard>
+            </ActivityCard>
           ),
         },
         {
           config: createCard('card-high', 95, 'hot'),
           component: (
-            <BentoCard
+            <ActivityCard
               config={createCard('card-high', 95, 'hot')}
               title="High Priority"
             >
               <div>High</div>
-            </BentoCard>
+            </ActivityCard>
           ),
         },
       ];
 
-      const { container } = render(<BentoGrid cards={cards} />);
+      const { container } = render(<ActivityGrid cards={cards} />);
 
-      const items = container.querySelectorAll('.bento-grid__card-wrapper');
+      const items = container.querySelectorAll('.activity-grid__card-wrapper');
       expect(items[0]).toHaveTextContent('Max'); // 100 > 95
       expect(items[1]).toHaveTextContent('High');
     });

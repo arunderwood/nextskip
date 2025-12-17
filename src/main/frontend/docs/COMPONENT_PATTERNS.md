@@ -448,15 +448,15 @@ return (
 );
 ```
 
-## Bento Grid Patterns
+## Activity Grid Patterns
 
-### Creating a Bento Card
+### Creating an Activity Card
 
-Bento cards use a wrapper + content pattern:
+Activity cards use a wrapper + content pattern:
 
 ```typescript
-import { BentoCard, usePriorityCalculation } from '../components/bento';
-import type { BentoCardConfig } from '../types/bento';
+import { ActivityCard, usePriorityCalculation } from '../components/activity';
+import type { ActivityCardConfig } from '../types/activity';
 
 // 1. Calculate priority from data
 const { priority, hotness } = usePriorityCalculation({
@@ -466,7 +466,7 @@ const { priority, hotness } = usePriorityCalculation({
 });
 
 // 2. Create card configuration
-const config: BentoCardConfig = {
+const config: ActivityCardConfig = {
   id: 'unique-id',
   type: 'activity-type',
   size: 'standard', // or 'wide', 'tall', 'hero'
@@ -474,8 +474,8 @@ const config: BentoCardConfig = {
   hotness,
 };
 
-// 3. Render with BentoCard wrapper
-<BentoCard
+// 3. Render with ActivityCard wrapper
+<ActivityCard
   config={config}
   title="Card Title"
   icon="📊"
@@ -483,7 +483,7 @@ const config: BentoCardConfig = {
   footer={<>Optional footer content</>}
 >
   <YourContentComponent data={data} />
-</BentoCard>
+</ActivityCard>
 ```
 
 ### Card Size Selection Guide
@@ -518,7 +518,7 @@ function MyActivityContent({ data }: Props) {
 export default MyActivityContent;
 ```
 
-**Key principle**: Content components are **pure presentation** - BentoCard handles the wrapper, header, footer, and styling.
+**Key principle**: Content components are **pure presentation** - ActivityCard handles the wrapper, header, footer, and styling.
 
 ### useDashboardCards Hook Pattern
 
@@ -527,10 +527,10 @@ Orchestrate card configurations in a custom hook:
 ```typescript
 // hooks/useDashboardCards.ts
 import { useMemo } from 'react';
-import { usePriorityCalculation } from '../components/bento';
-import type { BentoCardConfig } from '../types/bento';
+import { usePriorityCalculation } from '../components/activity';
+import type { ActivityCardConfig } from '../types/activity';
 
-export function useDashboardCards(data: DashboardData | null): BentoCardConfig[] {
+export function useDashboardCards(data: DashboardData | null): ActivityCardConfig[] {
   // Create config for each activity
   const activityConfig = useMemo(() => {
     if (!data?.activity) return null;
@@ -553,28 +553,28 @@ export function useDashboardCards(data: DashboardData | null): BentoCardConfig[]
   // Return array of configs (filter out null)
   return useMemo(() => {
     return [activityConfig /* , otherConfigs... */].filter(
-      (config): config is BentoCardConfig => config !== null
+      (config): config is ActivityCardConfig => config !== null
     );
   }, [activityConfig]);
 }
 ```
 
-### BentoGrid Usage
+### ActivityGrid Usage
 
 ```typescript
-import { BentoGrid } from '../components/bento';
+import { ActivityGrid } from '../components/activity';
 
 function DashboardView() {
   const cardConfigs = useDashboardCards(data);
 
-  const bentoCards = cardConfigs.map((config) => ({
+  const activityCards = cardConfigs.map((config) => ({
     config,
-    component: <BentoCard config={config} {...cardProps}>
+    component: <ActivityCard config={config} {...cardProps}>
       <ContentComponent />
-    </BentoCard>
+    </ActivityCard>
   }));
 
-  return <BentoGrid cards={bentoCards} />;
+  return <ActivityGrid cards={activityCards} />;
 }
 ```
 
@@ -610,7 +610,7 @@ No manual styling needed - it's automatic based on priority score.
 Adding new activity cards:
 
 1. Create content component in `components/cards/`
-2. Add type to `ActivityType` in `types/bento.ts`
+2. Add type to `ActivityType` in `types/activity.ts`
 3. Add case in `useDashboardCards` hook
 4. Add switch case in `DashboardView` to render
 
@@ -618,9 +618,9 @@ Example:
 ```typescript
 case 'satellite-passes':
   component = (
-    <BentoCard config={config} title="Satellite Passes" icon="🛰️">
+    <ActivityCard config={config} title="Satellite Passes" icon="🛰️">
       <SatellitePassesContent passes={data.satellitePasses} />
-    </BentoCard>
+    </ActivityCard>
   );
   break;
 ```

@@ -6,7 +6,7 @@
  */
 
 import { useMemo } from 'react';
-import type { BentoCardConfig } from '../types/bento';
+import type { ActivityCardConfig } from '../types/activity';
 import type { DashboardData } from '../components/cards/types';
 import { getRegisteredCards } from '../components/cards/CardRegistry';
 
@@ -19,10 +19,10 @@ import { getRegisteredCards } from '../components/cards/CardRegistry';
  * @param data - Combined data from all activity modules
  * @returns Array of card configurations sorted by priority
  */
-export function useDashboardCards(data: DashboardData): BentoCardConfig[] {
+export function useDashboardCards(data: DashboardData): ActivityCardConfig[] {
   return useMemo(() => {
     const cards = getRegisteredCards();
-    const configs: BentoCardConfig[] = [];
+    const configs: ActivityCardConfig[] = [];
 
     for (const card of cards) {
       // Check if this card can render with the available data
@@ -43,7 +43,7 @@ export function useDashboardCards(data: DashboardData): BentoCardConfig[] {
       }
     }
 
-    // Configs are already sorted by priority in BentoGrid, but we return them here
+    // Configs are already sorted by priority in ActivityGrid, but we return them here
     return configs;
   }, [data]);
 }

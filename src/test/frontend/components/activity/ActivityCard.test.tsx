@@ -1,5 +1,5 @@
 /**
- * Component tests for BentoCard
+ * Component tests for ActivityCard
  *
  * Tests card rendering, hotness variants, accessibility, and user interaction
  */
@@ -8,12 +8,12 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { axe, toHaveNoViolations } from 'jest-axe';
-import BentoCard from 'Frontend/components/bento/BentoCard';
-import type { BentoCardConfig } from 'Frontend/types/bento';
+import ActivityCard from "Frontend/components/activity/ActivityCard";
+import type { ActivityCardConfig } from "Frontend/components/activity";
 
 expect.extend(toHaveNoViolations);
 
-const mockConfig: BentoCardConfig = {
+const mockConfig: ActivityCardConfig = {
   id: 'test-card',
   type: 'solar-indices',
   size: 'standard',
@@ -21,13 +21,13 @@ const mockConfig: BentoCardConfig = {
   hotness: 'hot',
 };
 
-describe('BentoCard', () => {
+describe('ActivityCard', () => {
   describe('rendering', () => {
     it('should render with required props', () => {
       render(
-        <BentoCard config={mockConfig} title="Test Card">
+        <ActivityCard config={mockConfig} title="Test Card">
           <div>Test content</div>
-        </BentoCard>
+        </ActivityCard>
       );
 
       expect(screen.getByText('Test Card')).toBeInTheDocument();
@@ -36,9 +36,9 @@ describe('BentoCard', () => {
 
     it('should render icon when provided', () => {
       render(
-        <BentoCard config={mockConfig} title="Test Card" icon="☀️">
+        <ActivityCard config={mockConfig} title="Test Card" icon="☀️">
           <div>Content</div>
-        </BentoCard>
+        </ActivityCard>
       );
 
       expect(screen.getByText('☀️')).toBeInTheDocument();
@@ -46,13 +46,13 @@ describe('BentoCard', () => {
 
     it('should render subtitle when provided', () => {
       render(
-        <BentoCard
+        <ActivityCard
           config={mockConfig}
           title="Test Card"
           subtitle="Test subtitle"
         >
           <div>Content</div>
-        </BentoCard>
+        </ActivityCard>
       );
 
       expect(screen.getByText('Test subtitle')).toBeInTheDocument();
@@ -60,13 +60,13 @@ describe('BentoCard', () => {
 
     it('should render footer when provided', () => {
       render(
-        <BentoCard
+        <ActivityCard
           config={mockConfig}
           title="Test Card"
           footer={<div>Footer content</div>}
         >
           <div>Content</div>
-        </BentoCard>
+        </ActivityCard>
       );
 
       expect(screen.getByText('Footer content')).toBeInTheDocument();
@@ -74,56 +74,56 @@ describe('BentoCard', () => {
 
     it('should apply custom className', () => {
       const { container } = render(
-        <BentoCard
+        <ActivityCard
           config={mockConfig}
           title="Test Card"
           className="custom-class"
         >
           <div>Content</div>
-        </BentoCard>
+        </ActivityCard>
       );
 
-      const card = container.querySelector('.bento-card');
+      const card = container.querySelector('.activity-card');
       expect(card).toHaveClass('custom-class');
     });
   });
 
   describe('card sizes', () => {
     it.each([
-      ['standard', 'bento-card--standard'],
-      ['wide', 'bento-card--wide'],
-      ['tall', 'bento-card--tall'],
-      ['hero', 'bento-card--hero'],
+      ['standard', 'activity-card--standard'],
+      ['wide', 'activity-card--wide'],
+      ['tall', 'activity-card--tall'],
+      ['hero', 'activity-card--hero'],
     ] as const)('should apply %s size class', (size, expectedClass) => {
       const config = { ...mockConfig, size };
       const { container } = render(
-        <BentoCard config={config} title="Test Card">
+        <ActivityCard config={config} title="Test Card">
           <div>Content</div>
-        </BentoCard>
+        </ActivityCard>
       );
 
-      const card = container.querySelector('.bento-card');
+      const card = container.querySelector('.activity-card');
       expect(card).toHaveClass(expectedClass);
     });
   });
 
   describe('hotness variants', () => {
     it.each([
-      ['hot', 'bento-card--hot', 'Excellent'],
-      ['warm', 'bento-card--warm', 'Good'],
-      ['neutral', 'bento-card--neutral', 'Moderate'],
-      ['cool', 'bento-card--cool', 'Limited'],
+      ['hot', 'activity-card--hot', 'Excellent'],
+      ['warm', 'activity-card--warm', 'Good'],
+      ['neutral', 'activity-card--neutral', 'Moderate'],
+      ['cool', 'activity-card--cool', 'Limited'],
     ] as const)(
       'should apply %s hotness class and show %s label',
       (hotness, expectedClass, expectedLabel) => {
         const config = { ...mockConfig, hotness };
         const { container } = render(
-          <BentoCard config={config} title="Test Card">
+          <ActivityCard config={config} title="Test Card">
             <div>Content</div>
-          </BentoCard>
+          </ActivityCard>
         );
 
-        const card = container.querySelector('.bento-card');
+        const card = container.querySelector('.activity-card');
         expect(card).toHaveClass(expectedClass);
         expect(screen.getByText(expectedLabel)).toBeInTheDocument();
       }
@@ -133,26 +133,26 @@ describe('BentoCard', () => {
   describe('interactive behavior', () => {
     it('should render as article when not interactive', () => {
       const { container } = render(
-        <BentoCard config={mockConfig} title="Test Card">
+        <ActivityCard config={mockConfig} title="Test Card">
           <div>Content</div>
-        </BentoCard>
+        </ActivityCard>
       );
 
-      const article = container.querySelector('article.bento-card');
+      const article = container.querySelector('article.activity-card');
       expect(article).toBeInTheDocument();
     });
 
     it('should render as button when onClick is provided', () => {
       const handleClick = vi.fn();
       const { container } = render(
-        <BentoCard config={mockConfig} title="Test Card" onClick={handleClick}>
+        <ActivityCard config={mockConfig} title="Test Card" onClick={handleClick}>
           <div>Content</div>
-        </BentoCard>
+        </ActivityCard>
       );
 
-      const button = container.querySelector('button.bento-card');
+      const button = container.querySelector('button.activity-card');
       expect(button).toBeInTheDocument();
-      expect(button).toHaveClass('bento-card--interactive');
+      expect(button).toHaveClass('activity-card--interactive');
     });
 
     it('should call onClick when clicked', async () => {
@@ -160,9 +160,9 @@ describe('BentoCard', () => {
       const handleClick = vi.fn();
 
       render(
-        <BentoCard config={mockConfig} title="Test Card" onClick={handleClick}>
+        <ActivityCard config={mockConfig} title="Test Card" onClick={handleClick}>
           <div>Content</div>
-        </BentoCard>
+        </ActivityCard>
       );
 
       const button = screen.getByRole('button', { name: 'Test Card' });
@@ -175,9 +175,9 @@ describe('BentoCard', () => {
   describe('accessibility', () => {
     it('should have no accessibility violations (non-interactive)', async () => {
       const { container } = render(
-        <BentoCard config={mockConfig} title="Test Card" subtitle="Subtitle">
+        <ActivityCard config={mockConfig} title="Test Card" subtitle="Subtitle">
           <div>Content</div>
-        </BentoCard>
+        </ActivityCard>
       );
 
       const results = await axe(container);
@@ -187,9 +187,9 @@ describe('BentoCard', () => {
     it('should have no accessibility violations (interactive)', async () => {
       const handleClick = vi.fn();
       const { container } = render(
-        <BentoCard config={mockConfig} title="Test Card" onClick={handleClick}>
+        <ActivityCard config={mockConfig} title="Test Card" onClick={handleClick}>
           <div>Content</div>
-        </BentoCard>
+        </ActivityCard>
       );
 
       const results = await axe(container);
@@ -198,13 +198,13 @@ describe('BentoCard', () => {
 
     it('should use custom aria-label when provided', () => {
       render(
-        <BentoCard
+        <ActivityCard
           config={mockConfig}
           title="Test Card"
           ariaLabel="Custom label"
         >
           <div>Content</div>
-        </BentoCard>
+        </ActivityCard>
       );
 
       const article = screen.getByLabelText('Custom label');
@@ -213,9 +213,9 @@ describe('BentoCard', () => {
 
     it('should fall back to title for aria-label', () => {
       render(
-        <BentoCard config={mockConfig} title="Default Label">
+        <ActivityCard config={mockConfig} title="Default Label">
           <div>Content</div>
-        </BentoCard>
+        </ActivityCard>
       );
 
       const article = screen.getByLabelText('Default Label');
@@ -224,9 +224,9 @@ describe('BentoCard', () => {
 
     it('should have proper heading hierarchy', () => {
       render(
-        <BentoCard config={mockConfig} title="Card Title">
+        <ActivityCard config={mockConfig} title="Card Title">
           <div>Content</div>
-        </BentoCard>
+        </ActivityCard>
       );
 
       const heading = screen.getByRole('heading', { name: 'Card Title' });
@@ -237,44 +237,44 @@ describe('BentoCard', () => {
   describe('hotness indicator', () => {
     it('should show hotness indicator for all levels', () => {
       const { container, rerender } = render(
-        <BentoCard config={{ ...mockConfig, hotness: 'hot' }} title="Test">
+        <ActivityCard config={{ ...mockConfig, hotness: 'hot' }} title="Test">
           <div>Content</div>
-        </BentoCard>
+        </ActivityCard>
       );
 
       let indicator = container.querySelector(
-        '.bento-card__hotness-indicator--hot'
+        '.activity-card__hotness-indicator--hot'
       );
       expect(indicator).toBeInTheDocument();
       expect(indicator).toHaveTextContent('Excellent');
 
       rerender(
-        <BentoCard config={{ ...mockConfig, hotness: 'warm' }} title="Test">
+        <ActivityCard config={{ ...mockConfig, hotness: 'warm' }} title="Test">
           <div>Content</div>
-        </BentoCard>
+        </ActivityCard>
       );
       indicator = container.querySelector(
-        '.bento-card__hotness-indicator--warm'
+        '.activity-card__hotness-indicator--warm'
       );
       expect(indicator).toHaveTextContent('Good');
 
       rerender(
-        <BentoCard config={{ ...mockConfig, hotness: 'neutral' }} title="Test">
+        <ActivityCard config={{ ...mockConfig, hotness: 'neutral' }} title="Test">
           <div>Content</div>
-        </BentoCard>
+        </ActivityCard>
       );
       indicator = container.querySelector(
-        '.bento-card__hotness-indicator--neutral'
+        '.activity-card__hotness-indicator--neutral'
       );
       expect(indicator).toHaveTextContent('Moderate');
 
       rerender(
-        <BentoCard config={{ ...mockConfig, hotness: 'cool' }} title="Test">
+        <ActivityCard config={{ ...mockConfig, hotness: 'cool' }} title="Test">
           <div>Content</div>
-        </BentoCard>
+        </ActivityCard>
       );
       indicator = container.querySelector(
-        '.bento-card__hotness-indicator--cool'
+        '.activity-card__hotness-indicator--cool'
       );
       expect(indicator).toHaveTextContent('Limited');
     });
@@ -283,44 +283,44 @@ describe('BentoCard', () => {
   describe('card structure', () => {
     it('should have header, content, and footer sections', () => {
       const { container } = render(
-        <BentoCard
+        <ActivityCard
           config={mockConfig}
           title="Test Card"
           footer={<div>Footer</div>}
         >
           <div>Content</div>
-        </BentoCard>
+        </ActivityCard>
       );
 
       expect(
-        container.querySelector('.bento-card__header')
+        container.querySelector('.activity-card__header')
       ).toBeInTheDocument();
       expect(
-        container.querySelector('.bento-card__content')
+        container.querySelector('.activity-card__content')
       ).toBeInTheDocument();
       expect(
-        container.querySelector('.bento-card__footer')
+        container.querySelector('.activity-card__footer')
       ).toBeInTheDocument();
     });
 
     it('should not render footer when not provided', () => {
       const { container } = render(
-        <BentoCard config={mockConfig} title="Test Card">
+        <ActivityCard config={mockConfig} title="Test Card">
           <div>Content</div>
-        </BentoCard>
+        </ActivityCard>
       );
 
-      expect(container.querySelector('.bento-card__footer')).not.toBeInTheDocument();
+      expect(container.querySelector('.activity-card__footer')).not.toBeInTheDocument();
     });
 
     it('should render header with icon and title', () => {
       const { container } = render(
-        <BentoCard config={mockConfig} title="Test Card" icon="📊">
+        <ActivityCard config={mockConfig} title="Test Card" icon="📊">
           <div>Content</div>
-        </BentoCard>
+        </ActivityCard>
       );
 
-      const header = container.querySelector('.bento-card__header');
+      const header = container.querySelector('.activity-card__header');
       expect(header).toBeInTheDocument();
       expect(header).toHaveTextContent('📊');
       expect(header).toHaveTextContent('Test Card');

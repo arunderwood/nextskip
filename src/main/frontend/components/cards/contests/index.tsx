@@ -14,8 +14,8 @@
 import React from 'react';
 import { registerCard } from '../CardRegistry';
 import type { CardDefinition, DashboardData } from '../types';
-import type { BentoCardConfig } from 'Frontend/types/bento';
-import { priorityToHotness } from '../../bento/usePriorityCalculation';
+import type { ActivityCardConfig } from 'Frontend/types/activity';
+import { priorityToHotness } from '../../activity/usePriorityCalculation';
 import { EventCard } from '../events/EventCard';
 import EventStatus from 'Frontend/generated/io/nextskip/common/model/EventStatus';
 import type Contest from 'Frontend/generated/io/nextskip/contests/model/Contest';
@@ -39,7 +39,7 @@ const contestsCard: CardDefinition = {
     return !!(data.contests?.contests && data.contests.contests.length > 0);
   },
 
-  createConfig: (data: DashboardData): BentoCardConfig[] | null => {
+  createConfig: (data: DashboardData): ActivityCardConfig[] | null => {
     const contests = data.contests?.contests;
     if (!contests || contests.length === 0) return null;
 
@@ -74,7 +74,7 @@ const contestsCard: CardDefinition = {
     });
   },
 
-  render: (data: DashboardData, config: BentoCardConfig) => {
+  render: (data: DashboardData, config: ActivityCardConfig) => {
     const contests = data.contests?.contests;
     if (!contests) return null;
 

@@ -28,8 +28,8 @@ test.describe('Dashboard', () => {
     // Wait for loading to complete (should be < 10 seconds)
     await page.waitForSelector('.loading', { state: 'hidden', timeout: 10000 });
 
-    // Verify BentoGrid has cards
-    const cards = page.locator('.bento-card');
+    // Verify ActivityGrid has cards
+    const cards = page.locator('.activity-card');
     await expect(cards.first()).toBeVisible();
     expect(await cards.count()).toBeGreaterThan(0);
   });

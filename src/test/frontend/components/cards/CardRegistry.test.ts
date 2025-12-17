@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { registerCard, getRegisteredCards, clearRegistry } from 'Frontend/components/cards/CardRegistry';
 import type { CardDefinition } from 'Frontend/components/cards/types';
-import type { BentoCardConfig } from 'Frontend/types/bento';
+import type { ActivityCardConfig } from 'Frontend/types/activity';
 
 describe('CardRegistry', () => {
   beforeEach(() => {

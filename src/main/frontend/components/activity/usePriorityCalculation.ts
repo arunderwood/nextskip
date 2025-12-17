@@ -1,12 +1,12 @@
 /**
- * Priority calculation hooks for bento grid card ordering
+ * Priority calculation hooks for activity grid card ordering
  *
  * Calculates priority score from input data and maps to visual "hotness" levels.
  * Higher priority cards appear first in the grid (top-left position).
  */
 
 import { useMemo } from 'react';
-import type { PriorityInput, HotnessLevel } from '../../types/bento';
+import type { PriorityInput, HotnessLevel } from '../../types/activity';
 
 /**
  * Weight configuration for priority calculation
