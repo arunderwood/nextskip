@@ -88,7 +88,7 @@ dependencies {
     implementation 'org.mnode.ical4j:ical4j:4.2.2'
 
     // Jsoup for HTML parsing/scraping
-    implementation 'org.jsoup:jsoup:1.18.3'
+    implementation 'org.jsoup:jsoup:1.21.2'
 
     // Observability
     runtimeOnly 'io.micrometer:micrometer-registry-prometheus'
