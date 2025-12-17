@@ -12,6 +12,7 @@
     "e2e:headed": "playwright test --headed"
   },
   "dependencies": {
+    "@masonry-grid/react": "^1.1.1",
     "@vaadin/aura": "25.0.0-rc1",
     "@vaadin/common-frontend": "0.0.19",
     "@vaadin/hilla-file-router": "25.0.0-rc1",
@@ -131,7 +132,7 @@
       "vite-plugin-checker": "0.12.0",
       "workbox-build": "7.4.0"
     },
-    "hash": "c3a93562992a1e6495d60e5193ab70eb120efc4bf34a7544bc0a7f1cdf438c79"
+    "hash": "7970bf60f581e2c94060e48cd25f1e7a20e2834bd4c185eec8e8b503a4245186"
   },
   "overrides": {
     "@vaadin/vaadin-development-mode-detector": "$@vaadin/vaadin-development-mode-detector",
@@ -214,6 +215,7 @@
     "@vaadin/vertical-layout": "25.0.0-rc1",
     "@vaadin/virtual-list": "25.0.0-rc1",
     "react-router-dom": "$react-router-dom",
-    "lucide-react": "$lucide-react"
+    "lucide-react": "$lucide-react",
+    "@masonry-grid/react": "$@masonry-grid/react"
   }
 }

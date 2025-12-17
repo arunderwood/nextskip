@@ -1,76 +1,25 @@
-/* BentoGrid Component Styles */
+/* BentoGrid Component Styles - Masonry Layout */
 
 .bento-grid {
-  display: grid;
-  grid-template-columns: repeat(var(--bento-columns-desktop), 1fr);
-  gap: var(--bento-gap);
   width: 100%;
+  /* Masonry grid handles layout via RegularMasonryGrid component */
 }
 
-/* Card size variants using grid-column and grid-row */
-.bento-grid__card--standard {
-  grid-column: span var(--bento-card-standard-cols);
-  grid-row: span var(--bento-card-standard-rows);
-}
-
-.bento-grid__card--wide {
-  grid-column: span var(--bento-card-wide-cols);
-  grid-row: span var(--bento-card-wide-rows);
-}
-
-.bento-grid__card--tall {
-  grid-column: span var(--bento-card-tall-cols);
-  grid-row: span var(--bento-card-tall-rows);
-}
-
-.bento-grid__card--hero {
-  grid-column: span var(--bento-card-hero-cols);
-  grid-row: span var(--bento-card-hero-rows);
-}
-
-/* Animation wrapper for reordering */
+/* Card wrapper - masonry handles positioning and sizing via Frame */
 .bento-grid__card-wrapper {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
   transition: transform var(--bento-transition-duration) var(--bento-transition-timing),
     opacity var(--bento-transition-duration) var(--bento-transition-timing);
 }
 
-/* Responsive breakpoints */
-@media (max-width: 1024px) {
-  .bento-grid {
-    grid-template-columns: repeat(var(--bento-columns-tablet), 1fr);
-  }
-
-  /* Wide cards span full width on tablet */
-  .bento-grid__card--wide,
-  .bento-grid__card--hero {
-    grid-column: span var(--bento-columns-tablet);
-  }
-}
-
-@media (max-width: 768px) {
-  .bento-grid {
-    grid-template-columns: repeat(var(--bento-columns-mobile), 1fr);
-    gap: calc(var(--bento-gap) * 0.67); /* 16px gap on mobile */
-  }
-
-  /* All cards span full width on mobile */
-  .bento-grid__card--standard,
-  .bento-grid__card--wide,
-  .bento-grid__card--tall,
-  .bento-grid__card--hero {
-    grid-column: 1 / -1;
-    grid-row: span 1; /* No multi-row on mobile */
-  }
-}
-
-/* Wide desktop breakpoint - 6 columns for full utilization */
-@media (min-width: 1400px) {
-  .bento-grid {
-    grid-template-columns: repeat(var(--bento-columns-wide, 6), 1fr);
-  }
-
-  /* Hero cards span 3 columns on wide screens */
-  .bento-grid__card--hero {
-    grid-column: span 3;
-  }
+/* Card size classes - kept for backwards compatibility with BentoCard styling */
+/* Actual sizing is handled by Frame component width/height aspect ratios */
+.bento-grid__card--standard,
+.bento-grid__card--wide,
+.bento-grid__card--tall,
+.bento-grid__card--hero {
+  /* Frame component handles sizing */
 }
