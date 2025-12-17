@@ -50,7 +50,7 @@ export function BentoCard({
               {icon}
             </span>
           )}
-          <div>
+          <div className="bento-card__title-wrapper">
             <h3 className="bento-card__title">{title}</h3>
             {subtitle && <p className="bento-card__subtitle">{subtitle}</p>}
           </div>

@@ -210,6 +210,11 @@
   opacity: 0.9; /* Subtle opacity for refinement */
 }
 
+.bento-card__title-wrapper {
+  min-width: 0;
+  overflow: hidden;
+}
+
 .bento-card__title {
   margin: 0;
   font-size: 0.9375rem;  /* Reduced from 1.125rem */
