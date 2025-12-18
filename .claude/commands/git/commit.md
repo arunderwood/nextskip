@@ -135,7 +135,26 @@ BREAKING CHANGE: fetchSolarIndices() now returns Optional<SolarIndices>
 
 ## Workflow
 
-### 1. Analyze Changes
+### 1. Check Current Branch
+
+**IMPORTANT**: Commits should be made on a feature branch, NOT on main, unless the user explicitly requests committing to main.
+
+```bash
+# Check current branch
+git branch --show-current
+
+# If on main, create and switch to a feature branch
+git checkout -b feature/descriptive-name
+```
+
+Feature branch naming examples:
+- `feature/voacap-integration`
+- `fix/noaa-date-parsing`
+- `refactor/xml-parsing-util`
+
+**Only commit to main if the user explicitly says**: "commit to main" or "commit on main"
+
+### 2. Analyze Changes
 
 Review what will be committed:
 
@@ -144,7 +163,7 @@ git status
 git diff --staged
 ```
 
-### 2. Group by Scope
+### 3. Group by Scope
 
 Organize changes into logical commits by feature area:
 
@@ -166,7 +185,7 @@ git add src/test/java/io/nextskip/propagation/internal/NoaaSwpcClientTest.java
 git commit -m "test(api): update tests for new date parsing"
 ```
 
-### 3. Draft Message
+### 4. Draft Message
 
 For each group, create a commit message with:
 
@@ -184,7 +203,7 @@ For each group, create a commit message with:
 - `Fixes #123`
 - `Closes #456`
 
-### 4. Create Commit
+### 5. Create Commit
 
 **Simple Commit** (description only):
 ```bash
