@@ -67,60 +67,66 @@ describe('MeteorShowerDetails', () => {
       expect(screen.getByText('At Peak Activity!')).toBeInTheDocument();
     });
 
-    it('displays rising trend indicator before peak midpoint', () => {
-      render(
+    it('applies rising animation class to meter fill before peak midpoint', () => {
+      const { container } = render(
         <div className="meteor-shower-details">
           <div className="zhr-meter-section">
             <div className="zhr-header">
               <span className="zhr-label">Zenithal Hourly Rate</span>
-              <div className="zhr-current-container">
-                <span className="zhr-current-value">50/hr</span>
-                <span
-                  className="zhr-trend-indicator rising"
-                  aria-label="ZHR rising toward peak"
-                  title="Rising toward peak"
-                >
-                  ↗
-                  <span className="zhr-trend-label">Rising</span>
-                </span>
+              <span className="zhr-current-value">50/hr</span>
+            </div>
+            <div
+              className="zhr-meter"
+              role="meter"
+              aria-label="ZHR rising toward peak"
+              aria-valuenow={50}
+              aria-valuemin={0}
+              aria-valuemax={100}
+            >
+              <div className="zhr-meter-track">
+                <div className="zhr-meter-fill rising" style={{ width: '50%' }} />
               </div>
             </div>
           </div>
         </div>
       );
 
-      const trendIndicator = screen.getByLabelText('ZHR rising toward peak');
-      expect(trendIndicator).toBeInTheDocument();
-      expect(trendIndicator).toHaveClass('rising');
-      expect(screen.getByText('Rising')).toBeInTheDocument();
+      const meter = screen.getByRole('meter');
+      expect(meter).toHaveAttribute('aria-label', 'ZHR rising toward peak');
+
+      const meterFill = container.querySelector('.zhr-meter-fill');
+      expect(meterFill).toHaveClass('rising');
     });
 
-    it('displays declining trend indicator after peak midpoint', () => {
-      render(
+    it('applies declining animation class to meter fill after peak midpoint', () => {
+      const { container } = render(
         <div className="meteor-shower-details">
           <div className="zhr-meter-section">
             <div className="zhr-header">
               <span className="zhr-label">Zenithal Hourly Rate</span>
-              <div className="zhr-current-container">
-                <span className="zhr-current-value">30/hr</span>
-                <span
-                  className="zhr-trend-indicator declining"
-                  aria-label="ZHR declining after peak"
-                  title="Declining after peak"
-                >
-                  ↘
-                  <span className="zhr-trend-label">Declining</span>
-                </span>
+              <span className="zhr-current-value">30/hr</span>
+            </div>
+            <div
+              className="zhr-meter"
+              role="meter"
+              aria-label="ZHR declining after peak"
+              aria-valuenow={30}
+              aria-valuemin={0}
+              aria-valuemax={100}
+            >
+              <div className="zhr-meter-track">
+                <div className="zhr-meter-fill declining" style={{ width: '30%' }} />
               </div>
             </div>
           </div>
         </div>
       );
 
-      const trendIndicator = screen.getByLabelText('ZHR declining after peak');
-      expect(trendIndicator).toBeInTheDocument();
-      expect(trendIndicator).toHaveClass('declining');
-      expect(screen.getByText('Declining')).toBeInTheDocument();
+      const meter = screen.getByRole('meter');
+      expect(meter).toHaveAttribute('aria-label', 'ZHR declining after peak');
+
+      const meterFill = container.querySelector('.zhr-meter-fill');
+      expect(meterFill).toHaveClass('declining');
     });
   });
 
@@ -238,39 +244,84 @@ describe('MeteorShowerDetails', () => {
       expect(meter).toHaveAttribute('aria-valuemax', '100');
     });
 
-    it('trend indicator has proper ARIA attributes', () => {
+    it('meter ARIA label describes trend state (rising)', () => {
       render(
-        <span
-          className="zhr-trend-indicator rising"
+        <div
+          className="zhr-meter"
+          role="meter"
           aria-label="ZHR rising toward peak"
-          title="Rising toward peak"
+          aria-valuenow={50}
+          aria-valuemin={0}
+          aria-valuemax={100}
         >
-          ↗
-          <span className="zhr-trend-label">Rising</span>
-        </span>
+          <div className="zhr-meter-track">
+            <div className="zhr-meter-fill rising" style={{ width: '50%' }} />
+          </div>
+        </div>
       );
 
-      const trendIndicator = screen.getByLabelText('ZHR rising toward peak');
-      expect(trendIndicator).toHaveAttribute('title', 'Rising toward peak');
-      expect(trendIndicator).toHaveClass('rising');
+      const meter = screen.getByRole('meter');
+      expect(meter).toHaveAttribute('aria-label', 'ZHR rising toward peak');
     });
 
-    it('has no accessibility violations with trend indicator', async () => {
+    it('meter ARIA label describes trend state (declining)', () => {
+      render(
+        <div
+          className="zhr-meter"
+          role="meter"
+          aria-label="ZHR declining after peak"
+          aria-valuenow={30}
+          aria-valuemin={0}
+          aria-valuemax={100}
+        >
+          <div className="zhr-meter-track">
+            <div className="zhr-meter-fill declining" style={{ width: '30%' }} />
+          </div>
+        </div>
+      );
+
+      const meter = screen.getByRole('meter');
+      expect(meter).toHaveAttribute('aria-label', 'ZHR declining after peak');
+    });
+
+    it('meter ARIA label describes peak state', () => {
+      render(
+        <div
+          className="zhr-meter"
+          role="meter"
+          aria-label="ZHR at peak activity"
+          aria-valuenow={100}
+          aria-valuemin={0}
+          aria-valuemax={100}
+        >
+          <div className="zhr-meter-track">
+            <div className="zhr-meter-fill at-peak" style={{ width: '100%' }} />
+          </div>
+        </div>
+      );
+
+      const meter = screen.getByRole('meter');
+      expect(meter).toHaveAttribute('aria-label', 'ZHR at peak activity');
+    });
+
+    it('has no accessibility violations with animated meter fill', async () => {
       const { container } = render(
         <div className="meteor-shower-details">
           <div className="zhr-meter-section">
             <div className="zhr-header">
               <span className="zhr-label">Zenithal Hourly Rate</span>
-              <div className="zhr-current-container">
-                <span className="zhr-current-value">50/hr</span>
-                <span
-                  className="zhr-trend-indicator rising"
-                  aria-label="ZHR rising toward peak"
-                  title="Rising toward peak"
-                >
-                  ↗
-                  <span className="zhr-trend-label">Rising</span>
-                </span>
+              <span className="zhr-current-value">50/hr</span>
+            </div>
+            <div
+              className="zhr-meter"
+              role="meter"
+              aria-label="ZHR rising toward peak"
+              aria-valuenow={50}
+              aria-valuemin={0}
+              aria-valuemax={100}
+            >
+              <div className="zhr-meter-track">
+                <div className="zhr-meter-fill rising" style={{ width: '50%' }} />
               </div>
             </div>
           </div>

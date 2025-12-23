@@ -82,48 +82,11 @@
   letter-spacing: 0.05em;
 }
 
-.zhr-current-container {
-  display: flex;
-  align-items: center;
-  gap: calc(var(--spacing-unit) * 1.5);
-}
-
 .zhr-current-value {
   font-size: 1.5rem;
   font-weight: var(--font-weight-semibold);
   color: var(--primary-color);
   font-variant-numeric: tabular-nums;
-}
-
-/* === ZHR Trend Indicator === */
-.zhr-trend-indicator {
-  display: inline-flex;
-  align-items: center;
-  gap: calc(var(--spacing-unit) * 0.5);
-  padding: calc(var(--spacing-unit) * 0.5) calc(var(--spacing-unit) * 0.75);
-  border-radius: var(--border-radius);
-  font-size: 1.25rem;
-  line-height: 1;
-  transition: all var(--transition-base);
-}
-
-.zhr-trend-indicator.rising {
-  background: var(--hotness-warm-bg);
-  color: var(--success-color);
-  border: 1px solid var(--success-color);
-}
-
-.zhr-trend-indicator.declining {
-  background: var(--hotness-neutral-bg);
-  color: var(--warning-color);
-  border: 1px solid var(--warning-color);
-}
-
-.zhr-trend-label {
-  font-size: 0.6875rem;
-  font-weight: var(--font-weight-semibold);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
 }
 
 /* Visual Meter */
@@ -154,7 +117,7 @@
 /* Enhanced fill when at peak */
 .zhr-meter-fill.at-peak {
   background: linear-gradient(90deg, var(--success-color), var(--warning-color));
-  box-shadow: 
+  box-shadow:
     inset 0 1px 2px rgba(255, 255, 255, 0.3),
     0 0 12px var(--hotness-hot-glow);
   animation: meterPulse 2s ease-in-out infinite;
@@ -166,6 +129,70 @@
   }
   50% {
     filter: brightness(1.2);
+  }
+}
+
+/* Rising state - subtle shimmer moving right (building energy) */
+.zhr-meter-fill.rising {
+  background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+  position: relative;
+  overflow: hidden;
+}
+
+.zhr-meter-fill.rising::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.3) 50%,
+    transparent 100%
+  );
+  animation: risingShimmer 3s ease-in-out infinite;
+}
+
+@keyframes risingShimmer {
+  0% {
+    left: -100%;
+  }
+  100% {
+    left: 100%;
+  }
+}
+
+/* Declining state - subtle fade moving left (receding energy) */
+.zhr-meter-fill.declining {
+  background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+  position: relative;
+  overflow: hidden;
+}
+
+.zhr-meter-fill.declining::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    270deg,
+    transparent 0%,
+    rgba(0, 0, 0, 0.2) 50%,
+    transparent 100%
+  );
+  animation: decliningFade 3s ease-in-out infinite;
+}
+
+@keyframes decliningFade {
+  0% {
+    right: -100%;
+  }
+  100% {
+    right: 100%;
   }
 }
 
@@ -236,14 +263,6 @@
     font-size: 1.25rem;
   }
 
-  .zhr-trend-indicator {
-    font-size: 1rem;
-  }
-
-  .zhr-trend-label {
-    font-size: 0.625rem;
-  }
-
   .peak-indicator {
     padding: var(--spacing-unit) calc(var(--spacing-unit) * 1.25);
   }
@@ -258,11 +277,11 @@
 @media (prefers-reduced-motion: reduce) {
   .peak-indicator,
   .zhr-meter-fill,
+  .zhr-meter-fill::after,
   .peak-icon {
     animation: none !important;
   }
 
-  .zhr-trend-indicator,
   .peak-timing-section {
     transition: none;
   }
@@ -274,10 +293,6 @@
   }
 
   .zhr-meter-track {
-    border-width: 2px;
-  }
-
-  .zhr-trend-indicator {
     border-width: 2px;
   }
 

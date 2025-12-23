@@ -78,26 +78,29 @@ function MeteorShowerDetails({ shower }: { shower: MeteorShower }) {
       <div className="zhr-meter-section">
         <div className="zhr-header">
           <span className="zhr-label">Zenithal Hourly Rate</span>
-          <div className="zhr-current-container">
-            <span className="zhr-current-value">{formatZhr(currentZhr)}</span>
-            {trend && trend !== 'peak' && (
-              <span
-                className={`zhr-trend-indicator ${trend}`}
-                aria-label={trend === 'rising' ? 'ZHR rising toward peak' : 'ZHR declining after peak'}
-                title={trend === 'rising' ? 'Rising toward peak' : 'Declining after peak'}
-              >
-                {trend === 'rising' ? '↗' : '↘'}
-                <span className="zhr-trend-label">{trend === 'rising' ? 'Rising' : 'Declining'}</span>
-              </span>
-            )}
-          </div>
+          <span className="zhr-current-value">{formatZhr(currentZhr)}</span>
         </div>
 
         {/* Visual Progress Bar */}
-        <div className="zhr-meter" role="meter" aria-label="ZHR meter" aria-valuenow={currentZhr} aria-valuemin={0} aria-valuemax={peakZhr}>
+        <div
+          className="zhr-meter"
+          role="meter"
+          aria-label={
+            trend === 'peak'
+              ? 'ZHR at peak activity'
+              : trend === 'rising'
+              ? 'ZHR rising toward peak'
+              : trend === 'declining'
+              ? 'ZHR declining after peak'
+              : 'ZHR meter'
+          }
+          aria-valuenow={currentZhr}
+          aria-valuemin={0}
+          aria-valuemax={peakZhr}
+        >
           <div className="zhr-meter-track">
             <div
-              className={`zhr-meter-fill ${isAtPeak ? 'at-peak' : ''}`}
+              className={`zhr-meter-fill ${isAtPeak ? 'at-peak' : trend === 'rising' ? 'rising' : trend === 'declining' ? 'declining' : ''}`}
               style={{ width: `${zhrPercentage}%` }}
             />
           </div>
