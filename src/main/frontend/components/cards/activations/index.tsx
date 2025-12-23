@@ -120,7 +120,7 @@ const sotaActivationsCard: CardDefinition = {
     return {
       id: 'sota-activations',
       type: 'sota-activations',
-      size: 'hero',
+      size: 'tall',
       priority,
       hotness,
     };
