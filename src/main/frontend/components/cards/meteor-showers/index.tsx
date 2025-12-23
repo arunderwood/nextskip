@@ -32,6 +32,25 @@ function formatZhr(zhr: number | undefined): string {
 }
 
 /**
+ * Calculate ZHR trend direction based on peak midpoint
+ */
+function calculateZhrTrend(shower: MeteorShower): 'rising' | 'declining' | 'peak' | null {
+  if (!shower.peakStart || !shower.peakEnd) return null;
+  if (shower.atPeak) return 'peak';
+
+  const peakStartTime = new Date(shower.peakStart).getTime();
+  const peakEndTime = new Date(shower.peakEnd).getTime();
+  const peakMidpoint = new Date((peakStartTime + peakEndTime) / 2);
+  const now = new Date();
+
+  if (now < peakMidpoint) {
+    return 'rising';
+  } else {
+    return 'declining';
+  }
+}
+
+/**
  * Meteor Shower Details component - renders shower-specific information
  */
 function MeteorShowerDetails({ shower }: { shower: MeteorShower }) {
@@ -41,6 +60,9 @@ function MeteorShowerDetails({ shower }: { shower: MeteorShower }) {
 
   // Calculate percentage for visual meter (0-100%)
   const zhrPercentage = peakZhr > 0 ? Math.min(100, (currentZhr / peakZhr) * 100) : 0;
+
+  // Determine ZHR trend direction
+  const trend = calculateZhrTrend(shower);
 
   return (
     <div className="meteor-shower-details">
@@ -56,7 +78,19 @@ function MeteorShowerDetails({ shower }: { shower: MeteorShower }) {
       <div className="zhr-meter-section">
         <div className="zhr-header">
           <span className="zhr-label">Zenithal Hourly Rate</span>
-          <span className="zhr-current-value">{formatZhr(currentZhr)}</span>
+          <div className="zhr-current-container">
+            <span className="zhr-current-value">{formatZhr(currentZhr)}</span>
+            {trend && trend !== 'peak' && (
+              <span
+                className={`zhr-trend-indicator ${trend}`}
+                aria-label={trend === 'rising' ? 'ZHR rising toward peak' : 'ZHR declining after peak'}
+                title={trend === 'rising' ? 'Rising toward peak' : 'Declining after peak'}
+              >
+                {trend === 'rising' ? '↗' : '↘'}
+                <span className="zhr-trend-label">{trend === 'rising' ? 'Rising' : 'Declining'}</span>
+              </span>
+            )}
+          </div>
         </div>
 
         {/* Visual Progress Bar */}
@@ -72,17 +106,6 @@ function MeteorShowerDetails({ shower }: { shower: MeteorShower }) {
           </div>
         </div>
       </div>
-
-      {/* Parent Body Info */}
-      {shower.parentBody && (
-        <div className="parent-body-section">
-          <span className="parent-body-icon">☄️</span>
-          <div className="parent-body-info">
-            <span className="parent-body-label">Parent Body</span>
-            <span className="parent-body-value">{shower.parentBody}</span>
-          </div>
-        </div>
-      )}
 
       {/* Peak Timing Info */}
       {shower.peakStart && shower.peakEnd && (

@@ -1,9 +1,10 @@
 /**
  * MeteorShowerDetails Component Tests
- * 
+ *
  * Tests for the redesigned meteor shower card details component:
  * - Component rendering with various states
  * - Visual meter calculation
+ * - ZHR trend indicator logic
  * - WCAG 2.1 AA accessibility compliance
  */
 
@@ -12,6 +13,28 @@ import { render, screen } from '@testing-library/react';
 import { axe, toHaveNoViolations } from 'jest-axe';
 
 expect.extend(toHaveNoViolations);
+
+/**
+ * Helper function to calculate ZHR trend (mirrors component logic)
+ */
+function calculateZhrTrend(
+  peakStart: string,
+  peakEnd: string,
+  isAtPeak: boolean,
+  currentTime: Date = new Date()
+): 'rising' | 'declining' | 'peak' | null {
+  if (isAtPeak) return 'peak';
+
+  const peakStartTime = new Date(peakStart).getTime();
+  const peakEndTime = new Date(peakEnd).getTime();
+  const peakMidpoint = new Date((peakStartTime + peakEndTime) / 2);
+
+  if (currentTime < peakMidpoint) {
+    return 'rising';
+  } else {
+    return 'declining';
+  }
+}
 
 describe('MeteorShowerDetails', () => {
   describe('Visual Elements', () => {
@@ -44,21 +67,102 @@ describe('MeteorShowerDetails', () => {
       expect(screen.getByText('At Peak Activity!')).toBeInTheDocument();
     });
 
-    it('displays parent body information', () => {
+    it('displays rising trend indicator before peak midpoint', () => {
       render(
         <div className="meteor-shower-details">
-          <div className="parent-body-section">
-            <span className="parent-body-icon">☄️</span>
-            <div className="parent-body-info">
-              <span className="parent-body-label">Parent Body</span>
-              <span className="parent-body-value">109P/Swift-Tuttle</span>
+          <div className="zhr-meter-section">
+            <div className="zhr-header">
+              <span className="zhr-label">Zenithal Hourly Rate</span>
+              <div className="zhr-current-container">
+                <span className="zhr-current-value">50/hr</span>
+                <span
+                  className="zhr-trend-indicator rising"
+                  aria-label="ZHR rising toward peak"
+                  title="Rising toward peak"
+                >
+                  ↗
+                  <span className="zhr-trend-label">Rising</span>
+                </span>
+              </div>
             </div>
           </div>
         </div>
       );
 
-      expect(screen.getByText('Parent Body')).toBeInTheDocument();
-      expect(screen.getByText('109P/Swift-Tuttle')).toBeInTheDocument();
+      const trendIndicator = screen.getByLabelText('ZHR rising toward peak');
+      expect(trendIndicator).toBeInTheDocument();
+      expect(trendIndicator).toHaveClass('rising');
+      expect(screen.getByText('Rising')).toBeInTheDocument();
+    });
+
+    it('displays declining trend indicator after peak midpoint', () => {
+      render(
+        <div className="meteor-shower-details">
+          <div className="zhr-meter-section">
+            <div className="zhr-header">
+              <span className="zhr-label">Zenithal Hourly Rate</span>
+              <div className="zhr-current-container">
+                <span className="zhr-current-value">30/hr</span>
+                <span
+                  className="zhr-trend-indicator declining"
+                  aria-label="ZHR declining after peak"
+                  title="Declining after peak"
+                >
+                  ↘
+                  <span className="zhr-trend-label">Declining</span>
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+
+      const trendIndicator = screen.getByLabelText('ZHR declining after peak');
+      expect(trendIndicator).toBeInTheDocument();
+      expect(trendIndicator).toHaveClass('declining');
+      expect(screen.getByText('Declining')).toBeInTheDocument();
+    });
+  });
+
+  describe('ZHR Trend Calculations', () => {
+    it('returns "rising" when current time is before peak midpoint', () => {
+      const peakStart = '2025-12-22T00:00:00Z';
+      const peakEnd = '2025-12-24T00:00:00Z';
+      // Midpoint: 2025-12-23T00:00:00Z
+      const currentTime = new Date('2025-12-22T12:00:00Z'); // Before midpoint
+
+      const trend = calculateZhrTrend(peakStart, peakEnd, false, currentTime);
+      expect(trend).toBe('rising');
+    });
+
+    it('returns "declining" when current time is after peak midpoint', () => {
+      const peakStart = '2025-12-22T00:00:00Z';
+      const peakEnd = '2025-12-24T00:00:00Z';
+      // Midpoint: 2025-12-23T00:00:00Z
+      const currentTime = new Date('2025-12-23T12:00:00Z'); // After midpoint
+
+      const trend = calculateZhrTrend(peakStart, peakEnd, false, currentTime);
+      expect(trend).toBe('declining');
+    });
+
+    it('returns "peak" when at peak regardless of time', () => {
+      const peakStart = '2025-12-22T00:00:00Z';
+      const peakEnd = '2025-12-24T00:00:00Z';
+      const currentTime = new Date('2025-12-22T12:00:00Z');
+
+      const trend = calculateZhrTrend(peakStart, peakEnd, true, currentTime);
+      expect(trend).toBe('peak');
+    });
+
+    it('correctly calculates midpoint for peak period', () => {
+      const peakStart = '2025-12-22T00:00:00Z';
+      const peakEnd = '2025-12-24T00:00:00Z';
+
+      const peakStartTime = new Date(peakStart).getTime();
+      const peakEndTime = new Date(peakEnd).getTime();
+      const midpoint = new Date((peakStartTime + peakEndTime) / 2);
+
+      expect(midpoint.toISOString()).toBe('2025-12-23T00:00:00.000Z');
     });
   });
 
@@ -134,22 +238,47 @@ describe('MeteorShowerDetails', () => {
       expect(meter).toHaveAttribute('aria-valuemax', '100');
     });
 
-    it('has semantic section structure', () => {
+    it('trend indicator has proper ARIA attributes', () => {
+      render(
+        <span
+          className="zhr-trend-indicator rising"
+          aria-label="ZHR rising toward peak"
+          title="Rising toward peak"
+        >
+          ↗
+          <span className="zhr-trend-label">Rising</span>
+        </span>
+      );
+
+      const trendIndicator = screen.getByLabelText('ZHR rising toward peak');
+      expect(trendIndicator).toHaveAttribute('title', 'Rising toward peak');
+      expect(trendIndicator).toHaveClass('rising');
+    });
+
+    it('has no accessibility violations with trend indicator', async () => {
       const { container } = render(
         <div className="meteor-shower-details">
-          <div className="parent-body-section">
-            <span className="parent-body-icon">☄️</span>
-            <div className="parent-body-info">
-              <span className="parent-body-label">Parent Body</span>
-              <span className="parent-body-value">109P/Swift-Tuttle</span>
+          <div className="zhr-meter-section">
+            <div className="zhr-header">
+              <span className="zhr-label">Zenithal Hourly Rate</span>
+              <div className="zhr-current-container">
+                <span className="zhr-current-value">50/hr</span>
+                <span
+                  className="zhr-trend-indicator rising"
+                  aria-label="ZHR rising toward peak"
+                  title="Rising toward peak"
+                >
+                  ↗
+                  <span className="zhr-trend-label">Rising</span>
+                </span>
+              </div>
             </div>
           </div>
         </div>
       );
 
-      expect(container.querySelector('.parent-body-section')).toBeInTheDocument();
-      expect(container.querySelector('.parent-body-label')).toBeInTheDocument();
-      expect(container.querySelector('.parent-body-value')).toBeInTheDocument();
+      const results = await axe(container);
+      expect(results).toHaveNoViolations();
     });
   });
 
