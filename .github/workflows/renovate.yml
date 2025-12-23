@@ -1,0 +1,35 @@
+name: Renovate
+
+on:
+  schedule:
+    - cron: '0 16 * * 1-5'  # 8 AM Pacific (16:00 UTC) weekdays
+  workflow_dispatch:
+    inputs:
+      dryRun:
+        description: 'Dry run (no PRs created)'
+        required: false
+        default: 'false'
+        type: boolean
+
+jobs:
+  renovate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '25'
+
+      - name: Self-hosted Renovate
+        uses: renovatebot/github-action@v41
+        with:
+          configurationFile: renovate.json
+          token: ${{ secrets.RENOVATE_TOKEN }}
+        env:
+          LOG_LEVEL: info
+          RENOVATE_ALLOWED_POST_UPGRADE_COMMANDS: '["^\\./gradlew vaadinPrepareFrontend"]'
+          RENOVATE_DRY_RUN: ${{ inputs.dryRun == 'true' && 'full' || 'null' }}
