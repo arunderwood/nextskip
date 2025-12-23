@@ -402,7 +402,7 @@ describe('useDashboardCards', () => {
       expect(result.current[0]).toMatchObject({
         id: 'band-conditions',
         type: 'band-conditions',
-        size: 'wide',
+        size: 'hero',
       });
     });
 

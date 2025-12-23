@@ -129,7 +129,7 @@ const bandConditionsCard: CardDefinition = {
     return {
       id: 'band-conditions',
       type: 'band-conditions',
-      size: 'wide',
+      size: 'hero',
       priority,
       hotness,
     };
