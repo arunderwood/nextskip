@@ -13,7 +13,7 @@
   },
   "dependencies": {
     "@masonry-grid/react": "^1.1.1",
-    "@vaadin/aura": "25.0.0",
+    "@vaadin/aura": "25.0.1",
     "@vaadin/common-frontend": "0.0.19",
     "@vaadin/hilla-file-router": "25.0.0",
     "@vaadin/hilla-frontend": "25.0.0",
@@ -165,7 +165,7 @@
   },
   "vaadin": {
     "dependencies": {
-      "@vaadin/aura": "25.0.0",
+      "@vaadin/aura": "25.0.1",
       "@vaadin/common-frontend": "0.0.19",
       "@vaadin/hilla-file-router": "25.0.0",
       "@vaadin/hilla-frontend": "25.0.0",
