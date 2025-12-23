@@ -4,18 +4,27 @@ updates:
     directory: "/"
     schedule:
       interval: "daily"
+    open-pull-requests-limit: 20
 
   - package-ecosystem: "docker"
     directory: "/"
     schedule:
       interval: "daily"
+    open-pull-requests-limit: 20
 
   - package-ecosystem: "gradle"
     directory: "/"
     schedule:
       interval: "daily"
+    open-pull-requests-limit: 20
 
   - package-ecosystem: "npm"
     directory: "/"
     schedule:
       interval: "daily"
+    open-pull-requests-limit: 20
+    ignore:
+      # Hilla packages are controlled by Vaadin Gradle plugin version
+      # They are locked to the Vaadin BOM version via vaadinPrepareFrontend task
+      - dependency-name: "@vaadin/hilla-*"
+      - dependency-name: "@vaadin/hilla-generator-*"
