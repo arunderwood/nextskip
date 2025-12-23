@@ -19,6 +19,7 @@ import { priorityToHotness } from '../../activity/usePriorityCalculation';
 import { EventCard } from '../events/EventCard';
 import EventStatus from 'Frontend/generated/io/nextskip/common/model/EventStatus';
 import type MeteorShower from 'Frontend/generated/io/nextskip/meteors/model/MeteorShower';
+import './MeteorShowerDetails.css';
 
 /* eslint-disable react/jsx-key */
 
@@ -38,23 +39,73 @@ function MeteorShowerDetails({ shower }: { shower: MeteorShower }) {
   const peakZhr = shower.peakZhr ?? 0;
   const isAtPeak = shower.atPeak ?? false;
 
+  // Calculate percentage for visual meter (0-100%)
+  const zhrPercentage = peakZhr > 0 ? Math.min(100, (currentZhr / peakZhr) * 100) : 0;
+
   return (
-    <div className="event-details">
-      <div className="detail-row">
-        <span className="detail-label">Current Rate:</span>
-        <span className="detail-value">
-          {formatZhr(currentZhr)}
-          {isAtPeak && <span className="peak-badge"> (Peak!)</span>}
-        </span>
+    <div className="meteor-shower-details">
+      {/* At Peak Indicator */}
+      {isAtPeak && (
+        <div className="peak-indicator">
+          <span className="peak-icon">✨</span>
+          <span className="peak-text">At Peak Activity!</span>
+        </div>
+      )}
+
+      {/* ZHR Visual Meter */}
+      <div className="zhr-meter-section">
+        <div className="zhr-header">
+          <span className="zhr-label">Zenithal Hourly Rate</span>
+          <span className="zhr-current-value">{formatZhr(currentZhr)}</span>
+        </div>
+
+        {/* Visual Progress Bar */}
+        <div className="zhr-meter" role="meter" aria-label="ZHR meter" aria-valuenow={currentZhr} aria-valuemin={0} aria-valuemax={peakZhr}>
+          <div className="zhr-meter-track">
+            <div
+              className={`zhr-meter-fill ${isAtPeak ? 'at-peak' : ''}`}
+              style={{ width: `${zhrPercentage}%` }}
+            />
+          </div>
+          <div className="zhr-peak-label">
+            <span>Peak: {formatZhr(peakZhr)}</span>
+          </div>
+        </div>
       </div>
-      <div className="detail-row">
-        <span className="detail-label">Peak Rate:</span>
-        <span className="detail-value">{formatZhr(peakZhr)}</span>
-      </div>
+
+      {/* Parent Body Info */}
       {shower.parentBody && (
-        <div className="detail-row">
-          <span className="detail-label">Parent:</span>
-          <span className="detail-value">{shower.parentBody}</span>
+        <div className="parent-body-section">
+          <span className="parent-body-icon">☄️</span>
+          <div className="parent-body-info">
+            <span className="parent-body-label">Parent Body</span>
+            <span className="parent-body-value">{shower.parentBody}</span>
+          </div>
+        </div>
+      )}
+
+      {/* Peak Timing Info */}
+      {shower.peakStart && shower.peakEnd && (
+        <div className="peak-timing-section">
+          <span className="timing-icon">📅</span>
+          <div className="timing-info">
+            <span className="timing-label">Peak Period</span>
+            <span className="timing-value">
+              {new Date(shower.peakStart).toLocaleDateString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+              })}
+              {' - '}
+              {new Date(shower.peakEnd).toLocaleDateString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+              })}
+            </span>
+          </div>
         </div>
       )}
     </div>
