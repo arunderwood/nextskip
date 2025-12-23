@@ -52,7 +52,7 @@ repositories {
 }
 
 ext {
-    vaadinVersion = '25.0.0'
+    vaadinVersion = '25.0.2'
 }
 
 dependencyManagement {
