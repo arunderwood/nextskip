@@ -84,6 +84,35 @@ function DashboardView() {
   // Get card configurations from registry (must be called before conditional returns)
   const cardConfigs = useDashboardCards(dashboardData);
 
+  // Build activity grid cards using the registry (memoized to avoid O(n*m) recalculation)
+  // IMPORTANT: Must be called before conditional returns to satisfy Rules of Hooks
+  const activityCards = useMemo(() => {
+    const cards = getRegisteredCards();
+
+    return cardConfigs.map((config) => {
+      // Match the card definition by checking if its createConfig produces this config's ID
+      const cardDef = cards.find((c) => {
+        const cfgResult = c.createConfig(dashboardData);
+        // Handle both single config and array of configs
+        if (Array.isArray(cfgResult)) {
+          return cfgResult.some((cfg) => cfg.id === config.id);
+        }
+        return cfgResult?.id === config.id;
+      });
+
+      if (!cardDef) {
+        return { config, component: null };
+      }
+
+      const component = cardDef.render(dashboardData, config);
+
+      return {
+        config,
+        component,
+      };
+    });
+  }, [cardConfigs, dashboardData]);
+
   if (loading && !propagationData) {
     return (
       <div className="loading">
@@ -112,34 +141,6 @@ function DashboardView() {
       </div>
     );
   }
-
-  // Build activity grid cards using the registry (memoized to avoid O(n*m) recalculation)
-  const activityCards = useMemo(() => {
-    const cards = getRegisteredCards();
-
-    return cardConfigs.map((config) => {
-      // Match the card definition by checking if its createConfig produces this config's ID
-      const cardDef = cards.find((c) => {
-        const cfgResult = c.createConfig(dashboardData);
-        // Handle both single config and array of configs
-        if (Array.isArray(cfgResult)) {
-          return cfgResult.some((cfg) => cfg.id === config.id);
-        }
-        return cfgResult?.id === config.id;
-      });
-
-      if (!cardDef) {
-        return { config, component: null };
-      }
-
-      const component = cardDef.render(dashboardData, config);
-
-      return {
-        config,
-        component,
-      };
-    });
-  }, [cardConfigs, dashboardData]);
 
   return (
     <div className="dashboard">
