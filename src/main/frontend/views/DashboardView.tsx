@@ -1,9 +1,10 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { Radio, AlertTriangle } from 'lucide-react';
-import { PropagationEndpoint, ActivationsEndpoint, ContestEndpoint } from 'Frontend/generated/endpoints';
+import { PropagationEndpoint, ActivationsEndpoint, ContestEndpoint, MeteorEndpoint } from 'Frontend/generated/endpoints';
 import type PropagationResponse from 'Frontend/generated/io/nextskip/propagation/api/PropagationResponse';
 import type ActivationsResponse from 'Frontend/generated/io/nextskip/activations/api/ActivationsResponse';
 import type ContestsResponse from 'Frontend/generated/io/nextskip/contests/api/ContestsResponse';
+import type MeteorShowersResponse from 'Frontend/generated/io/nextskip/meteors/api/MeteorShowersResponse';
 import type { DashboardData } from '../components/cards/types';
 import { ActivityGrid } from '../components/activity';
 import { useDashboardCards } from '../hooks/useDashboardCards';
@@ -15,6 +16,7 @@ import './DashboardView.css';
 import '../components/cards/propagation';
 import '../components/cards/activations';
 import '../components/cards/contests';
+import '../components/cards/meteor-showers';
 
 function DashboardView() {
   const [propagationData, setPropagationData] = useState<PropagationResponse | undefined>(
@@ -24,6 +26,9 @@ function DashboardView() {
     undefined
   );
   const [contestsData, setContestsData] = useState<ContestsResponse | undefined>(
+    undefined
+  );
+  const [meteorShowersData, setMeteorShowersData] = useState<MeteorShowersResponse | undefined>(
     undefined
   );
   const [loading, setLoading] = useState(true);
@@ -37,15 +42,17 @@ function DashboardView() {
       setError(null);
 
       // Fetch data from all Hilla endpoints in parallel
-      const [propagation, activations, contests] = await Promise.all([
+      const [propagation, activations, contests, meteorShowers] = await Promise.all([
         PropagationEndpoint.getPropagationData(),
         ActivationsEndpoint.getActivations(),
         ContestEndpoint.getContests(),
+        MeteorEndpoint.getMeteorShowers(),
       ]);
 
       setPropagationData(propagation);
       setActivationsData(activations);
       setContestsData(contests);
+      setMeteorShowersData(meteorShowers);
       setLastUpdate(new Date());
     } catch (err) {
       console.error('Error fetching dashboard data:', err);
@@ -75,10 +82,11 @@ function DashboardView() {
       propagation: propagationData,
       activations: activationsData,
       contests: contestsData,
+      meteorShowers: meteorShowersData,
       // Future modules will add their data here:
       // satellites: satellitesData,
     }),
-    [propagationData, activationsData, contestsData]
+    [propagationData, activationsData, contestsData, meteorShowersData]
   );
 
   // Get card configurations from registry (must be called before conditional returns)

@@ -50,6 +50,9 @@ index.html
 *.tsbuildinfo
 tsconfig.tsbuildinfo
 
+# Vaadin build lock files
+.vaadin-node-tasks.lock
+
 # IDE
 .idea/
 .vscode/

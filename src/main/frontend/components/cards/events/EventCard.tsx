@@ -41,6 +41,7 @@ interface EventCardProps {
   event: Event;
   eventType: EventType;
   config: ActivityCardConfig;
+  children?: React.ReactNode;
 }
 
 /**
@@ -127,12 +128,14 @@ function ContestDetails({ event }: { event: Contest }) {
 /**
  * Generic EventCard component
  */
-export function EventCard({ event, eventType, config }: EventCardProps) {
+export function EventCard({ event, eventType, config, children }: EventCardProps) {
   const metadata = getEventMetadata(eventType);
   const status = getStatusBadge(event);
 
   // Get the calendar source URL if available (contests have this)
   const sourceUrl = (event as any).calendarSourceUrl;
+  // Get info URL for meteor showers
+  const infoUrl = (event as any).infoUrl;
 
   return (
     <ActivityCard
@@ -150,12 +153,14 @@ export function EventCard({ event, eventType, config }: EventCardProps) {
 
         {/* Render event-type-specific details */}
         {eventType === 'contest' && <ContestDetails event={event as Contest} />}
+        {/* Render custom children (e.g., MeteorShowerDetails) */}
+        {children}
 
         {/* Link to more info if available */}
-        {sourceUrl && (
+        {(sourceUrl || infoUrl) && (
           <div className="event-link">
             <a
-              href={sourceUrl}
+              href={sourceUrl || infoUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="details-link"

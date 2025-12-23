@@ -1,0 +1,302 @@
+/**
+ * Meteor Shower Details Component Styles
+ * 
+ * Follows NextSkip Design System tokens strictly.
+ * See: frontend/docs/DESIGN_SYSTEM.md
+ */
+
+.meteor-shower-details {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--spacing-unit) * 2);
+  padding: calc(var(--spacing-unit) * 1.5) 0;
+}
+
+/* === Peak Indicator === */
+.peak-indicator {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-unit);
+  padding: calc(var(--spacing-unit) * 1.25) calc(var(--spacing-unit) * 1.5);
+  background: var(--hotness-hot-bg);
+  border: 2px solid var(--hotness-hot-border);
+  border-radius: calc(var(--border-radius) * 2);
+  animation: peakPulse 2s ease-in-out infinite;
+}
+
+.peak-icon {
+  font-size: 1.5rem;
+  line-height: 1;
+  animation: sparkle 1.5s ease-in-out infinite;
+}
+
+.peak-text {
+  font-size: 0.9375rem;
+  font-weight: var(--font-weight-semibold);
+  color: var(--hotness-hot-color);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+@keyframes peakPulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 var(--hotness-hot-glow);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 0 20px var(--hotness-hot-glow);
+    transform: scale(1.02);
+  }
+}
+
+@keyframes sparkle {
+  0%, 100% {
+    opacity: 1;
+    transform: rotate(0deg) scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: rotate(180deg) scale(1.1);
+  }
+}
+
+/* === ZHR Meter Section === */
+.zhr-meter-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-unit);
+}
+
+.zhr-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--spacing-unit);
+}
+
+.zhr-label {
+  font-size: 0.8125rem;
+  font-weight: var(--font-weight-medium);
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.zhr-current-value {
+  font-size: 1.5rem;
+  font-weight: var(--font-weight-semibold);
+  color: var(--primary-color);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Visual Meter */
+.zhr-meter {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--spacing-unit) * 0.5);
+}
+
+.zhr-meter-track {
+  position: relative;
+  height: 28px;
+  background: var(--hotness-neutral-bg);
+  border: 1px solid var(--hotness-neutral-border);
+  border-radius: calc(var(--border-radius) * 2);
+  overflow: hidden;
+}
+
+.zhr-meter-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+  border-radius: calc(var(--border-radius) * 2);
+  transition: width var(--transition-slow), background var(--transition-slow);
+  position: relative;
+  box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.2);
+}
+
+/* Enhanced fill when at peak */
+.zhr-meter-fill.at-peak {
+  background: linear-gradient(90deg, var(--success-color), var(--warning-color));
+  box-shadow:
+    inset 0 1px 2px rgba(255, 255, 255, 0.3),
+    0 0 12px var(--hotness-hot-glow);
+  animation: meterPulse 2s ease-in-out infinite;
+}
+
+@keyframes meterPulse {
+  0%, 100% {
+    filter: brightness(1);
+  }
+  50% {
+    filter: brightness(1.2);
+  }
+}
+
+/* Rising state - subtle shimmer moving right (building energy) */
+.zhr-meter-fill.rising {
+  background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+  position: relative;
+  overflow: hidden;
+}
+
+.zhr-meter-fill.rising::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.3) 50%,
+    transparent 100%
+  );
+  animation: risingShimmer 3s ease-in-out infinite;
+}
+
+@keyframes risingShimmer {
+  0% {
+    left: -100%;
+  }
+  100% {
+    left: 100%;
+  }
+}
+
+/* Declining state - subtle fade moving left (receding energy) */
+.zhr-meter-fill.declining {
+  background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+  position: relative;
+  overflow: hidden;
+}
+
+.zhr-meter-fill.declining::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    270deg,
+    transparent 0%,
+    rgba(0, 0, 0, 0.2) 50%,
+    transparent 100%
+  );
+  animation: decliningFade 3s ease-in-out infinite;
+}
+
+@keyframes decliningFade {
+  0% {
+    right: -100%;
+  }
+  100% {
+    right: 100%;
+  }
+}
+
+.zhr-peak-label {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.zhr-peak-label span {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* === Peak Timing Section === */
+.peak-timing-section {
+  display: flex;
+  align-items: flex-start;
+  gap: calc(var(--spacing-unit) * 1.5);
+  padding: calc(var(--spacing-unit) * 1.25);
+  background: var(--hotness-neutral-bg);
+  border-left: 3px solid var(--primary-color);
+  border-radius: var(--border-radius);
+  transition: background var(--transition-base);
+}
+
+.peak-timing-section:hover {
+  background: var(--hotness-neutral-glow);
+}
+
+.timing-icon {
+  font-size: 1.5rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.timing-info {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--spacing-unit) * 0.25);
+  flex: 1;
+  min-width: 0;
+}
+
+.timing-label {
+  font-size: 0.6875rem;
+  font-weight: var(--font-weight-medium);
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.timing-value {
+  font-size: 0.8125rem;
+  font-weight: var(--font-weight-medium);
+  color: var(--text-primary);
+  line-height: 1.4;
+  font-variant-numeric: tabular-nums;
+}
+
+/* === Responsive === */
+@media (max-width: 768px) {
+  .meteor-shower-details {
+    gap: calc(var(--spacing-unit) * 1.5);
+  }
+
+  .zhr-current-value {
+    font-size: 1.25rem;
+  }
+
+  .peak-indicator {
+    padding: var(--spacing-unit) calc(var(--spacing-unit) * 1.25);
+  }
+
+  .peak-timing-section {
+    padding: var(--spacing-unit);
+    gap: var(--spacing-unit);
+  }
+}
+
+/* === Accessibility === */
+@media (prefers-reduced-motion: reduce) {
+  .peak-indicator,
+  .zhr-meter-fill,
+  .zhr-meter-fill::after,
+  .peak-icon {
+    animation: none !important;
+  }
+
+  .peak-timing-section {
+    transition: none;
+  }
+}
+
+@media (prefers-contrast: high) {
+  .peak-indicator {
+    border-width: 3px;
+  }
+
+  .zhr-meter-track {
+    border-width: 2px;
+  }
+
+  .peak-timing-section {
+    border-left-width: 4px;
+  }
+}

@@ -18,6 +18,7 @@ export interface DashboardData {
   propagation?: import('Frontend/generated/io/nextskip/propagation/api/PropagationResponse').default;
   activations?: import('Frontend/generated/io/nextskip/activations/api/ActivationsResponse').default;
   contests?: import('Frontend/generated/io/nextskip/contests/api/ContestsResponse').default;
+  meteorShowers?: import('Frontend/generated/io/nextskip/meteors/api/MeteorShowersResponse').default;
   // Future modules will add their types here as they're implemented:
   // satellites?: SatellitesResponse;
   // pskreporter?: PskReporterResponse;
