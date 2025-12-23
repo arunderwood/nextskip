@@ -15,7 +15,7 @@
     "@masonry-grid/react": "^1.1.1",
     "@vaadin/aura": "25.0.0",
     "@vaadin/common-frontend": "0.0.19",
-    "@vaadin/hilla-file-router": "25.0.0",
+    "@vaadin/hilla-file-router": "25.0.1",
     "@vaadin/hilla-frontend": "25.0.0",
     "@vaadin/hilla-lit-form": "25.0.0",
     "@vaadin/hilla-react-auth": "25.0.0",
@@ -168,7 +168,7 @@
     "dependencies": {
       "@vaadin/aura": "25.0.0",
       "@vaadin/common-frontend": "0.0.19",
-      "@vaadin/hilla-file-router": "25.0.0",
+      "@vaadin/hilla-file-router": "25.0.1",
       "@vaadin/hilla-frontend": "25.0.0",
       "@vaadin/hilla-lit-form": "25.0.0",
       "@vaadin/hilla-react-auth": "25.0.0",
