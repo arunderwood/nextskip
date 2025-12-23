@@ -5,9 +5,15 @@
  * Displays HF band propagation conditions in table format.
  */
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Check, Minus, X } from 'lucide-react';
 import type BandCondition from 'Frontend/generated/io/nextskip/propagation/model/BandCondition';
+import {
+  getRatingClass,
+  getBandDescription,
+  formatBandName,
+  sortBandConditions,
+} from 'Frontend/utils/bandConditions';
 import '../../BandConditionsTable.css'; // Reuse existing styles
 
 interface Props {
@@ -15,19 +21,6 @@ interface Props {
 }
 
 function BandConditionsContent({ bandConditions }: Props) {
-  const getRatingClass = (rating: string): string => {
-    switch (rating?.toUpperCase()) {
-      case 'GOOD':
-        return 'rating-good';
-      case 'FAIR':
-        return 'rating-fair';
-      case 'POOR':
-        return 'rating-poor';
-      default:
-        return 'rating-unknown';
-    }
-  };
-
   const getRatingIcon = (rating: string): React.ReactElement => {
     switch (rating?.toUpperCase()) {
       case 'GOOD':
@@ -41,42 +34,11 @@ function BandConditionsContent({ bandConditions }: Props) {
     }
   };
 
-  const getBandDescription = (band: string): string => {
-    const descriptions: { [key: string]: string } = {
-      BAND_160M: 'Long distance, nighttime',
-      BAND_80M: 'Regional to DX, night',
-      BAND_40M: 'All-around workhorse',
-      BAND_30M: 'Digital modes, quiet',
-      BAND_20M: 'DX powerhouse',
-      BAND_17M: 'Underutilized gem',
-      BAND_15M: 'DX when conditions support',
-      BAND_12M: 'Daytime DX',
-      BAND_10M: 'Solar cycle dependent',
-      BAND_6M: 'Magic band',
-    };
-    return descriptions[band] || '';
-  };
-
-  // Sort bands by frequency (highest to lowest)
-  const sortedConditions = [...bandConditions].sort((a, b) => {
-    const order = [
-      'BAND_160M',
-      'BAND_80M',
-      'BAND_40M',
-      'BAND_30M',
-      'BAND_20M',
-      'BAND_17M',
-      'BAND_15M',
-      'BAND_12M',
-      'BAND_10M',
-      'BAND_6M',
-    ];
-    return order.indexOf(a.band || '') - order.indexOf(b.band || '');
-  });
-
-  const formatBandName = (band: string): string => {
-    return band?.replace('BAND_', '') || 'Unknown';
-  };
+  // Sort bands by frequency (memoized to avoid re-sorting on every render)
+  const sortedConditions = useMemo(
+    () => sortBandConditions(bandConditions),
+    [bandConditions]
+  );
 
   return (
     <>

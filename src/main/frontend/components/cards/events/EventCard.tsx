@@ -16,6 +16,7 @@ import { Trophy, Sparkles, Tent } from 'lucide-react';
 import type { ActivityCardConfig } from 'Frontend/types/activity';
 import type Contest from 'Frontend/generated/io/nextskip/contests/model/Contest';
 import EventStatus from 'Frontend/generated/io/nextskip/common/model/EventStatus';
+import { formatTimeRemaining } from 'Frontend/utils/formatTime';
 import { ActivityCard } from '../../activity';
 import './EventCard.module.css';
 
@@ -41,23 +42,6 @@ interface EventCardProps {
   eventType: EventType;
   config: ActivityCardConfig;
   children?: React.ReactNode;
-}
-
-/**
- * Format time remaining as human-readable string
- */
-function formatTimeRemaining(seconds: number | undefined): string {
-  if (seconds === undefined || seconds === null) return '';
-
-  const totalSeconds = Math.abs(seconds);
-  const hours = Math.floor(totalSeconds / 3600);
-  const minutes = Math.floor((totalSeconds % 3600) / 60);
-
-  if (hours < 1) return `${minutes}m`;
-  if (hours < 24) return `${hours}h ${minutes}m`;
-
-  const days = Math.floor(hours / 24);
-  return `${days}d ${hours % 24}h`;
 }
 
 /**

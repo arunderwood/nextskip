@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { Radio, AlertTriangle } from 'lucide-react';
 import { PropagationEndpoint, ActivationsEndpoint, ContestEndpoint, MeteorEndpoint } from 'Frontend/generated/endpoints';
 import type PropagationResponse from 'Frontend/generated/io/nextskip/propagation/api/PropagationResponse';
@@ -35,11 +35,13 @@ function DashboardView() {
   const [error, setError] = useState<string | null>(null);
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
 
-  const fetchData = async () => {
+  // Memoize fetchData to avoid recreation on every render
+  // Hilla pattern: Keep async/await with generated endpoint methods
+  const fetchData = useCallback(async () => {
     try {
       setError(null);
 
-      // Fetch data from all modules in parallel
+      // Fetch data from all Hilla endpoints in parallel
       const [propagation, activations, contests, meteorShowers] = await Promise.all([
         PropagationEndpoint.getPropagationData(),
         ActivationsEndpoint.getActivations(),
@@ -58,7 +60,7 @@ function DashboardView() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []); // Empty deps: setState functions are stable, Hilla endpoint methods are static
 
   useEffect(() => {
     // Set document title
@@ -71,20 +73,53 @@ function DashboardView() {
     const interval = setInterval(fetchData, 5 * 60 * 1000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [fetchData]);
 
-  // Combine all module data into DashboardData structure
-  const dashboardData: DashboardData = {
-    propagation: propagationData,
-    activations: activationsData,
-    contests: contestsData,
-    meteorShowers: meteorShowersData,
-    // Future modules will add their data here:
-    // satellites: satellitesData,
-  };
+  // Memoize dashboardData to prevent unnecessary recalculations in useDashboardCards
+  // Hilla pattern: DashboardData interface references Frontend/generated/ types
+  const dashboardData: DashboardData = useMemo(
+    () => ({
+      propagation: propagationData,
+      activations: activationsData,
+      contests: contestsData,
+      meteorShowers: meteorShowersData,
+      // Future modules will add their data here:
+      // satellites: satellitesData,
+    }),
+    [propagationData, activationsData, contestsData, meteorShowersData]
+  );
 
   // Get card configurations from registry (must be called before conditional returns)
   const cardConfigs = useDashboardCards(dashboardData);
+
+  // Build activity grid cards using the registry (memoized to avoid O(n*m) recalculation)
+  // IMPORTANT: Must be called before conditional returns to satisfy Rules of Hooks
+  const activityCards = useMemo(() => {
+    const cards = getRegisteredCards();
+
+    return cardConfigs.map((config) => {
+      // Match the card definition by checking if its createConfig produces this config's ID
+      const cardDef = cards.find((c) => {
+        const cfgResult = c.createConfig(dashboardData);
+        // Handle both single config and array of configs
+        if (Array.isArray(cfgResult)) {
+          return cfgResult.some((cfg) => cfg.id === config.id);
+        }
+        return cfgResult?.id === config.id;
+      });
+
+      if (!cardDef) {
+        return { config, component: null };
+      }
+
+      const component = cardDef.render(dashboardData, config);
+
+      return {
+        config,
+        component,
+      };
+    });
+  }, [cardConfigs, dashboardData]);
 
   if (loading && !propagationData) {
     return (
@@ -114,31 +149,6 @@ function DashboardView() {
       </div>
     );
   }
-
-  // Build activity grid cards using the registry
-  const cards = getRegisteredCards();
-  const activityCards = cardConfigs.map((config) => {
-    // Match the card definition by checking if its createConfig produces this config's ID
-    const cardDef = cards.find((c) => {
-      const cfgResult = c.createConfig(dashboardData);
-      // Handle both single config and array of configs
-      if (Array.isArray(cfgResult)) {
-        return cfgResult.some((cfg) => cfg.id === config.id);
-      }
-      return cfgResult?.id === config.id;
-    });
-
-    if (!cardDef) {
-      return { config, component: null };
-    }
-
-    const component = cardDef.render(dashboardData, config);
-
-    return {
-      config,
-      component,
-    };
-  });
 
   return (
     <div className="dashboard">

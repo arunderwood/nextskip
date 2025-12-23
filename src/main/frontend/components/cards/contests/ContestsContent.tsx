@@ -9,6 +9,7 @@
 import React from 'react';
 import type Contest from 'Frontend/generated/io/nextskip/contests/model/Contest';
 import EventStatus from 'Frontend/generated/io/nextskip/common/model/EventStatus';
+import { formatTimeRemaining } from 'Frontend/utils/formatTime';
 import './ContestsContent.module.css';
 
 interface Props {
@@ -41,20 +42,6 @@ function ContestsContent({ contests, activeCount, upcomingCount }: Props) {
       hour: 'numeric',
       minute: '2-digit'
     });
-  };
-
-  const formatTimeRemaining = (seconds: number | undefined): string => {
-    if (seconds === undefined || seconds === null) return '';
-
-    const totalSeconds = Math.abs(seconds);
-    const hours = Math.floor(totalSeconds / 3600);
-    const minutes = Math.floor((totalSeconds % 3600) / 60);
-
-    if (hours < 1) return `${minutes}m`;
-    if (hours < 24) return `${hours}h ${minutes}m`;
-
-    const days = Math.floor(hours / 24);
-    return `${days}d ${hours % 24}h`;
   };
 
   const getStatusBadge = (contest: Contest): { label: string; className: string } => {

@@ -7,6 +7,7 @@
 
 import React from 'react';
 import type SolarIndices from 'Frontend/generated/io/nextskip/propagation/model/SolarIndices';
+import { getSolarFluxLevel, getGeomagneticLevel } from 'Frontend/utils/solarIndices';
 import '../../SolarIndicesCard.css'; // Reuse existing styles
 
 interface Props {
@@ -14,27 +15,6 @@ interface Props {
 }
 
 function SolarIndicesContent({ solarIndices }: Props) {
-  const getSolarFluxLevel = (
-    sfi: number
-  ): { label: string; className: string } => {
-    if (sfi >= 200) return { label: 'Very High', className: 'status-good' };
-    if (sfi >= 150) return { label: 'High', className: 'status-good' };
-    if (sfi >= 100) return { label: 'Moderate', className: 'status-fair' };
-    if (sfi >= 70) return { label: 'Low', className: 'status-poor' };
-    return { label: 'Very Low', className: 'status-poor' };
-  };
-
-  const getGeomagneticLevel = (
-    kIndex: number
-  ): { label: string; className: string } => {
-    if (kIndex === 0) return { label: 'Quiet', className: 'status-good' };
-    if (kIndex <= 2) return { label: 'Settled', className: 'status-good' };
-    if (kIndex <= 4) return { label: 'Unsettled', className: 'status-fair' };
-    if (kIndex <= 6) return { label: 'Active', className: 'status-fair' };
-    if (kIndex <= 8) return { label: 'Storm', className: 'status-poor' };
-    return { label: 'Severe Storm', className: 'status-poor' };
-  };
-
   const sfiLevel = getSolarFluxLevel(solarIndices.solarFluxIndex || 0);
   const geoLevel = getGeomagneticLevel(solarIndices.kIndex || 0);
 
