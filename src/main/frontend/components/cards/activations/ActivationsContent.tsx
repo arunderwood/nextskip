@@ -12,6 +12,8 @@ import React, { useMemo } from 'react';
 import type Activation from 'Frontend/generated/io/nextskip/activations/model/Activation';
 import type { ActivationLocationExt } from 'Frontend/types/ActivationLocation';
 import { formatTimeSince, formatFrequency } from 'Frontend/utils/activations';
+import './PotaActivationsContent.css';
+import './SotaActivationsContent.css';
 
 interface Props {
   activations: Activation[];
