@@ -7,6 +7,7 @@ import io.nextskip.activations.model.Activation;
 import io.nextskip.activations.model.ActivationType;
 import io.nextskip.activations.model.Summit;
 import io.nextskip.common.client.ExternalDataClient;
+import io.nextskip.common.util.ParsingUtils;
 import io.nextskip.propagation.internal.ExternalApiException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,10 +20,6 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 
 import java.time.Duration;
 import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
 import java.util.List;
 
 /**
@@ -161,19 +158,10 @@ public class SotaClient implements ExternalDataClient<List<Activation>> {
 
         try {
             // Parse timestamp (SOTA format: "2024-01-15T14:30:00" - no Z suffix)
-            Instant spottedAt = parseTimestamp(dto.timeStamp());
+            Instant spottedAt = ParsingUtils.parseTimestamp(dto.timeStamp(), "SOTA");
 
-            // Parse frequency (MHz string to kHz Double)
-            Double frequency = null;
-            if (dto.frequency() != null && !dto.frequency().isBlank()) {
-                try {
-                    // SOTA returns frequency in MHz, convert to kHz for consistency
-                    double freqMHz = Double.parseDouble(dto.frequency());
-                    frequency = freqMHz * 1000.0;
-                } catch (NumberFormatException e) {
-                    LOG.debug("Invalid frequency format: {}", dto.frequency());
-                }
-            }
+            // Parse frequency (MHz string to kHz Double) - SOTA returns MHz, we need kHz
+            Double frequency = ParsingUtils.parseFrequencyMhzToKhz(dto.frequency());
 
             // Map association code to state abbreviation using static mapper
             String regionCode = SotaAssociationMapper.toStateCode(dto.associationCode()).orElse(null);
@@ -201,33 +189,6 @@ public class SotaClient implements ExternalDataClient<List<Activation>> {
         } catch (Exception e) {
             LOG.warn("Error converting SOTA spot to activation: {}", e.getMessage());
             return null;
-        }
-    }
-
-    /**
-     * Parse SOTA timestamp format.
-     *
-     * <p>SOTA uses "yyyy-MM-dd'T'HH:mm:ss" format without timezone suffix.
-     * Assumes UTC timezone.
-     */
-    private Instant parseTimestamp(String timestamp) {
-        if (timestamp == null || timestamp.isBlank()) {
-            return Instant.now();
-        }
-
-        try {
-            // Try parsing with 'Z' suffix first (ISO-8601)
-            return Instant.parse(timestamp);
-        } catch (DateTimeParseException e1) {
-            try {
-                // Try parsing without timezone (assume UTC)
-                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
-                LocalDateTime dateTime = LocalDateTime.parse(timestamp, formatter);
-                return dateTime.toInstant(ZoneOffset.UTC);
-            } catch (DateTimeParseException e2) {
-                LOG.warn("Invalid timestamp format in SOTA spot: {}", timestamp);
-                return Instant.now();
-            }
         }
     }
 }

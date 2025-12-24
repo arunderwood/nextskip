@@ -7,6 +7,7 @@ import io.nextskip.activations.model.Activation;
 import io.nextskip.activations.model.ActivationType;
 import io.nextskip.activations.model.Park;
 import io.nextskip.common.client.ExternalDataClient;
+import io.nextskip.common.util.ParsingUtils;
 import io.nextskip.propagation.internal.ExternalApiException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,8 +20,6 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 
 import java.time.Duration;
 import java.time.Instant;
-import java.time.format.DateTimeParseException;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -150,25 +149,18 @@ public class PotaClient implements ExternalDataClient<List<Activation>> {
 
         try {
             // Parse timestamp (POTA returns format like "2025-12-15T04:19:19" without timezone)
-            Instant spottedAt = parseTimestamp(dto.spotTime());
+            Instant spottedAt = ParsingUtils.parseTimestamp(dto.spotTime(), "POTA");
 
             // Parse frequency (kHz string to Double)
-            Double frequency = null;
-            if (dto.frequency() != null && !dto.frequency().isBlank()) {
-                try {
-                    frequency = Double.parseDouble(dto.frequency());
-                } catch (NumberFormatException e) {
-                    LOG.debug("Invalid frequency format: {}", dto.frequency());
-                }
-            }
+            Double frequency = ParsingUtils.parseDouble(dto.frequency(), "frequency");
 
             // Parse coordinates
-            Double latitude = parseDouble(dto.latitude());
-            Double longitude = parseDouble(dto.longitude());
+            Double latitude = ParsingUtils.parseDouble(dto.latitude());
+            Double longitude = ParsingUtils.parseDouble(dto.longitude());
 
             // Parse location info from locationDesc (e.g., "US-CO" -> countryCode="US", regionCode="CO")
-            String regionCode = parseRegionCode(dto.locationDesc());
-            String countryCode = parseCountryCode(dto.locationDesc());
+            String regionCode = ParsingUtils.parseRegionCode(dto.locationDesc());
+            String countryCode = ParsingUtils.parseCountryCode(dto.locationDesc());
 
             // Create Park object with all location data
             Park park = new Park(
@@ -196,90 +188,6 @@ public class PotaClient implements ExternalDataClient<List<Activation>> {
         } catch (Exception e) {
             LOG.warn("Error converting POTA spot to activation: {}", e.getMessage());
             return null;
-        }
-    }
-
-    /**
-     * Safely parse a string to Double.
-     */
-    private Double parseDouble(String value) {
-        if (value == null || value.isBlank()) {
-            return null;
-        }
-        try {
-            return Double.parseDouble(value);
-        } catch (NumberFormatException e) {
-            return null;
-        }
-    }
-
-    /**
-     * Parse region code from POTA locationDesc field.
-     *
-     * <p>Format: "{country}-{region}" (e.g., "US-CO" → "CO", "K-0817" → null)
-     *
-     * @param locationDesc Location descriptor from POTA API
-     * @return Region code (state abbreviation), or null if not parseable
-     */
-    private String parseRegionCode(String locationDesc) {
-        if (locationDesc == null || locationDesc.isBlank()) {
-            return null;
-        }
-
-        int hyphenIndex = locationDesc.indexOf('-');
-        if (hyphenIndex > 0 && hyphenIndex < locationDesc.length() - 1) {
-            return locationDesc.substring(hyphenIndex + 1);
-        }
-
-        return null;
-    }
-
-    /**
-     * Parse country code from POTA locationDesc field.
-     *
-     * <p>Format: "{country}-{region}" (e.g., "US-CO" → "US", "JP-ST" → "JP")
-     *
-     * @param locationDesc Location descriptor from POTA API
-     * @return Country code, or null if not parseable
-     */
-    private String parseCountryCode(String locationDesc) {
-        if (locationDesc == null || locationDesc.isBlank()) {
-            return null;
-        }
-
-        int hyphenIndex = locationDesc.indexOf('-');
-        if (hyphenIndex > 0) {
-            return locationDesc.substring(0, hyphenIndex);
-        }
-
-        return null;
-    }
-
-    /**
-     * Parse POTA timestamp format.
-     *
-     * <p>POTA uses "yyyy-MM-dd'T'HH:mm:ss" format without timezone suffix.
-     * Assumes UTC timezone.
-     */
-    private Instant parseTimestamp(String timestamp) {
-        if (timestamp == null || timestamp.isBlank()) {
-            return Instant.now();
-        }
-
-        try {
-            // Try parsing with 'Z' suffix first (ISO-8601)
-            return Instant.parse(timestamp);
-        } catch (java.time.format.DateTimeParseException e1) {
-            try {
-                // Try parsing without timezone (assume UTC) - POTA's actual format
-                java.time.format.DateTimeFormatter formatter =
-                        java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
-                java.time.LocalDateTime dateTime = java.time.LocalDateTime.parse(timestamp, formatter);
-                return dateTime.toInstant(java.time.ZoneOffset.UTC);
-            } catch (java.time.format.DateTimeParseException e2) {
-                LOG.warn("Unable to parse timestamp from POTA: '{}', using current time", timestamp);
-                return Instant.now();
-            }
         }
     }
 }
