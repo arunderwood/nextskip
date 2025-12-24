@@ -23,6 +23,12 @@ java {
     targetCompatibility = JavaVersion.VERSION_25
 }
 
+// Enable dependency locking for all configurations
+// This creates gradle.lockfile which Renovate uses to trigger postUpgradeTasks
+dependencyLocking {
+    lockAllConfigurations()
+}
+
 // Disable plain JAR generation - we only need the Spring Boot executable JAR
 tasks.named('jar') {
     enabled = false

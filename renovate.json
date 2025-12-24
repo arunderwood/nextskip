@@ -7,6 +7,11 @@
   "labels": ["dependencies"],
   "packageRules": [
     {
+      "description": "Docker - disable all updates (manually managed)",
+      "matchManagers": ["docker", "dockerfile"],
+      "enabled": false
+    },
+    {
       "description": "Checkstyle - group all versions into single PR",
       "matchManagers": ["gradle"],
       "matchPackageNames": ["com.puppycrawl.tools:checkstyle"],
