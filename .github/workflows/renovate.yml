@@ -32,4 +32,6 @@ jobs:
         env:
           LOG_LEVEL: info
           RENOVATE_ALLOWED_POST_UPGRADE_COMMANDS: '["^\\./gradlew vaadinPrepareFrontend"]'
-          RENOVATE_DRY_RUN: ${{ inputs.dryRun == 'true' && 'full' || 'null' }}
+          RENOVATE_DRY_RUN: ${{ inputs.dryRun == 'true' && 'full' || '' }}
+          RENOVATE_AUTODISCOVER: true
+          RENOVATE_AUTODISCOVER_FILTER: ${{ github.repository }}
