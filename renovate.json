@@ -21,7 +21,7 @@
           "install-tool java 25.0.1+8",
           "./gradlew vaadinPrepareFrontend --no-daemon"
         ],
-        "fileFilters": ["package.json", "package-lock.json"],
+        "fileFilters": ["**/**"],
         "executionMode": "update"
       },
       "matchPackageNames": ["/^com\\.vaadin/"]
