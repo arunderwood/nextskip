@@ -105,6 +105,16 @@ class ParsingUtilsTest {
     }
 
     @Test
+    void testParseDouble_WithFieldName_Null() {
+        assertNull(ParsingUtils.parseDouble(null, "frequency"));
+    }
+
+    @Test
+    void testParseDouble_WithFieldName_Blank() {
+        assertNull(ParsingUtils.parseDouble("   ", "frequency"));
+    }
+
+    @Test
     void testParseFrequencyMhzToKhz_ValidFrequency() {
         Double result = ParsingUtils.parseFrequencyMhzToKhz("14.074");
 
