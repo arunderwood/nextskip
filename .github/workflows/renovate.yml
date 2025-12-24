@@ -29,9 +29,13 @@ jobs:
         with:
           configurationFile: renovate.json
           token: ${{ secrets.RENOVATE_TOKEN }}
+          docker-volumes: |
+            /tmp:/tmp
+            ${{ env.JAVA_HOME }}:${{ env.JAVA_HOME }}:ro
         env:
           LOG_LEVEL: debug
           RENOVATE_ALLOWED_COMMANDS: '["^\\./gradlew vaadinPrepareFrontend"]'
           RENOVATE_DRY_RUN: ${{ inputs.dryRun && 'full' || '' }}
           RENOVATE_AUTODISCOVER: true
           RENOVATE_AUTODISCOVER_FILTER: ${{ github.repository }}
+          JAVA_HOME: ${{ env.JAVA_HOME }}
