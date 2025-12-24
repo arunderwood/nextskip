@@ -1,55 +1,38 @@
-# Dependency Management Strategy
+# Dependency Management
 
-This repository uses a hybrid approach to dependency management:
+**Renovate** handles Gradle and npm dependencies. **Dependabot** handles GitHub Actions only.
 
-## Tools
+Docker images are manually managed.
 
-| Tool | Ecosystems | Why |
-|------|------------|-----|
-| **Renovate** | Gradle, npm, Docker | Supports `postUpgradeTasks` to run gradle commands after updates |
-| **Dependabot** | GitHub Actions | Simpler for Actions, no extra PAT permissions needed |
+## Vaadin/Hilla Updates
 
-## Vaadin/Hilla Special Handling
-
-Vaadin/Hilla controls many npm dependencies via its Gradle plugin. When any `com.vaadin*`
-package is updated (plugin or BOM), Renovate automatically runs:
+When `com.vaadin` packages update, Renovate runs:
 
 ```bash
-./gradlew vaadinPrepareFrontend
+install-tool java 25.0.1+8
+install-tool node 24.12.0
+./gradlew vaadinPrepareFrontend --no-daemon
+npm install --package-lock-only
 ```
 
-This task:
-- Copies frontend resources from JAR dependencies to `node_modules`
-- Updates `package.json` with the correct `@vaadin/*` package versions
-- Regenerates `package-lock.json`
+This syncs npm `package.json` and `package-lock.json` with Gradle-managed Vaadin versions.
 
-**Packages that trigger frontend regeneration:**
-- `com.vaadin` Gradle plugin (in `plugins {}` block)
-- `com.vaadin:vaadin-bom` (in `dependencyManagement {}`)
-- `com.vaadin:vaadin-spring-boot-starter`
-- `com.vaadin:hilla-spring-boot-starter`
+**Ignored npm packages** (controlled by Vaadin Gradle plugin):
+- `@vaadin/*`, `react*`, `lit`, `vite`, `typescript`, `workbox-*`
 
-All are grouped together so a single PR updates everything atomically.
+## Gradle Dependency Locking
 
-### Ignored npm Packages
+Enabled via `dependencyLocking { lockAllConfigurations() }` in `build.gradle`.
 
-The following npm packages are controlled by Vaadin and ignored by Renovate:
-- `@vaadin/*` - All Vaadin web components
-- `react`, `react-dom`, `react-router`, `react-router-dom` - React ecosystem
-- `lit`, `vite`, `typescript` - Build tooling
-- `workbox-*` - Service worker tooling
+The `gradle.lockfile` is required for Renovate to detect changes and trigger postUpgradeTasks.
 
-These are updated automatically when Vaadin is updated.
+## Renovate PAT Permissions
 
-## Configuration Files
-
-- `renovate.json` - Renovate configuration
-  - Dependency dashboard disabled (no GitHub issue created)
-- `.github/workflows/renovate.yml` - Renovate workflow (runs 8 AM Pacific, weekdays)
-- `.github/dependabot.yml` - Dependabot configuration (GitHub Actions only)
+Fine-grained token scoped to this repo with:
+- Contents: Read and write
+- Pull requests: Read and write
+- Commit statuses: Read and write
 
 ## Security
 
-- Renovate workflow uses `schedule` and `workflow_dispatch` triggers (not `pull_request`)
-- PAT is scoped to this repository only with minimal permissions
-- See: [GitHub Actions Security Hardening](https://docs.github.com/en/actions/security-for-github-actions/security-guides/security-hardening-for-github-actions)
+Workflow uses `schedule` and `workflow_dispatch` triggers only - executes code from `main` branch, never from PRs.
