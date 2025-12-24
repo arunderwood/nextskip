@@ -17,7 +17,10 @@
       "matchManagers": ["gradle", "gradle-wrapper"],
       "groupName": "Vaadin",
       "postUpgradeTasks": {
-        "commands": ["./gradlew vaadinPrepareFrontend --no-daemon"],
+        "commands": [
+          "install-tool java 25.0.1+8",
+          "./gradlew vaadinPrepareFrontend --no-daemon"
+        ],
         "fileFilters": ["package.json", "package-lock.json"],
         "executionMode": "update"
       },
