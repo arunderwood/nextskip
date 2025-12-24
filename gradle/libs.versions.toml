@@ -5,12 +5,10 @@ spring-boot = "4.0.1"
 spring-dependency-management = "1.1.7"
 
 # Quality & testing tools
+# NOTE: checkstyle, pmd, spotbugs-tool, and jacoco versions moved to direct literals in build.gradle
+# to enable Renovate detection. See: https://github.com/renovatebot/renovate/discussions/40147
 spotbugs-plugin = "6.4.8"
 pitest = "1.19.0-rc.2"
-checkstyle = "10.12.5"
-pmd = "7.9.0"
-spotbugs-tool = "4.8.6"
-jacoco = "0.8.14"
 
 # Dependencies (not managed by Spring Boot BOM)
 resilience4j = "2.3.0"

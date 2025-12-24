@@ -149,21 +149,25 @@ configurations.all {
 
 // Code quality plugin configurations
 
+// NOTE: Using direct string literals instead of version catalog accessors (libs.versions.X.get())
+// to enable Renovate detection until native support is added.
+// See: https://github.com/renovatebot/renovate/discussions/40147
+// Can be reverted to catalog accessors if Renovate adds native support.
 checkstyle {
-    toolVersion = libs.versions.checkstyle.get()
+    toolVersion = "10.12.5"
     configFile = file("${rootDir}/config/checkstyle/checkstyle.xml")
     ignoreFailures = true  // Report violations but don't fail build during development
 }
 
 pmd {
-    toolVersion = libs.versions.pmd.get()
+    toolVersion = "7.9.0"
     ruleSets = []  // Empty to use custom ruleset file
     ruleSetFiles = files("${rootDir}/config/pmd/ruleset.xml")
     ignoreFailures = true  // Report violations but don't fail build during development
 }
 
 spotbugs {
-    toolVersion = libs.versions.spotbugs.tool.get()
+    toolVersion = "4.8.6"
     effort = 'max'
     reportLevel = 'medium'
     ignoreFailures = true  // Report violations but don't fail build during development
@@ -177,7 +181,7 @@ tasks.withType(com.github.spotbugs.snom.SpotBugsTask) {
 }
 
 jacoco {
-    toolVersion = libs.versions.jacoco.get()
+    toolVersion = "0.8.14"
 }
 
 jacocoTestReport {
