@@ -3,7 +3,6 @@ package io.nextskip.activations.internal;
 import io.nextskip.activations.api.ActivationsService;
 import io.nextskip.activations.model.Activation;
 import io.nextskip.activations.model.ActivationsSummary;
-import io.nextskip.activations.model.ActivationType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
