@@ -30,8 +30,8 @@ jobs:
           configurationFile: renovate.json
           token: ${{ secrets.RENOVATE_TOKEN }}
         env:
-          LOG_LEVEL: ${{ inputs.dryRun == 'true' && 'debug' || 'info' }}
+          LOG_LEVEL: ${{ inputs.dryRun && 'debug' || 'info' }}
           RENOVATE_ALLOWED_POST_UPGRADE_COMMANDS: '["^\\./gradlew vaadinPrepareFrontend"]'
-          RENOVATE_DRY_RUN: ${{ inputs.dryRun == 'true' && 'full' || '' }}
+          RENOVATE_DRY_RUN: ${{ inputs.dryRun && 'full' || '' }}
           RENOVATE_AUTODISCOVER: true
           RENOVATE_AUTODISCOVER_FILTER: ${{ github.repository }}
