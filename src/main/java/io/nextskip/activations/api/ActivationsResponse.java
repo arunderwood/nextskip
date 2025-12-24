@@ -20,4 +20,11 @@ public record ActivationsResponse(
         int totalCount,
         Instant lastUpdated
 ) {
+    /**
+     * Compact constructor for defensive copying of mutable collections.
+     */
+    public ActivationsResponse {
+        potaActivations = potaActivations != null ? List.copyOf(potaActivations) : List.of();
+        sotaActivations = sotaActivations != null ? List.copyOf(sotaActivations) : List.of();
+    }
 }

@@ -62,7 +62,7 @@ public class MeteorShowerDataLoader {
             JsonNode showersNode = root.get("showers");
             templates = objectMapper.readValue(
                     showersNode.traverse(),
-                    new TypeReference<List<MeteorShowerTemplate>>() {}
+                    new TypeReference<List<MeteorShowerTemplate>>() { }
             );
         }
     }
@@ -105,7 +105,7 @@ public class MeteorShowerDataLoader {
         // Sort by peak start time
         result.sort((a, b) -> a.peakStart().compareTo(b.peakStart()));
 
-        return result;
+        return List.copyOf(result);
     }
 
     private boolean isRelevant(MeteorShower shower, Instant cutoffPast, Instant cutoffFuture) {
@@ -153,8 +153,9 @@ public class MeteorShowerDataLoader {
 
     /**
      * Get all loaded templates (for testing).
+     * Returns an unmodifiable view to prevent external modification.
      */
     List<MeteorShowerTemplate> getTemplates() {
-        return templates;
+        return List.copyOf(templates);
     }
 }

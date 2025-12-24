@@ -23,6 +23,13 @@ public record ActivationsSummary(
 ) implements Scoreable {
 
     /**
+     * Compact constructor for defensive copying of mutable collections.
+     */
+    public ActivationsSummary {
+        activations = activations != null ? List.copyOf(activations) : List.of();
+    }
+
+    /**
      * An activations summary is favorable when there are 5 or more total activations.
      *
      * @return true if there are at least 5 activations on air
@@ -61,8 +68,8 @@ public record ActivationsSummary(
 
         // Check if any activation is very recent (last 5 minutes)
         boolean hasRecentActivation = activations != null && activations.stream()
-                .anyMatch(a -> a.spottedAt() != null &&
-                        java.time.Duration.between(a.spottedAt(), Instant.now()).toMinutes() <= 5);
+                .anyMatch(a -> a.spottedAt() != null
+                        && java.time.Duration.between(a.spottedAt(), Instant.now()).toMinutes() <= 5);
 
         int recencyBonus = hasRecentActivation ? 10 : 0;
 

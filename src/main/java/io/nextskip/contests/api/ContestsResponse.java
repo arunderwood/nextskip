@@ -23,4 +23,10 @@ public record ContestsResponse(
         int totalCount,
         Instant lastUpdated
 ) {
+    /**
+     * Compact constructor for defensive copying of mutable collections.
+     */
+    public ContestsResponse {
+        contests = contests != null ? List.copyOf(contests) : List.of();
+    }
 }
