@@ -108,7 +108,7 @@ npm run e2e:headed
 - Module-specific models in `model/` package
 - Isolated external dependencies
 
-**Current Modules**: common, propagation
+**Current Modules**: common, propagation, activations, contests, meteors
 **Planned Modules**: See `nextskip-project-plan.md`
 
 ### Package Structure
@@ -116,7 +116,10 @@ npm run e2e:headed
 ```
 io.nextskip/
 ├── common/           # Shared models and utilities
-├── propagation/      # Phase 1 module (solar indices, band conditions)
+├── propagation/      # Solar indices, band conditions (NOAA, HamQSL)
+├── activations/      # POTA/SOTA activations
+├── contests/         # Contest calendar (WA7BNM)
+├── meteors/          # Meteor shower tracking
 │   ├── api/          # Public contracts (@BrowserCallable endpoints)
 │   ├── internal/     # Implementations (clients, services)
 │   └── model/        # Domain models

@@ -21,4 +21,10 @@ public record MeteorShowersResponse(
         MeteorShower primaryShower,
         Instant lastUpdated
 ) {
+    /**
+     * Compact constructor for defensive copying of mutable collections.
+     */
+    public MeteorShowersResponse {
+        showers = showers != null ? List.copyOf(showers) : List.of();
+    }
 }

@@ -39,6 +39,14 @@ public record Contest(
 ) implements Event {
 
     /**
+     * Compact constructor for defensive copying of mutable collections.
+     */
+    public Contest {
+        bands = bands != null ? Set.copyOf(bands) : Set.of();
+        modes = modes != null ? Set.copyOf(modes) : Set.of();
+    }
+
+    /**
      * Returns the event name.
      *
      * @return the contest name

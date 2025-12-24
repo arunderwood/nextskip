@@ -119,7 +119,9 @@ class PropagationEndpointTest {
 
         assertNotNull(response);
         assertNull(response.solarIndices());
-        assertNull(response.bandConditions());
+        // Defensive copying converts null to empty list
+        assertNotNull(response.bandConditions());
+        assertTrue(response.bandConditions().isEmpty());
 
         verify(propagationService).getCurrentSolarIndices();
         verify(propagationService).getBandConditions();

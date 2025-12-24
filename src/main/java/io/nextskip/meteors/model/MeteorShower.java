@@ -175,7 +175,7 @@ public record MeteorShower(
                 if (!now.isBefore(peakStart) && !now.isAfter(peakEnd)) {
                     // Higher ZHR showers score higher
                     // Map ZHR 10-150 to score 85-100
-                    int zhrBonus = (int) Math.min(15, (peakZhr / 10.0));
+                    int zhrBonus = (int) Math.min(15, peakZhr / 10.0);
                     yield 85 + zhrBonus;
                 }
                 // Active but not at peak - use Gaussian decay

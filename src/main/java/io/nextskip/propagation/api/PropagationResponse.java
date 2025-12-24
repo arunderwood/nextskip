@@ -22,6 +22,13 @@ public record PropagationResponse(
         Instant timestamp
 ) {
     /**
+     * Compact constructor for defensive copying of mutable collections.
+     */
+    public PropagationResponse {
+        bandConditions = bandConditions != null ? List.copyOf(bandConditions) : List.of();
+    }
+
+    /**
      * Create a PropagationResponse with current timestamp.
      */
     public PropagationResponse(SolarIndices solarIndices, List<BandCondition> bandConditions) {

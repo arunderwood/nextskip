@@ -2,12 +2,12 @@ package io.nextskip.propagation.internal;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
-import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
-import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
 import com.fasterxml.jackson.dataformat.xml.deser.FromXmlParser;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
 import io.nextskip.common.model.FrequencyBand;
+import io.nextskip.propagation.internal.dto.HamQslDto.BandConditionEntry;
+import io.nextskip.propagation.internal.dto.HamQslDto.HamQslData;
 import io.nextskip.propagation.model.BandCondition;
 import io.nextskip.propagation.model.BandConditionRating;
 import io.nextskip.propagation.model.SolarIndices;
@@ -49,6 +49,9 @@ public class HamQslClient {
 
     private static final Duration REQUEST_TIMEOUT = Duration.ofSeconds(10);
 
+    // Pre-initialized XmlMapper to avoid constructor exceptions (SpotBugs CT_CONSTRUCTOR_THROW)
+    private static final XmlMapper SHARED_XML_MAPPER = createXmlMapper();
+
     private final WebClient webClient;
     private final CacheManager cacheManager;
     private final XmlMapper xmlMapper;
@@ -66,8 +69,8 @@ public class HamQslClient {
                 .build();
         this.cacheManager = cacheManager;
 
-        // Configure XmlMapper with security and robustness settings
-        this.xmlMapper = createXmlMapper();
+        // Use pre-initialized XmlMapper to avoid constructor exceptions
+        this.xmlMapper = SHARED_XML_MAPPER;
     }
 
     /**
@@ -127,12 +130,12 @@ public class HamQslClient {
 
             HamQslData data = xmlMapper.readValue(xml, HamQslData.class);
 
-            if (data == null || data.solardata == null) {
+            if (data == null || data.getSolardata() == null) {
                 throw new InvalidApiResponseException("HamQSL", "Missing solardata element in XML response");
             }
 
             // Validate the data
-            data.solardata.validate();
+            data.getSolardata().validate();
 
             // Extract values with defaults
             Double solarFlux = data.getSolarFlux() != null ? data.getSolarFlux() : 0.0;
@@ -200,23 +203,24 @@ public class HamQslClient {
 
             HamQslData data = xmlMapper.readValue(xml, HamQslData.class);
 
-            if (data == null || data.solardata == null) {
+            if (data == null || data.getSolardata() == null) {
                 throw new InvalidApiResponseException("HamQSL", "Missing solardata element in XML response");
             }
 
             List<BandCondition> conditions = new ArrayList<>();
 
             // Parse band conditions from the XML structure
-            if (data.solardata.calculatedConditions != null
-                    && data.solardata.calculatedConditions.bands != null) {
+            var solarData = data.getSolardata();
+            if (solarData.getCalculatedConditions() != null
+                    && solarData.getCalculatedConditions().getBands() != null) {
 
-                for (BandConditionEntry entry : data.solardata.calculatedConditions.bands) {
+                for (BandConditionEntry entry : solarData.getCalculatedConditions().getBands()) {
                     // Use "day" conditions for now (could be enhanced to handle time-based selection)
-                    if ("day".equals(entry.time)) {
-                        BandConditionRating rating = parseBandRating(entry.value);
+                    if ("day".equals(entry.getTime())) {
+                        BandConditionRating rating = parseBandRating(entry.getValue());
 
                         // Map band ranges to individual bands
-                        switch (entry.name) {
+                        switch (entry.getName()) {
                             case "80m-40m":
                                 conditions.add(new BandCondition(FrequencyBand.BAND_80M, rating));
                                 conditions.add(new BandCondition(FrequencyBand.BAND_40M, rating));
@@ -299,94 +303,5 @@ public class HamQslClient {
             }
         }
         return List.of();
-    }
-
-    /**
-     * DTO for parsing HamQSL XML response.
-     */
-    @JacksonXmlRootElement(localName = "solar")
-    static class HamQslData {
-        @JacksonXmlProperty(localName = "solardata")
-        SolarData solardata;
-
-        Double getSolarFlux() {
-            return solardata != null ? solardata.solarFlux : null;
-        }
-
-        Integer getAIndex() {
-            return solardata != null ? solardata.aIndex : null;
-        }
-
-        Integer getKIndex() {
-            return solardata != null ? solardata.kIndex : null;
-        }
-
-        Integer getSunspots() {
-            return solardata != null ? solardata.sunspots : null;
-        }
-    }
-
-    static class SolarData {
-        @JacksonXmlProperty(localName = "solarflux")
-        Double solarFlux;
-
-        @JacksonXmlProperty(localName = "aindex")
-        Integer aIndex;
-
-        @JacksonXmlProperty(localName = "kindex")
-        Integer kIndex;
-
-        @JacksonXmlProperty(localName = "sunspots")
-        Integer sunspots;
-
-        @JacksonXmlProperty(localName = "calculatedconditions")
-        CalculatedConditions calculatedConditions;
-
-        /**
-         * Validate the solar data fields.
-         * Allows null values but checks ranges when present.
-         */
-        void validate() {
-            // K-index ranges from 0 to 9
-            if (kIndex != null && (kIndex < 0 || kIndex > 9)) {
-                throw new InvalidApiResponseException("HamQSL",
-                        "K-index out of expected range [0, 9]: " + kIndex);
-            }
-
-            // A-index typically ranges from 0 to ~400
-            if (aIndex != null && (aIndex < 0 || aIndex > 500)) {
-                throw new InvalidApiResponseException("HamQSL",
-                        "A-index out of expected range [0, 500]: " + aIndex);
-            }
-
-            // Solar flux typically ranges from ~50 to ~400
-            if (solarFlux != null && (solarFlux < 0 || solarFlux > 1000)) {
-                throw new InvalidApiResponseException("HamQSL",
-                        "Solar flux out of expected range [0, 1000]: " + solarFlux);
-            }
-
-            // Sunspot number typically ranges from 0 to ~400
-            if (sunspots != null && (sunspots < 0 || sunspots > 1000)) {
-                throw new InvalidApiResponseException("HamQSL",
-                        "Sunspot number out of expected range [0, 1000]: " + sunspots);
-            }
-        }
-    }
-
-    static class CalculatedConditions {
-        @JacksonXmlProperty(localName = "band")
-        @com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper(useWrapping = false)
-        List<BandConditionEntry> bands;
-    }
-
-    static class BandConditionEntry {
-        @com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty(isAttribute = true)
-        String name;
-
-        @com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty(isAttribute = true)
-        String time;
-
-        @com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlText
-        String value;
     }
 }

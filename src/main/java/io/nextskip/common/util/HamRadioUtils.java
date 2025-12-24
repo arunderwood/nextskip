@@ -5,6 +5,14 @@ import io.nextskip.common.model.GridSquare;
 
 /**
  * Utility methods for amateur radio calculations and conversions.
+ *
+ * <p>Provides utilities for:
+ * <ul>
+ *   <li><b>Grid Squares</b>: Convert coordinates to Maidenhead grid locators</li>
+ *   <li><b>Bearing</b>: Calculate azimuth between two coordinates</li>
+ *   <li><b>Frequency</b>: Format and parse frequency strings (Hz, kHz, MHz)</li>
+ *   <li><b>Callsigns</b>: Basic validation of amateur radio callsign format</li>
+ * </ul>
  */
 public final class HamRadioUtils {
 
@@ -162,42 +170,5 @@ public final class HamRadioUtils {
         // Most callsigns are 3-6 characters with at least one number
         String pattern = "^[A-Z0-9]{1,3}[0-9][A-Z0-9]{0,3}$";
         return callsign.toUpperCase().matches(pattern);
-    }
-
-    /**
-     * Calculate sunrise/sunset times (simplified calculation).
-     * Note: This is a simplified calculation. For production use,
-     * consider using a library like SunCalc or similar.
-     *
-     * @param coordinates Location coordinates
-     * @param julianDay   Julian day number
-     * @return Array of [sunrise hour, sunset hour] in UTC (0-24)
-     */
-    public static double[] calculateSunriseSunset(Coordinates coordinates, double julianDay) {
-        // Simplified calculation - not astronomically precise
-        // For a production system, use a proper astronomical calculation library
-
-        double lat = Math.toRadians(coordinates.latitude());
-        double n = julianDay - 2451545.0;
-        double l = (280.460 + 0.9856474 * n) % 360.0;
-        double g = (357.528 + 0.9856003 * n) % 360.0;
-        double lambda = l + 1.915 * Math.sin(Math.toRadians(g)) + 0.020 * Math.sin(Math.toRadians(2 * g));
-        double epsilon = 23.439 - 0.0000004 * n;
-        double delta = Math.asin(Math.sin(Math.toRadians(epsilon)) * Math.sin(Math.toRadians(lambda)));
-
-        double cosH = -Math.tan(lat) * Math.tan(delta);
-        if (cosH > 1.0) {
-            // Polar night
-            return new double[]{0.0, 0.0};
-        } else if (cosH < -1.0) {
-            // Polar day
-            return new double[]{0.0, 24.0};
-        }
-
-        double h = Math.toDegrees(Math.acos(cosH));
-        double sunrise = 12.0 - h / 15.0;
-        double sunset = 12.0 + h / 15.0;
-
-        return new double[]{sunrise, sunset};
     }
 }
