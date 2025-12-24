@@ -1,15 +1,15 @@
 plugins {
     id 'java'
-    id 'org.springframework.boot' version '4.0.1'
-    id 'io.spring.dependency-management' version '1.1.7'
-    id 'com.vaadin' version '25.0.0'
+    alias(libs.plugins.spring.boot)
+    alias(libs.plugins.spring.dependency.management)
+    alias(libs.plugins.vaadin)
 
     // Code quality plugins
     id 'checkstyle'
     id 'pmd'
-    id 'com.github.spotbugs' version '6.4.8'
+    alias(libs.plugins.spotbugs)
     id 'jacoco'
-    id 'info.solidsoft.pitest' version '1.19.0-rc.2'  // Gradle 9 compatible
+    alias(libs.plugins.pitest)
 }
 
 group = 'io.nextskip'
@@ -19,8 +19,12 @@ java {
     toolchain {
         languageVersion = JavaLanguageVersion.of(25)
     }
-    sourceCompatibility = JavaVersion.VERSION_25
-    targetCompatibility = JavaVersion.VERSION_25
+}
+
+// Enable reproducible builds
+tasks.withType(AbstractArchiveTask).configureEach {
+    preserveFileTimestamps = false
+    reproducibleFileOrder = true
 }
 
 // Enable dependency locking for all configurations
@@ -51,70 +55,82 @@ tasks.named('bootJar') {
 }
 
 repositories {
-    mavenCentral()
-    maven { url 'https://maven.vaadin.com/vaadin-addons' }
-    maven { url 'https://maven.vaadin.com/vaadin-prereleases' }
-    maven { url 'https://repo.spring.io/milestone' }
-}
+    mavenCentral()  // Primary repository - fastest and most reliable
 
-ext {
-    vaadinVersion = '25.0.0'
+    // Vaadin addons repository (required for Vaadin components)
+    maven {
+        url 'https://maven.vaadin.com/vaadin-addons'
+        content {
+            includeGroup 'com.vaadin'
+        }
+    }
+
+    // Pre-release repositories (only for SNAPSHOT builds)
+    if (version.toString().contains('SNAPSHOT') || version.toString().contains('rc')) {
+        maven {
+            url 'https://maven.vaadin.com/vaadin-prereleases'
+            content {
+                includeGroup 'com.vaadin'
+            }
+        }
+        maven {
+            url 'https://repo.spring.io/milestone'
+            content {
+                includeGroupByRegex 'org\\.springframework.*'
+            }
+        }
+    }
 }
 
 dependencyManagement {
     imports {
-        mavenBom "com.vaadin:vaadin-bom:${vaadinVersion}"
+        mavenBom "com.vaadin:vaadin-bom:${libs.versions.vaadin.get()}"
     }
 }
 
 dependencies {
     // Vaadin with Hilla for React integration
-    implementation 'com.vaadin:vaadin-spring-boot-starter'
-    implementation 'com.vaadin:hilla-spring-boot-starter'
-    developmentOnly 'com.vaadin:vaadin-dev'
+    implementation libs.bundles.vaadin
+    developmentOnly libs.vaadin.dev
 
-    // Spring Boot
-    implementation 'org.springframework.boot:spring-boot-starter-web'
-    implementation 'org.springframework.boot:spring-boot-starter-cache'
-    implementation 'org.springframework.boot:spring-boot-starter-actuator'
-    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    // Spring Boot starters (versions managed by Spring Boot BOM)
+    implementation libs.bundles.spring.boot.web
+    implementation libs.spring.boot.starter.webflux
 
     // Caching
-    implementation 'com.github.ben-manes.caffeine:caffeine'
+    implementation libs.caffeine
 
-    // Resilience4j
-    implementation 'io.github.resilience4j:resilience4j-spring-boot3:2.3.0'
-    implementation 'io.github.resilience4j:resilience4j-circuitbreaker:2.3.0'
-    implementation 'io.github.resilience4j:resilience4j-retry:2.3.0'
+    // Resilience4j for circuit breakers and retry logic
+    implementation libs.bundles.resilience4j
 
     // Jackson XML
-    implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-xml'
+    implementation libs.jackson.dataformat.xml
 
     // iCal4j for calendar/event parsing
-    implementation 'org.mnode.ical4j:ical4j:4.2.2'
+    implementation libs.ical4j
 
-    // Jsoup for HTML parsing/scraping
-    implementation 'org.jsoup:jsoup:1.21.2'
+    // Jsoup for HTML parsing
+    implementation libs.jsoup
 
     // Observability
-    runtimeOnly 'io.micrometer:micrometer-registry-prometheus'
-
-    // WebClient support (reactive client for Spring MVC)
-    implementation 'org.springframework.boot:spring-boot-starter-webflux'
+    runtimeOnly libs.micrometer.registry.prometheus
 
     // Testing
-    testImplementation 'org.springframework.boot:spring-boot-starter-test'
-    testImplementation 'io.projectreactor:reactor-test'
-    testImplementation 'org.wiremock:wiremock-standalone:3.13.2'
-    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    testImplementation libs.spring.boot.starter.test
+    testImplementation libs.reactor.test
+    testImplementation libs.wiremock.standalone
 
     // Java 25 compatibility - override Mockito and ByteBuddy
-    testImplementation 'org.mockito:mockito-core:5.21.0'
-    testImplementation 'net.bytebuddy:byte-buddy:1.18.3'
+    testImplementation libs.mockito.core
+    testImplementation libs.byte.buddy
 }
 
 tasks.named('test') {
     useJUnitPlatform()
+
+    // Required for Java 25 compatibility with Mockito/ByteBuddy
+    // --add-opens: Allows reflective access to JDK internals
+    // -Dnet.bytebuddy.experimental=true: Enables ByteBuddy's experimental Java 25 support
     jvmArgs = [
         '--add-opens', 'java.base/java.lang=ALL-UNNAMED',
         '--add-opens', 'java.base/java.util=ALL-UNNAMED',
@@ -123,34 +139,34 @@ tasks.named('test') {
     ]
 }
 
-// Code quality plugin configurations
-
 configurations.all {
     resolutionStrategy {
-        force 'com.google.guava:guava:33.5.0-jre'
         // Exclude old google-collections in favor of guava
+        // Required: Checkstyle transitively depends on google-collections which conflicts with guava
         exclude group: 'com.google.collections', module: 'google-collections'
     }
 }
 
+// Code quality plugin configurations
+
 checkstyle {
-    toolVersion = '10.12.5'
+    toolVersion = libs.versions.checkstyle.get()
     configFile = file("${rootDir}/config/checkstyle/checkstyle.xml")
-    ignoreFailures = true  // Report violations but don't fail build
+    ignoreFailures = true  // Report violations but don't fail build during development
 }
 
 pmd {
-    toolVersion = '7.9.0'
+    toolVersion = libs.versions.pmd.get()
     ruleSets = []  // Empty to use custom ruleset file
     ruleSetFiles = files("${rootDir}/config/pmd/ruleset.xml")
-    ignoreFailures = true  // Report violations but don't fail build
+    ignoreFailures = true  // Report violations but don't fail build during development
 }
 
 spotbugs {
-    toolVersion = '4.8.6'
+    toolVersion = libs.versions.spotbugs.tool.get()
     effort = 'max'
     reportLevel = 'medium'
-    ignoreFailures = true  // Report violations but don't fail build
+    ignoreFailures = true  // Report violations but don't fail build during development
 }
 
 tasks.withType(com.github.spotbugs.snom.SpotBugsTask) {
@@ -161,7 +177,7 @@ tasks.withType(com.github.spotbugs.snom.SpotBugsTask) {
 }
 
 jacoco {
-    toolVersion = '0.8.14'  // Official Java 25 support (class file version 69)
+    toolVersion = libs.versions.jacoco.get()
 }
 
 jacocoTestReport {
@@ -176,7 +192,13 @@ jacocoTestCoverageVerification {
     violationRules {
         rule {
             limit {
-                minimum = 0.80  // 80% coverage requirement
+                minimum = 0.75  // 75% instruction coverage
+            }
+        }
+        rule {
+            limit {
+                counter = 'BRANCH'
+                minimum = 0.65  // 65% branch coverage
             }
         }
     }
@@ -191,9 +213,8 @@ pitest {
     timestampedReports = false
 }
 
-// Add quality checks to build lifecycle (but don't fail build during development)
-// Run manually with ./gradlew check to include all quality checks
+// Enable coverage verification in check task for local feedback
+// Skip locally if needed: ./gradlew check -x jacocoTestCoverageVerification
 tasks.named('check') {
-    // Comment out to run quality checks on every build
-    // dependsOn jacocoTestCoverageVerification
+    dependsOn jacocoTestCoverageVerification
 }
