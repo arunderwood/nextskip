@@ -1,0 +1,47 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended"],
+  "dependencyDashboard": false,
+  "timezone": "America/Los_Angeles",
+  "schedule": ["before 9am every weekday"],
+  "labels": ["dependencies"],
+  "packageRules": [
+    {
+      "description": "Vaadin ecosystem - group plugin + BOM and run postUpgradeTasks",
+      "matchManagers": ["gradle", "gradle-wrapper"],
+      "groupName": "Vaadin",
+      "postUpgradeTasks": {
+        "commands": ["./gradlew vaadinPrepareFrontend --no-daemon"],
+        "fileFilters": ["package.json", "package-lock.json"],
+        "executionMode": "branch"
+      },
+      "matchPackageNames": ["/^com\\.vaadin/"]
+    },
+    {
+      "description": "Vaadin-controlled npm packages - ignore (synced via gradle)",
+      "matchManagers": ["npm"],
+      "matchPackageNames": [
+        "react",
+        "react-dom",
+        "react-router",
+        "react-router-dom",
+        "lit",
+        "vite",
+        "typescript",
+        "@vitejs/plugin-react",
+        "@types/react",
+        "@types/react-dom",
+        "@babel/preset-react",
+        "vite-plugin-checker",
+        "/^@vaadin//",
+        "/^workbox-/"
+      ],
+      "enabled": false
+    },
+    {
+      "description": "Disable GitHub Actions - managed by Dependabot",
+      "matchManagers": ["github-actions"],
+      "enabled": false
+    }
+  ]
+}
