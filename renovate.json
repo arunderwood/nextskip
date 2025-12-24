@@ -26,7 +26,8 @@
       "postUpgradeTasks": {
         "commands": [
           "install-tool java 25.0.1+8",
-          "./gradlew vaadinPrepareFrontend --no-daemon"
+          "./gradlew vaadinPrepareFrontend --no-daemon",
+          "npm install --package-lock-only"
         ],
         "fileFilters": ["**/**"],
         "executionMode": "branch"
