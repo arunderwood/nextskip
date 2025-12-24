@@ -154,20 +154,20 @@ configurations.all {
 // See: https://github.com/renovatebot/renovate/discussions/40147
 // Can be reverted to catalog accessors if Renovate adds native support.
 checkstyle {
-    toolVersion = "10.12.5"
+    toolVersion = "12.3.0"
     configFile = file("${rootDir}/config/checkstyle/checkstyle.xml")
     ignoreFailures = true  // Report violations but don't fail build during development
 }
 
 pmd {
-    toolVersion = "7.9.0"
+    toolVersion = "7.19.0"
     ruleSets = []  // Empty to use custom ruleset file
     ruleSetFiles = files("${rootDir}/config/pmd/ruleset.xml")
     ignoreFailures = true  // Report violations but don't fail build during development
 }
 
 spotbugs {
-    toolVersion = "4.8.6"
+    toolVersion = "4.9.8"
     effort = 'max'
     reportLevel = 'medium'
     ignoreFailures = true  // Report violations but don't fail build during development
