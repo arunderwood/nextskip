@@ -29,6 +29,8 @@ import java.util.List;
  */
 public final class HamQslDto {
 
+    private static final String SOURCE_NAME = "HamQSL";
+
     private HamQslDto() {
         // Utility class - prevent instantiation
     }
@@ -134,25 +136,25 @@ public final class HamQslDto {
         public void validate() {
             // K-index ranges from 0 to 9
             if (kIndex != null && (kIndex < 0 || kIndex > 9)) {
-                throw new InvalidApiResponseException("HamQSL",
+                throw new InvalidApiResponseException(SOURCE_NAME,
                         "K-index out of expected range [0, 9]: " + kIndex);
             }
 
             // A-index typically ranges from 0 to ~400
             if (aIndex != null && (aIndex < 0 || aIndex > 500)) {
-                throw new InvalidApiResponseException("HamQSL",
+                throw new InvalidApiResponseException(SOURCE_NAME,
                         "A-index out of expected range [0, 500]: " + aIndex);
             }
 
             // Solar flux typically ranges from ~50 to ~400
             if (solarFlux != null && (solarFlux < 0 || solarFlux > 1000)) {
-                throw new InvalidApiResponseException("HamQSL",
+                throw new InvalidApiResponseException(SOURCE_NAME,
                         "Solar flux out of expected range [0, 1000]: " + solarFlux);
             }
 
             // Sunspot number typically ranges from 0 to ~400
             if (sunspots != null && (sunspots < 0 || sunspots > 1000)) {
-                throw new InvalidApiResponseException("HamQSL",
+                throw new InvalidApiResponseException(SOURCE_NAME,
                         "Sunspot number out of expected range [0, 1000]: " + sunspots);
             }
         }

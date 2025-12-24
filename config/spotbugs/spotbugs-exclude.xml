@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    SpotBugs exclusion filter for NextSkip project.
+
+    This file excludes false positives and generated code from SpotBugs analysis.
+    Add exclusions sparingly and document the reason for each.
+-->
+<FindBugsFilter>
+    <!-- Exclude generated code (e.g., Hilla endpoints, Lombok) -->
+    <Match>
+        <Package name="~.*\.generated.*"/>
+    </Match>
+
+    <!--
+        EI_EXPOSE_REP and EI_EXPOSE_REP2: DTOs intentionally expose internal representation.
+        Jackson requires getters/setters for XML/JSON deserialization. These are internal
+        DTOs used only for parsing external API responses, not exposed to clients.
+    -->
+    <Match>
+        <Class name="~io\.nextskip\..*\.dto\..*"/>
+        <Bug pattern="EI_EXPOSE_REP,EI_EXPOSE_REP2"/>
+    </Match>
+
+    <!--
+        MeteorShowerDataLoader: ObjectMapper is injected by Spring and is thread-safe.
+        Storing it is the intended Spring pattern for component-scoped dependencies.
+    -->
+    <Match>
+        <Class name="io.nextskip.meteors.internal.MeteorShowerDataLoader"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+
+    <!--
+        VA_FORMAT_STRING_USES_NEWLINE: Test JSON/XML strings use \n for readability.
+        Using %n would make test data harder to read and maintain.
+    -->
+    <Match>
+        <Source name="~.*Test\.java"/>
+        <Bug pattern="VA_FORMAT_STRING_USES_NEWLINE"/>
+    </Match>
+
+    <!--
+        BC_VACUOUS_INSTANCEOF: Tests intentionally verify interface implementations.
+        Tests like "assertTrue(activation instanceof Scoreable)" verify class structure.
+    -->
+    <Match>
+        <Source name="~.*Test\.java"/>
+        <Bug pattern="BC_VACUOUS_INSTANCEOF"/>
+    </Match>
+</FindBugsFilter>

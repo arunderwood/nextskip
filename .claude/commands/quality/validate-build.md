@@ -218,8 +218,9 @@ lsof -ti :8080 | xargs kill -9
 - Check recent git changes that might have broken tests
 
 **Quality Check Failures**:
-- Checkstyle/PMD violations are reported but don't fail the build (ignoreFailures = true)
-- SpotBugs may show Java 25 compatibility warnings (non-blocking)
+- Quality checks ARE blocking - violations WILL fail the build
+- **FIX violations properly** - do NOT suppress or exclude rules without strong justification
+- See "Handling Quality Violations" section below for proper fix patterns
 
 **npm Command Not Found**:
 - Ensure Node.js and npm are installed
@@ -234,6 +235,21 @@ lsof -ti :8080 | xargs kill -9
   - Port conflicts (use `lsof -ti :8080` to check)
 - Verify all required environment variables are set
 - Check that gradle.properties settings are compatible with the application
+
+## Handling Quality Violations
+
+**FIX violations, don't suppress them.** Rule exclusions lower the quality bar.
+
+**Proper fixes**:
+- `AvoidDuplicateLiterals` → Extract to `private static final` constants
+- `AvoidLiteralsInIfCondition` → Extract magic numbers to named constants
+- `MethodNamingConventions` → Rename methods to match BDD pattern
+- `UseLocaleWithCaseConversions` → Use `toUpperCase(Locale.ROOT)`
+
+**Suppressions require documented justification**:
+```java
+@SuppressWarnings("PMD.TooManyMethods") // Comprehensive test suite requires many methods
+```
 
 ## Key Principles for Execution
 

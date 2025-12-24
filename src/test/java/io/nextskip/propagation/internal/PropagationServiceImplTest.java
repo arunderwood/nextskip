@@ -72,7 +72,7 @@ class PropagationServiceImplTest {
     }
 
     @Test
-    void testGetCurrentSolarIndices_BothSourcesAvailable() {
+    void shouldGet_CurrentSolarIndices_BothSourcesAvailable() {
         when(noaaClient.fetchSolarIndices()).thenReturn(noaaData);
         when(hamQslClient.fetchSolarIndices()).thenReturn(hamQslData);
 
@@ -92,7 +92,7 @@ class PropagationServiceImplTest {
     }
 
     @Test
-    void testGetCurrentSolarIndices_OnlyNoaaAvailable() {
+    void shouldGet_CurrentSolarIndices_OnlyNoaaAvailable() {
         when(noaaClient.fetchSolarIndices()).thenReturn(noaaData);
         when(hamQslClient.fetchSolarIndices()).thenReturn(null);
 
@@ -107,7 +107,7 @@ class PropagationServiceImplTest {
     }
 
     @Test
-    void testGetCurrentSolarIndices_OnlyHamQslAvailable() {
+    void shouldGet_CurrentSolarIndices_OnlyHamQslAvailable() {
         when(noaaClient.fetchSolarIndices()).thenReturn(null);
         when(hamQslClient.fetchSolarIndices()).thenReturn(hamQslData);
 
@@ -122,7 +122,7 @@ class PropagationServiceImplTest {
     }
 
     @Test
-    void testGetCurrentSolarIndices_BothSourcesUnavailable() {
+    void shouldGet_CurrentSolarIndices_BothSourcesUnavailable() {
         when(noaaClient.fetchSolarIndices()).thenReturn(null);
         when(hamQslClient.fetchSolarIndices()).thenReturn(null);
 
@@ -135,7 +135,7 @@ class PropagationServiceImplTest {
     }
 
     @Test
-    void testGetCurrentSolarIndices_ExceptionHandling() {
+    void shouldGet_CurrentSolarIndices_ExceptionHandling() {
         when(noaaClient.fetchSolarIndices()).thenThrow(new RuntimeException("Network error"));
 
         SolarIndices result = service.getCurrentSolarIndices();
@@ -147,7 +147,7 @@ class PropagationServiceImplTest {
     }
 
     @Test
-    void testGetBandConditions_Success() {
+    void shouldGet_BandConditions_Success() {
         when(hamQslClient.fetchBandConditions()).thenReturn(bandConditions);
 
         List<BandCondition> result = service.getBandConditions();
@@ -160,7 +160,7 @@ class PropagationServiceImplTest {
     }
 
     @Test
-    void testGetBandConditions_EmptyList() {
+    void shouldGet_BandConditions_EmptyList() {
         when(hamQslClient.fetchBandConditions()).thenReturn(List.of());
 
         List<BandCondition> result = service.getBandConditions();
@@ -172,7 +172,7 @@ class PropagationServiceImplTest {
     }
 
     @Test
-    void testGetBandConditions_ExceptionHandling() {
+    void shouldGet_BandConditions_ExceptionHandling() {
         when(hamQslClient.fetchBandConditions())
                 .thenThrow(new RuntimeException("Network error"));
 
@@ -185,7 +185,7 @@ class PropagationServiceImplTest {
     }
 
     @Test
-    void testGetBandCondition_Found() {
+    void shouldGet_BandCondition_Found() {
         when(hamQslClient.fetchBandConditions()).thenReturn(bandConditions);
 
         BandCondition result = service.getBandCondition(FrequencyBand.BAND_20M);
@@ -198,7 +198,7 @@ class PropagationServiceImplTest {
     }
 
     @Test
-    void testGetBandCondition_NotFound() {
+    void shouldGet_BandCondition_NotFound() {
         when(hamQslClient.fetchBandConditions()).thenReturn(bandConditions);
 
         BandCondition result = service.getBandCondition(FrequencyBand.BAND_160M);
@@ -209,7 +209,7 @@ class PropagationServiceImplTest {
     }
 
     @Test
-    void testGetBandCondition_NullBand() {
+    void shouldGet_BandCondition_NullBand() {
         BandCondition result = service.getBandCondition(null);
 
         assertNull(result);
@@ -218,7 +218,7 @@ class PropagationServiceImplTest {
     }
 
     @Test
-    void testGetSolarIndicesReactive() {
+    void shouldGet_SolarIndicesReactive() {
         when(noaaClient.fetchSolarIndices()).thenReturn(noaaData);
         when(hamQslClient.fetchSolarIndices()).thenReturn(hamQslData);
 
@@ -237,7 +237,7 @@ class PropagationServiceImplTest {
     }
 
     @Test
-    void testGetBandConditionsReactive() {
+    void shouldGet_BandConditionsReactive() {
         when(hamQslClient.fetchBandConditions()).thenReturn(bandConditions);
 
         Mono<List<BandCondition>> resultMono = service.getBandConditionsReactive();

@@ -36,6 +36,12 @@ public record Activation(
         ActivationLocation location
 ) implements Scoreable {
 
+    // Recency scoring thresholds (in minutes)
+    private static final long VERY_FRESH_THRESHOLD_MINUTES = 5;
+    private static final long FRESH_THRESHOLD_MINUTES = 15;
+    private static final long AGING_THRESHOLD_MINUTES = 30;
+    private static final long STALE_THRESHOLD_MINUTES = 60;
+
     /**
      * An activation is favorable if it was spotted within the last 15 minutes.
      *
@@ -47,7 +53,7 @@ public record Activation(
             return false;
         }
         Duration age = Duration.between(spottedAt, Instant.now());
-        return age.toMinutes() <= 15;
+        return age.toMinutes() <= FRESH_THRESHOLD_MINUTES;
     }
 
     /**
@@ -75,18 +81,18 @@ public record Activation(
         if (minutes < 0) {
             // Future timestamp (shouldn't happen, but handle gracefully)
             return 100;
-        } else if (minutes <= 5) {
+        } else if (minutes <= VERY_FRESH_THRESHOLD_MINUTES) {
             // Very fresh: 100 points
             return 100;
-        } else if (minutes <= 15) {
+        } else if (minutes <= FRESH_THRESHOLD_MINUTES) {
             // Fresh: 80-100 points (linear decay)
-            return (int) (100 - ((minutes - 5) * 2));
-        } else if (minutes <= 30) {
+            return (int) (100 - ((minutes - VERY_FRESH_THRESHOLD_MINUTES) * 2));
+        } else if (minutes <= AGING_THRESHOLD_MINUTES) {
             // Aging: 20-80 points (linear decay)
-            return (int) (80 - ((minutes - 15) * 4));
-        } else if (minutes <= 60) {
+            return (int) (80 - ((minutes - FRESH_THRESHOLD_MINUTES) * 4));
+        } else if (minutes <= STALE_THRESHOLD_MINUTES) {
             // Stale: 0-20 points (linear decay)
-            return (int) Math.max(0, 20 - ((minutes - 30) * 0.67));
+            return (int) Math.max(0, 20 - ((minutes - AGING_THRESHOLD_MINUTES) * 0.67));
         } else {
             // Very stale: 0 points
             return 0;

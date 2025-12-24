@@ -48,14 +48,17 @@ public class ContestServiceImpl implements ContestService {
     /**
      * Fetch contest DTOs from the calendar client.
      *
+     * <p>Primary error handling via ContestCalendarClient's Resilience4j annotations.
+     * Service-level fallback ensures dashboard remains functional.
+     *
      * @return list of contest DTOs, or empty list on error
      */
+    @SuppressWarnings("PMD.AvoidCatchingGenericException")
     private List<ContestICalDto> fetchContestDtos() {
         try {
             return calendarClient.fetch();
-        } catch (Exception e) {
-            LOG.error("Failed to fetch contests from calendar", e);
-            // Return empty list rather than propagating exception - allows dashboard to degrade gracefully
+        } catch (RuntimeException e) {
+            LOG.error("Failed to fetch contests from calendar: {}", e.getMessage());
             return List.of();
         }
     }

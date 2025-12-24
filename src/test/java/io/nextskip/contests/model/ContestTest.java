@@ -17,56 +17,66 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 /**
  * Unit tests for Contest model.
  */
+@SuppressWarnings("PMD.TooManyMethods") // Model class with many behaviors requires comprehensive test methods
 class ContestTest {
 
+    private static final String TEST_CONTEST = "Test Contest";
+    private static final String MODE_CW = "CW";
+    private static final String ORGANIZER_ARRL = "ARRL";
+    private static final String URL_EXAMPLE = "https://example.com";
+    private static final String URL_EXAMPLE_RULES = "https://example.com/rules";
+    private static final String UPCOMING_CONTEST = "Upcoming Contest";
+    private static final String ACTIVE_CONTEST = "Active Contest";
+    private static final String ENDED_CONTEST = "Ended Contest";
+
     @Test
-    void testActiveContest_Status() {
+    void shouldBeActive_Status() {
         Instant start = Instant.now().minus(1, ChronoUnit.HOURS);
         Instant end = Instant.now().plus(1, ChronoUnit.HOURS);
 
-        Contest contest = createContest("Active Contest", start, end);
+        Contest contest = createContest(ACTIVE_CONTEST, start, end);
 
         assertEquals(EventStatus.ACTIVE, contest.getStatus());
     }
 
     @Test
-    void testUpcomingContest_Status() {
+    void shouldBeUpcoming_Status() {
         Instant start = Instant.now().plus(2, ChronoUnit.HOURS);
         Instant end = Instant.now().plus(26, ChronoUnit.HOURS);
 
-        Contest contest = createContest("Upcoming Contest", start, end);
+        Contest contest = createContest(UPCOMING_CONTEST, start, end);
 
         assertEquals(EventStatus.UPCOMING, contest.getStatus());
     }
 
     @Test
-    void testEndedContest_Status() {
+    void shouldBeEnded_Status() {
         Instant start = Instant.now().minus(48, ChronoUnit.HOURS);
         Instant end = Instant.now().minus(24, ChronoUnit.HOURS);
 
-        Contest contest = createContest("Ended Contest", start, end);
+        Contest contest = createContest(ENDED_CONTEST, start, end);
 
         assertEquals(EventStatus.ENDED, contest.getStatus());
     }
 
     @Test
-    void testActiveContest_Score() {
+    void shouldScore_ActiveContest() {
         Instant start = Instant.now().minus(1, ChronoUnit.HOURS);
         Instant end = Instant.now().plus(1, ChronoUnit.HOURS);
 
-        Contest contest = createContest("Active Contest", start, end);
+        Contest contest = createContest(ACTIVE_CONTEST, start, end);
 
         // Active contests always score 100
         assertEquals(100, contest.getScore());
     }
 
     @Test
-    void testUpcomingContest_Score_Within6Hours() {
+    void shouldScore_UpcomingWithin6Hours() {
         // Contest starting in 3 hours
         Instant start = Instant.now().plus(3, ChronoUnit.HOURS);
         Instant end = Instant.now().plus(27, ChronoUnit.HOURS);
 
-        Contest contest = createContest("Upcoming Contest", start, end);
+        Contest contest = createContest(UPCOMING_CONTEST, start, end);
 
         // Score should be between 80-100 (linear decay)
         int score = contest.getScore();
@@ -74,12 +84,12 @@ class ContestTest {
     }
 
     @Test
-    void testUpcomingContest_Score_Within24Hours() {
+    void shouldScore_UpcomingWithin24Hours() {
         // Contest starting in 12 hours
         Instant start = Instant.now().plus(12, ChronoUnit.HOURS);
         Instant end = Instant.now().plus(36, ChronoUnit.HOURS);
 
-        Contest contest = createContest("Upcoming Contest", start, end);
+        Contest contest = createContest(UPCOMING_CONTEST, start, end);
 
         // Score should be between 40-80 (linear decay)
         int score = contest.getScore();
@@ -87,12 +97,12 @@ class ContestTest {
     }
 
     @Test
-    void testUpcomingContest_Score_Within72Hours() {
+    void shouldScore_UpcomingWithin72Hours() {
         // Contest starting in 48 hours
         Instant start = Instant.now().plus(48, ChronoUnit.HOURS);
         Instant end = Instant.now().plus(72, ChronoUnit.HOURS);
 
-        Contest contest = createContest("Upcoming Contest", start, end);
+        Contest contest = createContest(UPCOMING_CONTEST, start, end);
 
         // Score should be between 20-40 (linear decay)
         int score = contest.getScore();
@@ -100,74 +110,74 @@ class ContestTest {
     }
 
     @Test
-    void testUpcomingContest_Score_Beyond72Hours() {
+    void shouldScore_UpcomingBeyond72Hours() {
         // Contest starting in 100 hours
         Instant start = Instant.now().plus(100, ChronoUnit.HOURS);
         Instant end = Instant.now().plus(124, ChronoUnit.HOURS);
 
-        Contest contest = createContest("Upcoming Contest", start, end);
+        Contest contest = createContest(UPCOMING_CONTEST, start, end);
 
         // Score should be 10 (far future)
         assertEquals(10, contest.getScore());
     }
 
     @Test
-    void testEndedContest_Score() {
+    void shouldScore_EndedContest() {
         Instant start = Instant.now().minus(48, ChronoUnit.HOURS);
         Instant end = Instant.now().minus(24, ChronoUnit.HOURS);
 
-        Contest contest = createContest("Ended Contest", start, end);
+        Contest contest = createContest(ENDED_CONTEST, start, end);
 
         // Ended contests score 0
         assertEquals(0, contest.getScore());
     }
 
     @Test
-    void testActiveContest_IsFavorable() {
+    void shouldBeFavorable_ActiveContest() {
         Instant start = Instant.now().minus(1, ChronoUnit.HOURS);
         Instant end = Instant.now().plus(1, ChronoUnit.HOURS);
 
-        Contest contest = createContest("Active Contest", start, end);
+        Contest contest = createContest(ACTIVE_CONTEST, start, end);
 
         assertTrue(contest.isFavorable());
     }
 
     @Test
-    void testUpcomingContest_IsFavorable_Within6Hours() {
+    void shouldBeFavorable_UpcomingWithin6Hours() {
         Instant start = Instant.now().plus(3, ChronoUnit.HOURS);
         Instant end = Instant.now().plus(27, ChronoUnit.HOURS);
 
-        Contest contest = createContest("Upcoming Contest", start, end);
+        Contest contest = createContest(UPCOMING_CONTEST, start, end);
 
         assertTrue(contest.isFavorable());
     }
 
     @Test
-    void testUpcomingContest_NotFavorable_Beyond6Hours() {
+    void shouldNotBeFavorable_UpcomingBeyond6Hours() {
         Instant start = Instant.now().plus(12, ChronoUnit.HOURS);
         Instant end = Instant.now().plus(36, ChronoUnit.HOURS);
 
-        Contest contest = createContest("Upcoming Contest", start, end);
+        Contest contest = createContest(UPCOMING_CONTEST, start, end);
 
         assertFalse(contest.isFavorable());
     }
 
     @Test
-    void testEndedContest_NotFavorable() {
+    void shouldNotBeFavorable_EndedContest() {
         Instant start = Instant.now().minus(48, ChronoUnit.HOURS);
         Instant end = Instant.now().minus(24, ChronoUnit.HOURS);
 
-        Contest contest = createContest("Ended Contest", start, end);
+        Contest contest = createContest(ENDED_CONTEST, start, end);
 
         assertFalse(contest.isFavorable());
     }
 
     @Test
-    void testActiveContest_TimeRemaining() {
+    void shouldReturnTimeRemaining_ActiveContest() {
         Instant start = Instant.now().minus(1, ChronoUnit.HOURS);
         Instant end = Instant.now().plus(1, ChronoUnit.HOURS);
 
-        Contest contest = createContest("Active Contest", start, end);
+        Contest contest = createContest(ACTIVE_CONTEST, start, end);
 
         Duration remaining = contest.getTimeRemaining();
         // Time remaining is to end time for active contests
@@ -175,11 +185,11 @@ class ContestTest {
     }
 
     @Test
-    void testUpcomingContest_TimeRemaining() {
+    void shouldReturnTimeRemaining_UpcomingContest() {
         Instant start = Instant.now().plus(2, ChronoUnit.HOURS);
         Instant end = Instant.now().plus(26, ChronoUnit.HOURS);
 
-        Contest contest = createContest("Upcoming Contest", start, end);
+        Contest contest = createContest(UPCOMING_CONTEST, start, end);
 
         Duration remaining = contest.getTimeRemaining();
         // Time remaining is to start time for upcoming contests
@@ -187,11 +197,11 @@ class ContestTest {
     }
 
     @Test
-    void testEndedContest_TimeRemaining() {
+    void shouldReturnTimeRemaining_EndedContest() {
         Instant start = Instant.now().minus(48, ChronoUnit.HOURS);
         Instant end = Instant.now().minus(24, ChronoUnit.HOURS);
 
-        Contest contest = createContest("Ended Contest", start, end);
+        Contest contest = createContest(ENDED_CONTEST, start, end);
 
         Duration remaining = contest.getTimeRemaining();
         // Time remaining is negative for ended contests
@@ -199,11 +209,11 @@ class ContestTest {
     }
 
     @Test
-    void testTimeRemainingSeconds() {
+    void shouldReturn_TimeRemainingSeconds() {
         Instant start = Instant.now().plus(2, ChronoUnit.HOURS);
         Instant end = Instant.now().plus(26, ChronoUnit.HOURS);
 
-        Contest contest = createContest("Upcoming Contest", start, end);
+        Contest contest = createContest(UPCOMING_CONTEST, start, end);
 
         long seconds = contest.getTimeRemainingSeconds();
         // Should be around 7200 seconds (2 hours)
@@ -211,7 +221,7 @@ class ContestTest {
     }
 
     @Test
-    void testIsEndingSoon_ActiveEnding() {
+    void shouldBeEndingSoon_ActiveEnding() {
         Instant start = Instant.now().minus(23, ChronoUnit.HOURS);
         Instant end = Instant.now().plus(30, ChronoUnit.MINUTES);
 
@@ -221,40 +231,40 @@ class ContestTest {
     }
 
     @Test
-    void testIsEndingSoon_ActiveNotEnding() {
+    void shouldNotBeEndingSoon_ActiveNotEnding() {
         Instant start = Instant.now().minus(1, ChronoUnit.HOURS);
         Instant end = Instant.now().plus(2, ChronoUnit.HOURS);
 
-        Contest contest = createContest("Active Contest", start, end);
+        Contest contest = createContest(ACTIVE_CONTEST, start, end);
 
         assertFalse(contest.isEndingSoon());
     }
 
     @Test
-    void testIsEndingSoon_UpcomingNeverEnding() {
+    void shouldNotBeEndingSoon_UpcomingNeverEnding() {
         Instant start = Instant.now().plus(1, ChronoUnit.HOURS);
         Instant end = Instant.now().plus(25, ChronoUnit.HOURS);
 
-        Contest contest = createContest("Upcoming Contest", start, end);
+        Contest contest = createContest(UPCOMING_CONTEST, start, end);
 
         // Upcoming contests are never "ending soon"
         assertFalse(contest.isEndingSoon());
     }
 
     @Test
-    void testDefensiveCopyBands() {
-        Set<FrequencyBand> mutableBands = new java.util.HashSet<>();
+    void shouldDefensivelyCopy_Bands() {
+        Set<FrequencyBand> mutableBands = java.util.EnumSet.noneOf(FrequencyBand.class);
         mutableBands.add(FrequencyBand.BAND_20M);
 
         Contest contest = new Contest(
-                "Test Contest",
+                TEST_CONTEST,
                 Instant.now(),
                 Instant.now().plus(24, ChronoUnit.HOURS),
                 mutableBands,
-                Set.of("CW"),
-                "ARRL",
-                "https://example.com",
-                "https://example.com/rules"
+                Set.of(MODE_CW),
+                ORGANIZER_ARRL,
+                URL_EXAMPLE,
+                URL_EXAMPLE_RULES
         );
 
         // Modify the original set
@@ -266,19 +276,19 @@ class ContestTest {
     }
 
     @Test
-    void testDefensiveCopyModes() {
+    void shouldDefensivelyCopy_Modes() {
         Set<String> mutableModes = new java.util.HashSet<>();
-        mutableModes.add("CW");
+        mutableModes.add(MODE_CW);
 
         Contest contest = new Contest(
-                "Test Contest",
+                TEST_CONTEST,
                 Instant.now(),
                 Instant.now().plus(24, ChronoUnit.HOURS),
                 Set.of(FrequencyBand.BAND_20M),
                 mutableModes,
-                "ARRL",
-                "https://example.com",
-                "https://example.com/rules"
+                ORGANIZER_ARRL,
+                URL_EXAMPLE,
+                URL_EXAMPLE_RULES
         );
 
         // Modify the original set
@@ -286,20 +296,20 @@ class ContestTest {
 
         // Contest's modes should not be affected (defensive copy)
         assertEquals(1, contest.modes().size());
-        assertTrue(contest.modes().contains("CW"));
+        assertTrue(contest.modes().contains(MODE_CW));
     }
 
     @Test
-    void testNullBandsBecomesEmptySet() {
+    void shouldConvertNullTo_EmptyBandsSet() {
         Contest contest = new Contest(
-                "Test Contest",
+                TEST_CONTEST,
                 Instant.now(),
                 Instant.now().plus(24, ChronoUnit.HOURS),
                 null,
-                Set.of("CW"),
-                "ARRL",
-                "https://example.com",
-                "https://example.com/rules"
+                Set.of(MODE_CW),
+                ORGANIZER_ARRL,
+                URL_EXAMPLE,
+                URL_EXAMPLE_RULES
         );
 
         assertNotNull(contest.bands());
@@ -307,16 +317,16 @@ class ContestTest {
     }
 
     @Test
-    void testNullModesBecomesEmptySet() {
+    void shouldConvertNullTo_EmptyModesSet() {
         Contest contest = new Contest(
-                "Test Contest",
+                TEST_CONTEST,
                 Instant.now(),
                 Instant.now().plus(24, ChronoUnit.HOURS),
                 Set.of(FrequencyBand.BAND_20M),
                 null,
-                "ARRL",
-                "https://example.com",
-                "https://example.com/rules"
+                ORGANIZER_ARRL,
+                URL_EXAMPLE,
+                URL_EXAMPLE_RULES
         );
 
         assertNotNull(contest.modes());
@@ -324,14 +334,14 @@ class ContestTest {
     }
 
     @Test
-    void testGetName() {
+    void shouldReturn_Name() {
         Contest contest = createContest("Test Contest Name", Instant.now(), Instant.now().plus(1, ChronoUnit.HOURS));
         assertEquals("Test Contest Name", contest.getName());
         assertEquals("Test Contest Name", contest.name());
     }
 
     @Test
-    void testGetStartTime() {
+    void shouldReturn_StartTime() {
         Instant start = Instant.now();
         Contest contest = createContest("Test", start, start.plus(24, ChronoUnit.HOURS));
         assertEquals(start, contest.getStartTime());
@@ -339,7 +349,7 @@ class ContestTest {
     }
 
     @Test
-    void testGetEndTime() {
+    void shouldReturn_EndTime() {
         Instant start = Instant.now();
         Instant end = start.plus(24, ChronoUnit.HOURS);
         Contest contest = createContest("Test", start, end);

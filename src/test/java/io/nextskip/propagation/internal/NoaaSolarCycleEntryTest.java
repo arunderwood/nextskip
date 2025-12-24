@@ -22,6 +22,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 class NoaaSolarCycleEntryTest {
 
+    private static final String TIME_TAG_2025_01 = "2025-01";
+    private static final double SOLAR_FLUX_150 = 150.0;
+    private static final String MISSING_TIME_TAG_MSG = "Missing required field: time-tag";
+
     // ==========================================================================
     // Category 1: Valid Data - No Exceptions
     // ==========================================================================
@@ -29,7 +33,7 @@ class NoaaSolarCycleEntryTest {
     @Test
     void testValidate_ValidEntry_NoException() {
         // Valid data should not throw any exceptions
-        var entry = new NoaaSolarCycleEntry("2025-01", 150.0, 100);
+        var entry = new NoaaSolarCycleEntry(TIME_TAG_2025_01, SOLAR_FLUX_150, 100);
         assertDoesNotThrow(entry::validate);
 
         var entry2 = new NoaaSolarCycleEntry("2025-12-15", 200.5, 50);
@@ -47,7 +51,7 @@ class NoaaSolarCycleEntryTest {
     @Test
     void testValidate_NullSolarFlux_ThrowsException() {
         // Null solar flux should throw InvalidApiResponseException
-        var entry = new NoaaSolarCycleEntry("2025-01", null, 100);
+        var entry = new NoaaSolarCycleEntry(TIME_TAG_2025_01, null, 100);
         var exception = assertThrows(InvalidApiResponseException.class, entry::validate);
         assertTrue(exception.getMessage().contains("Missing required field: f10.7 (solar flux)"));
     }
@@ -55,7 +59,7 @@ class NoaaSolarCycleEntryTest {
     @Test
     void testValidate_NegativeSolarFlux_ThrowsException() {
         // Negative solar flux should throw InvalidApiResponseException
-        var entry = new NoaaSolarCycleEntry("2025-01", -0.1, 100);
+        var entry = new NoaaSolarCycleEntry(TIME_TAG_2025_01, -0.1, 100);
         var exception = assertThrows(InvalidApiResponseException.class, entry::validate);
         assertTrue(exception.getMessage().contains("Solar flux out of expected range [0, 1000]"));
         assertTrue(exception.getMessage().contains("-0.1"));
@@ -64,7 +68,7 @@ class NoaaSolarCycleEntryTest {
     @Test
     void testValidate_SolarFluxTooHigh_ThrowsException() {
         // Solar flux above 1000 should throw InvalidApiResponseException
-        var entry = new NoaaSolarCycleEntry("2025-01", 1000.1, 100);
+        var entry = new NoaaSolarCycleEntry(TIME_TAG_2025_01, 1000.1, 100);
         var exception = assertThrows(InvalidApiResponseException.class, entry::validate);
         assertTrue(exception.getMessage().contains("Solar flux out of expected range [0, 1000]"));
         assertTrue(exception.getMessage().contains("1000.1"));
@@ -73,17 +77,17 @@ class NoaaSolarCycleEntryTest {
     @Test
     void testValidate_SolarFluxAtBoundary() {
         // Solar flux at 0 and 1000 (boundaries) should be valid
-        var entryZero = new NoaaSolarCycleEntry("2025-01", 0.0, 100);
+        var entryZero = new NoaaSolarCycleEntry(TIME_TAG_2025_01, 0.0, 100);
         assertDoesNotThrow(entryZero::validate);
 
-        var entry1000 = new NoaaSolarCycleEntry("2025-01", 1000.0, 100);
+        var entry1000 = new NoaaSolarCycleEntry(TIME_TAG_2025_01, 1000.0, 100);
         assertDoesNotThrow(entry1000::validate);
 
         // Just inside boundaries
-        var entryJustAboveZero = new NoaaSolarCycleEntry("2025-01", 0.001, 100);
+        var entryJustAboveZero = new NoaaSolarCycleEntry(TIME_TAG_2025_01, 0.001, 100);
         assertDoesNotThrow(entryJustAboveZero::validate);
 
-        var entryJustBelow1000 = new NoaaSolarCycleEntry("2025-01", 999.999, 100);
+        var entryJustBelow1000 = new NoaaSolarCycleEntry(TIME_TAG_2025_01, 999.999, 100);
         assertDoesNotThrow(entryJustBelow1000::validate);
     }
 
@@ -94,7 +98,7 @@ class NoaaSolarCycleEntryTest {
     @Test
     void testValidate_NullSunspotNumber_ThrowsException() {
         // Null sunspot number should throw InvalidApiResponseException
-        var entry = new NoaaSolarCycleEntry("2025-01", 150.0, null);
+        var entry = new NoaaSolarCycleEntry(TIME_TAG_2025_01, SOLAR_FLUX_150, null);
         var exception = assertThrows(InvalidApiResponseException.class, entry::validate);
         assertTrue(exception.getMessage().contains("Missing required field: ssn (sunspot number)"));
     }
@@ -102,7 +106,7 @@ class NoaaSolarCycleEntryTest {
     @Test
     void testValidate_NegativeSunspotNumber_ThrowsException() {
         // Negative sunspot number should throw InvalidApiResponseException
-        var entry = new NoaaSolarCycleEntry("2025-01", 150.0, -1);
+        var entry = new NoaaSolarCycleEntry(TIME_TAG_2025_01, SOLAR_FLUX_150, -1);
         var exception = assertThrows(InvalidApiResponseException.class, entry::validate);
         assertTrue(exception.getMessage().contains("Sunspot number out of expected range [0, 1000]"));
         assertTrue(exception.getMessage().contains("-1"));
@@ -111,7 +115,7 @@ class NoaaSolarCycleEntryTest {
     @Test
     void testValidate_SunspotNumberTooHigh_ThrowsException() {
         // Sunspot number above 1000 should throw InvalidApiResponseException
-        var entry = new NoaaSolarCycleEntry("2025-01", 150.0, 1001);
+        var entry = new NoaaSolarCycleEntry(TIME_TAG_2025_01, SOLAR_FLUX_150, 1001);
         var exception = assertThrows(InvalidApiResponseException.class, entry::validate);
         assertTrue(exception.getMessage().contains("Sunspot number out of expected range [0, 1000]"));
         assertTrue(exception.getMessage().contains("1001"));
@@ -120,17 +124,17 @@ class NoaaSolarCycleEntryTest {
     @Test
     void testValidate_SunspotNumberAtBoundary() {
         // Sunspot number at 0 and 1000 (boundaries) should be valid
-        var entryZero = new NoaaSolarCycleEntry("2025-01", 150.0, 0);
+        var entryZero = new NoaaSolarCycleEntry(TIME_TAG_2025_01, SOLAR_FLUX_150, 0);
         assertDoesNotThrow(entryZero::validate);
 
-        var entry1000 = new NoaaSolarCycleEntry("2025-01", 150.0, 1000);
+        var entry1000 = new NoaaSolarCycleEntry(TIME_TAG_2025_01, SOLAR_FLUX_150, 1000);
         assertDoesNotThrow(entry1000::validate);
 
         // Just inside boundaries
-        var entryOne = new NoaaSolarCycleEntry("2025-01", 150.0, 1);
+        var entryOne = new NoaaSolarCycleEntry(TIME_TAG_2025_01, SOLAR_FLUX_150, 1);
         assertDoesNotThrow(entryOne::validate);
 
-        var entry999 = new NoaaSolarCycleEntry("2025-01", 150.0, 999);
+        var entry999 = new NoaaSolarCycleEntry(TIME_TAG_2025_01, SOLAR_FLUX_150, 999);
         assertDoesNotThrow(entry999::validate);
     }
 
@@ -141,24 +145,24 @@ class NoaaSolarCycleEntryTest {
     @Test
     void testValidate_NullTimeTag_ThrowsException() {
         // Null time tag should throw InvalidApiResponseException
-        var entry = new NoaaSolarCycleEntry(null, 150.0, 100);
+        var entry = new NoaaSolarCycleEntry(null, SOLAR_FLUX_150, 100);
         var exception = assertThrows(InvalidApiResponseException.class, entry::validate);
-        assertTrue(exception.getMessage().contains("Missing required field: time-tag"));
+        assertTrue(exception.getMessage().contains(MISSING_TIME_TAG_MSG));
     }
 
     @Test
     void testValidate_BlankTimeTag_ThrowsException() {
         // Blank time tag should throw InvalidApiResponseException
-        var entryEmpty = new NoaaSolarCycleEntry("", 150.0, 100);
+        var entryEmpty = new NoaaSolarCycleEntry("", SOLAR_FLUX_150, 100);
         var exception1 = assertThrows(InvalidApiResponseException.class, entryEmpty::validate);
-        assertTrue(exception1.getMessage().contains("Missing required field: time-tag"));
+        assertTrue(exception1.getMessage().contains(MISSING_TIME_TAG_MSG));
 
-        var entrySpaces = new NoaaSolarCycleEntry("   ", 150.0, 100);
+        var entrySpaces = new NoaaSolarCycleEntry("   ", SOLAR_FLUX_150, 100);
         var exception2 = assertThrows(InvalidApiResponseException.class, entrySpaces::validate);
-        assertTrue(exception2.getMessage().contains("Missing required field: time-tag"));
+        assertTrue(exception2.getMessage().contains(MISSING_TIME_TAG_MSG));
 
-        var entryTab = new NoaaSolarCycleEntry("\t", 150.0, 100);
+        var entryTab = new NoaaSolarCycleEntry("\t", SOLAR_FLUX_150, 100);
         var exception3 = assertThrows(InvalidApiResponseException.class, entryTab::validate);
-        assertTrue(exception3.getMessage().contains("Missing required field: time-tag"));
+        assertTrue(exception3.getMessage().contains(MISSING_TIME_TAG_MSG));
     }
 }

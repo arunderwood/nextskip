@@ -165,9 +165,9 @@ class ContestServiceImplTest {
         assertEquals(3, result.size());
 
         // All contests should be converted
-        assertTrue(result.stream().anyMatch(c -> c.name().equals("Contest 1")));
-        assertTrue(result.stream().anyMatch(c -> c.name().equals("Contest 2")));
-        assertTrue(result.stream().anyMatch(c -> c.name().equals("Contest 3")));
+        assertTrue(result.stream().anyMatch(c -> "Contest 1".equals(c.name())));
+        assertTrue(result.stream().anyMatch(c -> "Contest 2".equals(c.name())));
+        assertTrue(result.stream().anyMatch(c -> "Contest 3".equals(c.name())));
     }
 
     @Test

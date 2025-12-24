@@ -40,10 +40,12 @@ import java.util.List;
  * </ul>
  */
 @Component
+@SuppressWarnings("PMD.AvoidCatchingGenericException") // Intentional: wrap unknown exceptions in ExternalApiException
 public class SotaClient implements ExternalDataClient<List<Activation>> {
 
     private static final Logger LOG = LoggerFactory.getLogger(SotaClient.class);
 
+    private static final String SOURCE_NAME = "SOTA";
     private static final String SOTA_URL = "https://api2.sota.org.uk/api/spots/50";
     private static final Duration REQUEST_TIMEOUT = Duration.ofSeconds(10);
     private static final Duration RECENCY_THRESHOLD = Duration.ofMinutes(45);
@@ -67,7 +69,7 @@ public class SotaClient implements ExternalDataClient<List<Activation>> {
 
     @Override
     public String getSourceName() {
-        return "SOTA API";
+        return SOURCE_NAME + " API";
     }
 
     /**
@@ -110,17 +112,17 @@ public class SotaClient implements ExternalDataClient<List<Activation>> {
 
         } catch (WebClientResponseException e) {
             LOG.error("HTTP error from SOTA API: {} {}", e.getStatusCode(), e.getStatusText());
-            throw new ExternalApiException("SOTA",
+            throw new ExternalApiException(SOURCE_NAME,
                     "HTTP " + e.getStatusCode() + " from SOTA API: " + e.getStatusText(), e);
 
         } catch (WebClientRequestException e) {
             LOG.error("Network error connecting to SOTA API", e);
-            throw new ExternalApiException("SOTA",
+            throw new ExternalApiException(SOURCE_NAME,
                     "Network error connecting to SOTA API: " + e.getMessage(), e);
 
         } catch (Exception e) {
             LOG.error("Unexpected error fetching SOTA activations", e);
-            throw new ExternalApiException("SOTA",
+            throw new ExternalApiException(SOURCE_NAME,
                     "Unexpected error fetching SOTA data: " + e.getMessage(), e);
         }
     }

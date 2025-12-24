@@ -6,105 +6,110 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class SummitTest {
 
+    private static final String REFERENCE_W7W_LC_001 = "W7W/LC-001";
+    private static final String NAME_MOUNT_SAINT_HELENS = "Mount Saint Helens";
+    private static final String REGION_CODE_WA = "WA";
+    private static final String ASSOCIATION_CODE_W7W = "W7W";
+
     @Test
-    void shouldCreateSummitWithAllFields() {
+    void shouldCreate_SummitWithAllFields() {
         Summit summit = new Summit(
-                "W7W/LC-001",
-                "Mount Saint Helens",
-                "WA",
-                "W7W"
+                REFERENCE_W7W_LC_001,
+                NAME_MOUNT_SAINT_HELENS,
+                REGION_CODE_WA,
+                ASSOCIATION_CODE_W7W
         );
 
-        assertEquals("W7W/LC-001", summit.reference());
-        assertEquals("Mount Saint Helens", summit.name());
-        assertEquals("WA", summit.regionCode());
-        assertEquals("W7W", summit.associationCode());
+        assertEquals(REFERENCE_W7W_LC_001, summit.reference());
+        assertEquals(NAME_MOUNT_SAINT_HELENS, summit.name());
+        assertEquals(REGION_CODE_WA, summit.regionCode());
+        assertEquals(ASSOCIATION_CODE_W7W, summit.associationCode());
     }
 
     @Test
-    void shouldCreateSummitWithNullOptionalFields() {
+    void shouldCreate_SummitWithNullOptionalFields() {
         Summit summit = new Summit(
-                "W7W/LC-001",
-                "Mount Saint Helens",
+                REFERENCE_W7W_LC_001,
+                NAME_MOUNT_SAINT_HELENS,
                 null,  // regionCode
                 null   // associationCode
         );
 
-        assertEquals("W7W/LC-001", summit.reference());
-        assertEquals("Mount Saint Helens", summit.name());
+        assertEquals(REFERENCE_W7W_LC_001, summit.reference());
+        assertEquals(NAME_MOUNT_SAINT_HELENS, summit.name());
         assertNull(summit.regionCode());
         assertNull(summit.associationCode());
     }
 
     @Test
-    void shouldImplementActivationLocation() {
-        Summit summit = new Summit("W7W/LC-001", "Mount Saint Helens", "WA", "W7W");
+    void shouldImplement_ActivationLocation() {
+        Summit summit = new Summit(REFERENCE_W7W_LC_001, NAME_MOUNT_SAINT_HELENS, REGION_CODE_WA, ASSOCIATION_CODE_W7W);
 
         assertTrue(summit instanceof ActivationLocation);
-        assertEquals("W7W/LC-001", summit.reference());
-        assertEquals("Mount Saint Helens", summit.name());
-        assertEquals("WA", summit.regionCode());
+        assertEquals(REFERENCE_W7W_LC_001, summit.reference());
+        assertEquals(NAME_MOUNT_SAINT_HELENS, summit.name());
+        assertEquals(REGION_CODE_WA, summit.regionCode());
     }
 
     @Test
-    void shouldThrowExceptionWhenReferenceIsNull() {
+    void shouldThrow_ExceptionWhenReferenceIsNull() {
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
-                new Summit(null, "Mount Saint Helens", "WA", "W7W")
+                new Summit(null, NAME_MOUNT_SAINT_HELENS, REGION_CODE_WA, ASSOCIATION_CODE_W7W)
         );
         assertEquals("Summit reference cannot be null or blank", exception.getMessage());
     }
 
     @Test
-    void shouldThrowExceptionWhenReferenceIsBlank() {
+    void shouldThrow_ExceptionWhenReferenceIsBlank() {
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
-                new Summit("  ", "Mount Saint Helens", "WA", "W7W")
+                new Summit("  ", NAME_MOUNT_SAINT_HELENS, REGION_CODE_WA, ASSOCIATION_CODE_W7W)
         );
         assertEquals("Summit reference cannot be null or blank", exception.getMessage());
     }
 
     @Test
-    void shouldThrowExceptionWhenNameIsNull() {
+    void shouldThrow_ExceptionWhenNameIsNull() {
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
-                new Summit("W7W/LC-001", null, "WA", "W7W")
+                new Summit(REFERENCE_W7W_LC_001, null, REGION_CODE_WA, ASSOCIATION_CODE_W7W)
         );
         assertEquals("Summit name cannot be null or blank", exception.getMessage());
     }
 
     @Test
-    void shouldThrowExceptionWhenNameIsBlank() {
+    void shouldThrow_ExceptionWhenNameIsBlank() {
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
-                new Summit("W7W/LC-001", "", "WA", "W7W")
+                new Summit(REFERENCE_W7W_LC_001, "", REGION_CODE_WA, ASSOCIATION_CODE_W7W)
         );
         assertEquals("Summit name cannot be null or blank", exception.getMessage());
     }
 
     @Test
-    void shouldBeEqualWhenAllFieldsMatch() {
-        Summit summit1 = new Summit("W7W/LC-001", "Mount Saint Helens", "WA", "W7W");
-        Summit summit2 = new Summit("W7W/LC-001", "Mount Saint Helens", "WA", "W7W");
+    void shouldBeEqual_WhenAllFieldsMatch() {
+        Summit summit1 = new Summit(REFERENCE_W7W_LC_001, NAME_MOUNT_SAINT_HELENS, REGION_CODE_WA, ASSOCIATION_CODE_W7W);
+        Summit summit2 = new Summit(REFERENCE_W7W_LC_001, NAME_MOUNT_SAINT_HELENS, REGION_CODE_WA, ASSOCIATION_CODE_W7W);
 
         assertEquals(summit1, summit2);
         assertEquals(summit1.hashCode(), summit2.hashCode());
     }
 
     @Test
-    void shouldNotBeEqualWhenReferencesDiffer() {
-        Summit summit1 = new Summit("W7W/LC-001", "Mount Saint Helens", "WA", "W7W");
-        Summit summit2 = new Summit("W7W/LC-002", "Mount Adams", "WA", "W7W");
+    void shouldNotBeEqual_WhenReferencesDiffer() {
+        Summit summit1 = new Summit(REFERENCE_W7W_LC_001, NAME_MOUNT_SAINT_HELENS, REGION_CODE_WA, ASSOCIATION_CODE_W7W);
+        Summit summit2 = new Summit("W7W/LC-002", "Mount Adams", REGION_CODE_WA, ASSOCIATION_CODE_W7W);
 
         assertNotEquals(summit1, summit2);
     }
 
     @Test
-    void shouldHandleW7RegionSummits() {
-        Summit summit = new Summit("W7W/LC-001", "Mount Saint Helens", "WA", "W7W");
+    void shouldHandle_W7RegionSummits() {
+        Summit summit = new Summit(REFERENCE_W7W_LC_001, NAME_MOUNT_SAINT_HELENS, REGION_CODE_WA, ASSOCIATION_CODE_W7W);
 
-        assertEquals("WA", summit.regionCode());
-        assertEquals("W7W", summit.associationCode());
+        assertEquals(REGION_CODE_WA, summit.regionCode());
+        assertEquals(ASSOCIATION_CODE_W7W, summit.associationCode());
     }
 
     @Test
-    void shouldHandleW4RegionSummits() {
+    void shouldHandle_W4RegionSummits() {
         Summit summit = new Summit("W4G/NG-001", "Brasstown Bald", "GA", "W4G");
 
         assertEquals("GA", summit.regionCode());
@@ -112,7 +117,7 @@ class SummitTest {
     }
 
     @Test
-    void shouldHandleW6RegionSummits() {
+    void shouldHandle_W6RegionSummits() {
         Summit summit = new Summit("W6/CT-001", "Mount Whitney", "CA", "W6");
 
         assertEquals("CA", summit.regionCode());
@@ -120,7 +125,7 @@ class SummitTest {
     }
 
     @Test
-    void shouldHandleInternationalSummits() {
+    void shouldHandle_InternationalSummits() {
         Summit summit = new Summit("G/LD-001", "Scafell Pike", null, "G/LD");
 
         assertNull(summit.regionCode());

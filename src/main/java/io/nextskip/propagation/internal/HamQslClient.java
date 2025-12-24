@@ -11,6 +11,7 @@ import io.nextskip.propagation.internal.dto.HamQslDto.HamQslData;
 import io.nextskip.propagation.model.BandCondition;
 import io.nextskip.propagation.model.BandConditionRating;
 import io.nextskip.propagation.model.SolarIndices;
+import java.util.Locale;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cache.CacheManager;
@@ -41,13 +42,19 @@ import java.util.List;
  * - Fallback to cached data
  */
 @Component
+@SuppressWarnings("PMD.AvoidCatchingGenericException") // Intentional: wrap unknown exceptions in ExternalApiException
 public class HamQslClient {
 
     private static final Logger LOG = LoggerFactory.getLogger(HamQslClient.class);
 
+    private static final String SOURCE_NAME = "HamQSL";
+    private static final String CACHE_KEY = "hamqsl";
     private static final String HAMQSL_URL = "https://www.hamqsl.com/solarxml.php";
 
     private static final Duration REQUEST_TIMEOUT = Duration.ofSeconds(10);
+
+    // Band condition time period (day vs night)
+    private static final String DAY_TIME_PERIOD = "day";
 
     // Pre-initialized XmlMapper to avoid constructor exceptions (SpotBugs CT_CONSTRUCTOR_THROW)
     private static final XmlMapper SHARED_XML_MAPPER = createXmlMapper();
@@ -110,9 +117,9 @@ public class HamQslClient {
      * @throws ExternalApiException if the API call fails
      * @throws InvalidApiResponseException if the response is invalid
      */
-    @CircuitBreaker(name = "hamqsl", fallbackMethod = "getCachedSolarData")
-    @Retry(name = "hamqsl")
-    @Cacheable(value = "solarIndices", key = "'hamqsl'", unless = "#result == null")
+    @CircuitBreaker(name = CACHE_KEY, fallbackMethod = "getCachedSolarData")
+    @Retry(name = CACHE_KEY)
+    @Cacheable(value = "solarIndices", key = "'" + CACHE_KEY + "'", unless = "#result == null")
     public SolarIndices fetchSolarIndices() {
         LOG.debug("Fetching solar data from HamQSL");
 
@@ -125,13 +132,13 @@ public class HamQslClient {
 
             if (xml == null || xml.isBlank()) {
                 LOG.warn("No data received from HamQSL");
-                throw new InvalidApiResponseException("HamQSL", "Empty response from HamQSL API");
+                throw new InvalidApiResponseException(SOURCE_NAME, "Empty response from HamQSL API");
             }
 
             HamQslData data = xmlMapper.readValue(xml, HamQslData.class);
 
             if (data == null || data.getSolardata() == null) {
-                throw new InvalidApiResponseException("HamQSL", "Missing solardata element in XML response");
+                throw new InvalidApiResponseException(SOURCE_NAME, "Missing solardata element in XML response");
             }
 
             // Validate the data
@@ -149,7 +156,7 @@ public class HamQslClient {
                     kIndex,
                     sunspots,
                     Instant.now(),
-                    "HamQSL"
+                    SOURCE_NAME
             );
 
             LOG.info("Successfully fetched solar indices from HamQSL: K={}, A={}", kIndex, aIndex);
@@ -157,12 +164,12 @@ public class HamQslClient {
 
         } catch (WebClientResponseException e) {
             LOG.error("HTTP error from HamQSL API: {} {}", e.getStatusCode(), e.getStatusText());
-            throw new ExternalApiException("HamQSL",
+            throw new ExternalApiException(SOURCE_NAME,
                     "HTTP " + e.getStatusCode() + " from HamQSL API: " + e.getStatusText(), e);
 
         } catch (WebClientRequestException e) {
             LOG.error("Network error connecting to HamQSL API", e);
-            throw new ExternalApiException("HamQSL",
+            throw new ExternalApiException(SOURCE_NAME,
                     "Network error connecting to HamQSL API: " + e.getMessage(), e);
 
         } catch (InvalidApiResponseException e) {
@@ -171,7 +178,7 @@ public class HamQslClient {
 
         } catch (Exception e) {
             LOG.error("Error fetching solar data from HamQSL", e);
-            throw new ExternalApiException("HamQSL",
+            throw new ExternalApiException(SOURCE_NAME,
                     "Failed to parse HamQSL solar data: " + e.getMessage(), e);
         }
     }
@@ -183,9 +190,9 @@ public class HamQslClient {
      * @throws ExternalApiException if the API call fails
      * @throws InvalidApiResponseException if the response is invalid
      */
-    @CircuitBreaker(name = "hamqsl", fallbackMethod = "getCachedBandConditions")
-    @Retry(name = "hamqsl")
-    @Cacheable(value = "bandConditions", key = "'hamqsl'", unless = "#result == null || #result.isEmpty()")
+    @CircuitBreaker(name = CACHE_KEY, fallbackMethod = "getCachedBandConditions")
+    @Retry(name = CACHE_KEY)
+    @Cacheable(value = "bandConditions", key = "'" + CACHE_KEY + "'", unless = "#result == null || #result.isEmpty()")
     public List<BandCondition> fetchBandConditions() {
         LOG.debug("Fetching band conditions from HamQSL");
 
@@ -198,13 +205,13 @@ public class HamQslClient {
 
             if (xml == null || xml.isBlank()) {
                 LOG.warn("No data received from HamQSL");
-                throw new InvalidApiResponseException("HamQSL", "Empty response from HamQSL API");
+                throw new InvalidApiResponseException(SOURCE_NAME, "Empty response from HamQSL API");
             }
 
             HamQslData data = xmlMapper.readValue(xml, HamQslData.class);
 
             if (data == null || data.getSolardata() == null) {
-                throw new InvalidApiResponseException("HamQSL", "Missing solardata element in XML response");
+                throw new InvalidApiResponseException(SOURCE_NAME, "Missing solardata element in XML response");
             }
 
             List<BandCondition> conditions = new ArrayList<>();
@@ -216,7 +223,7 @@ public class HamQslClient {
 
                 for (BandConditionEntry entry : solarData.getCalculatedConditions().getBands()) {
                     // Use "day" conditions for now (could be enhanced to handle time-based selection)
-                    if ("day".equals(entry.getTime())) {
+                    if (DAY_TIME_PERIOD.equals(entry.getTime())) {
                         BandConditionRating rating = parseBandRating(entry.getValue());
 
                         // Map band ranges to individual bands
@@ -250,12 +257,12 @@ public class HamQslClient {
 
         } catch (WebClientResponseException e) {
             LOG.error("HTTP error from HamQSL API: {} {}", e.getStatusCode(), e.getStatusText());
-            throw new ExternalApiException("HamQSL",
+            throw new ExternalApiException(SOURCE_NAME,
                     "HTTP " + e.getStatusCode() + " from HamQSL API: " + e.getStatusText(), e);
 
         } catch (WebClientRequestException e) {
             LOG.error("Network error connecting to HamQSL API", e);
-            throw new ExternalApiException("HamQSL",
+            throw new ExternalApiException(SOURCE_NAME,
                     "Network error connecting to HamQSL API: " + e.getMessage(), e);
 
         } catch (InvalidApiResponseException e) {
@@ -264,7 +271,7 @@ public class HamQslClient {
 
         } catch (Exception e) {
             LOG.error("Error fetching band conditions from HamQSL", e);
-            throw new ExternalApiException("HamQSL",
+            throw new ExternalApiException(SOURCE_NAME,
                     "Failed to parse HamQSL band conditions: " + e.getMessage(), e);
         }
     }
@@ -273,7 +280,7 @@ public class HamQslClient {
         if (value == null || value.isBlank()) {
             return BandConditionRating.UNKNOWN;
         }
-        return switch (value.toLowerCase().trim()) {
+        return switch (value.toLowerCase(Locale.ROOT).trim()) {
             case "good" -> BandConditionRating.GOOD;
             case "fair" -> BandConditionRating.FAIR;
             case "poor" -> BandConditionRating.POOR;
@@ -286,7 +293,7 @@ public class HamQslClient {
         LOG.warn("Using cached solar data due to: {}", e.getMessage());
         var cache = cacheManager.getCache("solarIndices");
         if (cache != null) {
-            return cache.get("hamqsl", SolarIndices.class);
+            return cache.get(CACHE_KEY, SolarIndices.class);
         }
         return null;
     }
@@ -297,7 +304,7 @@ public class HamQslClient {
         var cache = cacheManager.getCache("bandConditions");
         if (cache != null) {
             @SuppressWarnings("unchecked")
-            List<BandCondition> cached = (List<BandCondition>) cache.get("hamqsl", List.class);
+            List<BandCondition> cached = (List<BandCondition>) cache.get(CACHE_KEY, List.class);
             if (cached != null) {
                 return cached;
             }

@@ -18,7 +18,6 @@ import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.getRequestedFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -27,6 +26,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * Unit tests for ContestCalendarClient using WireMock.
  */
 class ContestCalendarClientTest {
+
+    private static final String CALENDAR_SOURCE = "WA7BNM Contest Calendar";
+    private static final String CONTENT_TYPE_CALENDAR = "text/calendar";
+    private static final String HEADER_CONTENT_TYPE = "Content-Type";
 
     private WireMockServer wireMockServer;
     private ContestCalendarClient client;
@@ -41,7 +44,7 @@ class ContestCalendarClientTest {
         WebClient.Builder webClientBuilder = WebClient.builder();
         cacheManager = new ConcurrentMapCacheManager("contests");
 
-        client = new TestContestCalendarClient(webClientBuilder, cacheManager, baseUrl);
+        client = new StubContestCalendarClient(webClientBuilder, cacheManager, baseUrl);
     }
 
     @AfterEach
@@ -50,7 +53,7 @@ class ContestCalendarClientTest {
     }
 
     @Test
-    void testFetch_Success() {
+    void shouldFetch_Success() {
         String icalResponse = """
             BEGIN:VCALENDAR
             VERSION:2.0
@@ -73,7 +76,7 @@ class ContestCalendarClientTest {
         wireMockServer.stubFor(get(urlEqualTo("/"))
                 .willReturn(aResponse()
                         .withStatus(200)
-                        .withHeader("Content-Type", "text/calendar")
+                        .withHeader(HEADER_CONTENT_TYPE, CONTENT_TYPE_CALENDAR)
                         .withBody(icalResponse)));
 
         List<ContestICalDto> result = client.fetch();
@@ -95,7 +98,7 @@ class ContestCalendarClientTest {
     }
 
     @Test
-    void testFetch_SingleContest() {
+    void shouldFetch_SingleContest() {
         String icalResponse = """
             BEGIN:VCALENDAR
             VERSION:2.0
@@ -112,7 +115,7 @@ class ContestCalendarClientTest {
         wireMockServer.stubFor(get(urlEqualTo("/"))
                 .willReturn(aResponse()
                         .withStatus(200)
-                        .withHeader("Content-Type", "text/calendar")
+                        .withHeader(HEADER_CONTENT_TYPE, CONTENT_TYPE_CALENDAR)
                         .withBody(icalResponse)));
 
         List<ContestICalDto> result = client.fetch();
@@ -123,7 +126,7 @@ class ContestCalendarClientTest {
     }
 
     @Test
-    void testFetch_EmptyCalendar() {
+    void shouldFetch_EmptyCalendar() {
         String icalResponse = """
             BEGIN:VCALENDAR
             VERSION:2.0
@@ -134,7 +137,7 @@ class ContestCalendarClientTest {
         wireMockServer.stubFor(get(urlEqualTo("/"))
                 .willReturn(aResponse()
                         .withStatus(200)
-                        .withHeader("Content-Type", "text/calendar")
+                        .withHeader(HEADER_CONTENT_TYPE, CONTENT_TYPE_CALENDAR)
                         .withBody(icalResponse)));
 
         List<ContestICalDto> result = client.fetch();
@@ -144,7 +147,7 @@ class ContestCalendarClientTest {
     }
 
     @Test
-    void testFetch_MalformedEvent_Skipped() {
+    void shouldFetch_MalformedEvent_Skipped() {
         // One valid event and one malformed (missing required fields)
         String icalResponse = """
             BEGIN:VCALENDAR
@@ -166,7 +169,7 @@ class ContestCalendarClientTest {
         wireMockServer.stubFor(get(urlEqualTo("/"))
                 .willReturn(aResponse()
                         .withStatus(200)
-                        .withHeader("Content-Type", "text/calendar")
+                        .withHeader(HEADER_CONTENT_TYPE, CONTENT_TYPE_CALENDAR)
                         .withBody(icalResponse)));
 
         List<ContestICalDto> result = client.fetch();
@@ -178,7 +181,7 @@ class ContestCalendarClientTest {
     }
 
     @Test
-    void testFetch_ServerError() {
+    void shouldFetch_ServerError() {
         wireMockServer.stubFor(get(urlEqualTo("/"))
                 .willReturn(aResponse()
                         .withStatus(500)
@@ -188,18 +191,18 @@ class ContestCalendarClientTest {
     }
 
     @Test
-    void testFetch_EmptyResponse() {
+    void shouldFetch_EmptyResponse() {
         wireMockServer.stubFor(get(urlEqualTo("/"))
                 .willReturn(aResponse()
                         .withStatus(200)
-                        .withHeader("Content-Type", "text/calendar")
+                        .withHeader(HEADER_CONTENT_TYPE, CONTENT_TYPE_CALENDAR)
                         .withBody("")));
 
         assertThrows(ExternalApiException.class, () -> client.fetch());
     }
 
     @Test
-    void testFetch_NotFoundError() {
+    void shouldFetch_NotFoundError() {
         wireMockServer.stubFor(get(urlEqualTo("/"))
                 .willReturn(aResponse()
                         .withStatus(404)
@@ -209,12 +212,12 @@ class ContestCalendarClientTest {
     }
 
     @Test
-    void testGetSourceName() {
-        assertEquals("WA7BNM Contest Calendar", client.getSourceName());
+    void shouldGet_SourceName() {
+        assertEquals(CALENDAR_SOURCE, client.getSourceName());
     }
 
     @Test
-    void testFetch_ContestWithoutUrl() {
+    void shouldFetch_ContestWithoutUrl() {
         String icalResponse = """
             BEGIN:VCALENDAR
             VERSION:2.0
@@ -230,7 +233,7 @@ class ContestCalendarClientTest {
         wireMockServer.stubFor(get(urlEqualTo("/"))
                 .willReturn(aResponse()
                         .withStatus(200)
-                        .withHeader("Content-Type", "text/calendar")
+                        .withHeader(HEADER_CONTENT_TYPE, CONTENT_TYPE_CALENDAR)
                         .withBody(icalResponse)));
 
         List<ContestICalDto> result = client.fetch();
@@ -242,7 +245,7 @@ class ContestCalendarClientTest {
     }
 
     @Test
-    void testFetch_TimezoneHandling() {
+    void shouldFetch_TimezoneHandling() {
         // Test with UTC timezone (common format from WA7BNM)
         String icalResponse = """
             BEGIN:VCALENDAR
@@ -260,7 +263,7 @@ class ContestCalendarClientTest {
         wireMockServer.stubFor(get(urlEqualTo("/"))
                 .willReturn(aResponse()
                         .withStatus(200)
-                        .withHeader("Content-Type", "text/calendar")
+                        .withHeader(HEADER_CONTENT_TYPE, CONTENT_TYPE_CALENDAR)
                         .withBody(icalResponse)));
 
         List<ContestICalDto> result = client.fetch();
@@ -276,10 +279,10 @@ class ContestCalendarClientTest {
     }
 
     /**
-     * Test subclass that allows URL override for testing.
+     * Stub subclass that allows URL override for testing.
      */
-    static class TestContestCalendarClient extends ContestCalendarClient {
-        TestContestCalendarClient(WebClient.Builder webClientBuilder, CacheManager cacheManager, String testUrl) {
+    static class StubContestCalendarClient extends ContestCalendarClient {
+        StubContestCalendarClient(WebClient.Builder webClientBuilder, CacheManager cacheManager, String testUrl) {
             super(webClientBuilder, cacheManager, testUrl);
         }
     }

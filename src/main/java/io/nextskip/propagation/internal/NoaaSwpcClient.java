@@ -33,10 +33,12 @@ import java.util.List;
  * - Fallback to cached data on failures
  */
 @Component
+@SuppressWarnings("PMD.AvoidCatchingGenericException") // Intentional: wrap unknown exceptions in ExternalApiException
 public class NoaaSwpcClient {
 
     private static final Logger LOG = LoggerFactory.getLogger(NoaaSwpcClient.class);
 
+    private static final String SOURCE_NAME = "NOAA";
     private static final String NOAA_URL =
             "https://services.swpc.noaa.gov/json/solar-cycle/observed-solar-cycle-indices.json";
 
@@ -83,7 +85,7 @@ public class NoaaSwpcClient {
 
             if (data == null || data.isEmpty()) {
                 LOG.warn("No data received from NOAA SWPC");
-                throw new InvalidApiResponseException("NOAA", "Empty response from NOAA API");
+                throw new InvalidApiResponseException(SOURCE_NAME, "Empty response from NOAA API");
             }
 
             // Get the most recent observation (last entry)
@@ -116,13 +118,13 @@ public class NoaaSwpcClient {
         } catch (WebClientResponseException e) {
             // HTTP error (4xx, 5xx)
             LOG.error("HTTP error from NOAA API: {} {}", e.getStatusCode(), e.getStatusText());
-            throw new ExternalApiException("NOAA",
+            throw new ExternalApiException(SOURCE_NAME,
                     "HTTP " + e.getStatusCode() + " from NOAA API: " + e.getStatusText(), e);
 
         } catch (WebClientRequestException e) {
             // Network error (connection refused, timeout, etc.)
             LOG.error("Network error connecting to NOAA API", e);
-            throw new ExternalApiException("NOAA",
+            throw new ExternalApiException(SOURCE_NAME,
                     "Network error connecting to NOAA API: " + e.getMessage(), e);
 
         } catch (InvalidApiResponseException e) {
@@ -133,7 +135,7 @@ public class NoaaSwpcClient {
         } catch (Exception e) {
             // Unexpected error
             LOG.error("Unexpected error fetching solar indices from NOAA SWPC", e);
-            throw new ExternalApiException("NOAA",
+            throw new ExternalApiException(SOURCE_NAME,
                     "Unexpected error fetching NOAA solar data: " + e.getMessage(), e);
         }
     }

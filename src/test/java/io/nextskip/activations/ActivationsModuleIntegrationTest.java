@@ -36,7 +36,7 @@ class ActivationsModuleIntegrationTest {
     private SotaClient sotaClient;
 
     @Test
-    void contextLoads() {
+    void context_Loads() {
         // Verify all required beans are loaded and autowired correctly
         assertNotNull(endpoint, "ActivationsEndpoint should be autowired");
         assertNotNull(service, "ActivationsService should be autowired");
@@ -45,14 +45,14 @@ class ActivationsModuleIntegrationTest {
     }
 
     @Test
-    void serviceImplementationIsCorrectType() {
+    void serviceImplementation_IsCorrectType() {
         // Verify the service implementation is the expected class
         assertTrue(service instanceof ActivationsServiceImpl,
                 "Service should be instance of ActivationsServiceImpl");
     }
 
     @Test
-    void endpointReturnsActivationsResponse() {
+    void endpoint_ReturnsActivationsResponse() {
         // When: Call endpoint (may hit real APIs or cache)
         ActivationsResponse response = endpoint.getActivations();
 
@@ -65,7 +65,7 @@ class ActivationsModuleIntegrationTest {
     }
 
     @Test
-    void endpointTotalCountMatchesActivations() {
+    void endpointTotalCount_MatchesActivations() {
         // When: Call endpoint
         ActivationsResponse response = endpoint.getActivations();
 
@@ -76,7 +76,7 @@ class ActivationsModuleIntegrationTest {
     }
 
     @Test
-    void responseTimestampIsRecent() {
+    void responseTimestamp_IsRecent() {
         // When: Call endpoint
         ActivationsResponse response = endpoint.getActivations();
 

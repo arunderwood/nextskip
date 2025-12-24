@@ -1,5 +1,6 @@
 package io.nextskip.activations.internal;
 
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 
@@ -115,7 +116,7 @@ public final class SotaAssociationMapper {
             return Optional.empty();
         }
 
-        String code = associationCode.toUpperCase().trim();
+        String code = associationCode.toUpperCase(Locale.ROOT).trim();
         return Optional.ofNullable(ASSOCIATION_TO_STATE.get(code));
     }
 }

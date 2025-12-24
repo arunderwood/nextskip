@@ -61,25 +61,35 @@ public class ActivationsServiceImpl implements ActivationsService {
     }
 
     /**
-     * Fetch POTA activations with error handling.
+     * Fetch POTA activations with graceful degradation.
+     *
+     * <p>Primary error handling via PotaClient's Resilience4j annotations.
+     * Service-level fallback ensures dashboard remains functional even if
+     * client-level resilience is bypassed (e.g., in unit tests or edge cases).
      */
+    @SuppressWarnings("PMD.AvoidCatchingGenericException")
     private List<Activation> fetchPotaActivations() {
         try {
             return potaClient.fetch();
-        } catch (Exception e) {
-            LOG.error("Failed to fetch POTA activations: {}", e.getMessage());
+        } catch (RuntimeException e) {
+            LOG.warn("Failed to fetch POTA activations: {}", e.getMessage());
             return List.of();
         }
     }
 
     /**
-     * Fetch SOTA activations with error handling.
+     * Fetch SOTA activations with graceful degradation.
+     *
+     * <p>Primary error handling via SotaClient's Resilience4j annotations.
+     * Service-level fallback ensures dashboard remains functional even if
+     * client-level resilience is bypassed (e.g., in unit tests or edge cases).
      */
+    @SuppressWarnings("PMD.AvoidCatchingGenericException")
     private List<Activation> fetchSotaActivations() {
         try {
             return sotaClient.fetch();
-        } catch (Exception e) {
-            LOG.error("Failed to fetch SOTA activations: {}", e.getMessage());
+        } catch (RuntimeException e) {
+            LOG.warn("Failed to fetch SOTA activations: {}", e.getMessage());
             return List.of();
         }
     }

@@ -16,34 +16,40 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 class MeteorShowerTest {
 
+    private static final String PERSEIDS_2025 = "Perseids 2025";
+    private static final String SWIFT_TUTTLE = "109P/Swift-Tuttle";
+    private static final String IMO_URL = "https://imo.net";
+    private static final String TEST_SHOWER = "Test";
+    private static final String TEST_CODE = "TST";
+
     // Test data builders
     private static MeteorShower createActiveAtPeak() {
         Instant now = Instant.now();
         return new MeteorShower(
-                "Perseids 2025",
+                PERSEIDS_2025,
                 "PER",
                 now.minus(Duration.ofHours(6)),  // Peak started 6 hours ago
                 now.plus(Duration.ofHours(18)),  // Peak ends in 18 hours
                 now.minus(Duration.ofDays(5)),   // Visibility started 5 days ago
                 now.plus(Duration.ofDays(3)),    // Visibility ends in 3 days
                 100,
-                "109P/Swift-Tuttle",
-                "https://imo.net"
+                SWIFT_TUTTLE,
+                IMO_URL
         );
     }
 
     private static MeteorShower createActiveNotAtPeak() {
         Instant now = Instant.now();
         return new MeteorShower(
-                "Perseids 2025",
+                PERSEIDS_2025,
                 "PER",
                 now.plus(Duration.ofDays(2)),    // Peak starts in 2 days
                 now.plus(Duration.ofDays(2)).plus(Duration.ofHours(36)), // Peak duration
                 now.minus(Duration.ofDays(1)),   // Visibility started yesterday
                 now.plus(Duration.ofDays(5)),    // Visibility ends in 5 days
                 100,
-                "109P/Swift-Tuttle",
-                "https://imo.net"
+                SWIFT_TUTTLE,
+                IMO_URL
         );
     }
 
@@ -58,7 +64,7 @@ class MeteorShowerTest {
                 now.plus(Duration.ofDays(13)),
                 150,
                 "3200 Phaethon",
-                "https://imo.net"
+                IMO_URL
         );
     }
 
@@ -73,7 +79,7 @@ class MeteorShowerTest {
                 now.minus(Duration.ofDays(7)),
                 110,
                 "2003 EH1",
-                "https://imo.net"
+                IMO_URL
         );
     }
 
@@ -126,7 +132,7 @@ class MeteorShowerTest {
         void upcomingSoon_scoresMediumHigh() {
             Instant now = Instant.now();
             MeteorShower shower = new MeteorShower(
-                    "Test", "TST",
+                    TEST_SHOWER, TEST_CODE,
                     now.plus(Duration.ofHours(12)),
                     now.plus(Duration.ofHours(36)),
                     now.plus(Duration.ofHours(6)), // Starts in 6 hours
@@ -238,7 +244,7 @@ class MeteorShowerTest {
         void peakEndingInFiveHours_isEndingSoon() {
             Instant now = Instant.now();
             MeteorShower shower = new MeteorShower(
-                    "Test", "TST",
+                    TEST_SHOWER, TEST_CODE,
                     now.minus(Duration.ofHours(20)),
                     now.plus(Duration.ofHours(5)),  // Peak ends in 5 hours
                     now.minus(Duration.ofDays(1)),
@@ -252,7 +258,7 @@ class MeteorShowerTest {
         void peakEndingInSevenHours_notEndingSoon() {
             Instant now = Instant.now();
             MeteorShower shower = new MeteorShower(
-                    "Test", "TST",
+                    TEST_SHOWER, TEST_CODE,
                     now.minus(Duration.ofHours(12)),
                     now.plus(Duration.ofHours(7)),  // Peak ends in 7 hours
                     now.minus(Duration.ofDays(1)),
@@ -281,7 +287,7 @@ class MeteorShowerTest {
         void activeNearPeak_isFavorable() {
             Instant now = Instant.now();
             MeteorShower shower = new MeteorShower(
-                    "Test", "TST",
+                    TEST_SHOWER, TEST_CODE,
                     now.plus(Duration.ofHours(10)),  // Peak starts in 10 hours
                     now.plus(Duration.ofHours(34)),
                     now.minus(Duration.ofHours(12)), // Visibility started 12 hours ago
@@ -295,7 +301,7 @@ class MeteorShowerTest {
         void upcomingWithinTwelveHours_isFavorable() {
             Instant now = Instant.now();
             MeteorShower shower = new MeteorShower(
-                    "Test", "TST",
+                    TEST_SHOWER, TEST_CODE,
                     now.plus(Duration.ofHours(18)),
                     now.plus(Duration.ofHours(42)),
                     now.plus(Duration.ofHours(8)),  // Starts in 8 hours
@@ -309,7 +315,7 @@ class MeteorShowerTest {
         void activeFarFromPeak_isNotFavorable() {
             Instant now = Instant.now();
             MeteorShower shower = new MeteorShower(
-                    "Test", "TST",
+                    TEST_SHOWER, TEST_CODE,
                     now.plus(Duration.ofDays(3)),  // Peak starts in 3 days
                     now.plus(Duration.ofDays(4)),
                     now.minus(Duration.ofHours(1)), // Visibility started 1 hour ago
@@ -326,7 +332,7 @@ class MeteorShowerTest {
         void upcoming24To72Hours_scoresCorrectly() {
             Instant now = Instant.now();
             MeteorShower shower = new MeteorShower(
-                    "Test", "TST",
+                    TEST_SHOWER, TEST_CODE,
                     now.plus(Duration.ofHours(60)),  // ~2.5 days
                     now.plus(Duration.ofHours(84)),
                     now.plus(Duration.ofHours(48)),  // Starts in 48 hours
@@ -341,7 +347,7 @@ class MeteorShowerTest {
         void upcomingOver72Hours_scoresLow() {
             Instant now = Instant.now();
             MeteorShower shower = new MeteorShower(
-                    "Test", "TST",
+                    TEST_SHOWER, TEST_CODE,
                     now.plus(Duration.ofDays(6)),
                     now.plus(Duration.ofDays(7)),
                     now.plus(Duration.ofDays(5)),  // Starts in 5 days (120 hours)
@@ -381,7 +387,7 @@ class MeteorShowerTest {
             Instant now = Instant.now();
             // Create shower with peak exactly at current time
             MeteorShower shower = new MeteorShower(
-                    "Test", "TST",
+                    TEST_SHOWER, TEST_CODE,
                     now.minus(Duration.ofHours(12)),
                     now.plus(Duration.ofHours(12)),  // Peak midpoint is now
                     now.minus(Duration.ofDays(1)),
@@ -430,7 +436,7 @@ class MeteorShowerTest {
         @Test
         void getName_returnsCorrectName() {
             MeteorShower shower = createActiveAtPeak();
-            assertEquals("Perseids 2025", shower.getName());
+            assertEquals(PERSEIDS_2025, shower.getName());
         }
 
         @Test

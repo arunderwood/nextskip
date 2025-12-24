@@ -156,27 +156,28 @@ configurations.all {
 checkstyle {
     toolVersion = "12.3.0"
     configFile = file("${rootDir}/config/checkstyle/checkstyle.xml")
-    ignoreFailures = true  // Report violations but don't fail build during development
+    ignoreFailures = false  // Quality violations fail the build
 }
 
 pmd {
     toolVersion = "7.19.0"
     ruleSets = []  // Empty to use custom ruleset file
     ruleSetFiles = files("${rootDir}/config/pmd/ruleset.xml")
-    ignoreFailures = true  // Report violations but don't fail build during development
+    ignoreFailures = false  // Quality violations fail the build
 }
 
 spotbugs {
     toolVersion = "4.9.8"
     effort = 'max'
     reportLevel = 'medium'
-    ignoreFailures = true  // Report violations but don't fail build during development
+    ignoreFailures = false  // Quality violations fail the build
+    excludeFilter = file("${rootDir}/config/spotbugs/spotbugs-exclude.xml")
 }
 
 tasks.withType(com.github.spotbugs.snom.SpotBugsTask) {
     reports {
         html.required = true
-        xml.required = false
+        xml.required = true  // Enable for CI integration
     }
 }
 

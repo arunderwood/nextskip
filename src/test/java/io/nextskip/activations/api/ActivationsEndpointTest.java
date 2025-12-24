@@ -32,7 +32,7 @@ class ActivationsEndpointTest {
     }
 
     @Test
-    void shouldReturnActivationsResponseWithBothPotaAndSota() {
+    void should_ReturnActivationsResponseWithBothPotaAndSota() {
         // Given: Service returns summary with both POTA and SOTA activations
         Instant now = Instant.now();
         List<Activation> activations = List.of(
@@ -67,7 +67,7 @@ class ActivationsEndpointTest {
     }
 
     @Test
-    void shouldReturnOnlyPotaActivationsWhenNoSota() {
+    void should_ReturnOnlyPotaActivationsWhenNoSota() {
         // Given: Service returns summary with only POTA activations
         Instant now = Instant.now();
         List<Activation> activations = List.of(
@@ -93,7 +93,7 @@ class ActivationsEndpointTest {
     }
 
     @Test
-    void shouldReturnOnlySotaActivationsWhenNoPota() {
+    void should_ReturnOnlySotaActivationsWhenNoPota() {
         // Given: Service returns summary with only SOTA activations
         Instant now = Instant.now();
         List<Activation> activations = List.of(
@@ -118,7 +118,7 @@ class ActivationsEndpointTest {
     }
 
     @Test
-    void shouldReturnEmptyListsWhenNoActivations() {
+    void should_ReturnEmptyListsWhenNoActivations() {
         // Given: Service returns empty summary
         Instant now = Instant.now();
         ActivationsSummary summary = new ActivationsSummary(List.of(), 0, 0, now);
@@ -139,7 +139,7 @@ class ActivationsEndpointTest {
     }
 
     @Test
-    void shouldCalculateTotalCountCorrectly() {
+    void should_CalculateTotalCountCorrectly() {
         // Given: Service returns summary with mixed activations
         Instant now = Instant.now();
         List<Activation> activations = List.of(
@@ -165,7 +165,7 @@ class ActivationsEndpointTest {
     }
 
     @Test
-    void shouldPreserveActivationDetails() {
+    void should_PreserveActivationDetails() {
         // Given: Service returns activation with all details
         Instant now = Instant.now();
         io.nextskip.activations.model.Park park = new io.nextskip.activations.model.Park(
@@ -222,7 +222,7 @@ class ActivationsEndpointTest {
     }
 
     @Test
-    void shouldHandleMixedActivationsWithCorrectCounts() {
+    void should_HandleMixedActivationsWithCorrectCounts() {
         // Given: Uneven distribution of POTA and SOTA
         Instant now = Instant.now();
         List<Activation> activations = List.of(

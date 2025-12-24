@@ -23,6 +23,10 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
  */
 class NoaaSwpcClientTest {
 
+    private static final String NOAA_SWPC_SOURCE = "NOAA SWPC";
+    private static final String CONTENT_TYPE = "Content-Type";
+    private static final String CONTENT_TYPE_JSON = "application/json";
+
     private WireMockServer wireMockServer;
     private NoaaSwpcClient client;
     private CacheManager cacheManager;
@@ -39,7 +43,7 @@ class NoaaSwpcClientTest {
         cacheManager = new ConcurrentMapCacheManager("solarIndices");
 
         // Create a custom client that overrides the URL
-        client = new TestNoaaSwpcClient(webClientBuilder, cacheManager, baseUrl);
+        client = new StubNoaaSwpcClient(webClientBuilder, cacheManager, baseUrl);
     }
 
     @AfterEach
@@ -68,7 +72,7 @@ class NoaaSwpcClientTest {
         wireMockServer.stubFor(get(urlEqualTo("/"))
                 .willReturn(aResponse()
                         .withStatus(200)
-                        .withHeader("Content-Type", "application/json")
+                        .withHeader(CONTENT_TYPE, CONTENT_TYPE_JSON)
                         .withBody(jsonResponse)));
 
         SolarIndices result = client.fetchSolarIndices();
@@ -76,7 +80,7 @@ class NoaaSwpcClientTest {
         assertNotNull(result);
         assertEquals(155.2, result.solarFluxIndex(), 0.01);
         assertEquals(125, result.sunspotNumber());
-        assertEquals("NOAA SWPC", result.source());
+        assertEquals(NOAA_SWPC_SOURCE, result.source());
 
         // Verify WireMock was called
         wireMockServer.verify(getRequestedFor(urlEqualTo("/")));
@@ -87,7 +91,7 @@ class NoaaSwpcClientTest {
         wireMockServer.stubFor(get(urlEqualTo("/"))
                 .willReturn(aResponse()
                         .withStatus(200)
-                        .withHeader("Content-Type", "application/json")
+                        .withHeader(CONTENT_TYPE, CONTENT_TYPE_JSON)
                         .withBody("[]")));
 
         // Empty response should throw InvalidApiResponseException
@@ -112,7 +116,7 @@ class NoaaSwpcClientTest {
                 .willReturn(aResponse()
                         .withFixedDelay(2000) // 2 second delay
                         .withStatus(200)
-                        .withHeader("Content-Type", "application/json")
+                        .withHeader(CONTENT_TYPE, CONTENT_TYPE_JSON)
                         .withBody("[]")));
 
         // Slow response with empty data should throw InvalidApiResponseException
@@ -125,7 +129,7 @@ class NoaaSwpcClientTest {
         wireMockServer.stubFor(get(urlEqualTo("/"))
                 .willReturn(aResponse()
                         .withStatus(200)
-                        .withHeader("Content-Type", "application/json")
+                        .withHeader(CONTENT_TYPE, CONTENT_TYPE_JSON)
                         .withBody("{ invalid json }")));
 
         assertThrows(RuntimeException.class, () -> client.fetchSolarIndices());
@@ -144,7 +148,7 @@ class NoaaSwpcClientTest {
         wireMockServer.stubFor(get(urlEqualTo("/"))
                 .willReturn(aResponse()
                         .withStatus(200)
-                        .withHeader("Content-Type", "application/json")
+                        .withHeader(CONTENT_TYPE, CONTENT_TYPE_JSON)
                         .withBody(jsonResponse)));
 
         // Missing required fields should throw InvalidApiResponseException during validation
@@ -153,10 +157,10 @@ class NoaaSwpcClientTest {
     }
 
     /**
-     * Test subclass that allows URL override for testing.
+     * Stub subclass that allows URL override for testing.
      */
-    static class TestNoaaSwpcClient extends NoaaSwpcClient {
-        TestNoaaSwpcClient(WebClient.Builder webClientBuilder, CacheManager cacheManager, String testUrl) {
+    static class StubNoaaSwpcClient extends NoaaSwpcClient {
+        StubNoaaSwpcClient(WebClient.Builder webClientBuilder, CacheManager cacheManager, String testUrl) {
             super(webClientBuilder, cacheManager, testUrl);
         }
     }

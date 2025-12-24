@@ -4,7 +4,6 @@ import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -15,7 +14,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class ActivationsSummaryTest {
 
     @Test
-    void shouldBeFavorableWhenTotalCountIs5OrMore() {
+    void shouldBeFavorable_WhenTotalCountIs5OrMore() {
         // Given: 5 total activations (3 POTA + 2 SOTA)
         ActivationsSummary summary = createSummary(3, 2, List.of());
 
@@ -24,7 +23,7 @@ class ActivationsSummaryTest {
     }
 
     @Test
-    void shouldBeFavorableWhenTotalCountIsExactly5() {
+    void shouldBeFavorable_WhenTotalCountIsExactly5() {
         // Given: Exactly 5 activations (5 POTA + 0 SOTA)
         ActivationsSummary summary = createSummary(5, 0, List.of());
 
@@ -33,7 +32,7 @@ class ActivationsSummaryTest {
     }
 
     @Test
-    void shouldNotBeFavorableWhenTotalCountIsLessThan5() {
+    void shouldNotBeFavorable_WhenTotalCountIsLessThan5() {
         // Given: 4 total activations (2 POTA + 2 SOTA)
         ActivationsSummary summary = createSummary(2, 2, List.of());
 
@@ -42,7 +41,7 @@ class ActivationsSummaryTest {
     }
 
     @Test
-    void shouldNotBeFavorableWhenNoActivations() {
+    void shouldNotBeFavorable_WhenNoActivations() {
         // Given: No activations
         ActivationsSummary summary = createSummary(0, 0, List.of());
 
@@ -51,7 +50,7 @@ class ActivationsSummaryTest {
     }
 
     @Test
-    void shouldScore0WithNoActivations() {
+    void shouldScore_0WithNoActivations() {
         // Given: No activations
         ActivationsSummary summary = createSummary(0, 0, List.of());
 
@@ -60,7 +59,7 @@ class ActivationsSummaryTest {
     }
 
     @Test
-    void shouldCalculateBaseScoreWithoutRecencyBonus() {
+    void shouldCalculateBaseScore_WithoutRecencyBonus() {
         // Given: 10 activations, all older than 5 minutes
         Instant tenMinutesAgo = Instant.now().minus(10, ChronoUnit.MINUTES);
         List<Activation> activations = List.of(
@@ -74,7 +73,7 @@ class ActivationsSummaryTest {
     }
 
     @Test
-    void shouldAddRecencyBonusForRecentActivation() {
+    void shouldAddRecencyBonus_ForRecentActivation() {
         // Given: 10 activations, one spotted 3 minutes ago
         Instant threeMinutesAgo = Instant.now().minus(3, ChronoUnit.MINUTES);
         Instant tenMinutesAgo = Instant.now().minus(10, ChronoUnit.MINUTES);
@@ -89,7 +88,7 @@ class ActivationsSummaryTest {
     }
 
     @Test
-    void shouldAddRecencyBonusWhenActivationExactly5MinutesOld() {
+    void shouldAddRecencyBonus_WhenActivationExactly5MinutesOld() {
         // Given: Activation spotted exactly 5 minutes ago
         Instant fiveMinutesAgo = Instant.now().minus(5, ChronoUnit.MINUTES);
         List<Activation> activations = List.of(
@@ -102,7 +101,7 @@ class ActivationsSummaryTest {
     }
 
     @Test
-    void shouldNotAddRecencyBonusWhenActivationOver5MinutesOld() {
+    void shouldNotAddRecencyBonus_WhenActivationOver5MinutesOld() {
         // Given: Activation spotted 6 minutes ago
         Instant sixMinutesAgo = Instant.now().minus(6, ChronoUnit.MINUTES);
         List<Activation> activations = List.of(
@@ -115,7 +114,7 @@ class ActivationsSummaryTest {
     }
 
     @Test
-    void shouldCapScoreAt100() {
+    void shouldCapScore_At100() {
         // Given: 40 activations (would score 120 before capping)
         ActivationsSummary summary = createSummary(20, 20, List.of());
 
@@ -124,7 +123,7 @@ class ActivationsSummaryTest {
     }
 
     @Test
-    void shouldCapScoreAt100WithRecencyBonus() {
+    void shouldCapScore_At100WithRecencyBonus() {
         // Given: 34 activations with recent activity
         Instant now = Instant.now();
         List<Activation> activations = List.of(createActivation("1", now));
@@ -135,7 +134,7 @@ class ActivationsSummaryTest {
     }
 
     @Test
-    void shouldScoreCorrectlyFor3Activations() {
+    void shouldScoreCorrectly_For3Activations() {
         // Given: 3 activations (below favorable threshold)
         ActivationsSummary summary = createSummary(2, 1, List.of());
 
@@ -144,7 +143,7 @@ class ActivationsSummaryTest {
     }
 
     @Test
-    void shouldScoreCorrectlyFor5ActivationsWithRecentActivity() {
+    void shouldScoreCorrectly_For5ActivationsWithRecentActivity() {
         // Given: 5 activations with recent activity
         Instant now = Instant.now();
         List<Activation> activations = List.of(createActivation("1", now));
@@ -155,7 +154,7 @@ class ActivationsSummaryTest {
     }
 
     @Test
-    void shouldScoreCorrectlyFor20ActivationsWithRecentActivity() {
+    void shouldScoreCorrectly_For20ActivationsWithRecentActivity() {
         // Given: 20 activations with recent activity
         Instant now = Instant.now();
         List<Activation> activations = List.of(createActivation("1", now));
@@ -166,7 +165,7 @@ class ActivationsSummaryTest {
     }
 
     @Test
-    void shouldHandleNullActivationsList() {
+    void shouldHandle_NullActivationsList() {
         // Given: Null activations list
         ActivationsSummary summary = new ActivationsSummary(null, 10, 5, Instant.now());
 
@@ -175,7 +174,7 @@ class ActivationsSummaryTest {
     }
 
     @Test
-    void shouldHandleEmptyActivationsList() {
+    void shouldHandle_EmptyActivationsList() {
         // Given: Empty activations list but positive counts (edge case)
         ActivationsSummary summary = createSummary(5, 5, List.of());
 
@@ -184,7 +183,7 @@ class ActivationsSummaryTest {
     }
 
     @Test
-    void shouldHandleActivationsWithNullSpottedAt() {
+    void shouldHandle_ActivationsWithNullSpottedAt() {
         // Given: Activations with null spottedAt timestamps
         List<Activation> activations = List.of(
                 createActivation("1", null),
@@ -197,7 +196,7 @@ class ActivationsSummaryTest {
     }
 
     @Test
-    void shouldImplementScoreable() {
+    void shouldImplement_ScoreableInterface() {
         // Given/When
         ActivationsSummary summary = createSummary(5, 5, List.of());
 

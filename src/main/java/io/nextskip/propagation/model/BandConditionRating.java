@@ -1,5 +1,7 @@
 package io.nextskip.propagation.model;
 
+import java.util.Locale;
+
 /**
  * Band condition quality ratings.
  *
@@ -26,7 +28,7 @@ public enum BandConditionRating {
             return UNKNOWN;
         }
         try {
-            return BandConditionRating.valueOf(value.trim().toUpperCase());
+            return BandConditionRating.valueOf(value.trim().toUpperCase(Locale.ROOT));
         } catch (IllegalArgumentException e) {
             return UNKNOWN;
         }

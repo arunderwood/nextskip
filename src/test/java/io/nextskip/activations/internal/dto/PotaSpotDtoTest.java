@@ -12,10 +12,15 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 class PotaSpotDtoTest {
 
+    private static final String TIMESTAMP = "2025-12-14T12:30:00";
+    private static final long SPOT_ID = 12345L;
+    private static final String CALLSIGN_W1ABC = "W1ABC";
+    private static final String PARK_REFERENCE = "US-0001";
+
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Test
-    void shouldDeserializeFromJson() throws Exception {
+    void shouldDeserialize_fromJson() throws Exception {
         // Given: POTA API JSON response
         String json = """
             {
@@ -39,23 +44,23 @@ class PotaSpotDtoTest {
         PotaSpotDto dto = objectMapper.readValue(json, PotaSpotDto.class);
 
         // Then: All fields mapped correctly
-        assertEquals(12345L, dto.spotId());
-        assertEquals("W1ABC", dto.activator());
-        assertEquals("US-0001", dto.reference());
+        assertEquals(SPOT_ID, dto.spotId());
+        assertEquals(CALLSIGN_W1ABC, dto.activator());
+        assertEquals(PARK_REFERENCE, dto.reference());
         assertEquals("14.250", dto.frequency());
         assertEquals("SSB", dto.mode());
         assertEquals("Test Park", dto.name());
         assertEquals("FN42", dto.grid6());
         assertEquals("42.5", dto.latitude());
         assertEquals("-71.3", dto.longitude());
-        assertEquals("2025-12-14T12:30:00", dto.spotTime());
+        assertEquals(TIMESTAMP, dto.spotTime());
         assertEquals(15, dto.qsos());
         assertEquals("K2DEF", dto.spotter());
         assertEquals("Good signal", dto.comments());
     }
 
     @Test
-    void shouldHandleNullFields() throws Exception {
+    void shouldHandle_nullFields() throws Exception {
         // Given: Minimal JSON with null fields
         String json = """
             {
@@ -79,23 +84,23 @@ class PotaSpotDtoTest {
         PotaSpotDto dto = objectMapper.readValue(json, PotaSpotDto.class);
 
         // Then: Required fields present, optional fields null
-        assertEquals(12345L, dto.spotId());
-        assertEquals("W1ABC", dto.activator());
-        assertEquals("US-0001", dto.reference());
+        assertEquals(SPOT_ID, dto.spotId());
+        assertEquals(CALLSIGN_W1ABC, dto.activator());
+        assertEquals(PARK_REFERENCE, dto.reference());
         assertNull(dto.frequency());
         assertNull(dto.mode());
         assertNull(dto.name());
         assertNull(dto.grid6());
         assertNull(dto.latitude());
         assertNull(dto.longitude());
-        assertEquals("2025-12-14T12:30:00", dto.spotTime());
+        assertEquals(TIMESTAMP, dto.spotTime());
         assertNull(dto.qsos());
         assertNull(dto.spotter());
         assertNull(dto.comments());
     }
 
     @Test
-    void shouldIgnoreUnknownFields() throws Exception {
+    void shouldIgnore_unknownFields() throws Exception {
         // Given: JSON with extra unknown fields
         String json = """
             {
@@ -113,15 +118,15 @@ class PotaSpotDtoTest {
 
         // Then: Known fields mapped, unknown fields ignored
         assertNotNull(dto);
-        assertEquals(12345L, dto.spotId());
-        assertEquals("W1ABC", dto.activator());
+        assertEquals(SPOT_ID, dto.spotId());
+        assertEquals(CALLSIGN_W1ABC, dto.activator());
     }
 
     @Test
-    void shouldCreateDtoWithConstructor() {
+    void shouldCreate_dtoWithConstructor() {
         // When: Create DTO directly
         PotaSpotDto dto = new PotaSpotDto(
-                12345L,
+                SPOT_ID,
                 "W1ABC",
                 "US-0001",
                 "14.250",
@@ -131,15 +136,15 @@ class PotaSpotDtoTest {
                 "FN42",
                 "42.5",
                 "-71.3",
-                "2025-12-14T12:30:00",
+                TIMESTAMP,
                 15,
                 "K2DEF",
                 "Good signal"
         );
 
         // Then: All fields accessible
-        assertEquals(12345L, dto.spotId());
-        assertEquals("W1ABC", dto.activator());
-        assertEquals("US-0001", dto.reference());
+        assertEquals(SPOT_ID, dto.spotId());
+        assertEquals(CALLSIGN_W1ABC, dto.activator());
+        assertEquals(PARK_REFERENCE, dto.reference());
     }
 }

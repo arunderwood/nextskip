@@ -38,6 +38,11 @@ public record Contest(
         String officialRulesUrl
 ) implements Event {
 
+    // Scoring thresholds for upcoming contests (hours until start)
+    private static final long IMMINENT_HOURS = 6;
+    private static final long SOON_HOURS = 24;
+    private static final long UPCOMING_HOURS = 72;
+
     /**
      * Compact constructor for defensive copying of mutable collections.
      */
@@ -127,10 +132,7 @@ public record Contest(
      */
     @Override
     public boolean isEndingSoon() {
-        if (getStatus() != EventStatus.ACTIVE) {
-            return false;
-        }
-        return getTimeRemaining().toHours() < 1;
+        return getStatus() == EventStatus.ACTIVE && getTimeRemaining().toHours() < 1;
     }
 
     /**
@@ -176,15 +178,15 @@ public record Contest(
                 Duration timeToStart = getTimeRemaining();
                 long hours = timeToStart.toHours();
 
-                if (hours <= 6) {
+                if (hours <= IMMINENT_HOURS) {
                     // 0-6 hours: 80-100 points (linear decay)
                     yield (int) (100 - (hours * 3.33));
-                } else if (hours <= 24) {
+                } else if (hours <= SOON_HOURS) {
                     // 6-24 hours: 40-80 points (linear decay)
-                    yield (int) (80 - ((hours - 6) * 2.22));
-                } else if (hours <= 72) {
+                    yield (int) (80 - ((hours - IMMINENT_HOURS) * 2.22));
+                } else if (hours <= UPCOMING_HOURS) {
                     // 24-72 hours: 20-40 points (linear decay)
-                    yield (int) (40 - ((hours - 24) * 0.42));
+                    yield (int) (40 - ((hours - SOON_HOURS) * 0.42));
                 } else {
                     // 72+ hours: 10 points (far future)
                     yield 10;

@@ -24,6 +24,11 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 class SotaClientTest {
 
+    private static final String SOTA_API_SOURCE = "SOTA API";
+    private static final String W1ABC_PORTABLE = "W1ABC/P";
+    private static final String HEADER_CONTENT_TYPE = "Content-Type";
+    private static final String CONTENT_TYPE_JSON = "application/json";
+
     private WireMockServer wireMockServer;
     private SotaClient sotaClient;
     private CacheManager cacheManager;
@@ -48,7 +53,7 @@ class SotaClientTest {
     }
 
     @Test
-    void shouldFetchRecentSotaActivationsSuccessfully() {
+    void shouldFetch_RecentSotaActivationsSuccessfully() {
         // Given: Mock SOTA API response with recent and old spots
         Instant now = Instant.now();
         Instant recentTime = now.minus(5, ChronoUnit.MINUTES);
@@ -83,7 +88,7 @@ class SotaClientTest {
         wireMockServer.stubFor(get(urlEqualTo("/"))
                 .willReturn(aResponse()
                         .withStatus(200)
-                        .withHeader("Content-Type", "application/json")
+                        .withHeader(HEADER_CONTENT_TYPE, CONTENT_TYPE_JSON)
                         .withBody(jsonResponse)));
 
         // When: Fetch activations
@@ -95,12 +100,12 @@ class SotaClientTest {
 
         Activation activation = result.get(0);
         assertEquals("123456", activation.spotId());
-        assertEquals("W1ABC/P", activation.activatorCallsign());
+        assertEquals(W1ABC_PORTABLE, activation.activatorCallsign());
         assertEquals(ActivationType.SOTA, activation.type());
         assertEquals(14250.0, activation.frequency(), "Frequency should be converted from MHz to kHz");
         assertEquals("SSB", activation.mode());
         assertNull(activation.qsoCount(), "SOTA doesn't provide QSO count");
-        assertEquals("SOTA API", activation.source());
+        assertEquals(SOTA_API_SOURCE, activation.source());
         assertNotNull(activation.spottedAt());
 
         // Verify location data (Summit object)
@@ -112,7 +117,7 @@ class SotaClientTest {
     }
 
     @Test
-    void shouldFilterOutOldSpots() {
+    void shouldFilter_OutOldSpots() {
         // Given: All spots are older than 30 minutes
         Instant oldTime = Instant.now().minus(45, ChronoUnit.MINUTES);
 
@@ -133,7 +138,7 @@ class SotaClientTest {
         wireMockServer.stubFor(get(urlEqualTo("/"))
                 .willReturn(aResponse()
                         .withStatus(200)
-                        .withHeader("Content-Type", "application/json")
+                        .withHeader(HEADER_CONTENT_TYPE, CONTENT_TYPE_JSON)
                         .withBody(jsonResponse)));
 
         // When: Fetch activations
@@ -145,12 +150,12 @@ class SotaClientTest {
     }
 
     @Test
-    void shouldHandleEmptyResponseGracefully() {
+    void shouldHandle_EmptyResponseGracefully() {
         // Given: Empty array response
         wireMockServer.stubFor(get(urlEqualTo("/"))
                 .willReturn(aResponse()
                         .withStatus(200)
-                        .withHeader("Content-Type", "application/json")
+                        .withHeader(HEADER_CONTENT_TYPE, CONTENT_TYPE_JSON)
                         .withBody("[]")));
 
         // When: Fetch activations
@@ -162,7 +167,7 @@ class SotaClientTest {
     }
 
     @Test
-    void shouldHandleNullFieldsGracefully() {
+    void shouldHandle_NullFieldsGracefully() {
         // Given: Response with null/missing fields
         Instant recentTime = Instant.now().minus(5, ChronoUnit.MINUTES);
 
@@ -183,7 +188,7 @@ class SotaClientTest {
         wireMockServer.stubFor(get(urlEqualTo("/"))
                 .willReturn(aResponse()
                         .withStatus(200)
-                        .withHeader("Content-Type", "application/json")
+                        .withHeader(HEADER_CONTENT_TYPE, CONTENT_TYPE_JSON)
                         .withBody(jsonResponse)));
 
         // When: Fetch activations
@@ -194,13 +199,13 @@ class SotaClientTest {
         assertEquals(1, result.size());
 
         Activation activation = result.get(0);
-        assertEquals("W1ABC/P", activation.activatorCallsign());
+        assertEquals(W1ABC_PORTABLE, activation.activatorCallsign());
         assertNull(activation.frequency());
         assertNull(activation.mode());
     }
 
     @Test
-    void shouldConvertFrequencyFromMHzToKHz() {
+    void shouldConvert_FrequencyFromMHzToKHz() {
         // Given: Frequency in MHz format
         Instant recentTime = Instant.now().minus(5, ChronoUnit.MINUTES);
 
@@ -221,7 +226,7 @@ class SotaClientTest {
         wireMockServer.stubFor(get(urlEqualTo("/"))
                 .willReturn(aResponse()
                         .withStatus(200)
-                        .withHeader("Content-Type", "application/json")
+                        .withHeader(HEADER_CONTENT_TYPE, CONTENT_TYPE_JSON)
                         .withBody(jsonResponse)));
 
         // When: Fetch activations
@@ -234,7 +239,7 @@ class SotaClientTest {
     }
 
     @Test
-    void shouldHandleHttpErrorWithException() {
+    void shouldHandle_HttpErrorWithException() {
         // Given: API returns 500 error
         wireMockServer.stubFor(get(urlEqualTo("/"))
                 .willReturn(aResponse()
@@ -246,11 +251,11 @@ class SotaClientTest {
                 () -> sotaClient.fetch());
 
         assertTrue(exception.getMessage().contains("HTTP 500"));
-        assertTrue(exception.getMessage().contains("SOTA API"));
+        assertTrue(exception.getMessage().contains(SOTA_API_SOURCE));
     }
 
     @Test
-    void shouldHandleNetworkErrorWithException() {
+    void shouldHandle_NetworkErrorWithException() {
         // Given: Simulate network error by stopping server
         wireMockServer.stop();
 
@@ -263,7 +268,7 @@ class SotaClientTest {
     }
 
     @Test
-    void shouldParseTimestampWithoutZSuffix() {
+    void shouldParse_TimestampWithoutZSuffix() {
         // Given: SOTA format without 'Z' suffix
         Instant recentTime = Instant.now().minus(5, ChronoUnit.MINUTES);
 
@@ -284,7 +289,7 @@ class SotaClientTest {
         wireMockServer.stubFor(get(urlEqualTo("/"))
                 .willReturn(aResponse()
                         .withStatus(200)
-                        .withHeader("Content-Type", "application/json")
+                        .withHeader(HEADER_CONTENT_TYPE, CONTENT_TYPE_JSON)
                         .withBody(jsonResponse)));
 
         // When: Fetch activations
@@ -297,7 +302,7 @@ class SotaClientTest {
     }
 
     @Test
-    void shouldParseTimestampWithZSuffix() {
+    void shouldParse_TimestampWithZSuffix() {
         // Given: ISO-8601 format with 'Z' suffix
         Instant recentTime = Instant.now().minus(5, ChronoUnit.MINUTES);
 
@@ -318,7 +323,7 @@ class SotaClientTest {
         wireMockServer.stubFor(get(urlEqualTo("/"))
                 .willReturn(aResponse()
                         .withStatus(200)
-                        .withHeader("Content-Type", "application/json")
+                        .withHeader(HEADER_CONTENT_TYPE, CONTENT_TYPE_JSON)
                         .withBody(jsonResponse)));
 
         // When: Fetch activations
@@ -331,7 +336,7 @@ class SotaClientTest {
     }
 
     @Test
-    void shouldHandleInvalidTimestampGracefully() {
+    void shouldHandle_InvalidTimestampGracefully() {
         // Given: Invalid timestamp format - will use current time
         String jsonResponse = """
             [
@@ -350,7 +355,7 @@ class SotaClientTest {
         wireMockServer.stubFor(get(urlEqualTo("/"))
                 .willReturn(aResponse()
                         .withStatus(200)
-                        .withHeader("Content-Type", "application/json")
+                        .withHeader(HEADER_CONTENT_TYPE, CONTENT_TYPE_JSON)
                         .withBody(jsonResponse)));
 
         // When: Fetch activations
@@ -368,13 +373,13 @@ class SotaClientTest {
     }
 
     @Test
-    void shouldReturnSourceName() {
+    void shouldReturn_SourceName() {
         // When/Then
-        assertEquals("SOTA API", sotaClient.getSourceName());
+        assertEquals(SOTA_API_SOURCE, sotaClient.getSourceName());
     }
 
     @Test
-    void shouldHandleInvalidFrequencyFormat() {
+    void shouldHandle_InvalidFrequencyFormat() {
         // Given: Invalid frequency value
         Instant recentTime = Instant.now().minus(5, ChronoUnit.MINUTES);
 
@@ -395,7 +400,7 @@ class SotaClientTest {
         wireMockServer.stubFor(get(urlEqualTo("/"))
                 .willReturn(aResponse()
                         .withStatus(200)
-                        .withHeader("Content-Type", "application/json")
+                        .withHeader(HEADER_CONTENT_TYPE, CONTENT_TYPE_JSON)
                         .withBody(jsonResponse)));
 
         // When: Fetch activations

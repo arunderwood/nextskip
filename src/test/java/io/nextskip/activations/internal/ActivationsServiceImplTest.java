@@ -38,7 +38,7 @@ class ActivationsServiceImplTest {
     }
 
     @Test
-    void shouldCombinePotaAndSotaActivations() {
+    void shouldCombine_PotaAndSotaActivations() {
         // Given: Both clients return data
         List<Activation> potaActivations = List.of(
                 createPotaActivation("1", "W1ABC"),
@@ -67,7 +67,7 @@ class ActivationsServiceImplTest {
     }
 
     @Test
-    void shouldHandlePotaClientFailure() {
+    void shouldHandle_PotaClientFailure() {
         // Given: POTA client throws exception, SOTA succeeds
         when(potaClient.fetch()).thenThrow(new RuntimeException("POTA API unavailable"));
         when(sotaClient.fetch()).thenReturn(List.of(createSotaActivation("1", "W1ABC/P")));
@@ -87,7 +87,7 @@ class ActivationsServiceImplTest {
     }
 
     @Test
-    void shouldHandleSotaClientFailure() {
+    void shouldHandle_SotaClientFailure() {
         // Given: SOTA client throws exception, POTA succeeds
         when(potaClient.fetch()).thenReturn(List.of(createPotaActivation("1", "W1ABC")));
         when(sotaClient.fetch()).thenThrow(new RuntimeException("SOTA API unavailable"));
@@ -106,7 +106,7 @@ class ActivationsServiceImplTest {
     }
 
     @Test
-    void shouldHandleBothClientFailures() {
+    void shouldHandle_BothClientFailures() {
         // Given: Both clients fail
         when(potaClient.fetch()).thenThrow(new RuntimeException("POTA API down"));
         when(sotaClient.fetch()).thenThrow(new RuntimeException("SOTA API down"));
@@ -126,7 +126,7 @@ class ActivationsServiceImplTest {
     }
 
     @Test
-    void shouldHandleEmptyResults() {
+    void shouldHandle_EmptyResults() {
         // Given: Both clients return empty lists
         when(potaClient.fetch()).thenReturn(List.of());
         when(sotaClient.fetch()).thenReturn(List.of());
@@ -143,7 +143,7 @@ class ActivationsServiceImplTest {
     }
 
     @Test
-    void shouldSetRecentLastUpdatedTimestamp() {
+    void shouldSet_RecentLastUpdatedTimestamp() {
         // Given
         Instant before = Instant.now();
         when(potaClient.fetch()).thenReturn(List.of());

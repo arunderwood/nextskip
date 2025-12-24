@@ -13,7 +13,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class ActivationTest {
 
     @Test
-    void shouldBeFavorableWhenSpottedWithin15Minutes() {
+    void shouldBeFavorable_WhenSpottedWithin15Minutes() {
         // Given: Activation spotted 10 minutes ago
         Instant tenMinutesAgo = Instant.now().minus(10, ChronoUnit.MINUTES);
         Activation activation = createActivation(tenMinutesAgo);
@@ -23,7 +23,7 @@ class ActivationTest {
     }
 
     @Test
-    void shouldBeFavorableWhenSpottedExactly15MinutesAgo() {
+    void shouldBeFavorable_WhenSpottedExactly15MinutesAgo() {
         // Given: Activation spotted exactly 15 minutes ago
         Instant fifteenMinutesAgo = Instant.now().minus(15, ChronoUnit.MINUTES);
         Activation activation = createActivation(fifteenMinutesAgo);
@@ -33,7 +33,7 @@ class ActivationTest {
     }
 
     @Test
-    void shouldNotBeFavorableWhenSpottedOver15MinutesAgo() {
+    void shouldNotBeFavorable_WhenSpottedOver15MinutesAgo() {
         // Given: Activation spotted 20 minutes ago
         Instant twentyMinutesAgo = Instant.now().minus(20, ChronoUnit.MINUTES);
         Activation activation = createActivation(twentyMinutesAgo);
@@ -43,7 +43,7 @@ class ActivationTest {
     }
 
     @Test
-    void shouldNotBeFavorableWhenSpottedAtIsNull() {
+    void shouldNotBeFavorable_WhenSpottedAtIsNull() {
         // Given: Activation with null spottedAt
         Activation activation = createActivation(null);
 
@@ -52,7 +52,7 @@ class ActivationTest {
     }
 
     @Test
-    void shouldScore100WhenSpottedWithin5Minutes() {
+    void shouldScore100_WhenSpottedWithin5Minutes() {
         // Given: Activation spotted 3 minutes ago
         Instant threeMinutesAgo = Instant.now().minus(3, ChronoUnit.MINUTES);
         Activation activation = createActivation(threeMinutesAgo);
@@ -62,7 +62,7 @@ class ActivationTest {
     }
 
     @Test
-    void shouldScore100WhenSpottedExactly5MinutesAgo() {
+    void shouldScore100_WhenSpottedExactly5MinutesAgo() {
         // Given: Activation spotted exactly 5 minutes ago
         Instant fiveMinutesAgo = Instant.now().minus(5, ChronoUnit.MINUTES);
         Activation activation = createActivation(fiveMinutesAgo);
@@ -72,7 +72,7 @@ class ActivationTest {
     }
 
     @Test
-    void shouldDecayLinearlyBetween5And15Minutes() {
+    void shouldDecay_LinearlyBetween5And15Minutes() {
         // Given: Activation spotted 10 minutes ago
         Instant tenMinutesAgo = Instant.now().minus(10, ChronoUnit.MINUTES);
         Activation activation = createActivation(tenMinutesAgo);
@@ -83,7 +83,7 @@ class ActivationTest {
     }
 
     @Test
-    void shouldScore80WhenSpotted15MinutesAgo() {
+    void shouldScore80_WhenSpotted15MinutesAgo() {
         // Given: Activation spotted 15 minutes ago
         Instant fifteenMinutesAgo = Instant.now().minus(15, ChronoUnit.MINUTES);
         Activation activation = createActivation(fifteenMinutesAgo);
@@ -95,7 +95,7 @@ class ActivationTest {
     }
 
     @Test
-    void shouldDecayLinearlyBetween15And30Minutes() {
+    void shouldDecay_LinearlyBetween15And30Minutes() {
         // Given: Activation spotted 20 minutes ago
         Instant twentyMinutesAgo = Instant.now().minus(20, ChronoUnit.MINUTES);
         Activation activation = createActivation(twentyMinutesAgo);
@@ -107,7 +107,7 @@ class ActivationTest {
     }
 
     @Test
-    void shouldScore20WhenSpotted30MinutesAgo() {
+    void shouldScore20_WhenSpotted30MinutesAgo() {
         // Given: Activation spotted 30 minutes ago
         Instant thirtyMinutesAgo = Instant.now().minus(30, ChronoUnit.MINUTES);
         Activation activation = createActivation(thirtyMinutesAgo);
@@ -119,7 +119,7 @@ class ActivationTest {
     }
 
     @Test
-    void shouldDecayLinearlyBetween30And60Minutes() {
+    void shouldDecay_LinearlyBetween30And60Minutes() {
         // Given: Activation spotted 45 minutes ago
         Instant fortyFiveMinutesAgo = Instant.now().minus(45, ChronoUnit.MINUTES);
         Activation activation = createActivation(fortyFiveMinutesAgo);
@@ -131,7 +131,7 @@ class ActivationTest {
     }
 
     @Test
-    void shouldScore0WhenSpotted60MinutesAgo() {
+    void shouldScore0_WhenSpotted60MinutesAgo() {
         // Given: Activation spotted 60 minutes ago
         Instant sixtyMinutesAgo = Instant.now().minus(60, ChronoUnit.MINUTES);
         Activation activation = createActivation(sixtyMinutesAgo);
@@ -142,7 +142,7 @@ class ActivationTest {
     }
 
     @Test
-    void shouldScore0WhenSpottedOver60MinutesAgo() {
+    void shouldScore0_WhenSpottedOver60MinutesAgo() {
         // Given: Activation spotted 90 minutes ago
         Instant ninetyMinutesAgo = Instant.now().minus(90, ChronoUnit.MINUTES);
         Activation activation = createActivation(ninetyMinutesAgo);
@@ -152,7 +152,7 @@ class ActivationTest {
     }
 
     @Test
-    void shouldScore0WhenSpottedAtIsNull() {
+    void shouldScore0_WhenSpottedAtIsNull() {
         // Given: Activation with null spottedAt
         Activation activation = createActivation(null);
 
@@ -161,7 +161,7 @@ class ActivationTest {
     }
 
     @Test
-    void shouldScore100WhenSpottedInFuture() {
+    void shouldScore100_WhenSpottedInFuture() {
         // Given: Future timestamp (edge case)
         Instant futureTime = Instant.now().plus(10, ChronoUnit.MINUTES);
         Activation activation = createActivation(futureTime);
@@ -171,7 +171,7 @@ class ActivationTest {
     }
 
     @Test
-    void shouldImplementScoreable() {
+    void shouldImplement_Scoreable() {
         // Given/When
         Activation activation = createActivation(Instant.now());
 

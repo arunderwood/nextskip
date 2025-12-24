@@ -1,5 +1,7 @@
 package io.nextskip.common.model;
 
+import java.util.Locale;
+
 /**
  * Amateur radio frequency bands.
  *
@@ -105,7 +107,7 @@ public enum FrequencyBand {
         if (bandName == null || bandName.isBlank()) {
             return null;
         }
-        String normalized = bandName.toLowerCase().trim();
+        String normalized = bandName.toLowerCase(Locale.ROOT).trim();
         for (FrequencyBand band : values()) {
             if (band.name.equalsIgnoreCase(normalized)) {
                 return band;

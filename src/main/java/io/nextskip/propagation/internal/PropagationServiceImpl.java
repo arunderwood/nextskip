@@ -35,7 +35,14 @@ public class PropagationServiceImpl implements PropagationService {
         this.hamQslClient = hamQslClient;
     }
 
+    /**
+     * Get current solar indices by merging data from NOAA SWPC and HamQSL.
+     *
+     * <p>Primary error handling via clients' Resilience4j annotations.
+     * Service-level fallback ensures dashboard remains functional.
+     */
     @Override
+    @SuppressWarnings("PMD.AvoidCatchingGenericException")
     public SolarIndices getCurrentSolarIndices() {
         try {
             // Fetch from both sources
@@ -62,20 +69,27 @@ public class PropagationServiceImpl implements PropagationService {
                 LOG.error("Both NOAA and HamQSL data unavailable");
                 return null;
             }
-        } catch (Exception e) {
-            LOG.error("Error fetching solar indices", e);
+        } catch (RuntimeException e) {
+            LOG.error("Error fetching solar indices: {}", e.getMessage());
             return null;
         }
     }
 
+    /**
+     * Get current band conditions from HamQSL.
+     *
+     * <p>Primary error handling via HamQslClient's Resilience4j annotations.
+     * Service-level fallback ensures dashboard remains functional.
+     */
     @Override
+    @SuppressWarnings("PMD.AvoidCatchingGenericException")
     public List<BandCondition> getBandConditions() {
         try {
             List<BandCondition> conditions = hamQslClient.fetchBandConditions();
             LOG.debug("Retrieved {} band conditions", conditions.size());
             return conditions;
-        } catch (Exception e) {
-            LOG.error("Error fetching band conditions", e);
+        } catch (RuntimeException e) {
+            LOG.error("Error fetching band conditions: {}", e.getMessage());
             return List.of();
         }
     }

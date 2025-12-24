@@ -29,6 +29,25 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 class HamQslClientTest {
 
+    // XML structure constants
+    private static final String XML_DECLARATION = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>";
+    private static final String SOLAR_OPEN = "<solar>";
+    private static final String SOLAR_CLOSE = "</solar>";
+    private static final String SOLARDATA_OPEN = "<solardata>";
+    private static final String SOLARDATA_CLOSE = "</solardata>";
+    private static final String CALCULATED_CONDITIONS_OPEN = "<calculatedconditions>";
+    private static final String CALCULATED_CONDITIONS_CLOSE = "</calculatedconditions>";
+
+    // XML content constants
+    private static final String SOLARFLUX_145_5 = "<solarflux>145.5</solarflux>";
+    private static final String AINDEX_8 = "<aindex>8</aindex>";
+    private static final String KINDEX_3 = "<kindex>3</kindex>";
+    private static final String SUNSPOTS_115 = "<sunspots>115</sunspots>";
+
+    // HTTP header constants
+    private static final String HEADER_CONTENT_TYPE = "Content-Type";
+    private static final String CONTENT_TYPE_XML = "text/xml";
+
     private WireMockServer wireMockServer;
     private HamQslClient client;
     private CacheManager cacheManager;
@@ -42,7 +61,7 @@ class HamQslClientTest {
         WebClient.Builder webClientBuilder = WebClient.builder();
         cacheManager = new ConcurrentMapCacheManager("solarIndices", "bandConditions");
 
-        client = new TestHamQslClient(webClientBuilder, cacheManager, baseUrl);
+        client = new StubHamQslClient(webClientBuilder, cacheManager, baseUrl);
     }
 
     @AfterEach
@@ -52,20 +71,20 @@ class HamQslClientTest {
 
     @Test
     void testFetchSolarIndices_Success() {
-        String xmlResponse = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" +
-                "<solar>" +
-                "<solardata>" +
-                "<solarflux>145.5</solarflux>" +
-                "<aindex>8</aindex>" +
-                "<kindex>3</kindex>" +
-                "<sunspots>115</sunspots>" +
-                "</solardata>" +
-                "</solar>";
+        String xmlResponse = XML_DECLARATION
+                + SOLAR_OPEN
+                + SOLARDATA_OPEN
+                + SOLARFLUX_145_5
+                + AINDEX_8
+                + KINDEX_3
+                + SUNSPOTS_115
+                + SOLARDATA_CLOSE
+                + SOLAR_CLOSE;
 
         wireMockServer.stubFor(get(urlEqualTo("/"))
                 .willReturn(aResponse()
                         .withStatus(200)
-                        .withHeader("Content-Type", "text/xml")
+                        .withHeader(HEADER_CONTENT_TYPE, CONTENT_TYPE_XML)
                         .withBody(xmlResponse)));
 
         SolarIndices result = client.fetchSolarIndices();
@@ -82,26 +101,26 @@ class HamQslClientTest {
 
     @Test
     void testFetchBandConditions_Success() {
-        String xmlResponse = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" +
-                "<solar>" +
-                "<solardata>" +
-                "<solarflux>145.5</solarflux>" +
-                "<aindex>8</aindex>" +
-                "<kindex>3</kindex>" +
-                "<sunspots>115</sunspots>" +
-                "<calculatedconditions>" +
-                "<band name=\"80m-40m\" time=\"day\">Poor</band>" +
-                "<band name=\"30m-20m\" time=\"day\">Good</band>" +
-                "<band name=\"17m-15m\" time=\"day\">Fair</band>" +
-                "<band name=\"12m-10m\" time=\"day\">Poor</band>" +
-                "</calculatedconditions>" +
-                "</solardata>" +
-                "</solar>";
+        String xmlResponse = XML_DECLARATION
+                + SOLAR_OPEN
+                + SOLARDATA_OPEN
+                + SOLARFLUX_145_5
+                + AINDEX_8
+                + KINDEX_3
+                + SUNSPOTS_115
+                + CALCULATED_CONDITIONS_OPEN
+                + "<band name=\"80m-40m\" time=\"day\">Poor</band>"
+                + "<band name=\"30m-20m\" time=\"day\">Good</band>"
+                + "<band name=\"17m-15m\" time=\"day\">Fair</band>"
+                + "<band name=\"12m-10m\" time=\"day\">Poor</band>"
+                + CALCULATED_CONDITIONS_CLOSE
+                + SOLARDATA_CLOSE
+                + SOLAR_CLOSE;
 
         wireMockServer.stubFor(get(urlEqualTo("/"))
                 .willReturn(aResponse()
                         .withStatus(200)
-                        .withHeader("Content-Type", "text/xml")
+                        .withHeader(HEADER_CONTENT_TYPE, CONTENT_TYPE_XML)
                         .withBody(xmlResponse)));
 
         List<BandCondition> result = client.fetchBandConditions();
@@ -133,23 +152,23 @@ class HamQslClientTest {
 
     @Test
     void testFetchBandConditions_MissingBands() {
-        String xmlResponse = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" +
-                "<solar>" +
-                "<solardata>" +
-                "<solarflux>145.5</solarflux>" +
-                "<aindex>8</aindex>" +
-                "<kindex>3</kindex>" +
-                "<sunspots>115</sunspots>" +
-                "<calculatedconditions>" +
-                "<band name=\"30m-20m\" time=\"day\">Good</band>" +
-                "</calculatedconditions>" +
-                "</solardata>" +
-                "</solar>";
+        String xmlResponse = XML_DECLARATION
+                + SOLAR_OPEN
+                + SOLARDATA_OPEN
+                + SOLARFLUX_145_5
+                + AINDEX_8
+                + KINDEX_3
+                + SUNSPOTS_115
+                + CALCULATED_CONDITIONS_OPEN
+                + "<band name=\"30m-20m\" time=\"day\">Good</band>"
+                + CALCULATED_CONDITIONS_CLOSE
+                + SOLARDATA_CLOSE
+                + SOLAR_CLOSE;
 
         wireMockServer.stubFor(get(urlEqualTo("/"))
                 .willReturn(aResponse()
                         .withStatus(200)
-                        .withHeader("Content-Type", "text/xml")
+                        .withHeader(HEADER_CONTENT_TYPE, CONTENT_TYPE_XML)
                         .withBody(xmlResponse)));
 
         List<BandCondition> result = client.fetchBandConditions();
@@ -160,23 +179,23 @@ class HamQslClientTest {
 
     @Test
     void testFetchBandConditions_InvalidRating() {
-        String xmlResponse = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" +
-                "<solar>" +
-                "<solardata>" +
-                "<solarflux>145.5</solarflux>" +
-                "<aindex>8</aindex>" +
-                "<kindex>3</kindex>" +
-                "<sunspots>115</sunspots>" +
-                "<calculatedconditions>" +
-                "<band name=\"30m-20m\" time=\"day\">Excellent</band>" +
-                "</calculatedconditions>" +
-                "</solardata>" +
-                "</solar>";
+        String xmlResponse = XML_DECLARATION
+                + SOLAR_OPEN
+                + SOLARDATA_OPEN
+                + SOLARFLUX_145_5
+                + AINDEX_8
+                + KINDEX_3
+                + SUNSPOTS_115
+                + CALCULATED_CONDITIONS_OPEN
+                + "<band name=\"30m-20m\" time=\"day\">Excellent</band>"
+                + CALCULATED_CONDITIONS_CLOSE
+                + SOLARDATA_CLOSE
+                + SOLAR_CLOSE;
 
         wireMockServer.stubFor(get(urlEqualTo("/"))
                 .willReturn(aResponse()
                         .withStatus(200)
-                        .withHeader("Content-Type", "text/xml")
+                        .withHeader(HEADER_CONTENT_TYPE, CONTENT_TYPE_XML)
                         .withBody(xmlResponse)));
 
         List<BandCondition> result = client.fetchBandConditions();
@@ -213,7 +232,7 @@ class HamQslClientTest {
         wireMockServer.stubFor(get(urlEqualTo("/"))
                 .willReturn(aResponse()
                         .withStatus(200)
-                        .withHeader("Content-Type", "text/xml")
+                        .withHeader(HEADER_CONTENT_TYPE, CONTENT_TYPE_XML)
                         .withBody("")));
 
         // Empty response should throw InvalidApiResponseException
@@ -226,7 +245,7 @@ class HamQslClientTest {
         wireMockServer.stubFor(get(urlEqualTo("/"))
                 .willReturn(aResponse()
                         .withStatus(200)
-                        .withHeader("Content-Type", "text/xml")
+                        .withHeader(HEADER_CONTENT_TYPE, CONTENT_TYPE_XML)
                         .withBody("")));
 
         // Empty response should throw InvalidApiResponseException
@@ -239,7 +258,7 @@ class HamQslClientTest {
         wireMockServer.stubFor(get(urlEqualTo("/"))
                 .willReturn(aResponse()
                         .withStatus(200)
-                        .withHeader("Content-Type", "text/xml")
+                        .withHeader(HEADER_CONTENT_TYPE, CONTENT_TYPE_XML)
                         .withBody("<solar><invalid></solar>")));
 
         assertThrows(RuntimeException.class, () -> client.fetchSolarIndices());
@@ -247,25 +266,25 @@ class HamQslClientTest {
 
     @Test
     void testBandConditionRating_CaseInsensitive() {
-        String xmlResponse = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" +
-                "<solar>" +
-                "<solardata>" +
-                "<solarflux>145.5</solarflux>" +
-                "<aindex>8</aindex>" +
-                "<kindex>3</kindex>" +
-                "<sunspots>115</sunspots>" +
-                "<calculatedconditions>" +
-                "<band name=\"30m-20m\" time=\"day\">GOOD</band>" +
-                "<band name=\"80m-40m\" time=\"day\">fair</band>" +
-                "<band name=\"12m-10m\" time=\"day\">Poor</band>" +
-                "</calculatedconditions>" +
-                "</solardata>" +
-                "</solar>";
+        String xmlResponse = XML_DECLARATION
+                + SOLAR_OPEN
+                + SOLARDATA_OPEN
+                + SOLARFLUX_145_5
+                + AINDEX_8
+                + KINDEX_3
+                + SUNSPOTS_115
+                + CALCULATED_CONDITIONS_OPEN
+                + "<band name=\"30m-20m\" time=\"day\">GOOD</band>"
+                + "<band name=\"80m-40m\" time=\"day\">fair</band>"
+                + "<band name=\"12m-10m\" time=\"day\">Poor</band>"
+                + CALCULATED_CONDITIONS_CLOSE
+                + SOLARDATA_CLOSE
+                + SOLAR_CLOSE;
 
         wireMockServer.stubFor(get(urlEqualTo("/"))
                 .willReturn(aResponse()
                         .withStatus(200)
-                        .withHeader("Content-Type", "text/xml")
+                        .withHeader(HEADER_CONTENT_TYPE, CONTENT_TYPE_XML)
                         .withBody(xmlResponse)));
 
         List<BandCondition> result = client.fetchBandConditions();
@@ -279,10 +298,10 @@ class HamQslClientTest {
     }
 
     /**
-     * Test subclass that allows URL override for testing.
+     * Stub subclass that allows URL override for testing.
      */
-    static class TestHamQslClient extends HamQslClient {
-        TestHamQslClient(WebClient.Builder webClientBuilder, CacheManager cacheManager, String testUrl) {
+    static class StubHamQslClient extends HamQslClient {
+        StubHamQslClient(WebClient.Builder webClientBuilder, CacheManager cacheManager, String testUrl) {
             super(webClientBuilder, cacheManager, testUrl);
         }
     }

@@ -36,10 +36,12 @@ import java.util.List;
  * </ul>
  */
 @Component
+@SuppressWarnings("PMD.AvoidCatchingGenericException") // Intentional: wrap unknown exceptions in ExternalApiException
 public class PotaClient implements ExternalDataClient<List<Activation>> {
 
     private static final Logger LOG = LoggerFactory.getLogger(PotaClient.class);
 
+    private static final String SOURCE_NAME = "POTA";
     private static final String POTA_URL = "https://api.pota.app/spot/activator";
     private static final Duration REQUEST_TIMEOUT = Duration.ofSeconds(10);
 
@@ -62,7 +64,7 @@ public class PotaClient implements ExternalDataClient<List<Activation>> {
 
     @Override
     public String getSourceName() {
-        return "POTA API";
+        return SOURCE_NAME + " API";
     }
 
     /**
@@ -101,17 +103,17 @@ public class PotaClient implements ExternalDataClient<List<Activation>> {
 
         } catch (WebClientResponseException e) {
             LOG.error("HTTP error from POTA API: {} {}", e.getStatusCode(), e.getStatusText());
-            throw new ExternalApiException("POTA",
+            throw new ExternalApiException(SOURCE_NAME,
                     "HTTP " + e.getStatusCode() + " from POTA API: " + e.getStatusText(), e);
 
         } catch (WebClientRequestException e) {
             LOG.error("Network error connecting to POTA API", e);
-            throw new ExternalApiException("POTA",
+            throw new ExternalApiException(SOURCE_NAME,
                     "Network error connecting to POTA API: " + e.getMessage(), e);
 
         } catch (Exception e) {
             LOG.error("Unexpected error fetching POTA activations", e);
-            throw new ExternalApiException("POTA",
+            throw new ExternalApiException(SOURCE_NAME,
                     "Unexpected error fetching POTA data: " + e.getMessage(), e);
         }
     }

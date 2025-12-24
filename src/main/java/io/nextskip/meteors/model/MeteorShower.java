@@ -44,6 +44,10 @@ public record MeteorShower(
      */
     private static final double SIGMA_HOURS = 24.0;
 
+    // Scoring thresholds for upcoming meteor showers (hours until visibility start)
+    private static final long IMMINENT_HOURS = 24;
+    private static final long UPCOMING_HOURS = 72;
+
     @Override
     public String getName() {
         return name;
@@ -188,12 +192,12 @@ public record MeteorShower(
                 Duration timeToStart = Duration.between(now, visibilityStart);
                 long hours = timeToStart.toHours();
 
-                if (hours <= 24) {
+                if (hours <= IMMINENT_HOURS) {
                     // 0-24 hours: 60-80 points (linear decay)
                     yield (int) (80 - (hours * 0.83));
-                } else if (hours <= 72) {
+                } else if (hours <= UPCOMING_HOURS) {
                     // 24-72 hours: 30-60 points (linear decay)
-                    yield (int) (60 - ((hours - 24) * 0.625));
+                    yield (int) (60 - ((hours - IMMINENT_HOURS) * 0.625));
                 } else {
                     // 72+ hours: fixed 15 points
                     yield 15;

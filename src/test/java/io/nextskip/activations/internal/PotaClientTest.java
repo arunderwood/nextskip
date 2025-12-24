@@ -23,6 +23,11 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 class PotaClientTest {
 
+    private static final String POTA_API_SOURCE = "POTA API";
+    private static final String W1ABC_CALLSIGN = "W1ABC";
+    private static final String HEADER_CONTENT_TYPE = "Content-Type";
+    private static final String CONTENT_TYPE_JSON = "application/json";
+
     private WireMockServer wireMockServer;
     private PotaClient potaClient;
     private CacheManager cacheManager;
@@ -47,7 +52,7 @@ class PotaClientTest {
     }
 
     @Test
-    void shouldFetchPotaActivationsSuccessfully() {
+    void shouldFetch_PotaActivationsSuccessfully() {
         // Given: Mock POTA API response with valid data
         String jsonResponse = """
             [
@@ -83,7 +88,7 @@ class PotaClientTest {
         wireMockServer.stubFor(get(urlEqualTo("/"))
                 .willReturn(aResponse()
                         .withStatus(200)
-                        .withHeader("Content-Type", "application/json")
+                        .withHeader(HEADER_CONTENT_TYPE, CONTENT_TYPE_JSON)
                         .withBody(jsonResponse)));
 
         // When: Fetch activations
@@ -95,12 +100,12 @@ class PotaClientTest {
 
         Activation first = result.get(0);
         assertEquals("123456", first.spotId());
-        assertEquals("W1ABC", first.activatorCallsign());
+        assertEquals(W1ABC_CALLSIGN, first.activatorCallsign());
         assertEquals(ActivationType.POTA, first.type());
         assertEquals(14250.0, first.frequency());
         assertEquals("SSB", first.mode());
         assertEquals(15, first.qsoCount());
-        assertEquals("POTA API", first.source());
+        assertEquals(POTA_API_SOURCE, first.source());
         assertNotNull(first.spottedAt());
 
         // Verify location data (Park object)
@@ -117,12 +122,12 @@ class PotaClientTest {
     }
 
     @Test
-    void shouldHandleEmptyResponseGracefully() {
+    void shouldHandle_EmptyResponseGracefully() {
         // Given: Empty array response
         wireMockServer.stubFor(get(urlEqualTo("/"))
                 .willReturn(aResponse()
                         .withStatus(200)
-                        .withHeader("Content-Type", "application/json")
+                        .withHeader(HEADER_CONTENT_TYPE, CONTENT_TYPE_JSON)
                         .withBody("[]")));
 
         // When: Fetch activations
@@ -134,7 +139,7 @@ class PotaClientTest {
     }
 
     @Test
-    void shouldHandleNullFieldsGracefully() {
+    void shouldHandle_NullFieldsGracefully() {
         // Given: Response with null/missing fields
         String jsonResponse = """
             [
@@ -157,7 +162,7 @@ class PotaClientTest {
         wireMockServer.stubFor(get(urlEqualTo("/"))
                 .willReturn(aResponse()
                         .withStatus(200)
-                        .withHeader("Content-Type", "application/json")
+                        .withHeader(HEADER_CONTENT_TYPE, CONTENT_TYPE_JSON)
                         .withBody(jsonResponse)));
 
         // When: Fetch activations
@@ -168,7 +173,7 @@ class PotaClientTest {
         assertEquals(1, result.size());
 
         Activation activation = result.get(0);
-        assertEquals("W1ABC", activation.activatorCallsign());
+        assertEquals(W1ABC_CALLSIGN, activation.activatorCallsign());
         assertNull(activation.frequency());
         assertNull(activation.qsoCount());
 
@@ -180,7 +185,7 @@ class PotaClientTest {
     }
 
     @Test
-    void shouldHandleHttpErrorWithException() {
+    void shouldHandle_HttpErrorWithException() {
         // Given: API returns 500 error
         wireMockServer.stubFor(get(urlEqualTo("/"))
                 .willReturn(aResponse()
@@ -192,11 +197,11 @@ class PotaClientTest {
                 () -> potaClient.fetch());
 
         assertTrue(exception.getMessage().contains("HTTP 500"));
-        assertTrue(exception.getMessage().contains("POTA API"));
+        assertTrue(exception.getMessage().contains(POTA_API_SOURCE));
     }
 
     @Test
-    void shouldHandleNetworkErrorWithException() {
+    void shouldHandle_NetworkErrorWithException() {
         // Given: Simulate network error by not stubbing any response
         wireMockServer.stop();
 
@@ -209,7 +214,7 @@ class PotaClientTest {
     }
 
     @Test
-    void shouldParseTimestampWithoutZSuffix() {
+    void shouldParse_TimestampWithoutZSuffix() {
         // Given: POTA format without 'Z' suffix
         String jsonResponse = """
             [
@@ -228,7 +233,7 @@ class PotaClientTest {
         wireMockServer.stubFor(get(urlEqualTo("/"))
                 .willReturn(aResponse()
                         .withStatus(200)
-                        .withHeader("Content-Type", "application/json")
+                        .withHeader(HEADER_CONTENT_TYPE, CONTENT_TYPE_JSON)
                         .withBody(jsonResponse)));
 
         // When: Fetch activations
@@ -241,7 +246,7 @@ class PotaClientTest {
     }
 
     @Test
-    void shouldParseTimestampWithZSuffix() {
+    void shouldParse_TimestampWithZSuffix() {
         // Given: ISO-8601 format with 'Z' suffix
         String jsonResponse = """
             [
@@ -260,7 +265,7 @@ class PotaClientTest {
         wireMockServer.stubFor(get(urlEqualTo("/"))
                 .willReturn(aResponse()
                         .withStatus(200)
-                        .withHeader("Content-Type", "application/json")
+                        .withHeader(HEADER_CONTENT_TYPE, CONTENT_TYPE_JSON)
                         .withBody(jsonResponse)));
 
         // When: Fetch activations
@@ -273,7 +278,7 @@ class PotaClientTest {
     }
 
     @Test
-    void shouldHandleInvalidTimestampGracefully() {
+    void shouldHandle_InvalidTimestampGracefully() {
         // Given: Invalid timestamp format
         String jsonResponse = """
             [
@@ -292,7 +297,7 @@ class PotaClientTest {
         wireMockServer.stubFor(get(urlEqualTo("/"))
                 .willReturn(aResponse()
                         .withStatus(200)
-                        .withHeader("Content-Type", "application/json")
+                        .withHeader(HEADER_CONTENT_TYPE, CONTENT_TYPE_JSON)
                         .withBody(jsonResponse)));
 
         // When: Fetch activations
@@ -310,13 +315,13 @@ class PotaClientTest {
     }
 
     @Test
-    void shouldReturnSourceName() {
+    void shouldReturn_SourceName() {
         // When/Then
-        assertEquals("POTA API", potaClient.getSourceName());
+        assertEquals(POTA_API_SOURCE, potaClient.getSourceName());
     }
 
     @Test
-    void shouldHandleInvalidFrequencyFormat() {
+    void shouldHandle_InvalidFrequencyFormat() {
         // Given: Invalid frequency value
         String jsonResponse = """
             [
@@ -335,7 +340,7 @@ class PotaClientTest {
         wireMockServer.stubFor(get(urlEqualTo("/"))
                 .willReturn(aResponse()
                         .withStatus(200)
-                        .withHeader("Content-Type", "application/json")
+                        .withHeader(HEADER_CONTENT_TYPE, CONTENT_TYPE_JSON)
                         .withBody(jsonResponse)));
 
         // When: Fetch activations

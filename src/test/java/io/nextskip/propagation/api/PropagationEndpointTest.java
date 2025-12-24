@@ -60,7 +60,7 @@ class PropagationEndpointTest {
     }
 
     @Test
-    void testGetPropagationData_Success() {
+    void shouldGet_PropagationData_Success() {
         when(propagationService.getCurrentSolarIndices()).thenReturn(testSolarIndices);
         when(propagationService.getBandConditions()).thenReturn(testBandConditions);
 
@@ -79,7 +79,7 @@ class PropagationEndpointTest {
     }
 
     @Test
-    void testGetPropagationData_NullSolarIndices() {
+    void shouldGet_PropagationData_NullSolarIndices() {
         when(propagationService.getCurrentSolarIndices()).thenReturn(null);
         when(propagationService.getBandConditions()).thenReturn(testBandConditions);
 
@@ -95,7 +95,7 @@ class PropagationEndpointTest {
     }
 
     @Test
-    void testGetPropagationData_EmptyBandConditions() {
+    void shouldGet_PropagationData_EmptyBandConditions() {
         when(propagationService.getCurrentSolarIndices()).thenReturn(testSolarIndices);
         when(propagationService.getBandConditions()).thenReturn(List.of());
 
@@ -111,7 +111,7 @@ class PropagationEndpointTest {
     }
 
     @Test
-    void testGetPropagationData_BothNull() {
+    void shouldGet_PropagationData_BothNull() {
         when(propagationService.getCurrentSolarIndices()).thenReturn(null);
         when(propagationService.getBandConditions()).thenReturn(null);
 
@@ -128,7 +128,7 @@ class PropagationEndpointTest {
     }
 
     @Test
-    void testGetSolarIndices_Success() {
+    void shouldGet_SolarIndices_Success() {
         when(propagationService.getCurrentSolarIndices()).thenReturn(testSolarIndices);
 
         SolarIndices result = endpoint.getSolarIndices();
@@ -143,7 +143,7 @@ class PropagationEndpointTest {
     }
 
     @Test
-    void testGetSolarIndices_Null() {
+    void shouldGet_SolarIndices_Null() {
         when(propagationService.getCurrentSolarIndices()).thenReturn(null);
 
         SolarIndices result = endpoint.getSolarIndices();
@@ -154,7 +154,7 @@ class PropagationEndpointTest {
     }
 
     @Test
-    void testGetBandConditions_Success() {
+    void shouldGet_BandConditions_Success() {
         when(propagationService.getBandConditions()).thenReturn(testBandConditions);
 
         List<BandCondition> result = endpoint.getBandConditions();
@@ -172,7 +172,7 @@ class PropagationEndpointTest {
     }
 
     @Test
-    void testGetBandConditions_Empty() {
+    void shouldGet_BandConditions_Empty() {
         when(propagationService.getBandConditions()).thenReturn(List.of());
 
         List<BandCondition> result = endpoint.getBandConditions();
@@ -184,7 +184,7 @@ class PropagationEndpointTest {
     }
 
     @Test
-    void testResponseTimestamp() throws InterruptedException {
+    void shouldReturn_ResponseTimestamp() throws InterruptedException {
         when(propagationService.getCurrentSolarIndices()).thenReturn(testSolarIndices);
         when(propagationService.getBandConditions()).thenReturn(testBandConditions);
 
@@ -199,7 +199,7 @@ class PropagationEndpointTest {
     }
 
     @Test
-    void testSolarIndicesHelper_IsFavorable() {
+    void shouldTest_SolarIndicesHelper_IsFavorable() {
         // Test the helper method in SolarIndices
         SolarIndices favorable = new SolarIndices(
                 150.0, // High SFI
@@ -225,7 +225,7 @@ class PropagationEndpointTest {
     }
 
     @Test
-    void testBandConditionHelper_IsFavorable() {
+    void shouldTest_BandConditionHelper_IsFavorable() {
         BandCondition good = new BandCondition(
                 FrequencyBand.BAND_20M,
                 BandConditionRating.GOOD,
@@ -256,7 +256,7 @@ class PropagationEndpointTest {
     }
 
     @Test
-    void testBandConditionScore() {
+    void shouldCalculate_BandConditionScore() {
         BandCondition good = new BandCondition(
                 FrequencyBand.BAND_20M,
                 BandConditionRating.GOOD,

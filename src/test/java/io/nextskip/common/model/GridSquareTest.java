@@ -3,6 +3,9 @@ package io.nextskip.common.model;
 import io.nextskip.common.util.HamRadioUtils;
 import org.junit.jupiter.api.Test;
 
+import java.util.Locale;
+
+import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -24,7 +27,15 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * 6. Precision Metadata (5 tests)
  * 7. Integration with HamRadioUtils (3 tests)
  */
+@SuppressWarnings("PMD.TooManyMethods") // Comprehensive test suite requires many test methods
 class GridSquareTest {
+
+    // Test data constants to avoid duplicate literals
+    private static final String GRID_CN87 = "CN87";
+    private static final String GRID_CN87TS = "CN87ts";
+    private static final String GRID_CN87TS50 = "CN87ts50";
+    private static final String ERROR_NULL_OR_BLANK = "cannot be null or blank";
+    private static final String ERROR_INVALID_LENGTH = "must be 2, 4, 6, or 8 characters";
 
     // Reference test cases from Giangrandi QTH Calculator
     private static final TestCase MUNICH = new TestCase("JN58rj", 48.396, 11.458);
@@ -40,15 +51,15 @@ class GridSquareTest {
     void testConstructor_ValidGridSquares() {
         // Valid grid squares at all precision levels
         assertDoesNotThrow(() -> new GridSquare("CN"));         // 2-char field
-        assertDoesNotThrow(() -> new GridSquare("CN87"));       // 4-char square
-        assertDoesNotThrow(() -> new GridSquare("CN87ts"));     // 6-char subsquare
-        assertDoesNotThrow(() -> new GridSquare("CN87ts50"));   // 8-char extended
+        assertDoesNotThrow(() -> new GridSquare(GRID_CN87));       // 4-char square
+        assertDoesNotThrow(() -> new GridSquare(GRID_CN87TS));     // 6-char subsquare
+        assertDoesNotThrow(() -> new GridSquare(GRID_CN87TS50));   // 8-char extended
 
         // Verify values are stored
         assertEquals("CN", new GridSquare("CN").value());
-        assertEquals("CN87", new GridSquare("CN87").value());
-        assertEquals("CN87TS", new GridSquare("CN87ts").value()); // Normalized to uppercase
-        assertEquals("CN87TS50", new GridSquare("CN87ts50").value());
+        assertEquals(GRID_CN87, new GridSquare(GRID_CN87).value());
+        assertEquals("CN87TS", new GridSquare(GRID_CN87TS).value()); // Normalized to uppercase
+        assertEquals("CN87TS50", new GridSquare(GRID_CN87TS50).value());
     }
 
     @Test
@@ -57,7 +68,7 @@ class GridSquareTest {
                 IllegalArgumentException.class,
                 () -> new GridSquare(null)
         );
-        assertTrue(exception.getMessage().contains("cannot be null or blank"));
+        assertTrue(exception.getMessage().contains(ERROR_NULL_OR_BLANK));
     }
 
     @Test
@@ -67,14 +78,14 @@ class GridSquareTest {
                 IllegalArgumentException.class,
                 () -> new GridSquare("")
         );
-        assertTrue(exception1.getMessage().contains("cannot be null or blank"));
+        assertTrue(exception1.getMessage().contains(ERROR_NULL_OR_BLANK));
 
         // Whitespace only
         IllegalArgumentException exception2 = assertThrows(
                 IllegalArgumentException.class,
                 () -> new GridSquare("   ")
         );
-        assertTrue(exception2.getMessage().contains("cannot be null or blank"));
+        assertTrue(exception2.getMessage().contains(ERROR_NULL_OR_BLANK));
     }
 
     @Test
@@ -84,42 +95,42 @@ class GridSquareTest {
                 IllegalArgumentException.class,
                 () -> new GridSquare("C")
         );
-        assertTrue(e1.getMessage().contains("must be 2, 4, 6, or 8 characters"));
+        assertTrue(e1.getMessage().contains(ERROR_INVALID_LENGTH));
 
         // 3 characters - invalid
         IllegalArgumentException e2 = assertThrows(
                 IllegalArgumentException.class,
                 () -> new GridSquare("CN8")
         );
-        assertTrue(e2.getMessage().contains("must be 2, 4, 6, or 8 characters"));
+        assertTrue(e2.getMessage().contains(ERROR_INVALID_LENGTH));
 
         // 5 characters - invalid
         IllegalArgumentException e3 = assertThrows(
                 IllegalArgumentException.class,
                 () -> new GridSquare("CN87t")
         );
-        assertTrue(e3.getMessage().contains("must be 2, 4, 6, or 8 characters"));
+        assertTrue(e3.getMessage().contains(ERROR_INVALID_LENGTH));
 
         // 7 characters - invalid
         IllegalArgumentException e4 = assertThrows(
                 IllegalArgumentException.class,
                 () -> new GridSquare("CN87ts5")
         );
-        assertTrue(e4.getMessage().contains("must be 2, 4, 6, or 8 characters"));
+        assertTrue(e4.getMessage().contains(ERROR_INVALID_LENGTH));
 
         // 9 characters - too long
         IllegalArgumentException e5 = assertThrows(
                 IllegalArgumentException.class,
                 () -> new GridSquare("CN87ts500")
         );
-        assertTrue(e5.getMessage().contains("must be 2, 4, 6, or 8 characters"));
+        assertTrue(e5.getMessage().contains(ERROR_INVALID_LENGTH));
     }
 
     @Test
     void testConstructor_Normalization() {
         // Lowercase should be normalized to uppercase
         GridSquare grid1 = new GridSquare("cn87");
-        assertEquals("CN87", grid1.value());
+        assertEquals(GRID_CN87, grid1.value());
 
         GridSquare grid2 = new GridSquare("fn31pr");
         assertEquals("FN31PR", grid2.value());
@@ -317,7 +328,7 @@ class GridSquareTest {
 
     @Test
     void testRoundTrip_4Character() {
-        String originalGrid = "CN87";
+        String originalGrid = GRID_CN87;
         GridSquare grid1 = new GridSquare(originalGrid);
         Coordinates coords = grid1.toCoordinates();
 
@@ -330,43 +341,42 @@ class GridSquareTest {
 
     @Test
     void testRoundTrip_6Character() {
-        String originalGrid = "CN87ts";
+        String originalGrid = GRID_CN87TS;
         GridSquare grid1 = new GridSquare(originalGrid);
         Coordinates coords = grid1.toCoordinates();
 
         // Convert back to grid square (6-char precision)
         GridSquare roundTripGrid = HamRadioUtils.coordinatesToGridSquare(coords, 6);
 
-        assertEquals(originalGrid.toUpperCase(), roundTripGrid.value(),
+        assertEquals(originalGrid.toUpperCase(Locale.ROOT), roundTripGrid.value(),
                 "Round-trip conversion should preserve 6-character grid");
     }
 
     @Test
     void testRoundTrip_8Character() {
-        String originalGrid = "CN87ts50";
+        String originalGrid = GRID_CN87TS50;
         GridSquare grid1 = new GridSquare(originalGrid);
         Coordinates coords = grid1.toCoordinates();
 
         // Convert back to grid square (8-char precision)
         GridSquare roundTripGrid = HamRadioUtils.coordinatesToGridSquare(coords, 8);
 
-        assertEquals(originalGrid.toUpperCase(), roundTripGrid.value(),
+        assertEquals(originalGrid.toUpperCase(Locale.ROOT), roundTripGrid.value(),
                 "Round-trip conversion should preserve 8-character grid");
     }
 
     @Test
     void testRoundTrip_KnownLocations() {
-        // Seattle
-        testRoundTripLocation(47.6062, -122.3321, "CN87ts");
-
-        // New York
-        testRoundTripLocation(40.7128, -74.0060, "FN20xr");
-
-        // London
-        testRoundTripLocation(51.5074, -0.1278, "IO91wm");
-
-        // Tokyo
-        testRoundTripLocation(35.6762, 139.6503, "PM95vq");
+        assertAll("Round trip for known locations",
+            // Seattle
+            () -> testRoundTripLocation(47.6062, -122.3321, "CN87ts"),
+            // New York
+            () -> testRoundTripLocation(40.7128, -74.0060, "FN20xr"),
+            // London
+            () -> testRoundTripLocation(51.5074, -0.1278, "IO91wm"),
+            // Tokyo
+            () -> testRoundTripLocation(35.6762, 139.6503, "PM95vq")
+        );
     }
 
     // ==========================================================================
@@ -382,21 +392,21 @@ class GridSquareTest {
 
     @Test
     void testPrecisionKm_4Character() {
-        GridSquare grid = new GridSquare("CN87");
+        GridSquare grid = new GridSquare(GRID_CN87);
         assertEquals(100.0, grid.precisionKm(), 0.01,
                 "4-character square should have ~100 km precision");
     }
 
     @Test
     void testPrecisionKm_6Character() {
-        GridSquare grid = new GridSquare("CN87ts");
+        GridSquare grid = new GridSquare(GRID_CN87TS);
         assertEquals(5.0, grid.precisionKm(), 0.01,
                 "6-character subsquare should have ~5 km precision");
     }
 
     @Test
     void testPrecisionKm_8Character() {
-        GridSquare grid = new GridSquare("CN87ts50");
+        GridSquare grid = new GridSquare(GRID_CN87TS50);
         assertEquals(0.5, grid.precisionKm(), 0.01,
                 "8-character extended should have ~500 m precision");
     }
@@ -405,9 +415,9 @@ class GridSquareTest {
     void testPrecisionKm_Consistency() {
         // Precision should decrease (more precise) with more characters
         double precision2 = new GridSquare("CN").precisionKm();
-        double precision4 = new GridSquare("CN87").precisionKm();
-        double precision6 = new GridSquare("CN87ts").precisionKm();
-        double precision8 = new GridSquare("CN87ts50").precisionKm();
+        double precision4 = new GridSquare(GRID_CN87).precisionKm();
+        double precision6 = new GridSquare(GRID_CN87TS).precisionKm();
+        double precision8 = new GridSquare(GRID_CN87TS50).precisionKm();
 
         assertTrue(precision2 > precision4,
                 "2-char precision should be less precise than 4-char");
@@ -442,11 +452,11 @@ class GridSquareTest {
     void testIntegrationWithHamRadioUtils_AllPrecisions() {
         double lat = 48.396;
         double lon = 11.458;
+        Coordinates inputCoords = new Coordinates(lat, lon);
 
         // Test each precision level
         for (int precision : new int[]{4, 6, 8}) {
-            GridSquare gridSquare = HamRadioUtils.coordinatesToGridSquare(
-                    new Coordinates(lat, lon), precision);
+            GridSquare gridSquare = HamRadioUtils.coordinatesToGridSquare(inputCoords, precision);
             Coordinates coords = gridSquare.toCoordinates();
 
             assertNotNull(coords);
@@ -460,18 +470,17 @@ class GridSquareTest {
 
     @Test
     void testIntegrationWithHamRadioUtils_EdgeCases() {
-        // North pole area
-        testIntegrationEdgeCase(85.0, 170.0);
-
-        // South pole area
-        testIntegrationEdgeCase(-85.0, -170.0);
-
-        // Date line
-        testIntegrationEdgeCase(0.0, 179.0);
-        testIntegrationEdgeCase(0.0, -179.0);
-
-        // Equator
-        testIntegrationEdgeCase(0.0, 0.0);
+        assertAll("Edge cases for HamRadioUtils integration",
+            // North pole area
+            () -> testIntegrationEdgeCase(85.0, 170.0),
+            // South pole area
+            () -> testIntegrationEdgeCase(-85.0, -170.0),
+            // Date line
+            () -> testIntegrationEdgeCase(0.0, 179.0),
+            () -> testIntegrationEdgeCase(0.0, -179.0),
+            // Equator
+            () -> testIntegrationEdgeCase(0.0, 0.0)
+        );
     }
 
     // ==========================================================================

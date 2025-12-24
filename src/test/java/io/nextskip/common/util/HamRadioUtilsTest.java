@@ -18,7 +18,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class HamRadioUtilsTest {
 
     @Test
-    void testCoordinatesToGridSquare_4Characters() {
+    void shouldConvert_CoordinatesToGridSquare_4Characters() {
         // Seattle area: CN87
         Coordinates seattle = new Coordinates(47.6062, -122.3321);
         GridSquare grid = HamRadioUtils.coordinatesToGridSquare(seattle, 4);
@@ -27,7 +27,7 @@ class HamRadioUtilsTest {
     }
 
     @Test
-    void testCoordinatesToGridSquare_6Characters() {
+    void shouldConvert_CoordinatesToGridSquare_6Characters() {
         // Seattle area: should start with CN87
         Coordinates seattle = new Coordinates(47.6062, -122.3321);
         GridSquare grid = HamRadioUtils.coordinatesToGridSquare(seattle, 6);
@@ -38,7 +38,7 @@ class HamRadioUtilsTest {
     }
 
     @Test
-    void testCoordinatesToGridSquare_Default6Chars() {
+    void shouldConvert_CoordinatesToGridSquare_Default6Chars() {
         Coordinates coords = new Coordinates(51.5074, -0.1278); // London
         GridSquare grid = HamRadioUtils.coordinatesToGridSquare(coords);
 
@@ -47,7 +47,7 @@ class HamRadioUtilsTest {
     }
 
     @Test
-    void testGridSquareToCoordinates() {
+    void shouldConvert_GridSquareToCoordinates() {
         GridSquare grid = new GridSquare("FN31");
         Coordinates coords = grid.toCoordinates();
 
@@ -59,7 +59,7 @@ class HamRadioUtilsTest {
     }
 
     @Test
-    void testBearing() {
+    void shouldCalculate_Bearing() {
         Coordinates seattle = new Coordinates(47.6062, -122.3321);
         Coordinates newYork = new Coordinates(40.7128, -74.0060);
 
@@ -70,7 +70,7 @@ class HamRadioUtilsTest {
     }
 
     @Test
-    void testBearing_NorthPole() {
+    void shouldCalculate_Bearing_NorthPole() {
         Coordinates origin = new Coordinates(0, 0);
         Coordinates north = new Coordinates(10, 0);
 
@@ -81,7 +81,7 @@ class HamRadioUtilsTest {
     }
 
     @Test
-    void testDistance() {
+    void shouldCalculate_Distance() {
         Coordinates seattle = new Coordinates(47.6062, -122.3321);
         Coordinates newYork = new Coordinates(40.7128, -74.0060);
 
@@ -92,7 +92,7 @@ class HamRadioUtilsTest {
     }
 
     @Test
-    void testFormatFrequency_MHz() {
+    void shouldFormat_Frequency_MHz() {
         long freq = 14074000L; // 14.074 MHz
         String formatted = HamRadioUtils.formatFrequency(freq);
 
@@ -100,7 +100,7 @@ class HamRadioUtilsTest {
     }
 
     @Test
-    void testFormatFrequency_kHz() {
+    void shouldFormat_Frequency_kHz() {
         long freq = 7200000L; // 7200 kHz = 7.2 MHz
         String formatted = HamRadioUtils.formatFrequency(freq);
 
@@ -108,7 +108,7 @@ class HamRadioUtilsTest {
     }
 
     @Test
-    void testParseFrequency_MHz() {
+    void shouldParse_Frequency_MHz() {
         Long freq = HamRadioUtils.parseFrequency("14.074 MHz");
 
         assertNotNull(freq);
@@ -116,7 +116,7 @@ class HamRadioUtilsTest {
     }
 
     @Test
-    void testParseFrequency_kHz() {
+    void shouldParse_Frequency_kHz() {
         Long freq = HamRadioUtils.parseFrequency("7200 kHz");
 
         assertNotNull(freq);
@@ -124,7 +124,7 @@ class HamRadioUtilsTest {
     }
 
     @Test
-    void testParseFrequency_NoSpace() {
+    void shouldParse_Frequency_NoSpace() {
         Long freq = HamRadioUtils.parseFrequency("145.500MHz");
 
         assertNotNull(freq);
@@ -132,21 +132,21 @@ class HamRadioUtilsTest {
     }
 
     @Test
-    void testParseFrequency_Invalid() {
+    void shouldParse_Frequency_Invalid() {
         Long freq = HamRadioUtils.parseFrequency("invalid");
 
         assertNull(freq);
     }
 
     @Test
-    void testParseFrequency_Null() {
+    void shouldParse_Frequency_Null() {
         Long freq = HamRadioUtils.parseFrequency(null);
 
         assertNull(freq);
     }
 
     @Test
-    void testIsValidCallsign_Valid() {
+    void shouldValidate_Callsign_Valid() {
         assertTrue(HamRadioUtils.isValidCallsign("W1AW"));
         assertTrue(HamRadioUtils.isValidCallsign("K5ABC"));
         assertTrue(HamRadioUtils.isValidCallsign("N2YO"));
@@ -155,7 +155,7 @@ class HamRadioUtilsTest {
     }
 
     @Test
-    void testIsValidCallsign_Invalid() {
+    void shouldValidate_Callsign_Invalid() {
         assertFalse(HamRadioUtils.isValidCallsign("ABC")); // No number
         assertFalse(HamRadioUtils.isValidCallsign("1")); // Too short
         assertFalse(HamRadioUtils.isValidCallsign("")); // Empty
@@ -165,7 +165,7 @@ class HamRadioUtilsTest {
     }
 
     @Test
-    void testCoordinatesValidation_Valid() {
+    void shouldValidate_Coordinates_Valid() {
         assertDoesNotThrow(() -> new Coordinates(47.6062, -122.3321));
         assertDoesNotThrow(() -> new Coordinates(0, 0));
         assertDoesNotThrow(() -> new Coordinates(90, 180));
@@ -173,13 +173,13 @@ class HamRadioUtilsTest {
     }
 
     @Test
-    void testCoordinatesValidation_InvalidLatitude() {
+    void shouldValidate_Coordinates_InvalidLatitude() {
         assertThrows(IllegalArgumentException.class, () -> new Coordinates(91, 0));
         assertThrows(IllegalArgumentException.class, () -> new Coordinates(-91, 0));
     }
 
     @Test
-    void testCoordinatesValidation_InvalidLongitude() {
+    void shouldValidate_Coordinates_InvalidLongitude() {
         assertThrows(IllegalArgumentException.class, () -> new Coordinates(0, 181));
         assertThrows(IllegalArgumentException.class, () -> new Coordinates(0, -181));
     }

@@ -22,6 +22,19 @@ public record SolarIndices(
         Instant timestamp,
         String source
 ) implements Scoreable {
+
+    // Geomagnetic activity thresholds (K-index scale 0-9)
+    private static final int K_INDEX_QUIET_MAX = 2;
+    private static final int K_INDEX_UNSETTLED_MAX = 4;
+    private static final int K_INDEX_ACTIVE_MAX = 6;
+    private static final int K_INDEX_STORM_MAX = 8;
+
+    // Solar flux thresholds (typical range 50-300 SFU)
+    private static final double SFI_VERY_LOW_MAX = 70.0;
+    private static final double SFI_LOW_MAX = 100.0;
+    private static final double SFI_MODERATE_MAX = 150.0;
+    private static final double SFI_HIGH_MAX = 200.0;
+
     /**
      * Determine if conditions are generally favorable for HF propagation.
      *
@@ -29,7 +42,7 @@ public record SolarIndices(
      */
     @Override
     public boolean isFavorable() {
-        return solarFluxIndex > 100 && kIndex < 4 && aIndex < 20;
+        return solarFluxIndex > SFI_LOW_MAX && kIndex < K_INDEX_UNSETTLED_MAX && aIndex < 20;
     }
 
     /**
@@ -63,13 +76,13 @@ public record SolarIndices(
      * Get a human-readable description of current geomagnetic activity.
      */
     public String getGeomagneticActivity() {
-        if (kIndex <= 2) {
+        if (kIndex <= K_INDEX_QUIET_MAX) {
             return "Quiet";
-        } else if (kIndex <= 4) {
+        } else if (kIndex <= K_INDEX_UNSETTLED_MAX) {
             return "Unsettled";
-        } else if (kIndex <= 6) {
+        } else if (kIndex <= K_INDEX_ACTIVE_MAX) {
             return "Active";
-        } else if (kIndex <= 8) {
+        } else if (kIndex <= K_INDEX_STORM_MAX) {
             return "Storm";
         } else {
             return "Severe Storm";
@@ -80,13 +93,13 @@ public record SolarIndices(
      * Get a description of solar flux level.
      */
     public String getSolarFluxLevel() {
-        if (solarFluxIndex < 70) {
+        if (solarFluxIndex < SFI_VERY_LOW_MAX) {
             return "Very Low";
-        } else if (solarFluxIndex < 100) {
+        } else if (solarFluxIndex < SFI_LOW_MAX) {
             return "Low";
-        } else if (solarFluxIndex < 150) {
+        } else if (solarFluxIndex < SFI_MODERATE_MAX) {
             return "Moderate";
-        } else if (solarFluxIndex < 200) {
+        } else if (solarFluxIndex < SFI_HIGH_MAX) {
             return "High";
         } else {
             return "Very High";

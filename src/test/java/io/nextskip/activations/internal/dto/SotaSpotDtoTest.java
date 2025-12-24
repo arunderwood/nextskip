@@ -12,10 +12,15 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 class SotaSpotDtoTest {
 
+    private static final String TIMESTAMP = "2025-12-14T14:30:00";
+    private static final long SPOT_ID = 123456L;
+    private static final String K2DEF_PORTABLE = "K2DEF/P";
+    private static final String SUMMIT_CODE = "W7W/LC-001";
+
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Test
-    void shouldDeserializeFromJson() throws Exception {
+    void shouldDeserialize_fromJson() throws Exception {
         // Given: SOTA API JSON response
         String json = """
             {
@@ -38,14 +43,14 @@ class SotaSpotDtoTest {
         SotaSpotDto dto = objectMapper.readValue(json, SotaSpotDto.class);
 
         // Then: All fields mapped correctly
-        assertEquals(123456L, dto.id());
-        assertEquals("K2DEF/P", dto.activatorCallsign());
+        assertEquals(SPOT_ID, dto.id());
+        assertEquals(K2DEF_PORTABLE, dto.activatorCallsign());
         assertEquals("W7W", dto.associationCode());
-        assertEquals("W7W/LC-001", dto.summitCode());
+        assertEquals(SUMMIT_CODE, dto.summitCode());
         assertEquals("14.062", dto.frequency());
         assertEquals("CW", dto.mode());
         assertEquals("Mount Test", dto.summitDetails());
-        assertEquals("2025-12-14T14:30:00", dto.timeStamp());
+        assertEquals(TIMESTAMP, dto.timeStamp());
         assertEquals("QRV now", dto.comments());
         assertEquals("K2DEF", dto.callsign());
         assertEquals("John Doe", dto.activatorName());
@@ -53,7 +58,7 @@ class SotaSpotDtoTest {
     }
 
     @Test
-    void shouldHandleNullFields() throws Exception {
+    void shouldHandle_nullFields() throws Exception {
         // Given: Minimal JSON with null fields
         String json = """
             {
@@ -76,10 +81,10 @@ class SotaSpotDtoTest {
         SotaSpotDto dto = objectMapper.readValue(json, SotaSpotDto.class);
 
         // Then: Required fields present, optional fields null
-        assertEquals(123456L, dto.id());
-        assertEquals("K2DEF/P", dto.activatorCallsign());
-        assertEquals("W7W/LC-001", dto.summitCode());
-        assertEquals("2025-12-14T14:30:00", dto.timeStamp());
+        assertEquals(SPOT_ID, dto.id());
+        assertEquals(K2DEF_PORTABLE, dto.activatorCallsign());
+        assertEquals(SUMMIT_CODE, dto.summitCode());
+        assertEquals(TIMESTAMP, dto.timeStamp());
         assertNull(dto.frequency());
         assertNull(dto.mode());
         assertNull(dto.summitDetails());
@@ -91,7 +96,7 @@ class SotaSpotDtoTest {
     }
 
     @Test
-    void shouldIgnoreUnknownFields() throws Exception {
+    void shouldIgnore_unknownFields() throws Exception {
         // Given: JSON with extra unknown fields
         String json = """
             {
@@ -109,22 +114,22 @@ class SotaSpotDtoTest {
 
         // Then: Known fields mapped, unknown fields ignored
         assertNotNull(dto);
-        assertEquals(123456L, dto.id());
-        assertEquals("K2DEF/P", dto.activatorCallsign());
+        assertEquals(SPOT_ID, dto.id());
+        assertEquals(K2DEF_PORTABLE, dto.activatorCallsign());
     }
 
     @Test
-    void shouldCreateDtoWithConstructor() {
+    void shouldCreateDto_withConstructor() {
         // When: Create DTO directly
         SotaSpotDto dto = new SotaSpotDto(
-                123456L,
-                "K2DEF/P",
+                SPOT_ID,
+                K2DEF_PORTABLE,
                 "W7W",
-                "W7W/LC-001",
+                SUMMIT_CODE,
                 "14.062",
                 "CW",
                 "Mount Test",
-                "2025-12-14T14:30:00",
+                TIMESTAMP,
                 "QRV now",
                 "K2DEF",
                 "John Doe",
@@ -132,13 +137,13 @@ class SotaSpotDtoTest {
         );
 
         // Then: All fields accessible
-        assertEquals(123456L, dto.id());
-        assertEquals("K2DEF/P", dto.activatorCallsign());
-        assertEquals("W7W/LC-001", dto.summitCode());
+        assertEquals(SPOT_ID, dto.id());
+        assertEquals(K2DEF_PORTABLE, dto.activatorCallsign());
+        assertEquals(SUMMIT_CODE, dto.summitCode());
     }
 
     @Test
-    void shouldHandleHighlanderFlag() throws Exception {
+    void shouldHandle_highlanderFlag() throws Exception {
         // Given: SOTA spot with highlander = true
         String json = """
             {

@@ -37,14 +37,32 @@ lsof -ti :8080 | xargs kill -9
 
 ### Quality Checks
 
+Quality checks are **blocking** - violations will fail the build. Always run `./gradlew check` before committing.
+
 ```bash
 # Run all quality checks (Checkstyle, PMD, SpotBugs, JaCoCo)
 ./gradlew check
 
-# View test reports
+# View reports
 open build/reports/tests/test/index.html
 open build/reports/jacoco/test/html/index.html
+open build/reports/checkstyle/main.html
+open build/reports/pmd/main.html
 ```
+
+**Coverage Requirements**: 75% instruction, 65% branch (enforced by JaCoCo)
+
+**Fix violations, don't suppress them.** Rule exclusions lower the quality bar. Suppressions require documented justification (e.g., `@SuppressWarnings("PMD.TooManyMethods") // Comprehensive test suite`).
+
+**Common Violations**:
+- `AvoidLiteralsInIfCondition`: Extract magic numbers to named constants
+- `UseLocaleWithCaseConversions`: Use `toUpperCase(Locale.ROOT)` instead of `toUpperCase()`
+- `OperatorWrap`: Place `+` at start of next line, not end of current line
+- `TooManyMethods`: Add `@SuppressWarnings("PMD.TooManyMethods")` to comprehensive test classes
+
+**Test Naming Convention** (enforced by PMD):
+- Java tests MUST use BDD-style: `testMethodName_Scenario_ExpectedResult`
+- Example: `testGetScore_FreshActivation_Returns100`
 
 ### Frontend Testing
 

@@ -18,6 +18,12 @@
     <!-- Filters -->
     <module name="SuppressWarningsFilter"/>
 
+    <!-- Allow test files to exceed 500 lines - comprehensive test suites are naturally longer -->
+    <module name="SuppressionSingleFilter">
+        <property name="files" value=".*Test\.java"/>
+        <property name="checks" value="FileLength"/>
+    </module>
+
     <!-- Size Violations -->
     <module name="FileLength">
         <property name="max" value="500"/>
@@ -80,7 +86,10 @@
         <module name="OneStatementPerLine"/>
 
         <!-- Imports -->
-        <module name="AvoidStarImport"/>
+        <module name="AvoidStarImport">
+            <!-- Allow star imports for common test utilities - improves test readability -->
+            <property name="excludes" value="org.junit.jupiter.api.Assertions,org.mockito.Mockito,com.github.tomakehurst.wiremock.client.WireMock"/>
+        </module>
         <module name="IllegalImport"/>
         <module name="RedundantImport"/>
         <module name="UnusedImports"/>

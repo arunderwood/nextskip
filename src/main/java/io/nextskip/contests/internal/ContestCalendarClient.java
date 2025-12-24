@@ -50,10 +50,13 @@ import java.util.Optional;
  * </ul>
  */
 @org.springframework.stereotype.Component
+@SuppressWarnings("PMD.AvoidCatchingGenericException") // Intentional: wrap unknown exceptions in ExternalApiException
 public class ContestCalendarClient implements ExternalDataClient<List<ContestICalDto>> {
 
     private static final Logger LOG = LoggerFactory.getLogger(ContestCalendarClient.class);
 
+    private static final String SOURCE_NAME = "WA7BNM";
+    private static final String CACHE_NAME = "contests";
     private static final String CALENDAR_URL = "https://www.contestcalendar.com/weeklycontcustom.php";
     private static final Duration REQUEST_TIMEOUT = Duration.ofSeconds(15);
 
@@ -76,7 +79,7 @@ public class ContestCalendarClient implements ExternalDataClient<List<ContestICa
 
     @Override
     public String getSourceName() {
-        return "WA7BNM Contest Calendar";
+        return SOURCE_NAME + " Contest Calendar";
     }
 
     /**
@@ -86,9 +89,9 @@ public class ContestCalendarClient implements ExternalDataClient<List<ContestICa
      * @throws ExternalApiException if the API call fails
      */
     @Override
-    @CircuitBreaker(name = "contests", fallbackMethod = "getCachedContests")
-    @Retry(name = "contests")
-    @Cacheable(value = "contests", key = "'upcoming'", unless = "#result == null || #result.isEmpty()")
+    @CircuitBreaker(name = CACHE_NAME, fallbackMethod = "getCachedContests")
+    @Retry(name = CACHE_NAME)
+    @Cacheable(value = CACHE_NAME, key = "'upcoming'", unless = "#result == null || #result.isEmpty()")
     public List<ContestICalDto> fetch() {
         LOG.debug("Fetching contests from WA7BNM iCal feed");
 
@@ -102,7 +105,7 @@ public class ContestCalendarClient implements ExternalDataClient<List<ContestICa
 
             if (icalData == null || icalData.isBlank()) {
                 LOG.warn("No data received from WA7BNM contest calendar");
-                throw new ExternalApiException("WA7BNM", "Empty response from contest calendar");
+                throw new ExternalApiException(SOURCE_NAME, "Empty response from contest calendar");
             }
 
             // Parse iCal using ical4j
@@ -114,13 +117,13 @@ public class ContestCalendarClient implements ExternalDataClient<List<ContestICa
         } catch (WebClientResponseException e) {
             // HTTP error (4xx, 5xx)
             LOG.error("HTTP error from WA7BNM: {} {}", e.getStatusCode(), e.getStatusText());
-            throw new ExternalApiException("WA7BNM",
+            throw new ExternalApiException(SOURCE_NAME,
                     "HTTP " + e.getStatusCode() + " from WA7BNM: " + e.getStatusText(), e);
 
         } catch (WebClientRequestException e) {
             // Network error
             LOG.error("Network error connecting to WA7BNM", e);
-            throw new ExternalApiException("WA7BNM",
+            throw new ExternalApiException(SOURCE_NAME,
                     "Network error connecting to WA7BNM: " + e.getMessage(), e);
 
         } catch (ExternalApiException e) {
@@ -130,7 +133,7 @@ public class ContestCalendarClient implements ExternalDataClient<List<ContestICa
         } catch (Exception e) {
             // Unexpected error (including iCal parsing errors)
             LOG.error("Unexpected error fetching contests from WA7BNM", e);
-            throw new ExternalApiException("WA7BNM",
+            throw new ExternalApiException(SOURCE_NAME,
                     "Unexpected error fetching contest data: " + e.getMessage(), e);
         }
     }
@@ -164,7 +167,7 @@ public class ContestCalendarClient implements ExternalDataClient<List<ContestICa
 
         } catch (Exception e) {
             LOG.error("Failed to parse iCal data", e);
-            throw new ExternalApiException("WA7BNM", "Failed to parse iCal data: " + e.getMessage(), e);
+            throw new ExternalApiException(SOURCE_NAME, "Failed to parse iCal data: " + e.getMessage(), e);
         }
 
         return contests;
@@ -215,7 +218,7 @@ public class ContestCalendarClient implements ExternalDataClient<List<ContestICa
     private List<ContestICalDto> getCachedContests(Exception e) {
         LOG.warn("Using cached contests due to: {}", e.getMessage());
 
-        var cache = cacheManager.getCache("contests");
+        var cache = cacheManager.getCache(CACHE_NAME);
         if (cache != null) {
             var cached = cache.get("upcoming", List.class);
             if (cached != null && !cached.isEmpty()) {

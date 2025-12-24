@@ -81,7 +81,7 @@ class SotaAssociationMapperTest {
             "W0S, SD",
             "W0I, IA"
     })
-    void shouldMapKnownAssociationCodesToStates(String associationCode, String expectedState) {
+    void shouldMap_KnownAssociationCodesToStates(String associationCode, String expectedState) {
         Optional<String> result = SotaAssociationMapper.toStateCode(associationCode);
 
         assertTrue(result.isPresent(), "Expected state for " + associationCode);
@@ -89,7 +89,7 @@ class SotaAssociationMapperTest {
     }
 
     @Test
-    void shouldMapW7WToWashington() {
+    void shouldMap_W7WToWashington() {
         Optional<String> result = SotaAssociationMapper.toStateCode("W7W");
 
         assertTrue(result.isPresent());
@@ -97,7 +97,7 @@ class SotaAssociationMapperTest {
     }
 
     @Test
-    void shouldMapW4GToGeorgia() {
+    void shouldMap_W4GToGeorgia() {
         Optional<String> result = SotaAssociationMapper.toStateCode("W4G");
 
         assertTrue(result.isPresent());
@@ -105,7 +105,7 @@ class SotaAssociationMapperTest {
     }
 
     @Test
-    void shouldMapW0CToColorado() {
+    void shouldMap_W0CToColorado() {
         Optional<String> result = SotaAssociationMapper.toStateCode("W0C");
 
         assertTrue(result.isPresent());
@@ -113,7 +113,7 @@ class SotaAssociationMapperTest {
     }
 
     @Test
-    void shouldMapW6ToCalifornia() {
+    void shouldMap_W6ToCalifornia() {
         Optional<String> result = SotaAssociationMapper.toStateCode("W6");
 
         assertTrue(result.isPresent());
@@ -121,7 +121,7 @@ class SotaAssociationMapperTest {
     }
 
     @Test
-    void shouldHandleLowercaseInput() {
+    void shouldHandle_LowercaseInput() {
         Optional<String> result = SotaAssociationMapper.toStateCode("w7w");
 
         assertTrue(result.isPresent());
@@ -129,7 +129,7 @@ class SotaAssociationMapperTest {
     }
 
     @Test
-    void shouldHandleMixedCaseInput() {
+    void shouldHandle_MixedCaseInput() {
         Optional<String> result = SotaAssociationMapper.toStateCode("w7W");
 
         assertTrue(result.isPresent());
@@ -137,7 +137,7 @@ class SotaAssociationMapperTest {
     }
 
     @Test
-    void shouldHandleInputWithWhitespace() {
+    void shouldHandle_InputWithWhitespace() {
         Optional<String> result = SotaAssociationMapper.toStateCode("  W7W  ");
 
         assertTrue(result.isPresent());
@@ -145,35 +145,35 @@ class SotaAssociationMapperTest {
     }
 
     @Test
-    void shouldReturnEmptyForNullInput() {
+    void shouldReturnEmpty_ForNullInput() {
         Optional<String> result = SotaAssociationMapper.toStateCode(null);
 
         assertTrue(result.isEmpty());
     }
 
     @Test
-    void shouldReturnEmptyForBlankInput() {
+    void shouldReturnEmpty_ForBlankInput() {
         Optional<String> result = SotaAssociationMapper.toStateCode("   ");
 
         assertTrue(result.isEmpty());
     }
 
     @Test
-    void shouldReturnEmptyForEmptyString() {
+    void shouldReturnEmpty_ForEmptyString() {
         Optional<String> result = SotaAssociationMapper.toStateCode("");
 
         assertTrue(result.isEmpty());
     }
 
     @Test
-    void shouldReturnEmptyForUnknownCode() {
+    void shouldReturnEmpty_ForUnknownCode() {
         Optional<String> result = SotaAssociationMapper.toStateCode("W9Z");
 
         assertTrue(result.isEmpty());
     }
 
     @Test
-    void shouldReturnEmptyForInternationalAssociations() {
+    void shouldReturnEmpty_ForInternationalAssociations() {
         // Test common international SOTA associations
         assertTrue(SotaAssociationMapper.toStateCode("VK2").isEmpty()); // Australia
         assertTrue(SotaAssociationMapper.toStateCode("G/LD").isEmpty()); // England
@@ -183,7 +183,7 @@ class SotaAssociationMapperTest {
     }
 
     @Test
-    void shouldHandleFullSummitReferenceFormat() {
+    void shouldHandle_FullSummitReferenceFormat() {
         // Even though full references like "W7W/LC-001" won't match,
         // this test documents expected behavior
         Optional<String> result = SotaAssociationMapper.toStateCode("W7W/LC-001");
@@ -192,7 +192,7 @@ class SotaAssociationMapperTest {
     }
 
     @Test
-    void shouldHandleAllW1SubRegions() {
+    void shouldHandle_AllW1SubRegions() {
         assertEquals("CT", SotaAssociationMapper.toStateCode("W1/CT").orElse(null));
         assertEquals("MA", SotaAssociationMapper.toStateCode("W1/MA").orElse(null));
         assertEquals("ME", SotaAssociationMapper.toStateCode("W1/ME").orElse(null));
@@ -202,7 +202,7 @@ class SotaAssociationMapperTest {
     }
 
     @Test
-    void shouldHandleAllW7States() {
+    void shouldHandle_AllW7States() {
         assertEquals("AZ", SotaAssociationMapper.toStateCode("W7A").orElse(null));
         assertEquals("ID", SotaAssociationMapper.toStateCode("W7I").orElse(null));
         assertEquals("MT", SotaAssociationMapper.toStateCode("W7M").orElse(null));
@@ -214,7 +214,7 @@ class SotaAssociationMapperTest {
     }
 
     @Test
-    void shouldHandleAllW5States() {
+    void shouldHandle_AllW5States() {
         assertEquals("AR", SotaAssociationMapper.toStateCode("W5A").orElse(null));
         assertEquals("LA", SotaAssociationMapper.toStateCode("W5L").orElse(null));
         assertEquals("MS", SotaAssociationMapper.toStateCode("W5M").orElse(null));

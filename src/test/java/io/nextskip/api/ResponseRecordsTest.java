@@ -43,7 +43,7 @@ class ResponseRecordsTest {
     @Test
     void testContestsResponse_DefensiveCopy() {
         Contest contest = createTestContest("ARRL DX");
-        ArrayList<Contest> mutableList = new ArrayList<>();
+        List<Contest> mutableList = new ArrayList<>();
         mutableList.add(contest);
 
         ContestsResponse response = new ContestsResponse(mutableList, 1, 0, 1, Instant.now());
@@ -72,9 +72,9 @@ class ResponseRecordsTest {
         Activation pota = createTestActivation(ActivationType.POTA);
         Activation sota = createTestActivation(ActivationType.SOTA);
 
-        ArrayList<Activation> potaList = new ArrayList<>();
+        List<Activation> potaList = new ArrayList<>();
         potaList.add(pota);
-        ArrayList<Activation> sotaList = new ArrayList<>();
+        List<Activation> sotaList = new ArrayList<>();
         sotaList.add(sota);
 
         ActivationsResponse response = new ActivationsResponse(potaList, sotaList, 2, Instant.now());
@@ -103,7 +103,7 @@ class ResponseRecordsTest {
     @Test
     void testMeteorShowersResponse_DefensiveCopy() {
         MeteorShower shower = createTestMeteorShower("Perseids");
-        ArrayList<MeteorShower> mutableList = new ArrayList<>();
+        List<MeteorShower> mutableList = new ArrayList<>();
         mutableList.add(shower);
 
         MeteorShowersResponse response = new MeteorShowersResponse(mutableList, 1, 0, shower, Instant.now());
@@ -128,7 +128,7 @@ class ResponseRecordsTest {
     @Test
     void testActivationsSummary_DefensiveCopy() {
         Activation activation = createTestActivation(ActivationType.POTA);
-        ArrayList<Activation> mutableList = new ArrayList<>();
+        List<Activation> mutableList = new ArrayList<>();
         mutableList.add(activation);
 
         ActivationsSummary summary = new ActivationsSummary(mutableList, 1, 1, null);
@@ -150,7 +150,7 @@ class ResponseRecordsTest {
     @Test
     void testPropagationResponse_DefensiveCopy() {
         SolarIndices indices = new SolarIndices(150.0, 8, 3, 120, Instant.now(), "TEST");
-        ArrayList<BandCondition> mutableList = new ArrayList<>();
+        List<BandCondition> mutableList = new ArrayList<>();
 
         PropagationResponse response = new PropagationResponse(indices, mutableList, Instant.now());
 
