@@ -141,7 +141,7 @@ pmd {
 }
 
 spotbugs {
-    toolVersion = '4.8.6'
+    toolVersion = '4.9.8'
     effort = 'max'
     reportLevel = 'medium'
     ignoreFailures = true  // Report violations but don't fail build
