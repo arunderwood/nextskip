@@ -134,7 +134,7 @@ configurations.all {
 }
 
 checkstyle {
-    toolVersion = '10.12.5'
+    toolVersion = '12.3.0'
     configFile = file("${rootDir}/config/checkstyle/checkstyle.xml")
     ignoreFailures = true  // Report violations but don't fail build
 }
