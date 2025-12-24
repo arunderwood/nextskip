@@ -12,10 +12,15 @@
       "enabled": false
     },
     {
-      "description": "Checkstyle - group all versions into single PR",
+      "description": "Quality tools - group all updates into single PR",
       "matchManagers": ["gradle"],
-      "matchPackageNames": ["com.puppycrawl.tools:checkstyle"],
-      "groupName": "checkstyle",
+      "matchPackageNames": [
+        "com.puppycrawl.tools:checkstyle",
+        "net.sourceforge.pmd:pmd-java",
+        "com.github.spotbugs:spotbugs",
+        "org.jacoco:jacoco"
+      ],
+      "groupName": "quality-tools",
       "separateMajorMinor": false,
       "separateMinorPatch": false
     },
