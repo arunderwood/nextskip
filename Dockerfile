@@ -1,5 +1,5 @@
 # Stage 1: Build the application
-FROM eclipse-temurin:25-jdk AS builder
+FROM eclipse-temurin:25.0.1_8-jdk AS builder
 
 # Install Node.js 24.x (required for Vaadin Hilla frontend build)
 RUN apt-get update && apt-get install -y curl \
