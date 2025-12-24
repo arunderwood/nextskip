@@ -6,6 +6,12 @@
   "labels": ["dependencies"],
   "packageRules": [
     {
+      "description": "Docker images - disable version pinning, keep existing tag format",
+      "matchDatasources": ["docker"],
+      "pinDigests": false,
+      "separateMinorPatch": false
+    },
+    {
       "description": "Vaadin ecosystem - group plugin + BOM and run postUpgradeTasks",
       "matchManagers": ["gradle", "gradle-wrapper"],
       "groupName": "Vaadin",
