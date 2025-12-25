@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import React, { useEffect, useState, useCallback, useMemo, Suspense } from 'react';
 import { Radio, AlertTriangle } from 'lucide-react';
 import {
   PropagationEndpoint,
@@ -15,6 +15,7 @@ import { ActivityGrid } from '../components/activity';
 import { useDashboardCards } from '../hooks/useDashboardCards';
 import { getRegisteredCards } from '../components/cards/CardRegistry';
 import { ThemeToggle } from '../components/ThemeToggle';
+import { HelpButton, HelpModal } from '../components/help';
 import './DashboardView.css';
 
 // Import card modules to trigger registration
@@ -31,6 +32,7 @@ function DashboardView() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
+  const [isHelpOpen, setIsHelpOpen] = useState(false);
 
   // Memoize fetchData to avoid recreation on every render
   // Hilla pattern: Keep async/await with generated endpoint methods
@@ -161,7 +163,10 @@ function DashboardView() {
               <Radio className="dashboard-icon" size={28} aria-hidden="true" />
               NextSkip
             </h1>
-            <ThemeToggle />
+            <div className="header-actions">
+              <HelpButton onClick={() => setIsHelpOpen(true)} />
+              <ThemeToggle />
+            </div>
           </div>
           <p className="dashboard-subtitle">
             HF Propagation Dashboard
@@ -185,6 +190,8 @@ function DashboardView() {
           <p>No propagation data available at this time.</p>
         </div>
       )}
+
+      <HelpModal isOpen={isHelpOpen} onClose={() => setIsHelpOpen(false)} />
     </div>
   );
 }

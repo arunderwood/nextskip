@@ -74,6 +74,12 @@
   gap: calc(var(--spacing-unit) * 2);
 }
 
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--spacing-unit) * 1);
+}
+
 .dashboard-title {
   margin: 0;
   font-size: 2.5rem;
@@ -267,6 +273,11 @@
     flex-direction: column;
     align-items: flex-start;
     gap: calc(var(--spacing-unit) * 1.5);
+  }
+
+  .header-actions {
+    align-self: flex-end;
+    margin-top: calc(var(--spacing-unit) * -4);
   }
 
   .dashboard-title {

@@ -1,0 +1,118 @@
+/**
+ * HelpNavigation styles - scrollspy tab navigation with horizontal scroll on mobile.
+ */
+
+.help-navigation {
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--border-color);
+  background: rgba(0, 0, 0, 0.02);
+}
+
+.help-navigation__list {
+  display: flex;
+  list-style: none;
+  margin: 0;
+  padding: calc(var(--spacing-unit) * 1.5) calc(var(--spacing-unit) * 2);
+  gap: calc(var(--spacing-unit) * 1);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+}
+
+/* Scrollbar styling for webkit browsers */
+.help-navigation__list::-webkit-scrollbar {
+  height: 4px;
+}
+
+.help-navigation__list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.help-navigation__list::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 2px;
+}
+
+.help-navigation__item {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--spacing-unit) * 0.5);
+  padding: calc(var(--spacing-unit) * 0.75) calc(var(--spacing-unit) * 1.5);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: calc(var(--border-radius) * 5); /* Pill shape */
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    background 150ms,
+    border-color 150ms,
+    color 150ms;
+}
+
+.help-navigation__item:hover {
+  background: rgba(0, 0, 0, 0.05);
+  color: var(--text-primary);
+}
+
+.help-navigation__item:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+}
+
+/* Active state - scrollspy highlight */
+.help-navigation__item--active {
+  background: var(--primary-color);
+  border-color: var(--primary-color);
+  color: white;
+}
+
+.help-navigation__item--active:hover {
+  background: var(--primary-dark, #4f46e5);
+  color: white;
+}
+
+.help-navigation__icon {
+  display: flex;
+  align-items: center;
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.help-navigation__label {
+  line-height: 1.2;
+}
+
+/* Dark mode */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) .help-navigation {
+    background: rgba(255, 255, 255, 0.02);
+  }
+
+  :root:not([data-theme='light']) .help-navigation__item:hover {
+    background: rgba(255, 255, 255, 0.1);
+  }
+}
+
+:root[data-theme='dark'] .help-navigation {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+:root[data-theme='dark'] .help-navigation__item:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* Mobile: Ensure pills are scrollable */
+@media (max-width: 768px) {
+  .help-navigation__list {
+    padding: calc(var(--spacing-unit) * 1) calc(var(--spacing-unit) * 1.5);
+    gap: calc(var(--spacing-unit) * 0.75);
+  }
+
+  .help-navigation__item {
+    padding: calc(var(--spacing-unit) * 0.5) calc(var(--spacing-unit) * 1);
+    font-size: 0.8125rem;
+  }
+}

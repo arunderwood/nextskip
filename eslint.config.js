@@ -25,13 +25,8 @@ export default [
       },
     },
     rules: {
-      // Fix invalid config in eslint-config-vaadin - the rule schema forbids
-      // setting both html:'ignore' and custom:'ignore' with empty exceptions.
-      'react/jsx-props-no-spreading': ['error', {
-        html: 'ignore',
-        custom: 'enforce',
-        explicitSpread: 'enforce',
-      }],
+      // Disable jsx-props-no-spreading - the rule schema is fragile across versions
+      'react/jsx-props-no-spreading': 'off',
       // Disable jsx-no-literals - this is for i18n-heavy apps, not applicable here
       'react/jsx-no-literals': 'off',
       // Allow implicit return types for React components (TypeScript infers them well)

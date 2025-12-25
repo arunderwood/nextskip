@@ -1,0 +1,33 @@
+/**
+ * HelpButton styles - matches ThemeToggle for visual consistency.
+ */
+
+.help-button {
+  background: var(--surface-color);
+  border: 1px solid var(--border-color);
+  border-radius: calc(var(--border-radius) * 2);
+  padding: calc(var(--spacing-unit) * 0.75) calc(var(--spacing-unit) * 1);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-primary);
+  transition:
+    background 200ms,
+    border-color 200ms,
+    transform 150ms;
+}
+
+.help-button:hover {
+  background: var(--hotness-neutral-bg);
+  border-color: var(--hotness-neutral-border);
+}
+
+.help-button:active {
+  transform: scale(0.95);
+}
+
+.help-button:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+}

@@ -1,0 +1,114 @@
+/**
+ * HelpSection styles - consistent styling for help content sections.
+ */
+
+.help-section {
+  padding-bottom: calc(var(--spacing-unit) * 4);
+  margin-bottom: calc(var(--spacing-unit) * 3);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.help-section:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+.help-section__title {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--spacing-unit) * 1);
+  margin: 0 0 calc(var(--spacing-unit) * 2) 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.help-section__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+.help-section__content {
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+/* Typography within help content */
+.help-section__content p {
+  margin: 0 0 calc(var(--spacing-unit) * 2) 0;
+}
+
+.help-section__content p:last-child {
+  margin-bottom: 0;
+}
+
+.help-section__content h4 {
+  margin: calc(var(--spacing-unit) * 3) 0 calc(var(--spacing-unit) * 1.5) 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.help-section__content h4:first-child {
+  margin-top: 0;
+}
+
+.help-section__content ul,
+.help-section__content ol {
+  margin: 0 0 calc(var(--spacing-unit) * 2) 0;
+  padding-left: calc(var(--spacing-unit) * 3);
+}
+
+.help-section__content li {
+  margin-bottom: calc(var(--spacing-unit) * 0.75);
+}
+
+.help-section__content li:last-child {
+  margin-bottom: 0;
+}
+
+.help-section__content strong {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+/* Definition lists for term explanations */
+.help-section__content dl {
+  margin: 0 0 calc(var(--spacing-unit) * 2) 0;
+}
+
+.help-section__content dt {
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-top: calc(var(--spacing-unit) * 1.5);
+}
+
+.help-section__content dt:first-child {
+  margin-top: 0;
+}
+
+.help-section__content dd {
+  margin: calc(var(--spacing-unit) * 0.5) 0 0 calc(var(--spacing-unit) * 2);
+}
+
+/* Help content specific classes */
+.help-content__definitions {
+  background: rgba(0, 0, 0, 0.02);
+  border-radius: var(--border-radius);
+  padding: calc(var(--spacing-unit) * 2);
+}
+
+/* Dark mode */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) .help-content__definitions {
+    background: rgba(255, 255, 255, 0.03);
+  }
+}
+
+:root[data-theme='dark'] .help-content__definitions {
+  background: rgba(255, 255, 255, 0.03);
+}
