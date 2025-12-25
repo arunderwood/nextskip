@@ -2,6 +2,8 @@ import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
 import { resolve } from 'path';
 
+const isCI = process.env.CI === 'true';
+
 export default defineConfig({
   plugins: [react()],
   test: {
@@ -10,6 +12,7 @@ export default defineConfig({
     setupFiles: './src/test/frontend/setup.ts',
     include: ['src/test/frontend/**/*.{test,spec}.{ts,tsx}'],
     css: true,
+    reporters: isCI ? ['default', 'github-actions'] : ['default'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html', 'lcov'],
