@@ -15,12 +15,3 @@
     transform var(--activity-transition-duration) var(--activity-transition-timing),
     opacity var(--activity-transition-duration) var(--activity-transition-timing);
 }
-
-/* Card size classes - kept for backwards compatibility with ActivityCard styling */
-/* Actual sizing is handled by Frame component width/height aspect ratios */
-.activity-grid__card--standard,
-.activity-grid__card--wide,
-.activity-grid__card--tall,
-.activity-grid__card--hero {
-  /* Frame component handles sizing */
-}

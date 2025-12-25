@@ -33,23 +33,8 @@
   --shadow-high: 0 10px 15px rgba(0, 0, 0, 0.1), 0 4px 6px rgba(0, 0, 0, 0.08);
 
   /* === Activity Grid Tokens === */
-  /* Grid Configuration */
-  --activity-columns-desktop: 4;
-  --activity-columns-tablet: 2;
-  --activity-columns-mobile: 1;
-  --activity-columns-wide: 6; /* Wide screens (>1400px) */
   --activity-gap: calc(var(--spacing-unit) * 3); /* 24px */
   --activity-card-min-height: 160px; /* Reduced from 200px for compact mode */
-
-  /* Card Sizes (in grid units) */
-  --activity-card-standard-cols: 1;
-  --activity-card-standard-rows: 1;
-  --activity-card-wide-cols: 2;
-  --activity-card-wide-rows: 1;
-  --activity-card-tall-cols: 1;
-  --activity-card-tall-rows: 2;
-  --activity-card-hero-cols: 2;
-  --activity-card-hero-rows: 2;
 
   /* Hotness Indicator Colors - Enhanced for Modern Design */
   --hotness-hot-color: #059669; /* Emerald green for text */

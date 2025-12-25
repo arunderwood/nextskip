@@ -89,7 +89,7 @@ export function ActivityGrid({
           const aspect = SIZE_TO_ASPECT[config.size];
           return (
             <Frame key={config.id} width={aspect.width} height={aspect.height}>
-              <div className={`activity-grid__card-wrapper activity-grid__card--${config.size}`} role="listitem">
+              <div className="activity-grid__card-wrapper" role="listitem">
                 {component}
               </div>
             </Frame>
