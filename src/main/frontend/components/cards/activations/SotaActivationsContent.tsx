@@ -13,13 +13,7 @@ interface Props {
 }
 
 function SotaActivationsContent({ activations }: Props) {
-  return (
-    <ActivationsContent
-      activations={activations}
-      type="sota"
-      emptyMessage="No current SOTA activations"
-    />
-  );
+  return <ActivationsContent activations={activations} type="sota" emptyMessage="No current SOTA activations" />;
 }
 
 export default SotaActivationsContent;

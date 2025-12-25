@@ -32,14 +32,14 @@ export interface DashboardData {
  *
  * @template TData - The specific data type for this card (e.g., PropagationResponse)
  */
-export interface CardDefinition<TData = unknown> {
+export interface CardDefinition<_TData = unknown> {
   /**
    * Check if this card can be rendered with the given data.
    *
    * @param data - The combined dashboard data from all modules
    * @returns true if the card has sufficient data to render
    */
-  canRender: (data: DashboardData) => boolean;
+  canRender(data: DashboardData): boolean;
 
   /**
    * Create ActivityCardConfig(s) from the dashboard data.
@@ -51,7 +51,7 @@ export interface CardDefinition<TData = unknown> {
    * @param data - The combined dashboard data from all modules
    * @returns Card configuration(s) with priority/hotness, or null if cannot create
    */
-  createConfig: (data: DashboardData) => ActivityCardConfig | ActivityCardConfig[] | null;
+  createConfig(data: DashboardData): ActivityCardConfig | ActivityCardConfig[] | null;
 
   /**
    * Render the card's content within an ActivityCard wrapper.
@@ -60,5 +60,5 @@ export interface CardDefinition<TData = unknown> {
    * @param config - The card configuration created by createConfig
    * @returns React element for the complete card (including ActivityCard wrapper)
    */
-  render: (data: DashboardData, config: ActivityCardConfig) => ReactNode;
+  render(data: DashboardData, config: ActivityCardConfig): ReactNode;
 }

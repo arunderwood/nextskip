@@ -13,13 +13,7 @@ interface Props {
 }
 
 function PotaActivationsContent({ activations }: Props) {
-  return (
-    <ActivationsContent
-      activations={activations}
-      type="pota"
-      emptyMessage="No current POTA activations"
-    />
-  );
+  return <ActivationsContent activations={activations} type="pota" emptyMessage="No current POTA activations" />;
 }
 
 export default PotaActivationsContent;

@@ -121,7 +121,7 @@ interface Props {
 
 // ❌ Bad - uses any
 interface Props {
-  data: any;  // Never use any!
+  data: any; // Never use any!
 }
 ```
 
@@ -169,7 +169,7 @@ useEffect(() => {
 // Interval/polling
 useEffect(() => {
   const interval = setInterval(fetchData, 5 * 60 * 1000);
-  return () => clearInterval(interval);  // Cleanup
+  return () => clearInterval(interval); // Cleanup
 }, []);
 
 // Dependent effect
@@ -177,7 +177,7 @@ useEffect(() => {
   if (userId) {
     fetchUserData(userId);
   }
-}, [userId]);  // Re-run when userId changes
+}, [userId]); // Re-run when userId changes
 ```
 
 ## CSS Conventions
@@ -304,6 +304,7 @@ const data = response ?? defaultValue;
 ### Presentation vs Container Components
 
 **Presentation Component** (receives data via props):
+
 ```typescript
 // SolarIndicesCard.tsx - pure presentation
 interface Props {
@@ -316,6 +317,7 @@ function SolarIndicesCard({ solarIndices }: Props) {
 ```
 
 **Container Component** (fetches data, manages state):
+
 ```typescript
 // DashboardView.tsx - data fetching + composition
 function DashboardView() {
@@ -552,9 +554,7 @@ export function useDashboardCards(data: DashboardData | null): ActivityCardConfi
 
   // Return array of configs (filter out null)
   return useMemo(() => {
-    return [activityConfig /* , otherConfigs... */].filter(
-      (config): config is ActivityCardConfig => config !== null
-    );
+    return [activityConfig /* , otherConfigs... */].filter((config): config is ActivityCardConfig => config !== null);
   }, [activityConfig]);
 }
 ```
@@ -581,6 +581,7 @@ function DashboardView() {
 ### Hotness Visual Indicators
 
 Cards automatically display hotness via:
+
 - **Border glow**: Hot cards have green glow, warm have orange tint
 - **Header badge**: Shows "Excellent" / "Good" / "Moderate" / "Limited"
 - **Pulse animation**: Hot cards have pulsing indicator dot
@@ -590,18 +591,22 @@ No manual styling needed - it's automatic based on priority score.
 ### Priority Calculation Guidelines
 
 **Favorable flag** (40% weight):
+
 - Use for binary favorable/unfavorable conditions
 - Example: `solarIndices.favorable`
 
 **Score** (35% weight):
+
 - Numeric value 0-100
 - Example: `bandConditions.score`, `solarFluxIndex`
 
 **Rating** (20% weight):
+
 - GOOD/FAIR/POOR/UNKNOWN enum
 - Example: `bandCondition.rating`
 
 **Recency** (5% weight):
+
 - Optional timestamp for time-sensitive data
 - Decays from full weight at 0 minutes to 0 weight at 60 minutes
 
@@ -615,6 +620,7 @@ Adding new activity cards:
 4. Add switch case in `DashboardView` to render
 
 Example:
+
 ```typescript
 case 'satellite-passes':
   component = (
@@ -628,6 +634,7 @@ case 'satellite-passes':
 ## Do's and Don'ts
 
 ### Do's ✅
+
 - Export default for single component per file
 - Use TypeScript strict mode (no `any`)
 - Handle loading and error states
@@ -638,6 +645,7 @@ case 'satellite-passes':
 - Use semantic HTML elements
 
 ### Don'ts ❌
+
 - Export multiple components from one file
 - Use `any` type
 - Hardcode colors or spacing values

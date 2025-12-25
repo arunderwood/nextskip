@@ -3,6 +3,7 @@ import { render, screen } from '@testing-library/react';
 import { axe, toHaveNoViolations } from 'jest-axe';
 import SotaActivationsContent from 'Frontend/components/cards/activations/SotaActivationsContent';
 import type Activation from 'Frontend/generated/io/nextskip/activations/model/Activation';
+import ActivationType from 'Frontend/generated/io/nextskip/activations/model/ActivationType';
 
 // Extend Vitest's expect with jest-axe matchers
 expect.extend(toHaveNoViolations);
@@ -11,7 +12,7 @@ describe('SotaActivationsContent', () => {
   const createMockActivation = (overrides?: Partial<Activation>): Activation => ({
     spotId: '654321',
     activatorCallsign: 'K2DEF/P',
-    type: 'SOTA',
+    type: ActivationType.SOTA,
     frequency: 7200,
     mode: 'CW',
     spottedAt: new Date().toISOString(),
@@ -22,14 +23,13 @@ describe('SotaActivationsContent', () => {
       name: 'Mount Test',
       regionCode: 'WA',
     },
+    favorable: true,
+    score: 75,
     ...overrides,
   });
 
   it('should render activation count', () => {
-    const activations = [
-      createMockActivation({ spotId: '1' }),
-      createMockActivation({ spotId: '2' }),
-    ];
+    const activations = [createMockActivation({ spotId: '1' }), createMockActivation({ spotId: '2' })];
 
     render(<SotaActivationsContent activations={activations} />);
 
@@ -93,9 +93,7 @@ describe('SotaActivationsContent', () => {
     vi.setSystemTime(now);
 
     const tenMinutesAgo = new Date('2025-01-15T11:50:00Z');
-    const activations = [
-      createMockActivation({ spottedAt: tenMinutesAgo.toISOString() }),
-    ];
+    const activations = [createMockActivation({ spottedAt: tenMinutesAgo.toISOString() })];
 
     render(<SotaActivationsContent activations={activations} />);
 
@@ -107,7 +105,7 @@ describe('SotaActivationsContent', () => {
 
   it('should limit display to 8 activations with overflow message', () => {
     const manyActivations = Array.from({ length: 10 }, (_, i) =>
-      createMockActivation({ spotId: `${i + 1}`, activatorCallsign: `K${i}DEF/P` })
+      createMockActivation({ spotId: `${i + 1}`, activatorCallsign: `K${i}DEF/P` }),
     );
 
     render(<SotaActivationsContent activations={manyActivations} />);
@@ -147,9 +145,7 @@ describe('SotaActivationsContent', () => {
     vi.setSystemTime(now);
 
     const fortyFiveSecondsAgo = new Date('2025-01-15T11:59:15Z');
-    const activations = [
-      createMockActivation({ spottedAt: fortyFiveSecondsAgo.toISOString() }),
-    ];
+    const activations = [createMockActivation({ spottedAt: fortyFiveSecondsAgo.toISOString() })];
 
     render(<SotaActivationsContent activations={activations} />);
 
@@ -163,9 +159,7 @@ describe('SotaActivationsContent', () => {
     vi.setSystemTime(now);
 
     const oneMinuteAgo = new Date('2025-01-15T11:59:00Z');
-    const activations = [
-      createMockActivation({ spottedAt: oneMinuteAgo.toISOString() }),
-    ];
+    const activations = [createMockActivation({ spottedAt: oneMinuteAgo.toISOString() })];
 
     render(<SotaActivationsContent activations={activations} />);
 
@@ -179,9 +173,7 @@ describe('SotaActivationsContent', () => {
     vi.setSystemTime(now);
 
     const threeHoursAgo = new Date('2025-01-15T09:00:00Z');
-    const activations = [
-      createMockActivation({ spottedAt: threeHoursAgo.toISOString() }),
-    ];
+    const activations = [createMockActivation({ spottedAt: threeHoursAgo.toISOString() })];
 
     render(<SotaActivationsContent activations={activations} />);
 
@@ -195,9 +187,7 @@ describe('SotaActivationsContent', () => {
     vi.setSystemTime(now);
 
     const oneHourAgo = new Date('2025-01-15T11:00:00Z');
-    const activations = [
-      createMockActivation({ spottedAt: oneHourAgo.toISOString() }),
-    ];
+    const activations = [createMockActivation({ spottedAt: oneHourAgo.toISOString() })];
 
     render(<SotaActivationsContent activations={activations} />);
 
@@ -207,9 +197,7 @@ describe('SotaActivationsContent', () => {
   });
 
   it('should display "Unknown" for null timestamp', () => {
-    const activations = [
-      createMockActivation({ spottedAt: undefined }),
-    ];
+    const activations = [createMockActivation({ spottedAt: undefined })];
 
     render(<SotaActivationsContent activations={activations} />);
 
@@ -217,9 +205,7 @@ describe('SotaActivationsContent', () => {
   });
 
   it('should display "Unknown" for null frequency', () => {
-    const activations = [
-      createMockActivation({ frequency: undefined }),
-    ];
+    const activations = [createMockActivation({ frequency: undefined })];
 
     render(<SotaActivationsContent activations={activations} />);
 
@@ -244,9 +230,7 @@ describe('SotaActivationsContent', () => {
   });
 
   it('should display "Unknown" for null mode', () => {
-    const activations = [
-      createMockActivation({ mode: undefined }),
-    ];
+    const activations = [createMockActivation({ mode: undefined })];
 
     render(<SotaActivationsContent activations={activations} />);
 

@@ -39,7 +39,8 @@
 }
 
 @keyframes peakPulse {
-  0%, 100% {
+  0%,
+  100% {
     box-shadow: 0 0 0 0 var(--hotness-hot-glow);
     transform: scale(1);
   }
@@ -50,7 +51,8 @@
 }
 
 @keyframes sparkle {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 1;
     transform: rotate(0deg) scale(1);
   }
@@ -107,9 +109,12 @@
 
 .zhr-meter-fill {
   height: 100%;
+  width: var(--zhr-width, 0%);
   background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
   border-radius: calc(var(--border-radius) * 2);
-  transition: width var(--transition-slow), background var(--transition-slow);
+  transition:
+    width var(--transition-slow),
+    background var(--transition-slow);
   position: relative;
   box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.2);
 }
@@ -124,7 +129,8 @@
 }
 
 @keyframes meterPulse {
-  0%, 100% {
+  0%,
+  100% {
     filter: brightness(1);
   }
   50% {
@@ -146,12 +152,7 @@
   left: -100%;
   width: 100%;
   height: 100%;
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgba(255, 255, 255, 0.3) 50%,
-    transparent 100%
-  );
+  background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.3) 50%, transparent 100%);
   animation: risingShimmer 3s ease-in-out infinite;
 }
 
@@ -178,12 +179,7 @@
   right: -100%;
   width: 100%;
   height: 100%;
-  background: linear-gradient(
-    270deg,
-    transparent 0%,
-    rgba(0, 0, 0, 0.2) 50%,
-    transparent 100%
-  );
+  background: linear-gradient(270deg, transparent 0%, rgba(0, 0, 0, 0.2) 50%, transparent 100%);
   animation: decliningFade 3s ease-in-out infinite;
 }
 

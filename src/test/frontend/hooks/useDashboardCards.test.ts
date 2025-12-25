@@ -12,6 +12,8 @@ import type { DashboardData } from 'Frontend/components/cards/types';
 import type PropagationResponse from 'Frontend/generated/io/nextskip/propagation/api/PropagationResponse';
 import type SolarIndices from 'Frontend/generated/io/nextskip/propagation/model/SolarIndices';
 import type BandCondition from 'Frontend/generated/io/nextskip/propagation/model/BandCondition';
+import FrequencyBand from 'Frontend/generated/io/nextskip/common/model/FrequencyBand';
+import BandConditionRating from 'Frontend/generated/io/nextskip/propagation/model/BandConditionRating';
 
 // Import card registrations to ensure they're loaded for tests
 import 'Frontend/components/cards/propagation';
@@ -28,21 +30,20 @@ const createMockSolarIndices = (overrides: Partial<SolarIndices> = {}): SolarInd
 });
 
 const createMockBandCondition = (overrides: Partial<BandCondition> = {}): BandCondition => ({
-  band: '20m',
-  rating: 'GOOD',
+  band: FrequencyBand.BAND_20M,
+  rating: BandConditionRating.GOOD,
   favorable: true,
   score: 80,
+  confidence: 90,
   ...overrides,
 });
 
-const createMockPropagationResponse = (
-  overrides: Partial<PropagationResponse> = {}
-): PropagationResponse => ({
+const createMockPropagationResponse = (overrides: Partial<PropagationResponse> = {}): PropagationResponse => ({
   solarIndices: createMockSolarIndices(),
   bandConditions: [
-    createMockBandCondition({ band: '80m', score: 70 }),
-    createMockBandCondition({ band: '40m', score: 75 }),
-    createMockBandCondition({ band: '20m', score: 80 }),
+    createMockBandCondition({ band: FrequencyBand.BAND_80M, score: 70 }),
+    createMockBandCondition({ band: FrequencyBand.BAND_40M, score: 75 }),
+    createMockBandCondition({ band: FrequencyBand.BAND_20M, score: 80 }),
   ],
   ...overrides,
 });
@@ -144,20 +145,12 @@ describe('useDashboardCards', () => {
         }),
       };
 
-      const { result: favorableResult } = renderHook(() =>
-        useDashboardCards(favorableData)
-      );
-      const { result: unfavorableResult } = renderHook(() =>
-        useDashboardCards(unfavorableData)
-      );
+      const { result: favorableResult } = renderHook(() => useDashboardCards(favorableData));
+      const { result: unfavorableResult } = renderHook(() => useDashboardCards(unfavorableData));
 
       // Favorable flag adds 40 points to priority
-      expect(favorableResult.current[0].priority).toBeGreaterThan(
-        unfavorableResult.current[0].priority
-      );
-      expect(
-        favorableResult.current[0].priority - unfavorableResult.current[0].priority
-      ).toBeGreaterThanOrEqual(35); // Should be ~40 points difference
+      expect(favorableResult.current[0].priority).toBeGreaterThan(unfavorableResult.current[0].priority);
+      expect(favorableResult.current[0].priority - unfavorableResult.current[0].priority).toBeGreaterThanOrEqual(35); // Should be ~40 points difference
     });
   });
 
@@ -235,9 +228,9 @@ describe('useDashboardCards', () => {
         propagation: createMockPropagationResponse({
           solarIndices: undefined,
           bandConditions: [
-            createMockBandCondition({ rating: 'GOOD', score: 80 }),
-            createMockBandCondition({ rating: 'FAIR', score: 60 }),
-            createMockBandCondition({ rating: 'POOR', score: 30 }),
+            createMockBandCondition({ rating: BandConditionRating.GOOD, score: 80 }),
+            createMockBandCondition({ rating: BandConditionRating.FAIR, score: 60 }),
+            createMockBandCondition({ rating: BandConditionRating.POOR, score: 30 }),
           ],
         }),
       };
@@ -253,8 +246,8 @@ describe('useDashboardCards', () => {
         propagation: createMockPropagationResponse({
           solarIndices: undefined,
           bandConditions: [
-            createMockBandCondition({ rating: 'FAIR', score: 60, favorable: true }),
-            createMockBandCondition({ rating: 'POOR', score: 30, favorable: true }),
+            createMockBandCondition({ rating: BandConditionRating.FAIR, score: 60, favorable: true }),
+            createMockBandCondition({ rating: BandConditionRating.POOR, score: 30, favorable: true }),
           ],
         }),
       };
@@ -262,8 +255,8 @@ describe('useDashboardCards', () => {
         propagation: createMockPropagationResponse({
           solarIndices: undefined,
           bandConditions: [
-            createMockBandCondition({ rating: 'POOR', score: 60, favorable: true }),
-            createMockBandCondition({ rating: 'POOR', score: 30, favorable: true }),
+            createMockBandCondition({ rating: BandConditionRating.POOR, score: 60, favorable: true }),
+            createMockBandCondition({ rating: BandConditionRating.POOR, score: 30, favorable: true }),
           ],
         }),
       };
@@ -272,9 +265,7 @@ describe('useDashboardCards', () => {
       const { result: poorResult } = renderHook(() => useDashboardCards(dataWithPoor));
 
       // FAIR rating (12 points) should give higher priority than POOR rating (4 points)
-      expect(fairResult.current[0].priority).toBeGreaterThan(
-        poorResult.current[0].priority
-      );
+      expect(fairResult.current[0].priority).toBeGreaterThan(poorResult.current[0].priority);
     });
 
     it('should handle undefined values in band conditions', () => {
@@ -411,8 +402,8 @@ describe('useDashboardCards', () => {
         propagation: createMockPropagationResponse({
           solarIndices: undefined,
           bandConditions: [
-            createMockBandCondition({ favorable: true, score: 100, rating: 'GOOD' }),
-            createMockBandCondition({ favorable: true, score: 100, rating: 'GOOD' }),
+            createMockBandCondition({ favorable: true, score: 100, rating: BandConditionRating.GOOD }),
+            createMockBandCondition({ favorable: true, score: 100, rating: BandConditionRating.GOOD }),
           ],
         }),
       };
@@ -428,8 +419,8 @@ describe('useDashboardCards', () => {
         propagation: createMockPropagationResponse({
           solarIndices: undefined,
           bandConditions: [
-            createMockBandCondition({ favorable: true, score: 100, rating: 'GOOD' }),
-            createMockBandCondition({ favorable: true, score: 100, rating: 'GOOD' }),
+            createMockBandCondition({ favorable: true, score: 100, rating: BandConditionRating.GOOD }),
+            createMockBandCondition({ favorable: true, score: 100, rating: BandConditionRating.GOOD }),
           ],
         }),
       };
@@ -437,8 +428,8 @@ describe('useDashboardCards', () => {
         propagation: createMockPropagationResponse({
           solarIndices: undefined,
           bandConditions: [
-            createMockBandCondition({ favorable: false, score: 20, rating: 'POOR' }),
-            createMockBandCondition({ favorable: false, score: 10, rating: 'POOR' }),
+            createMockBandCondition({ favorable: false, score: 20, rating: BandConditionRating.POOR }),
+            createMockBandCondition({ favorable: false, score: 10, rating: BandConditionRating.POOR }),
           ],
         }),
       };

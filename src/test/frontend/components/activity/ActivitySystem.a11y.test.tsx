@@ -9,18 +9,13 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { axe, toHaveNoViolations } from 'jest-axe';
-import ActivityGrid from "Frontend/components/activity/ActivityGrid";
-import ActivityCard from "Frontend/components/activity/ActivityCard";
-import type { ActivityCardConfig } from "Frontend/components/activity";
+import ActivityGrid from 'Frontend/components/activity/ActivityGrid';
+import ActivityCard from 'Frontend/components/activity/ActivityCard';
+import type { ActivityCardConfig } from 'Frontend/components/activity';
 
 expect.extend(toHaveNoViolations);
 
-const createTestCard = (
-  id: string,
-  priority: number,
-  title: string,
-  interactive = false
-) => {
+const createTestCard = (id: string, priority: number, title: string, interactive = false) => {
   const config: ActivityCardConfig = {
     id,
     type: 'solar-indices',
@@ -160,7 +155,7 @@ describe('Activity System Accessibility', () => {
       render(
         <ActivityCard config={config} title="Test Card" onClick={handleClick}>
           <div>Content</div>
-        </ActivityCard>
+        </ActivityCard>,
       );
 
       const button = screen.getByRole('button', { name: 'Test Card' });
@@ -187,7 +182,7 @@ describe('Activity System Accessibility', () => {
       render(
         <ActivityCard config={config} title="Test Card" onClick={handleClick}>
           <div>Content</div>
-        </ActivityCard>
+        </ActivityCard>,
       );
 
       const button = screen.getByRole('button', { name: 'Test Card' });
@@ -217,7 +212,7 @@ describe('Activity System Accessibility', () => {
         createTestCard('card-3', 30, 'Card 3'),
       ];
 
-      const { container } = render(<ActivityGrid cards={cards} />);
+      render(<ActivityGrid cards={cards} />);
 
       const list = screen.getByRole('list');
       const items = list.querySelectorAll('[role="listitem"]');
@@ -235,16 +230,68 @@ describe('Activity System Accessibility', () => {
     });
 
     it('should announce hotness level to screen readers', () => {
-      const config1: ActivityCardConfig = { id: 'hot', type: 'solar-indices', size: 'standard', priority: 85, hotness: 'hot' };
-      const config2: ActivityCardConfig = { id: 'warm', type: 'solar-indices', size: 'standard', priority: 55, hotness: 'warm' };
-      const config3: ActivityCardConfig = { id: 'neutral', type: 'solar-indices', size: 'standard', priority: 35, hotness: 'neutral' };
-      const config4: ActivityCardConfig = { id: 'cool', type: 'solar-indices', size: 'standard', priority: 15, hotness: 'cool' };
+      const config1: ActivityCardConfig = {
+        id: 'hot',
+        type: 'solar-indices',
+        size: 'standard',
+        priority: 85,
+        hotness: 'hot',
+      };
+      const config2: ActivityCardConfig = {
+        id: 'warm',
+        type: 'solar-indices',
+        size: 'standard',
+        priority: 55,
+        hotness: 'warm',
+      };
+      const config3: ActivityCardConfig = {
+        id: 'neutral',
+        type: 'solar-indices',
+        size: 'standard',
+        priority: 35,
+        hotness: 'neutral',
+      };
+      const config4: ActivityCardConfig = {
+        id: 'cool',
+        type: 'solar-indices',
+        size: 'standard',
+        priority: 15,
+        hotness: 'cool',
+      };
 
       const cards = [
-        { config: config1, component: <ActivityCard config={config1} title="Hot Card" subtitle="Test" icon="📊"><div>Hot Card content</div></ActivityCard> },
-        { config: config2, component: <ActivityCard config={config2} title="Warm Card" subtitle="Test" icon="📊"><div>Warm Card content</div></ActivityCard> },
-        { config: config3, component: <ActivityCard config={config3} title="Neutral Card" subtitle="Test" icon="📊"><div>Neutral Card content</div></ActivityCard> },
-        { config: config4, component: <ActivityCard config={config4} title="Cool Card" subtitle="Test" icon="📊"><div>Cool Card content</div></ActivityCard> },
+        {
+          config: config1,
+          component: (
+            <ActivityCard config={config1} title="Hot Card" subtitle="Test" icon="📊">
+              <div>Hot Card content</div>
+            </ActivityCard>
+          ),
+        },
+        {
+          config: config2,
+          component: (
+            <ActivityCard config={config2} title="Warm Card" subtitle="Test" icon="📊">
+              <div>Warm Card content</div>
+            </ActivityCard>
+          ),
+        },
+        {
+          config: config3,
+          component: (
+            <ActivityCard config={config3} title="Neutral Card" subtitle="Test" icon="📊">
+              <div>Neutral Card content</div>
+            </ActivityCard>
+          ),
+        },
+        {
+          config: config4,
+          component: (
+            <ActivityCard config={config4} title="Cool Card" subtitle="Test" icon="📊">
+              <div>Cool Card content</div>
+            </ActivityCard>
+          ),
+        },
       ];
 
       const { container } = render(<ActivityGrid cards={cards} />);
@@ -256,10 +303,7 @@ describe('Activity System Accessibility', () => {
     });
 
     it('should have proper heading hierarchy', () => {
-      const cards = [
-        createTestCard('card-1', 90, 'Main Card'),
-        createTestCard('card-2', 60, 'Secondary Card'),
-      ];
+      const cards = [createTestCard('card-1', 90, 'Main Card'), createTestCard('card-2', 60, 'Secondary Card')];
 
       render(<ActivityGrid cards={cards} />);
 
@@ -290,17 +334,14 @@ describe('Activity System Accessibility', () => {
 
     it('should not trap focus within grid', async () => {
       const user = userEvent.setup();
-      const cards = [
-        createTestCard('card-1', 90, 'Card 1', true),
-        createTestCard('card-2', 60, 'Card 2', true),
-      ];
+      const cards = [createTestCard('card-1', 90, 'Card 1', true), createTestCard('card-2', 60, 'Card 2', true)];
 
       render(
         <div>
-          <button>Before</button>
+          <button type="button">Before</button>
           <ActivityGrid cards={cards} />
-          <button>After</button>
-        </div>
+          <button type="button">After</button>
+        </div>,
       );
 
       const beforeButton = screen.getByRole('button', { name: 'Before' });
@@ -352,13 +393,9 @@ describe('Activity System Accessibility', () => {
       };
 
       const { container } = render(
-        <ActivityCard
-          config={config}
-          title="Test"
-          footer={<div>Footer</div>}
-        >
+        <ActivityCard config={config} title="Test" footer={<div>Footer</div>}>
           <div>Content</div>
-        </ActivityCard>
+        </ActivityCard>,
       );
 
       expect(container.querySelector('.activity-card__header')).toBeInTheDocument();
@@ -368,41 +405,82 @@ describe('Activity System Accessibility', () => {
 
   describe('Color Contrast', () => {
     it('should use semantic color classes for hotness indicators', () => {
-      const config1: ActivityCardConfig = { id: 'hot', type: 'solar-indices', size: 'standard', priority: 85, hotness: 'hot' };
-      const config2: ActivityCardConfig = { id: 'warm', type: 'solar-indices', size: 'standard', priority: 55, hotness: 'warm' };
-      const config3: ActivityCardConfig = { id: 'neutral', type: 'solar-indices', size: 'standard', priority: 35, hotness: 'neutral' };
-      const config4: ActivityCardConfig = { id: 'cool', type: 'solar-indices', size: 'standard', priority: 15, hotness: 'cool' };
+      const config1: ActivityCardConfig = {
+        id: 'hot',
+        type: 'solar-indices',
+        size: 'standard',
+        priority: 85,
+        hotness: 'hot',
+      };
+      const config2: ActivityCardConfig = {
+        id: 'warm',
+        type: 'solar-indices',
+        size: 'standard',
+        priority: 55,
+        hotness: 'warm',
+      };
+      const config3: ActivityCardConfig = {
+        id: 'neutral',
+        type: 'solar-indices',
+        size: 'standard',
+        priority: 35,
+        hotness: 'neutral',
+      };
+      const config4: ActivityCardConfig = {
+        id: 'cool',
+        type: 'solar-indices',
+        size: 'standard',
+        priority: 15,
+        hotness: 'cool',
+      };
 
       const cards = [
-        { config: config1, component: <ActivityCard config={config1} title="Hot"><div>Hot</div></ActivityCard> },
-        { config: config2, component: <ActivityCard config={config2} title="Warm"><div>Warm</div></ActivityCard> },
-        { config: config3, component: <ActivityCard config={config3} title="Neutral"><div>Neutral</div></ActivityCard> },
-        { config: config4, component: <ActivityCard config={config4} title="Cool"><div>Cool</div></ActivityCard> },
+        {
+          config: config1,
+          component: (
+            <ActivityCard config={config1} title="Hot">
+              <div>Hot</div>
+            </ActivityCard>
+          ),
+        },
+        {
+          config: config2,
+          component: (
+            <ActivityCard config={config2} title="Warm">
+              <div>Warm</div>
+            </ActivityCard>
+          ),
+        },
+        {
+          config: config3,
+          component: (
+            <ActivityCard config={config3} title="Neutral">
+              <div>Neutral</div>
+            </ActivityCard>
+          ),
+        },
+        {
+          config: config4,
+          component: (
+            <ActivityCard config={config4} title="Cool">
+              <div>Cool</div>
+            </ActivityCard>
+          ),
+        },
       ];
 
       const { container } = render(<ActivityGrid cards={cards} />);
 
-      expect(
-        container.querySelector('.activity-card--hot')
-      ).toBeInTheDocument();
-      expect(
-        container.querySelector('.activity-card--warm')
-      ).toBeInTheDocument();
-      expect(
-        container.querySelector('.activity-card--neutral')
-      ).toBeInTheDocument();
-      expect(
-        container.querySelector('.activity-card--cool')
-      ).toBeInTheDocument();
+      expect(container.querySelector('.activity-card--hot')).toBeInTheDocument();
+      expect(container.querySelector('.activity-card--warm')).toBeInTheDocument();
+      expect(container.querySelector('.activity-card--neutral')).toBeInTheDocument();
+      expect(container.querySelector('.activity-card--cool')).toBeInTheDocument();
     });
   });
 
   describe('Responsive Accessibility', () => {
     it('should maintain accessibility at different viewport sizes', async () => {
-      const cards = [
-        createTestCard('card-1', 90, 'Card 1'),
-        createTestCard('card-2', 60, 'Card 2'),
-      ];
+      const cards = [createTestCard('card-1', 90, 'Card 1'), createTestCard('card-2', 60, 'Card 2')];
 
       const { container } = render(<ActivityGrid cards={cards} />);
 

@@ -5,7 +5,7 @@
 .pota-content {
   display: flex;
   flex-direction: column;
-  gap: calc(var(--spacing-unit) * 0.75);  /* Reduced for compact mode */
+  gap: calc(var(--spacing-unit) * 0.75); /* Reduced for compact mode */
   padding: 0;
 }
 
@@ -19,7 +19,7 @@
 }
 
 .count-number {
-  font-size: 1.75rem;  /* Reduced from 3rem */
+  font-size: 1.75rem; /* Reduced from 3rem */
   font-weight: 700;
   line-height: 1;
   color: var(--color-primary, #4a9eff);
@@ -45,14 +45,14 @@
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: calc(var(--spacing-unit) * 0.5);  /* Reduced for compact mode */
+  gap: calc(var(--spacing-unit) * 0.5); /* Reduced for compact mode */
 }
 
 .activation-item {
-  padding: calc(var(--spacing-unit) * 0.5);  /* Reduced padding */
+  padding: calc(var(--spacing-unit) * 0.5); /* Reduced padding */
   background: rgba(255, 255, 255, 0.03);
   border-radius: var(--border-radius);
-  border-left: 2px solid var(--color-primary, #4a9eff);  /* Thinner border */
+  border-left: 2px solid var(--color-primary, #4a9eff); /* Thinner border */
   transition: background 0.2s ease;
 }
 
@@ -69,7 +69,7 @@
 
 .callsign-link {
   font-weight: 600;
-  font-size: 0.9375rem;  /* Reduced from 1.125rem */
+  font-size: 0.9375rem; /* Reduced from 1.125rem */
   color: var(--color-primary, #4a9eff);
   text-decoration: none;
   transition: color 0.2s ease;
@@ -81,15 +81,15 @@
 }
 
 .reference-code {
-  font-size: 0.75rem;  /* Reduced from 0.875rem */
+  font-size: 0.75rem; /* Reduced from 0.875rem */
   color: var(--text-secondary);
   font-family: 'Courier New', monospace;
 }
 
 .activation-details {
   display: flex;
-  gap: calc(var(--spacing-unit) * 0.75);  /* Reduced gap */
-  font-size: 0.75rem;  /* Reduced from 0.875rem */
+  gap: calc(var(--spacing-unit) * 0.75); /* Reduced gap */
+  font-size: 0.75rem; /* Reduced from 0.875rem */
   color: var(--text-secondary);
   flex-wrap: wrap;
 }
@@ -102,7 +102,7 @@
 .mode {
   font-family: 'Courier New', monospace;
   background: rgba(255, 255, 255, 0.1);
-  padding: 0.0625rem 0.25rem;  /* Reduced padding */
+  padding: 0.0625rem 0.25rem; /* Reduced padding */
   border-radius: 3px;
 }
 
@@ -113,7 +113,7 @@
 
 .park-name {
   margin-top: 2px;
-  font-size: 0.6875rem;  /* Reduced from 0.8125rem */
+  font-size: 0.6875rem; /* Reduced from 0.8125rem */
   color: var(--text-secondary);
   font-style: italic;
 }

@@ -8,9 +8,9 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen, within } from '@testing-library/react';
 import { axe, toHaveNoViolations } from 'jest-axe';
-import ActivityGrid from "Frontend/components/activity/ActivityGrid";
-import ActivityCard from "Frontend/components/activity/ActivityCard";
-import type { ActivityCardConfig } from "Frontend/components/activity";
+import ActivityGrid from 'Frontend/components/activity/ActivityGrid';
+import ActivityCard from 'Frontend/components/activity/ActivityCard';
+import type { ActivityCardConfig } from 'Frontend/components/activity';
 
 expect.extend(toHaveNoViolations);
 
@@ -18,7 +18,7 @@ const createCard = (
   id: string,
   priority: number,
   hotness: 'hot' | 'warm' | 'neutral' | 'cool',
-  size: 'standard' | 'wide' | 'tall' | 'hero' = 'standard'
+  size: 'standard' | 'wide' | 'tall' | 'hero' = 'standard',
 ): ActivityCardConfig => ({
   id,
   type: 'solar-indices',
@@ -45,10 +45,7 @@ describe('ActivityGrid', () => {
         {
           config: createCard('card-1', 75, 'hot'),
           component: (
-            <ActivityCard
-              config={createCard('card-1', 75, 'hot')}
-              title="Card 1"
-            >
+            <ActivityCard config={createCard('card-1', 75, 'hot')} title="Card 1">
               <div>Content 1</div>
             </ActivityCard>
           ),
@@ -66,10 +63,7 @@ describe('ActivityGrid', () => {
         {
           config: createCard('card-1', 75, 'hot'),
           component: (
-            <ActivityCard
-              config={createCard('card-1', 75, 'hot')}
-              title="Card 1"
-            >
+            <ActivityCard config={createCard('card-1', 75, 'hot')} title="Card 1">
               <div>Content 1</div>
             </ActivityCard>
           ),
@@ -77,10 +71,7 @@ describe('ActivityGrid', () => {
         {
           config: createCard('card-2', 50, 'warm'),
           component: (
-            <ActivityCard
-              config={createCard('card-2', 50, 'warm')}
-              title="Card 2"
-            >
+            <ActivityCard config={createCard('card-2', 50, 'warm')} title="Card 2">
               <div>Content 2</div>
             </ActivityCard>
           ),
@@ -88,10 +79,7 @@ describe('ActivityGrid', () => {
         {
           config: createCard('card-3', 25, 'neutral'),
           component: (
-            <ActivityCard
-              config={createCard('card-3', 25, 'neutral')}
-              title="Card 3"
-            >
+            <ActivityCard config={createCard('card-3', 25, 'neutral')} title="Card 3">
               <div>Content 3</div>
             </ActivityCard>
           ),
@@ -110,19 +98,14 @@ describe('ActivityGrid', () => {
         {
           config: createCard('card-1', 75, 'hot'),
           component: (
-            <ActivityCard
-              config={createCard('card-1', 75, 'hot')}
-              title="Card 1"
-            >
+            <ActivityCard config={createCard('card-1', 75, 'hot')} title="Card 1">
               <div>Content</div>
             </ActivityCard>
           ),
         },
       ];
 
-      const { container } = render(
-        <ActivityGrid cards={cards} className="custom-grid" />
-      );
+      const { container } = render(<ActivityGrid cards={cards} className="custom-grid" />);
 
       const grid = container.querySelector('.activity-grid');
       expect(grid).toHaveClass('custom-grid');
@@ -151,10 +134,7 @@ describe('ActivityGrid', () => {
         {
           config: createCard('medium', 50, 'warm'),
           component: (
-            <ActivityCard
-              config={createCard('medium', 50, 'warm')}
-              title="Medium"
-            >
+            <ActivityCard config={createCard('medium', 50, 'warm')} title="Medium">
               <div>Medium priority</div>
             </ActivityCard>
           ),
@@ -218,10 +198,7 @@ describe('ActivityGrid', () => {
         {
           config: createCard('card-1', 30, 'neutral'),
           component: (
-            <ActivityCard
-              config={createCard('card-1', 30, 'neutral')}
-              title="Card 1"
-            >
+            <ActivityCard config={createCard('card-1', 30, 'neutral')} title="Card 1">
               <div>Content 1</div>
             </ActivityCard>
           ),
@@ -236,9 +213,7 @@ describe('ActivityGrid', () => {
         },
       ];
 
-      const { container, rerender } = render(
-        <ActivityGrid cards={initialCards} />
-      );
+      const { container, rerender } = render(<ActivityGrid cards={initialCards} />);
 
       let items = container.querySelectorAll('.activity-grid__card-wrapper');
       expect(items[0]).toHaveTextContent('Content 2'); // Higher priority first
@@ -256,10 +231,7 @@ describe('ActivityGrid', () => {
         {
           config: createCard('card-2', 40, 'neutral'),
           component: (
-            <ActivityCard
-              config={createCard('card-2', 40, 'neutral')}
-              title="Card 2"
-            >
+            <ActivityCard config={createCard('card-2', 40, 'neutral')} title="Card 2">
               <div>Content 2</div>
             </ActivityCard>
           ),
@@ -279,10 +251,7 @@ describe('ActivityGrid', () => {
         {
           config: createCard('standard', 90, 'hot', 'standard'),
           component: (
-            <ActivityCard
-              config={createCard('standard', 90, 'hot', 'standard')}
-              title="Standard"
-            >
+            <ActivityCard config={createCard('standard', 90, 'hot', 'standard')} title="Standard">
               <div>Standard</div>
             </ActivityCard>
           ),
@@ -290,10 +259,7 @@ describe('ActivityGrid', () => {
         {
           config: createCard('wide', 80, 'hot', 'wide'),
           component: (
-            <ActivityCard
-              config={createCard('wide', 80, 'hot', 'wide')}
-              title="Wide"
-            >
+            <ActivityCard config={createCard('wide', 80, 'hot', 'wide')} title="Wide">
               <div>Wide</div>
             </ActivityCard>
           ),
@@ -301,10 +267,7 @@ describe('ActivityGrid', () => {
         {
           config: createCard('tall', 70, 'hot', 'tall'),
           component: (
-            <ActivityCard
-              config={createCard('tall', 70, 'hot', 'tall')}
-              title="Tall"
-            >
+            <ActivityCard config={createCard('tall', 70, 'hot', 'tall')} title="Tall">
               <div>Tall</div>
             </ActivityCard>
           ),
@@ -312,10 +275,7 @@ describe('ActivityGrid', () => {
         {
           config: createCard('hero', 60, 'warm', 'hero'),
           component: (
-            <ActivityCard
-              config={createCard('hero', 60, 'warm', 'hero')}
-              title="Hero"
-            >
+            <ActivityCard config={createCard('hero', 60, 'warm', 'hero')} title="Hero">
               <div>Hero</div>
             </ActivityCard>
           ),
@@ -338,10 +298,7 @@ describe('ActivityGrid', () => {
         {
           config: createCard('card-1', 75, 'hot'),
           component: (
-            <ActivityCard
-              config={createCard('card-1', 75, 'hot')}
-              title="Card 1"
-            >
+            <ActivityCard config={createCard('card-1', 75, 'hot')} title="Card 1">
               <div>Content</div>
             </ActivityCard>
           ),
@@ -361,10 +318,7 @@ describe('ActivityGrid', () => {
         {
           config: createCard('card-1', 75, 'hot'),
           component: (
-            <ActivityCard
-              config={createCard('card-1', 75, 'hot')}
-              title="Card 1"
-            >
+            <ActivityCard config={createCard('card-1', 75, 'hot')} title="Card 1">
               <div>Content</div>
             </ActivityCard>
           ),
@@ -384,26 +338,19 @@ describe('ActivityGrid', () => {
         {
           config: createCard('card-1', 75, 'hot'),
           component: (
-            <ActivityCard
-              config={createCard('card-1', 75, 'hot')}
-              title="Card 1"
-            >
+            <ActivityCard config={createCard('card-1', 75, 'hot')} title="Card 1">
               <div>Content</div>
             </ActivityCard>
           ),
         },
       ];
 
-      const { container } = render(
-        <ActivityGrid cards={cards} animationDuration={500} />
-      );
+      const { container } = render(<ActivityGrid cards={cards} animationDuration={500} />);
 
       const grid = container.querySelector('.activity-grid') as HTMLElement;
       const style = grid?.style;
 
-      expect(style.getPropertyValue('--activity-transition-duration')).toBe(
-        '500ms'
-      );
+      expect(style.getPropertyValue('--activity-transition-duration')).toBe('500ms');
     });
   });
 
@@ -421,10 +368,7 @@ describe('ActivityGrid', () => {
         {
           config: createCard('card-2', 50, 'warm'),
           component: (
-            <ActivityCard
-              config={createCard('card-2', 50, 'warm')}
-              title="Card 2"
-            >
+            <ActivityCard config={createCard('card-2', 50, 'warm')} title="Card 2">
               <div>Content 2</div>
             </ActivityCard>
           ),
@@ -442,10 +386,7 @@ describe('ActivityGrid', () => {
         {
           config: createCard('card-1', 75, 'hot'),
           component: (
-            <ActivityCard
-              config={createCard('card-1', 75, 'hot')}
-              title="Card 1"
-            >
+            <ActivityCard config={createCard('card-1', 75, 'hot')} title="Card 1">
               <div>Content</div>
             </ActivityCard>
           ),
@@ -464,10 +405,7 @@ describe('ActivityGrid', () => {
         {
           config: createCard('card-1', 75, 'hot'),
           component: (
-            <ActivityCard
-              config={createCard('card-1', 75, 'hot')}
-              title="Card 1"
-            >
+            <ActivityCard config={createCard('card-1', 75, 'hot')} title="Card 1">
               <div>Content</div>
             </ActivityCard>
           ),
@@ -475,10 +413,7 @@ describe('ActivityGrid', () => {
         {
           config: createCard('card-2', 50, 'warm'),
           component: (
-            <ActivityCard
-              config={createCard('card-2', 50, 'warm')}
-              title="Card 2"
-            >
+            <ActivityCard config={createCard('card-2', 50, 'warm')} title="Card 2">
               <div>Content</div>
             </ActivityCard>
           ),
@@ -500,10 +435,7 @@ describe('ActivityGrid', () => {
         {
           config: createCard('card-zero', 0, 'cool'),
           component: (
-            <ActivityCard
-              config={createCard('card-zero', 0, 'cool')}
-              title="Zero Priority"
-            >
+            <ActivityCard config={createCard('card-zero', 0, 'cool')} title="Zero Priority">
               <div>Zero</div>
             </ActivityCard>
           ),
@@ -511,10 +443,7 @@ describe('ActivityGrid', () => {
         {
           config: createCard('card-low', 10, 'cool'),
           component: (
-            <ActivityCard
-              config={createCard('card-low', 10, 'cool')}
-              title="Low Priority"
-            >
+            <ActivityCard config={createCard('card-low', 10, 'cool')} title="Low Priority">
               <div>Low</div>
             </ActivityCard>
           ),
@@ -533,10 +462,7 @@ describe('ActivityGrid', () => {
         {
           config: createCard('card-max', 100, 'hot'),
           component: (
-            <ActivityCard
-              config={createCard('card-max', 100, 'hot')}
-              title="Max Priority"
-            >
+            <ActivityCard config={createCard('card-max', 100, 'hot')} title="Max Priority">
               <div>Max</div>
             </ActivityCard>
           ),
@@ -544,10 +470,7 @@ describe('ActivityGrid', () => {
         {
           config: createCard('card-high', 95, 'hot'),
           component: (
-            <ActivityCard
-              config={createCard('card-high', 95, 'hot')}
-              title="High Priority"
-            >
+            <ActivityCard config={createCard('card-high', 95, 'hot')} title="High Priority">
               <div>High</div>
             </ActivityCard>
           ),

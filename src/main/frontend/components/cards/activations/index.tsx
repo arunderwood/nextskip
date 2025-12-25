@@ -15,14 +15,12 @@ import { calculatePriority, priorityToHotness } from '../../activity/usePriority
 import PotaActivationsContent from './PotaActivationsContent';
 import SotaActivationsContent from './SotaActivationsContent';
 
-/* eslint-disable react/jsx-key */
-
 /**
  * POTA Activations Card Definition
  */
 const potaActivationsCard: CardDefinition = {
   canRender: (data: DashboardData) => {
-    return !!(data.activations?.potaActivations);
+    return !!data.activations?.potaActivations;
   },
 
   createConfig: (data: DashboardData) => {
@@ -38,8 +36,7 @@ const potaActivationsCard: CardDefinition = {
     const isFavorable = count >= 3;
 
     // Rating based on count
-    const rating =
-      count >= 10 ? ('GOOD' as const) : count >= 5 ? ('FAIR' as const) : ('POOR' as const);
+    const rating = count >= 10 ? ('GOOD' as const) : count >= 5 ? ('FAIR' as const) : ('POOR' as const);
 
     const priority = calculatePriority({
       favorable: isFavorable,
@@ -73,9 +70,8 @@ const potaActivationsCard: CardDefinition = {
         subtitle="Parks on the Air"
         footer={
           <div className="info-box">
-            <strong>About POTA:</strong> Parks on the Air (POTA) is an amateur radio
-            activity encouraging portable operations from parks and public lands. Higher
-            activation counts indicate more opportunities for contacts.
+            <strong>About POTA:</strong> Parks on the Air (POTA) is an amateur radio activity encouraging portable
+            operations from parks and public lands. Higher activation counts indicate more opportunities for contacts.
           </div>
         }
       >
@@ -90,7 +86,7 @@ const potaActivationsCard: CardDefinition = {
  */
 const sotaActivationsCard: CardDefinition = {
   canRender: (data: DashboardData) => {
-    return !!(data.activations?.sotaActivations);
+    return !!data.activations?.sotaActivations;
   },
 
   createConfig: (data: DashboardData) => {
@@ -106,8 +102,7 @@ const sotaActivationsCard: CardDefinition = {
     const isFavorable = count >= 3;
 
     // Rating based on count
-    const rating =
-      count >= 10 ? ('GOOD' as const) : count >= 5 ? ('FAIR' as const) : ('POOR' as const);
+    const rating = count >= 10 ? ('GOOD' as const) : count >= 5 ? ('FAIR' as const) : ('POOR' as const);
 
     const priority = calculatePriority({
       favorable: isFavorable,
@@ -141,9 +136,8 @@ const sotaActivationsCard: CardDefinition = {
         subtitle="Summits on the Air"
         footer={
           <div className="info-box">
-            <strong>About SOTA:</strong> Summits on the Air (SOTA) is an amateur radio
-            activity encouraging portable operations from mountain summits. Higher
-            activation counts indicate more opportunities for contacts.
+            <strong>About SOTA:</strong> Summits on the Air (SOTA) is an amateur radio activity encouraging portable
+            operations from mountain summits. Higher activation counts indicate more opportunities for contacts.
           </div>
         }
       >

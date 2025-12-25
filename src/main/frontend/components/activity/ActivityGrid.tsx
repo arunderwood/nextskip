@@ -59,7 +59,6 @@ export function ActivityGrid({
   cards,
   columns = 4,
   gap = 3,
-  animateReorder = true,
   animationDuration = 300,
   className = '',
 }: ActivityGridProps) {
@@ -79,19 +78,18 @@ export function ActivityGrid({
       className={`activity-grid ${className}`}
       role="list"
       aria-label="Dashboard activity cards"
-      style={{
-        '--activity-transition-duration': `${animationDuration}ms`,
-      } as React.CSSProperties}
+      style={
+        {
+          '--activity-transition-duration': `${animationDuration}ms`,
+        } as React.CSSProperties
+      }
     >
       <RegularMasonryGrid frameWidth={frameWidth} gap={gapPx}>
         {sortedCards.map(({ config, component }) => {
           const aspect = SIZE_TO_ASPECT[config.size];
           return (
             <Frame key={config.id} width={aspect.width} height={aspect.height}>
-              <div
-                className={`activity-grid__card-wrapper activity-grid__card--${config.size}`}
-                role="listitem"
-              >
+              <div className={`activity-grid__card-wrapper activity-grid__card--${config.size}`} role="listitem">
                 {component}
               </div>
             </Frame>

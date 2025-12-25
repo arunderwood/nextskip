@@ -28,7 +28,7 @@ interface Event {
   name?: string;
   startTime?: string;
   endTime?: string;
-  status?: typeof EventStatus[keyof typeof EventStatus];
+  status?: (typeof EventStatus)[keyof typeof EventStatus];
   endingSoon?: boolean;
 }
 
@@ -54,7 +54,7 @@ function getStatusBadge(event: Event): { label: string; className: string } {
     const remaining = formatTimeRemaining(timeRemaining);
     return {
       label: event.endingSoon ? `Ending in ${remaining}` : `Active (${remaining})`,
-      className: event.endingSoon ? 'status-ending-soon' : 'status-active'
+      className: event.endingSoon ? 'status-ending-soon' : 'status-active',
     };
   }
 
@@ -62,7 +62,7 @@ function getStatusBadge(event: Event): { label: string; className: string } {
     const remaining = formatTimeRemaining(timeRemaining);
     return {
       label: `Starts in ${remaining}`,
-      className: 'status-upcoming'
+      className: 'status-upcoming',
     };
   }
 
@@ -78,19 +78,19 @@ function getEventMetadata(eventType: EventType) {
       return {
         icon: <Trophy size={20} />,
         typeLabel: 'Contest',
-        description: 'Amateur radio competition'
+        description: 'Amateur radio competition',
       };
     case 'meteor-shower':
       return {
         icon: <Sparkles size={20} />,
         typeLabel: 'Meteor Shower',
-        description: 'Meteor scatter propagation opportunity'
+        description: 'Meteor scatter propagation opportunity',
       };
     case 'field-day':
       return {
         icon: <Tent size={20} />,
         typeLabel: 'Field Day',
-        description: 'Special operating event'
+        description: 'Special operating event',
       };
   }
 }
@@ -101,26 +101,28 @@ function getEventMetadata(eventType: EventType) {
 function ContestDetails({ event }: { event: Contest }) {
   return (
     <div className="event-details">
-      {event.sponsor && (
+      {event.sponsor ? (
         <div className="detail-row">
           <span className="detail-label">Sponsor:</span>
           <span className="detail-value">{event.sponsor}</span>
         </div>
-      )}
-      {event.modes && event.modes.length > 0 && (
+      ) : null}
+      {event.modes && event.modes.length > 0 ? (
         <div className="detail-row">
           <span className="detail-label">Modes:</span>
           <span className="detail-value">{Array.from(event.modes).join(', ')}</span>
         </div>
-      )}
-      {event.bands && event.bands.length > 0 && (
+      ) : null}
+      {event.bands && event.bands.length > 0 ? (
         <div className="detail-row">
           <span className="detail-label">Bands:</span>
           <span className="detail-value">
-            {Array.from(event.bands).map((band: any) => band.name || band).join(', ')}
+            {Array.from(event.bands)
+              .map((band: any) => band.name || band)
+              .join(', ')}
           </span>
         </div>
-      )}
+      ) : null}
     </div>
   );
 }
@@ -146,9 +148,7 @@ export function EventCard({ event, eventType, config, children }: EventCardProps
     >
       <div className="event-card-content">
         <div className="event-status">
-          <span className={`status-badge ${status.className}`}>
-            {status.label}
-          </span>
+          <span className={`status-badge ${status.className}`}>{status.label}</span>
         </div>
 
         {/* Render event-type-specific details */}
@@ -157,18 +157,13 @@ export function EventCard({ event, eventType, config, children }: EventCardProps
         {children}
 
         {/* Link to more info if available */}
-        {(sourceUrl || infoUrl) && (
+        {sourceUrl || infoUrl ? (
           <div className="event-link">
-            <a
-              href={sourceUrl || infoUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="details-link"
-            >
+            <a href={sourceUrl || infoUrl} target="_blank" rel="noopener noreferrer" className="details-link">
               View Details →
             </a>
           </div>
-        )}
+        ) : null}
       </div>
     </ActivityCard>
   );

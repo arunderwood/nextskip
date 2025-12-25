@@ -5,26 +5,29 @@ import BandConditionsContent, {
   BandConditionsLegend,
 } from 'Frontend/components/cards/propagation/BandConditionsContent';
 import type BandCondition from 'Frontend/generated/io/nextskip/propagation/model/BandCondition';
+import FrequencyBand from 'Frontend/generated/io/nextskip/common/model/FrequencyBand';
+import BandConditionRating from 'Frontend/generated/io/nextskip/propagation/model/BandConditionRating';
 
 describe('BandConditionsContent', () => {
   const createCondition = (
-    band: string,
-    rating: string,
+    band: FrequencyBand,
+    rating: BandConditionRating,
     score: number,
-    favorable: boolean
+    favorable: boolean,
   ): BandCondition => ({
     band,
     rating,
     score,
     favorable,
+    confidence: 90,
   });
 
   describe('rendering', () => {
     it('should render table with band conditions', () => {
       const conditions = [
-        createCondition('BAND_160M', 'GOOD', 85, true),
-        createCondition('BAND_80M', 'FAIR', 60, false),
-        createCondition('BAND_40M', 'POOR', 30, false),
+        createCondition(FrequencyBand.BAND_160M, BandConditionRating.GOOD, 85, true),
+        createCondition(FrequencyBand.BAND_80M, BandConditionRating.FAIR, 60, false),
+        createCondition(FrequencyBand.BAND_40M, BandConditionRating.POOR, 30, false),
       ];
 
       render(<BandConditionsContent bandConditions={conditions} />);
@@ -47,8 +50,8 @@ describe('BandConditionsContent', () => {
 
     it('should display band descriptions', () => {
       const conditions = [
-        createCondition('BAND_20M', 'GOOD', 85, true),
-        createCondition('BAND_40M', 'FAIR', 60, false),
+        createCondition(FrequencyBand.BAND_20M, BandConditionRating.GOOD, 85, true),
+        createCondition(FrequencyBand.BAND_40M, BandConditionRating.FAIR, 60, false),
       ];
 
       render(<BandConditionsContent bandConditions={conditions} />);
@@ -73,7 +76,7 @@ describe('BandConditionsContent', () => {
 
   describe('rating icons', () => {
     it('should show check icon for GOOD rating', () => {
-      const conditions = [createCondition('BAND_20M', 'GOOD', 85, true)];
+      const conditions = [createCondition(FrequencyBand.BAND_20M, BandConditionRating.GOOD, 85, true)];
       const { container } = render(<BandConditionsContent bandConditions={conditions} />);
 
       // Check for lucide-react check icon
@@ -82,7 +85,7 @@ describe('BandConditionsContent', () => {
     });
 
     it('should show minus icon for FAIR rating', () => {
-      const conditions = [createCondition('BAND_20M', 'FAIR', 60, false)];
+      const conditions = [createCondition(FrequencyBand.BAND_20M, BandConditionRating.FAIR, 60, false)];
       const { container } = render(<BandConditionsContent bandConditions={conditions} />);
 
       expect(container.querySelector('.rating-icon svg')).toBeInTheDocument();
@@ -90,7 +93,7 @@ describe('BandConditionsContent', () => {
     });
 
     it('should show X icon for POOR rating', () => {
-      const conditions = [createCondition('BAND_20M', 'POOR', 30, false)];
+      const conditions = [createCondition(FrequencyBand.BAND_20M, BandConditionRating.POOR, 30, false)];
       const { container } = render(<BandConditionsContent bandConditions={conditions} />);
 
       expect(container.querySelector('.rating-icon svg')).toBeInTheDocument();
@@ -98,7 +101,7 @@ describe('BandConditionsContent', () => {
     });
 
     it('should show question mark for unknown rating', () => {
-      const conditions = [createCondition('BAND_20M', 'UNKNOWN', 0, false)];
+      const conditions = [createCondition(FrequencyBand.BAND_20M, BandConditionRating.UNKNOWN, 0, false)];
       render(<BandConditionsContent bandConditions={conditions} />);
 
       expect(screen.getByText('?')).toBeInTheDocument();
@@ -106,13 +109,14 @@ describe('BandConditionsContent', () => {
     });
 
     it('should handle undefined rating', () => {
-      const conditions = [
+      const conditions: BandCondition[] = [
         {
-          band: 'BAND_20M',
+          band: FrequencyBand.BAND_20M,
           rating: undefined,
           score: 0,
           favorable: false,
-        } as BandCondition,
+          confidence: 90,
+        },
       ];
 
       render(<BandConditionsContent bandConditions={conditions} />);
@@ -124,28 +128,28 @@ describe('BandConditionsContent', () => {
 
   describe('CSS classes', () => {
     it('should apply rating-good class for GOOD rating', () => {
-      const conditions = [createCondition('BAND_20M', 'GOOD', 85, true)];
+      const conditions = [createCondition(FrequencyBand.BAND_20M, BandConditionRating.GOOD, 85, true)];
       const { container } = render(<BandConditionsContent bandConditions={conditions} />);
 
       expect(container.querySelector('.rating-good')).toBeInTheDocument();
     });
 
     it('should apply rating-fair class for FAIR rating', () => {
-      const conditions = [createCondition('BAND_20M', 'FAIR', 60, false)];
+      const conditions = [createCondition(FrequencyBand.BAND_20M, BandConditionRating.FAIR, 60, false)];
       const { container } = render(<BandConditionsContent bandConditions={conditions} />);
 
       expect(container.querySelector('.rating-fair')).toBeInTheDocument();
     });
 
     it('should apply rating-poor class for POOR rating', () => {
-      const conditions = [createCondition('BAND_20M', 'POOR', 30, false)];
+      const conditions = [createCondition(FrequencyBand.BAND_20M, BandConditionRating.POOR, 30, false)];
       const { container } = render(<BandConditionsContent bandConditions={conditions} />);
 
       expect(container.querySelector('.rating-poor')).toBeInTheDocument();
     });
 
     it('should apply rating-unknown class for unknown rating', () => {
-      const conditions = [createCondition('BAND_20M', 'UNKNOWN', 0, false)];
+      const conditions = [createCondition(FrequencyBand.BAND_20M, BandConditionRating.UNKNOWN, 0, false)];
       const { container } = render(<BandConditionsContent bandConditions={conditions} />);
 
       expect(container.querySelector('.rating-unknown')).toBeInTheDocument();
@@ -155,10 +159,10 @@ describe('BandConditionsContent', () => {
   describe('sorting', () => {
     it('should sort bands in correct frequency order', () => {
       const conditions = [
-        createCondition('BAND_10M', 'GOOD', 85, true),
-        createCondition('BAND_160M', 'FAIR', 60, false),
-        createCondition('BAND_40M', 'POOR', 30, false),
-        createCondition('BAND_20M', 'GOOD', 80, true),
+        createCondition(FrequencyBand.BAND_10M, BandConditionRating.GOOD, 85, true),
+        createCondition(FrequencyBand.BAND_160M, BandConditionRating.FAIR, 60, false),
+        createCondition(FrequencyBand.BAND_40M, BandConditionRating.POOR, 30, false),
+        createCondition(FrequencyBand.BAND_20M, BandConditionRating.GOOD, 80, true),
       ];
 
       const { container } = render(<BandConditionsContent bandConditions={conditions} />);
@@ -175,16 +179,16 @@ describe('BandConditionsContent', () => {
 
     it('should handle all bands in correct order', () => {
       const conditions = [
-        createCondition('BAND_6M', 'GOOD', 85, true),
-        createCondition('BAND_10M', 'GOOD', 85, true),
-        createCondition('BAND_12M', 'GOOD', 85, true),
-        createCondition('BAND_15M', 'GOOD', 85, true),
-        createCondition('BAND_17M', 'GOOD', 85, true),
-        createCondition('BAND_20M', 'GOOD', 85, true),
-        createCondition('BAND_30M', 'GOOD', 85, true),
-        createCondition('BAND_40M', 'GOOD', 85, true),
-        createCondition('BAND_80M', 'GOOD', 85, true),
-        createCondition('BAND_160M', 'GOOD', 85, true),
+        createCondition(FrequencyBand.BAND_6M, BandConditionRating.GOOD, 85, true),
+        createCondition(FrequencyBand.BAND_10M, BandConditionRating.GOOD, 85, true),
+        createCondition(FrequencyBand.BAND_12M, BandConditionRating.GOOD, 85, true),
+        createCondition(FrequencyBand.BAND_15M, BandConditionRating.GOOD, 85, true),
+        createCondition(FrequencyBand.BAND_17M, BandConditionRating.GOOD, 85, true),
+        createCondition(FrequencyBand.BAND_20M, BandConditionRating.GOOD, 85, true),
+        createCondition(FrequencyBand.BAND_30M, BandConditionRating.GOOD, 85, true),
+        createCondition(FrequencyBand.BAND_40M, BandConditionRating.GOOD, 85, true),
+        createCondition(FrequencyBand.BAND_80M, BandConditionRating.GOOD, 85, true),
+        createCondition(FrequencyBand.BAND_160M, BandConditionRating.GOOD, 85, true),
       ];
 
       const { container } = render(<BandConditionsContent bandConditions={conditions} />);
@@ -203,13 +207,11 @@ describe('BandConditionsContent', () => {
   describe('memoization', () => {
     it('should memoize sorted conditions', () => {
       const conditions = [
-        createCondition('BAND_10M', 'GOOD', 85, true),
-        createCondition('BAND_20M', 'FAIR', 60, false),
+        createCondition(FrequencyBand.BAND_10M, BandConditionRating.GOOD, 85, true),
+        createCondition(FrequencyBand.BAND_20M, BandConditionRating.FAIR, 60, false),
       ];
 
-      const { rerender, container } = render(
-        <BandConditionsContent bandConditions={conditions} />
-      );
+      const { rerender, container } = render(<BandConditionsContent bandConditions={conditions} />);
 
       const initialRows = container.querySelectorAll('.band-row');
 
@@ -223,14 +225,16 @@ describe('BandConditionsContent', () => {
 
   describe('edge cases', () => {
     it('should handle undefined band name', () => {
+      // Cast to test component handling of undefined band
       const conditions = [
         {
           band: undefined,
-          rating: 'GOOD',
+          rating: BandConditionRating.GOOD,
           score: 85,
           favorable: true,
-        } as BandCondition,
-      ];
+          confidence: 90,
+        },
+      ] as BandCondition[];
 
       render(<BandConditionsContent bandConditions={conditions} />);
 
@@ -239,7 +243,16 @@ describe('BandConditionsContent', () => {
     });
 
     it('should handle empty band name', () => {
-      const conditions = [createCondition('', 'GOOD', 85, true)];
+      // Cast to test component handling of empty band
+      const conditions = [
+        {
+          band: '' as FrequencyBand,
+          rating: BandConditionRating.GOOD,
+          score: 85,
+          favorable: true,
+          confidence: 90,
+        },
+      ];
 
       render(<BandConditionsContent bandConditions={conditions} />);
 
@@ -248,7 +261,16 @@ describe('BandConditionsContent', () => {
     });
 
     it('should handle band without description', () => {
-      const conditions = [createCondition('UNKNOWN_BAND', 'GOOD', 85, true)];
+      // Cast to test component handling of unknown band
+      const conditions = [
+        {
+          band: 'UNKNOWN_BAND' as FrequencyBand,
+          rating: BandConditionRating.GOOD,
+          score: 85,
+          favorable: true,
+          confidence: 90,
+        },
+      ];
 
       const { container } = render(<BandConditionsContent bandConditions={conditions} />);
 

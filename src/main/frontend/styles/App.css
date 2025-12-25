@@ -44,14 +44,14 @@
 
 /* Dark mode footer styles */
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) .app-footer {
+  :root:not([data-theme='light']) .app-footer {
     background: var(--surface-color);
     border-top-color: var(--border-color);
     color: var(--text-secondary);
   }
 }
 
-:root[data-theme="dark"] .app-footer {
+:root[data-theme='dark'] .app-footer {
   background: var(--surface-color);
   border-top-color: var(--border-color);
   color: var(--text-secondary);

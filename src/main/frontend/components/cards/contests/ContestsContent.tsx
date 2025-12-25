@@ -30,7 +30,7 @@ function ContestsContent({ contests, activeCount, upcomingCount }: Props) {
     const timeStr = date.toLocaleTimeString('en-US', {
       hour: 'numeric',
       minute: '2-digit',
-      timeZoneName: 'short'
+      timeZoneName: 'short',
     });
 
     if (isToday) return `Today ${timeStr}`;
@@ -40,7 +40,7 @@ function ContestsContent({ contests, activeCount, upcomingCount }: Props) {
       month: 'short',
       day: 'numeric',
       hour: 'numeric',
-      minute: '2-digit'
+      minute: '2-digit',
     });
   };
 
@@ -49,7 +49,7 @@ function ContestsContent({ contests, activeCount, upcomingCount }: Props) {
       const remaining = formatTimeRemaining(contest.timeRemainingSeconds);
       return {
         label: contest.endingSoon ? `Ending in ${remaining}` : `Active (${remaining})`,
-        className: contest.endingSoon ? 'status-ending-soon' : 'status-active'
+        className: contest.endingSoon ? 'status-ending-soon' : 'status-active',
       };
     }
 
@@ -57,7 +57,7 @@ function ContestsContent({ contests, activeCount, upcomingCount }: Props) {
       const remaining = formatTimeRemaining(contest.timeRemainingSeconds);
       return {
         label: `Starts in ${remaining}`,
-        className: 'status-upcoming'
+        className: 'status-upcoming',
       };
     }
 
@@ -87,11 +87,11 @@ function ContestsContent({ contests, activeCount, upcomingCount }: Props) {
         </div>
       ) : (
         <ul className="contests-list">
-          {displayContests.map((contest, index) => {
+          {displayContests.map((contest) => {
             const status = getStatusBadge(contest);
 
             return (
-              <li key={`${contest.name}-${index}`} className="contest-item">
+              <li key={`${contest.name}-${contest.startTime}`} className="contest-item">
                 <div className="contest-header">
                   <div className="contest-name">
                     {contest.calendarSourceUrl ? (
@@ -107,16 +107,13 @@ function ContestsContent({ contests, activeCount, upcomingCount }: Props) {
                       <span>{contest.name}</span>
                     )}
                   </div>
-                  <span className={`contest-status ${status.className}`}>
-                    {status.label}
-                  </span>
+                  <span className={`contest-status ${status.className}`}>{status.label}</span>
                 </div>
                 <div className="contest-timing">
                   <span className="start-time">
                     {contest.status === EventStatus.ACTIVE
                       ? `Ends ${formatDateTime(contest.endTime)}`
-                      : `Starts ${formatDateTime(contest.startTime)}`
-                    }
+                      : `Starts ${formatDateTime(contest.startTime)}`}
                   </span>
                 </div>
               </li>
@@ -125,11 +122,7 @@ function ContestsContent({ contests, activeCount, upcomingCount }: Props) {
         </ul>
       )}
 
-      {contests.length > 6 && (
-        <div className="more-contests">
-          +{contests.length - 6} more contests
-        </div>
-      )}
+      {contests.length > 6 && <div className="more-contests">+{contests.length - 6} more contests</div>}
     </div>
   );
 }

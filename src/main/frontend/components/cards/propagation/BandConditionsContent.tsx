@@ -8,12 +8,7 @@
 import React, { useMemo } from 'react';
 import { Check, Minus, X } from 'lucide-react';
 import type BandCondition from 'Frontend/generated/io/nextskip/propagation/model/BandCondition';
-import {
-  getRatingClass,
-  getBandDescription,
-  formatBandName,
-  sortBandConditions,
-} from 'Frontend/utils/bandConditions';
+import { getRatingClass, getBandDescription, formatBandName, sortBandConditions } from 'Frontend/utils/bandConditions';
 import '../../BandConditionsTable.css'; // Reuse existing styles
 
 interface Props {
@@ -35,51 +30,37 @@ function BandConditionsContent({ bandConditions }: Props) {
   };
 
   // Sort bands by frequency (memoized to avoid re-sorting on every render)
-  const sortedConditions = useMemo(
-    () => sortBandConditions(bandConditions),
-    [bandConditions]
-  );
+  const sortedConditions = useMemo(() => sortBandConditions(bandConditions), [bandConditions]);
 
   return (
-    <>
-      <div className="table-container">
-        <table className="conditions-table">
-          <thead>
-            <tr>
-              <th>Band</th>
-              <th>Condition</th>
-              <th className="description-col">Notes</th>
+    <div className="table-container">
+      <table className="conditions-table">
+        <thead>
+          <tr>
+            <th>Band</th>
+            <th>Condition</th>
+            <th className="description-col">Notes</th>
+          </tr>
+        </thead>
+        <tbody>
+          {sortedConditions.map((condition) => (
+            <tr key={condition.band} className="band-row">
+              <td className="band-name">
+                <span className="band-label">{formatBandName(condition.band || '')}</span>
+              </td>
+              {/* eslint-disable-next-line jsx-a11y/control-has-associated-label -- This is a data cell, not a control */}
+              <td>
+                <span className={`rating-badge ${getRatingClass(condition.rating || '')}`}>
+                  <span className="rating-icon">{getRatingIcon(condition.rating || '')}</span>
+                  <span className="rating-text">{condition.rating || 'Unknown'}</span>
+                </span>
+              </td>
+              <td className="description-col">{getBandDescription(condition.band || '')}</td>
             </tr>
-          </thead>
-          <tbody>
-            {sortedConditions.map((condition) => (
-              <tr key={condition.band} className="band-row">
-                <td className="band-name">
-                  <span className="band-label">
-                    {formatBandName(condition.band || '')}
-                  </span>
-                </td>
-                <td>
-                  <span
-                    className={`rating-badge ${getRatingClass(condition.rating || '')}`}
-                  >
-                    <span className="rating-icon">
-                      {getRatingIcon(condition.rating || '')}
-                    </span>
-                    <span className="rating-text">
-                      {condition.rating || 'Unknown'}
-                    </span>
-                  </span>
-                </td>
-                <td className="description-col">
-                  {getBandDescription(condition.band || '')}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }
 
@@ -93,19 +74,28 @@ export function BandConditionsLegend() {
       <div className="legend-items">
         <div className="legend-item">
           <span className="rating-badge rating-good">
-            <span className="rating-icon"><Check size={14} /></span> Good
+            <span className="rating-icon">
+              <Check size={14} />
+            </span>{' '}
+            Good
           </span>
           <span className="legend-desc">Excellent propagation</span>
         </div>
         <div className="legend-item">
           <span className="rating-badge rating-fair">
-            <span className="rating-icon"><Minus size={14} /></span> Fair
+            <span className="rating-icon">
+              <Minus size={14} />
+            </span>{' '}
+            Fair
           </span>
           <span className="legend-desc">Moderate propagation</span>
         </div>
         <div className="legend-item">
           <span className="rating-badge rating-poor">
-            <span className="rating-icon"><X size={14} /></span> Poor
+            <span className="rating-icon">
+              <X size={14} />
+            </span>{' '}
+            Poor
           </span>
           <span className="legend-desc">Limited propagation</span>
         </div>

@@ -5,7 +5,7 @@
  * declare the fields that are available on the concrete implementations (Park and Summit).
  */
 export interface ActivationLocationExt {
-    reference?: string;
-    name?: string;
-    regionCode?: string;
+  reference?: string;
+  name?: string;
+  regionCode?: string;
 }

@@ -5,25 +5,20 @@ import SolarIndicesContent from 'Frontend/components/cards/propagation/SolarIndi
 import type SolarIndices from 'Frontend/generated/io/nextskip/propagation/model/SolarIndices';
 
 describe('SolarIndicesContent', () => {
-  const createIndices = (
-    solarFluxIndex?: number,
-    kIndex?: number,
-    aIndex?: number,
-    sunspotNumber?: number
-  ): SolarIndices => ({
-    solarFluxIndex,
-    kIndex,
-    aIndex,
-    sunspotNumber,
+  const createIndices = (overrides?: Partial<SolarIndices>): SolarIndices => ({
+    solarFluxIndex: 150,
+    kIndex: 2,
+    aIndex: 15,
+    sunspotNumber: 75,
     favorable: true,
     score: 80,
-    rating: 'GOOD',
     source: 'Test Source',
+    ...overrides,
   });
 
   describe('rendering', () => {
     it('should render all index labels', () => {
-      const indices = createIndices(150, 2, 15, 75);
+      const indices = createIndices();
 
       render(<SolarIndicesContent solarIndices={indices} />);
 
@@ -34,7 +29,7 @@ describe('SolarIndicesContent', () => {
     });
 
     it('should render all index values', () => {
-      const indices = createIndices(150.5, 2, 15, 75);
+      const indices = createIndices({ solarFluxIndex: 150.5 });
 
       render(<SolarIndicesContent solarIndices={indices} />);
 
@@ -45,7 +40,12 @@ describe('SolarIndicesContent', () => {
     });
 
     it('should display N/A for undefined values', () => {
-      const indices = createIndices(undefined, undefined, undefined, undefined);
+      // Cast to SolarIndices to test undefined handling in component
+      const indices = {
+        favorable: true,
+        score: 80,
+        source: 'Test Source',
+      } as unknown as SolarIndices;
 
       render(<SolarIndicesContent solarIndices={indices} />);
 
@@ -56,7 +56,7 @@ describe('SolarIndicesContent', () => {
 
   describe('Solar Flux Index (SFI)', () => {
     it('should format SFI to 1 decimal place', () => {
-      const indices = createIndices(142.6789, 2, 15, 75);
+      const indices = createIndices({ solarFluxIndex: 142.6789 });
 
       render(<SolarIndicesContent solarIndices={indices} />);
 
@@ -64,7 +64,7 @@ describe('SolarIndicesContent', () => {
     });
 
     it('should show Very High status for SFI >= 200', () => {
-      const indices = createIndices(200, 2, 15, 75);
+      const indices = createIndices({ solarFluxIndex: 200 });
 
       render(<SolarIndicesContent solarIndices={indices} />);
 
@@ -72,7 +72,7 @@ describe('SolarIndicesContent', () => {
     });
 
     it('should show High status for SFI >= 150', () => {
-      const indices = createIndices(150, 2, 15, 75);
+      const indices = createIndices();
 
       render(<SolarIndicesContent solarIndices={indices} />);
 
@@ -80,7 +80,7 @@ describe('SolarIndicesContent', () => {
     });
 
     it('should show Moderate status for SFI >= 100', () => {
-      const indices = createIndices(100, 2, 15, 75);
+      const indices = createIndices({ solarFluxIndex: 100 });
 
       render(<SolarIndicesContent solarIndices={indices} />);
 
@@ -88,7 +88,7 @@ describe('SolarIndicesContent', () => {
     });
 
     it('should show Low status for SFI >= 70', () => {
-      const indices = createIndices(70, 2, 15, 75);
+      const indices = createIndices({ solarFluxIndex: 70 });
 
       render(<SolarIndicesContent solarIndices={indices} />);
 
@@ -96,7 +96,7 @@ describe('SolarIndicesContent', () => {
     });
 
     it('should show Very Low status for SFI < 70', () => {
-      const indices = createIndices(50, 2, 15, 75);
+      const indices = createIndices({ solarFluxIndex: 50 });
 
       render(<SolarIndicesContent solarIndices={indices} />);
 
@@ -104,7 +104,7 @@ describe('SolarIndicesContent', () => {
     });
 
     it('should apply status-good class for high SFI', () => {
-      const indices = createIndices(150, 2, 15, 75);
+      const indices = createIndices();
       const { container } = render(<SolarIndicesContent solarIndices={indices} />);
 
       const statusElements = container.querySelectorAll('.status-good');
@@ -112,7 +112,7 @@ describe('SolarIndicesContent', () => {
     });
 
     it('should apply status-poor class for low SFI', () => {
-      const indices = createIndices(50, 2, 15, 75);
+      const indices = createIndices({ solarFluxIndex: 50 });
       const { container } = render(<SolarIndicesContent solarIndices={indices} />);
 
       const statusElements = container.querySelectorAll('.status-poor');
@@ -122,7 +122,7 @@ describe('SolarIndicesContent', () => {
 
   describe('K-Index', () => {
     it('should show Quiet status for K=0', () => {
-      const indices = createIndices(150, 0, 15, 75);
+      const indices = createIndices({ kIndex: 0 });
 
       render(<SolarIndicesContent solarIndices={indices} />);
 
@@ -130,7 +130,7 @@ describe('SolarIndicesContent', () => {
     });
 
     it('should show Settled status for K=1-2', () => {
-      const indices = createIndices(150, 2, 15, 75);
+      const indices = createIndices();
 
       render(<SolarIndicesContent solarIndices={indices} />);
 
@@ -138,7 +138,7 @@ describe('SolarIndicesContent', () => {
     });
 
     it('should show Unsettled status for K=3-4', () => {
-      const indices = createIndices(150, 4, 15, 75);
+      const indices = createIndices({ kIndex: 4 });
 
       render(<SolarIndicesContent solarIndices={indices} />);
 
@@ -146,7 +146,7 @@ describe('SolarIndicesContent', () => {
     });
 
     it('should show Active status for K=5-6', () => {
-      const indices = createIndices(150, 6, 15, 75);
+      const indices = createIndices({ kIndex: 6 });
 
       render(<SolarIndicesContent solarIndices={indices} />);
 
@@ -154,7 +154,7 @@ describe('SolarIndicesContent', () => {
     });
 
     it('should show Storm status for K=7-8', () => {
-      const indices = createIndices(150, 8, 15, 75);
+      const indices = createIndices({ kIndex: 8 });
 
       render(<SolarIndicesContent solarIndices={indices} />);
 
@@ -162,7 +162,7 @@ describe('SolarIndicesContent', () => {
     });
 
     it('should show Severe Storm status for K>=9', () => {
-      const indices = createIndices(150, 9, 15, 75);
+      const indices = createIndices({ kIndex: 9 });
 
       render(<SolarIndicesContent solarIndices={indices} />);
 
@@ -170,7 +170,7 @@ describe('SolarIndicesContent', () => {
     });
 
     it('should apply status-good class for low K-index', () => {
-      const indices = createIndices(150, 1, 15, 75);
+      const indices = createIndices({ kIndex: 1 });
       const { container } = render(<SolarIndicesContent solarIndices={indices} />);
 
       const statusElements = container.querySelectorAll('.status-good');
@@ -178,7 +178,7 @@ describe('SolarIndicesContent', () => {
     });
 
     it('should apply status-poor class for high K-index', () => {
-      const indices = createIndices(150, 9, 15, 75);
+      const indices = createIndices({ kIndex: 9 });
       const { container } = render(<SolarIndicesContent solarIndices={indices} />);
 
       const statusElements = container.querySelectorAll('.status-poor');
@@ -188,7 +188,7 @@ describe('SolarIndicesContent', () => {
 
   describe('A-Index', () => {
     it('should show "Quiet conditions" for A-index < 20', () => {
-      const indices = createIndices(150, 2, 15, 75);
+      const indices = createIndices();
 
       render(<SolarIndicesContent solarIndices={indices} />);
 
@@ -196,7 +196,7 @@ describe('SolarIndicesContent', () => {
     });
 
     it('should show "Unsettled conditions" for A-index 20-49', () => {
-      const indices = createIndices(150, 2, 30, 75);
+      const indices = createIndices({ aIndex: 30 });
 
       render(<SolarIndicesContent solarIndices={indices} />);
 
@@ -204,7 +204,7 @@ describe('SolarIndicesContent', () => {
     });
 
     it('should show "Disturbed conditions" for A-index >= 50', () => {
-      const indices = createIndices(150, 2, 60, 75);
+      const indices = createIndices({ aIndex: 60 });
 
       render(<SolarIndicesContent solarIndices={indices} />);
 
@@ -212,7 +212,8 @@ describe('SolarIndicesContent', () => {
     });
 
     it('should show "Disturbed conditions" when A-index is undefined', () => {
-      const indices = createIndices(150, 2, undefined, 75);
+      // Cast to test undefined handling in component
+      const indices = { ...createIndices(), aIndex: undefined } as unknown as SolarIndices;
 
       render(<SolarIndicesContent solarIndices={indices} />);
 
@@ -220,7 +221,7 @@ describe('SolarIndicesContent', () => {
     });
 
     it('should handle A-index of 0', () => {
-      const indices = createIndices(150, 2, 0, 75);
+      const indices = createIndices({ aIndex: 0 });
 
       render(<SolarIndicesContent solarIndices={indices} />);
 
@@ -229,7 +230,7 @@ describe('SolarIndicesContent', () => {
     });
 
     it('should handle boundary value 20', () => {
-      const indices = createIndices(150, 2, 20, 75);
+      const indices = createIndices({ aIndex: 20 });
 
       render(<SolarIndicesContent solarIndices={indices} />);
 
@@ -237,7 +238,7 @@ describe('SolarIndicesContent', () => {
     });
 
     it('should handle boundary value 50', () => {
-      const indices = createIndices(150, 2, 50, 75);
+      const indices = createIndices({ aIndex: 50 });
 
       render(<SolarIndicesContent solarIndices={indices} />);
 
@@ -247,7 +248,7 @@ describe('SolarIndicesContent', () => {
 
   describe('Sunspot Number', () => {
     it('should show "High solar activity" for sunspots > 100', () => {
-      const indices = createIndices(150, 2, 15, 150);
+      const indices = createIndices({ sunspotNumber: 150 });
 
       render(<SolarIndicesContent solarIndices={indices} />);
 
@@ -255,7 +256,7 @@ describe('SolarIndicesContent', () => {
     });
 
     it('should show "Moderate activity" for sunspots 51-100', () => {
-      const indices = createIndices(150, 2, 15, 75);
+      const indices = createIndices();
 
       render(<SolarIndicesContent solarIndices={indices} />);
 
@@ -263,7 +264,7 @@ describe('SolarIndicesContent', () => {
     });
 
     it('should show "Low solar activity" for sunspots <= 50', () => {
-      const indices = createIndices(150, 2, 15, 30);
+      const indices = createIndices({ sunspotNumber: 30 });
 
       render(<SolarIndicesContent solarIndices={indices} />);
 
@@ -271,7 +272,8 @@ describe('SolarIndicesContent', () => {
     });
 
     it('should show "Low solar activity" when sunspots is undefined', () => {
-      const indices = createIndices(150, 2, 15, undefined);
+      // Cast to test undefined handling in component
+      const indices = { ...createIndices(), sunspotNumber: undefined } as unknown as SolarIndices;
 
       render(<SolarIndicesContent solarIndices={indices} />);
 
@@ -279,7 +281,7 @@ describe('SolarIndicesContent', () => {
     });
 
     it('should handle sunspot number of 0', () => {
-      const indices = createIndices(150, 2, 15, 0);
+      const indices = createIndices({ sunspotNumber: 0 });
 
       render(<SolarIndicesContent solarIndices={indices} />);
 
@@ -288,7 +290,7 @@ describe('SolarIndicesContent', () => {
     });
 
     it('should handle boundary value 50', () => {
-      const indices = createIndices(150, 2, 15, 50);
+      const indices = createIndices({ sunspotNumber: 50 });
 
       render(<SolarIndicesContent solarIndices={indices} />);
 
@@ -296,7 +298,7 @@ describe('SolarIndicesContent', () => {
     });
 
     it('should handle boundary value 51', () => {
-      const indices = createIndices(150, 2, 15, 51);
+      const indices = createIndices({ sunspotNumber: 51 });
 
       render(<SolarIndicesContent solarIndices={indices} />);
 
@@ -304,7 +306,7 @@ describe('SolarIndicesContent', () => {
     });
 
     it('should handle boundary value 100', () => {
-      const indices = createIndices(150, 2, 15, 100);
+      const indices = createIndices({ sunspotNumber: 100 });
 
       render(<SolarIndicesContent solarIndices={indices} />);
 
@@ -312,7 +314,7 @@ describe('SolarIndicesContent', () => {
     });
 
     it('should handle boundary value 101', () => {
-      const indices = createIndices(150, 2, 15, 101);
+      const indices = createIndices({ sunspotNumber: 101 });
 
       render(<SolarIndicesContent solarIndices={indices} />);
 
@@ -322,14 +324,14 @@ describe('SolarIndicesContent', () => {
 
   describe('CSS structure', () => {
     it('should have indices-grid container', () => {
-      const indices = createIndices(150, 2, 15, 75);
+      const indices = createIndices();
       const { container } = render(<SolarIndicesContent solarIndices={indices} />);
 
       expect(container.querySelector('.indices-grid')).toBeInTheDocument();
     });
 
     it('should have 4 index-item elements', () => {
-      const indices = createIndices(150, 2, 15, 75);
+      const indices = createIndices();
       const { container } = render(<SolarIndicesContent solarIndices={indices} />);
 
       const items = container.querySelectorAll('.index-item');
@@ -337,7 +339,7 @@ describe('SolarIndicesContent', () => {
     });
 
     it('should have index-label for each item', () => {
-      const indices = createIndices(150, 2, 15, 75);
+      const indices = createIndices();
       const { container } = render(<SolarIndicesContent solarIndices={indices} />);
 
       const labels = container.querySelectorAll('.index-label');
@@ -345,7 +347,7 @@ describe('SolarIndicesContent', () => {
     });
 
     it('should have index-value for each item', () => {
-      const indices = createIndices(150, 2, 15, 75);
+      const indices = createIndices();
       const { container } = render(<SolarIndicesContent solarIndices={indices} />);
 
       const values = container.querySelectorAll('.index-value');
@@ -353,7 +355,7 @@ describe('SolarIndicesContent', () => {
     });
 
     it('should have index-status for SFI and K-index', () => {
-      const indices = createIndices(150, 2, 15, 75);
+      const indices = createIndices();
       const { container } = render(<SolarIndicesContent solarIndices={indices} />);
 
       const statuses = container.querySelectorAll('.index-status');
@@ -361,7 +363,7 @@ describe('SolarIndicesContent', () => {
     });
 
     it('should have index-description for A-index and Sunspot', () => {
-      const indices = createIndices(150, 2, 15, 75);
+      const indices = createIndices();
       const { container } = render(<SolarIndicesContent solarIndices={indices} />);
 
       const descriptions = container.querySelectorAll('.index-description');
@@ -371,7 +373,7 @@ describe('SolarIndicesContent', () => {
 
   describe('edge cases', () => {
     it('should handle all values as zero', () => {
-      const indices = createIndices(0, 0, 0, 0);
+      const indices = createIndices({ solarFluxIndex: 0, kIndex: 0, aIndex: 0, sunspotNumber: 0 });
 
       render(<SolarIndicesContent solarIndices={indices} />);
 
@@ -380,7 +382,7 @@ describe('SolarIndicesContent', () => {
     });
 
     it('should handle very large values', () => {
-      const indices = createIndices(999.9, 9, 999, 999);
+      const indices = createIndices({ solarFluxIndex: 999.9, kIndex: 9, aIndex: 999, sunspotNumber: 999 });
 
       render(<SolarIndicesContent solarIndices={indices} />);
 
@@ -393,7 +395,7 @@ describe('SolarIndicesContent', () => {
 
     it('should handle negative values gracefully', () => {
       // Although negative values shouldn't occur in practice
-      const indices = createIndices(-10, -1, -5, -10);
+      const indices = createIndices({ solarFluxIndex: -10, kIndex: -1, aIndex: -5, sunspotNumber: -10 });
 
       render(<SolarIndicesContent solarIndices={indices} />);
 
