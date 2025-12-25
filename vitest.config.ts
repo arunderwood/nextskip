@@ -25,6 +25,8 @@ export default defineConfig({
   },
   resolve: {
     alias: {
+      // Mock generated types for tests (must come before Frontend alias)
+      'Frontend/generated': resolve(__dirname, './src/test/frontend/mocks/generated'),
       Frontend: resolve(__dirname, './src/main/frontend'),
     },
   },

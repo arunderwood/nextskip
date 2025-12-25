@@ -95,6 +95,8 @@ npm run test:coverage
 
 **Test Location**: Following Maven/Gradle conventions and Vaadin's official example repos, tests are in `src/test/frontend/` (parallel to `src/main/frontend/`)
 
+**Mock Generated Types**: Tests use mock stubs instead of Hilla-generated types to avoid Gradle dependency. Mocks are in `src/test/frontend/mocks/generated/` and aliased via `vitest.config.ts`. When adding new generated type imports to tests, create corresponding mock stubs.
+
 #### End-to-End Tests (Playwright)
 
 ```bash
