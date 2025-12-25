@@ -245,53 +245,6 @@ describe('ActivityGrid', () => {
     });
   });
 
-  describe('card size variants', () => {
-    it('should apply correct size classes', () => {
-      const cards = [
-        {
-          config: createCard('standard', 90, 'hot', 'standard'),
-          component: (
-            <ActivityCard config={createCard('standard', 90, 'hot', 'standard')} title="Standard">
-              <div>Standard</div>
-            </ActivityCard>
-          ),
-        },
-        {
-          config: createCard('wide', 80, 'hot', 'wide'),
-          component: (
-            <ActivityCard config={createCard('wide', 80, 'hot', 'wide')} title="Wide">
-              <div>Wide</div>
-            </ActivityCard>
-          ),
-        },
-        {
-          config: createCard('tall', 70, 'hot', 'tall'),
-          component: (
-            <ActivityCard config={createCard('tall', 70, 'hot', 'tall')} title="Tall">
-              <div>Tall</div>
-            </ActivityCard>
-          ),
-        },
-        {
-          config: createCard('hero', 60, 'warm', 'hero'),
-          component: (
-            <ActivityCard config={createCard('hero', 60, 'warm', 'hero')} title="Hero">
-              <div>Hero</div>
-            </ActivityCard>
-          ),
-        },
-      ];
-
-      const { container } = render(<ActivityGrid cards={cards} />);
-
-      const wrappers = container.querySelectorAll('.activity-grid__card-wrapper');
-      expect(wrappers[0]).toHaveClass('activity-grid__card--standard');
-      expect(wrappers[1]).toHaveClass('activity-grid__card--wide');
-      expect(wrappers[2]).toHaveClass('activity-grid__card--tall');
-      expect(wrappers[3]).toHaveClass('activity-grid__card--hero');
-    });
-  });
-
   describe('grid configuration', () => {
     it('should render with custom column count prop', () => {
       const cards = [

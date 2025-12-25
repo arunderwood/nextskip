@@ -256,7 +256,7 @@ Weighted algorithm:
 ```
 src/main/frontend/         # Production frontend code
 ├── components/            # Reusable React components
-│   ├── bento/             # Bento grid system (priority-based layout)
+│   ├── activity/          # Activity grid system (priority-based masonry layout)
 │   └── cards/             # Activity card content components
 ├── hooks/                 # Custom React hooks
 ├── types/                 # TypeScript type definitions

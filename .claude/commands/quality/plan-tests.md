@@ -7,6 +7,7 @@ allowed-tools: Read, Grep, Glob, Bash
 ## Purpose
 
 This command helps systematically expand test coverage beyond the current 60 tests by:
+
 - Identifying gaps in existing test coverage
 - Recommending specific tests to add at each layer
 - Prioritizing test additions for maximum value
@@ -30,6 +31,7 @@ Specify the target feature or module:
 ```
 
 Or in conversation:
+
 ```
 User: Plan tests for the band condition feature
 User: How should I test the solar indices caching?
@@ -42,6 +44,7 @@ User: How should I test the solar indices caching?
 **Purpose**: Test individual classes/methods in isolation
 
 **For NextSkip**:
+
 - Test DTOs (NoaaSolarCycleEntry validation)
 - Test utility methods (date parsing, band rating conversion)
 - Test service logic in isolation (mock dependencies)
@@ -52,6 +55,7 @@ User: How should I test the solar indices caching?
 **Coverage Target**: 80%+ for business logic
 
 **Example Unit Tests**:
+
 ```java
 @Test
 void testNoaaSolarCycleEntry_Validation_RejectsOutOfRange() {
@@ -72,6 +76,7 @@ void testParseBandRating_CaseInsensitive() {
 **Purpose**: Test component interactions
 
 **For NextSkip**:
+
 - Test Spring Boot context loading (@SpringBootTest)
 - Test database interactions (if H2 in-memory for tests)
 - Test caching behavior (ConcurrentMapCacheManager in tests)
@@ -82,6 +87,7 @@ void testParseBandRating_CaseInsensitive() {
 **Coverage Target**: Critical paths covered
 
 **Example Integration Tests**:
+
 ```java
 @SpringBootTest
 class PropagationServiceIntegrationTest {
@@ -109,6 +115,7 @@ class PropagationServiceIntegrationTest {
 **Purpose**: Test complete user workflows in the browser
 
 **For NextSkip**:
+
 - Test dashboard loads and displays propagation data
 - Test page title and header rendering
 - Test dashboard cards render after loading
@@ -121,6 +128,7 @@ class PropagationServiceIntegrationTest {
 **Coverage Target**: Happy paths + critical error scenarios
 
 **Example E2E Tests**:
+
 ```typescript
 // src/test/e2e/dashboard.spec.ts
 import { test, expect } from '@playwright/test';
@@ -139,7 +147,7 @@ test.describe('Dashboard', () => {
 
   test('dashboard cards render after loading', async ({ page }) => {
     await page.waitForSelector('.loading', { state: 'hidden', timeout: 30000 });
-    const cards = page.locator('.bento-card');
+    const cards = page.locator('.activity-card');
     await expect(cards.first()).toBeVisible();
     expect(await cards.count()).toBeGreaterThan(0);
   });
@@ -147,6 +155,7 @@ test.describe('Dashboard', () => {
 ```
 
 **Running E2E Tests**:
+
 ```bash
 # Run all E2E tests
 npm run e2e
@@ -163,6 +172,7 @@ npm run e2e:headed
 **Purpose**: Test properties that should hold for random inputs
 
 **For NextSkip**:
+
 - SolarIndices validation always rejects out-of-range values
 - Date parsing handles any valid ISO-8601 format
 - Band condition rating parsing is case-insensitive
@@ -172,6 +182,7 @@ npm run e2e:headed
 **Coverage Target**: Domain invariants
 
 **Example Property Test**:
+
 ```java
 @Property
 void testNoaaClientValidation_AlwaysRejectsInvalidFlux(@ForAll @DoubleRange(min = 1001, max = 10000) double invalidFlux) {
@@ -197,6 +208,7 @@ Arbitrary<String> validRatings() {
 **Purpose**: Verify tests actually catch bugs
 
 **For NextSkip**:
+
 - Run PITest to mutate code and verify tests fail
 - Identify weak test assertions
 - Improve test quality based on mutation score
@@ -206,12 +218,14 @@ Arbitrary<String> validRatings() {
 **Coverage Target**: 70%+ mutation score
 
 **How to Run**:
+
 ```bash
 ./gradlew pitest
 open build/reports/pitest/index.html
 ```
 
 **Mutations Caught by Good Tests**:
+
 - Changing `<` to `<=` in boundary checks
 - Removing null checks
 - Inverting conditionals (`if (x)` → `if (!x)`)
@@ -355,11 +369,13 @@ Estimated time: 3-4 hours
 ## Test Pyramid Principles
 
 **80% Unit, 15% Integration, 5% E2E**:
+
 - Unit tests are fast, isolated, and catch most bugs
 - Integration tests verify components work together
 - E2E tests validate complete workflows but are slow
 
 **Benefits**:
+
 - Faster feedback (unit tests run in seconds)
 - Easier debugging (isolated failures)
 - Better code design (testable code is well-designed)
@@ -375,3 +391,4 @@ Estimated time: 3-4 hours
 
 ```
 User: Plan tests for NoaaSwpcClient
+```

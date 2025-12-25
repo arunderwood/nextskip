@@ -181,11 +181,6 @@
   color: var(--error-color);
 }
 
-/* Remove display: grid to let ActivityGrid control layout */
-.dashboard-content {
-  /* ActivityGrid component handles its own grid layout */
-}
-
 .loading-spinner {
   text-align: center;
   padding: calc(var(--spacing-unit) * 4);
