@@ -1,6 +1,11 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { Radio, AlertTriangle } from 'lucide-react';
-import { PropagationEndpoint, ActivationsEndpoint, ContestEndpoint, MeteorEndpoint } from 'Frontend/generated/endpoints';
+import {
+  PropagationEndpoint,
+  ActivationsEndpoint,
+  ContestEndpoint,
+  MeteorEndpoint,
+} from 'Frontend/generated/endpoints';
 import type PropagationResponse from 'Frontend/generated/io/nextskip/propagation/api/PropagationResponse';
 import type ActivationsResponse from 'Frontend/generated/io/nextskip/activations/api/ActivationsResponse';
 import type ContestsResponse from 'Frontend/generated/io/nextskip/contests/api/ContestsResponse';
@@ -19,18 +24,10 @@ import '../components/cards/contests';
 import '../components/cards/meteor-showers';
 
 function DashboardView() {
-  const [propagationData, setPropagationData] = useState<PropagationResponse | undefined>(
-    undefined
-  );
-  const [activationsData, setActivationsData] = useState<ActivationsResponse | undefined>(
-    undefined
-  );
-  const [contestsData, setContestsData] = useState<ContestsResponse | undefined>(
-    undefined
-  );
-  const [meteorShowersData, setMeteorShowersData] = useState<MeteorShowersResponse | undefined>(
-    undefined
-  );
+  const [propagationData, setPropagationData] = useState<PropagationResponse | undefined>(undefined);
+  const [activationsData, setActivationsData] = useState<ActivationsResponse | undefined>(undefined);
+  const [contestsData, setContestsData] = useState<ContestsResponse | undefined>(undefined);
+  const [meteorShowersData, setMeteorShowersData] = useState<MeteorShowersResponse | undefined>(undefined);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
@@ -86,7 +83,7 @@ function DashboardView() {
       // Future modules will add their data here:
       // satellites: satellitesData,
     }),
-    [propagationData, activationsData, contestsData, meteorShowersData]
+    [propagationData, activationsData, contestsData, meteorShowersData],
   );
 
   // Get card configurations from registry (must be called before conditional returns)
@@ -125,7 +122,7 @@ function DashboardView() {
     return (
       <div className="loading">
         <div className="loading-spinner">
-          <div className="spinner"></div>
+          <div className="spinner" />
           <p>Loading propagation conditions...</p>
         </div>
       </div>
@@ -135,9 +132,14 @@ function DashboardView() {
   if (error && !propagationData) {
     return (
       <div className="error">
-        <h3><AlertTriangle size={20} style={{ verticalAlign: 'middle', marginRight: '8px' }} />Error</h3>
+        <h3>
+          {/* eslint-disable-next-line react-perf/jsx-no-new-object-as-prop -- One-time error display */}
+          <AlertTriangle size={20} style={{ verticalAlign: 'middle', marginRight: '8px' }} />
+          Error
+        </h3>
         <p>{error}</p>
         <button
+          type="button"
           onClick={() => {
             setLoading(true);
             fetchData();
@@ -170,11 +172,11 @@ function DashboardView() {
         </div>
       </header>
 
-      {error && (
+      {error ? (
         <div className="error-banner" role="alert">
           <p>{error}</p>
         </div>
-      )}
+      ) : null}
 
       <div className="dashboard-content">
         {activityCards.length > 0 ? (

@@ -22,20 +22,14 @@ function SolarIndicesContent({ solarIndices }: Props) {
     <div className="indices-grid">
       <div className="index-item">
         <div className="index-label">Solar Flux Index (SFI)</div>
-        <div className="index-value">
-          {solarIndices.solarFluxIndex?.toFixed(1) || 'N/A'}
-        </div>
-        <div className={`index-status ${sfiLevel.className}`}>
-          {sfiLevel.label}
-        </div>
+        <div className="index-value">{solarIndices.solarFluxIndex?.toFixed(1) || 'N/A'}</div>
+        <div className={`index-status ${sfiLevel.className}`}>{sfiLevel.label}</div>
       </div>
 
       <div className="index-item">
         <div className="index-label">K-Index</div>
         <div className="index-value">{solarIndices.kIndex ?? 'N/A'}</div>
-        <div className={`index-status ${geoLevel.className}`}>
-          {geoLevel.label}
-        </div>
+        <div className={`index-status ${geoLevel.className}`}>{geoLevel.label}</div>
       </div>
 
       <div className="index-item">
@@ -52,15 +46,11 @@ function SolarIndicesContent({ solarIndices }: Props) {
 
       <div className="index-item">
         <div className="index-label">Sunspot Number</div>
-        <div className="index-value">
-          {solarIndices.sunspotNumber ?? 'N/A'}
-        </div>
+        <div className="index-value">{solarIndices.sunspotNumber ?? 'N/A'}</div>
         <div className="index-description">
-          {solarIndices.sunspotNumber !== undefined &&
-          solarIndices.sunspotNumber > 100
+          {solarIndices.sunspotNumber !== undefined && solarIndices.sunspotNumber > 100
             ? 'High solar activity'
-            : solarIndices.sunspotNumber !== undefined &&
-                solarIndices.sunspotNumber > 50
+            : solarIndices.sunspotNumber !== undefined && solarIndices.sunspotNumber > 50
               ? 'Moderate activity'
               : 'Low solar activity'}
         </div>

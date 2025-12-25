@@ -13,6 +13,7 @@ const THEME_STORAGE_KEY = 'nextskip-theme';
 
 export function useTheme() {
   // Initialize from localStorage or default to 'system'
+  // eslint-disable-next-line react/hook-use-state -- Using setThemeState internally, exposed setTheme wraps it
   const [theme, setThemeState] = useState<Theme>(() => {
     if (typeof window === 'undefined') return 'system';
     const stored = localStorage.getItem(THEME_STORAGE_KEY);
@@ -44,7 +45,7 @@ export function useTheme() {
       setThemeState(newTheme);
       applyTheme(newTheme);
     },
-    [applyTheme]
+    [applyTheme],
   );
 
   // Toggle between light and dark (skips system)

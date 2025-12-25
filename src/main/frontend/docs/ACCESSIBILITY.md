@@ -18,21 +18,22 @@ All components must meet **WCAG 2.1 Level AA** standards. This is non-negotiable
 
 All design tokens in `DESIGN_SYSTEM.md` meet AA contrast requirements when used on their intended backgrounds:
 
-| Token | Background | Contrast | Status |
-|-------|-----------|----------|--------|
-| `--text-primary` | `--background-color` | 13.4:1 | ✅ AAA |
-| `--text-primary` | `--surface-color` | 14.6:1 | ✅ AAA |
-| `--text-secondary` | `--background-color` | 7.5:1 | ✅ AAA |
-| `--text-secondary` | `--surface-color` | 8.3:1 | ✅ AAA |
-| `--success-color` | `--surface-color` | 3.4:1 | ✅ AA Large |
-| `--warning-color` | `--surface-color` | 2.0:1 | ⚠️ Fails AA* |
-| `--error-color` | `--surface-color` | 4.0:1 | ⚠️ Borderline |
+| Token              | Background           | Contrast | Status        |
+| ------------------ | -------------------- | -------- | ------------- |
+| `--text-primary`   | `--background-color` | 13.4:1   | ✅ AAA        |
+| `--text-primary`   | `--surface-color`    | 14.6:1   | ✅ AAA        |
+| `--text-secondary` | `--background-color` | 7.5:1    | ✅ AAA        |
+| `--text-secondary` | `--surface-color`    | 8.3:1    | ✅ AAA        |
+| `--success-color`  | `--surface-color`    | 3.4:1    | ✅ AA Large   |
+| `--warning-color`  | `--surface-color`    | 2.0:1    | ⚠️ Fails AA\* |
+| `--error-color`    | `--surface-color`    | 4.0:1    | ⚠️ Borderline |
 
 **Note**: `--warning-color` (#ff9800) should only be used for large text or with background modifications.
 
 ### Testing Contrast
 
 **Browser DevTools**:
+
 1. Inspect element
 2. Click color swatch in Styles panel
 3. Check contrast ratio in color picker
@@ -41,6 +42,7 @@ All design tokens in `DESIGN_SYSTEM.md` meet AA contrast requirements when used 
 https://webaim.org/resources/contrastchecker/
 
 **Command Line** (with npm package):
+
 ```bash
 npm install -g wcag-contrast
 wcag-contrast "#ff9800" "#ffffff"  # Returns contrast ratio
@@ -93,7 +95,7 @@ button:focus {
 
 /* ❌ Bad - removes focus indicator */
 button:focus {
-  outline: none;  /* Never do this! */
+  outline: none; /* Never do this! */
 }
 ```
 
@@ -162,11 +164,7 @@ Use native HTML elements in logical order. Only use `tabIndex` when absolutely n
 
 ```tsx
 // Loading spinner
-<div
-  className="loading"
-  role="status"
-  aria-label="Loading propagation data"
->
+<div className="loading" role="status" aria-label="Loading propagation data">
   <div className="spinner" aria-hidden="true"></div>
   <p>Loading...</p>
 </div>
@@ -175,11 +173,7 @@ Use native HTML elements in logical order. Only use `tabIndex` when absolutely n
 #### Disabled State
 
 ```tsx
-<button
-  onClick={handleSubmit}
-  disabled={loading}
-  aria-disabled={loading}
->
+<button onClick={handleSubmit} disabled={loading} aria-disabled={loading}>
   {loading ? 'Submitting...' : 'Submit'}
 </button>
 ```
@@ -315,11 +309,13 @@ Use native HTML elements in logical order. Only use `tabIndex` when absolutely n
 ### Automated Testing (jest-axe)
 
 **Install**:
+
 ```bash
 npm install --save-dev jest-axe
 ```
 
 **Test Example**:
+
 ```typescript
 import { axe, toHaveNoViolations } from 'jest-axe';
 
@@ -335,6 +331,7 @@ it('has no accessibility violations', async () => {
 ### Manual Testing Checklist
 
 #### Keyboard Navigation
+
 - [ ] Tab through all interactive elements
 - [ ] Verify tab order is logical
 - [ ] Ensure focus indicators are visible
@@ -343,6 +340,7 @@ it('has no accessibility violations', async () => {
 - [ ] Verify no keyboard traps
 
 #### Screen Reader (macOS VoiceOver)
+
 - [ ] Enable VoiceOver (Cmd + F5)
 - [ ] Navigate page with VO keys (Ctrl + Option + arrow keys)
 - [ ] Verify all text is announced
@@ -351,6 +349,7 @@ it('has no accessibility violations', async () => {
 - [ ] Test forms (field labels, error messages)
 
 #### Visual
+
 - [ ] Check color contrast with DevTools
 - [ ] Verify text is readable at 200% zoom
 - [ ] Test with dark mode (if supported)
@@ -358,6 +357,7 @@ it('has no accessibility violations', async () => {
 - [ ] Check touch targets are ≥44×44px (mobile)
 
 #### Testing Tools
+
 - **Chrome DevTools Lighthouse**: Automated accessibility audit
 - **axe DevTools Extension**: Real-time accessibility checks
 - **WAVE**: Web accessibility evaluation tool
@@ -371,17 +371,18 @@ it('has no accessibility violations', async () => {
 **Problem**: Warning color (#ff9800) on white has 2.0:1 contrast.
 
 **Fix**: Use warning color only for large text or add background:
+
 ```css
 .status-fair {
   color: var(--warning-color);
-  font-size: 1.25rem;  /* Make text larger */
+  font-size: 1.25rem; /* Make text larger */
   font-weight: 500;
 }
 
 /* Or add background for better contrast */
 .warning-badge {
   background: var(--warning-color);
-  color: #000;  /* Black text on orange: 5.9:1 */
+  color: #000; /* Black text on orange: 5.9:1 */
 }
 ```
 
@@ -390,6 +391,7 @@ it('has no accessibility violations', async () => {
 **Problem**: User can't see which element has focus.
 
 **Fix**: Add visible focus styles:
+
 ```css
 button:focus,
 a:focus,
@@ -404,11 +406,13 @@ input:focus {
 **Problem**: `<div onClick={...}>` not keyboard accessible.
 
 **Fix 1**: Use native button:
+
 ```tsx
 <button onClick={handleClick}>Action</button>
 ```
 
 **Fix 2**: Add keyboard support to div:
+
 ```tsx
 <div
   role="button"
@@ -430,6 +434,7 @@ input:focus {
 **Problem**: Screen reader announces "Button" with no context.
 
 **Fix**: Add `aria-label`:
+
 ```tsx
 <button aria-label="Refresh propagation data" onClick={handleRefresh}>
   ↻
@@ -439,20 +444,25 @@ input:focus {
 ## Resources
 
 ### WCAG 2.1 Quick Reference
+
 https://www.w3.org/WAI/WCAG21/quickref/
 
 ### MDN Accessibility Guide
+
 https://developer.mozilla.org/en-US/docs/Web/Accessibility
 
 ### WebAIM Resources
+
 - **Contrast Checker**: https://webaim.org/resources/contrastchecker/
 - **WAVE Tool**: https://wave.webaim.org/
 - **Screen Reader Guide**: https://webaim.org/articles/voiceover/
 
 ### ARIA Authoring Practices
+
 https://www.w3.org/WAI/ARIA/apg/
 
 ### Testing Tools
+
 - **axe DevTools**: Browser extension for accessibility testing
 - **Lighthouse**: Built into Chrome DevTools
 - **jest-axe**: Automated accessibility testing for React components

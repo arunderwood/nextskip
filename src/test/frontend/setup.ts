@@ -30,7 +30,9 @@ Object.defineProperty(window, 'matchMedia', {
 
 // Mock ResizeObserver for masonry grid tests
 global.ResizeObserver = class ResizeObserver {
+  /* eslint-disable @typescript-eslint/class-methods-use-this */
   observe() {}
   unobserve() {}
   disconnect() {}
+  /* eslint-enable @typescript-eslint/class-methods-use-this */
 };

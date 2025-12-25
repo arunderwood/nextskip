@@ -5,29 +5,33 @@ This document defines the design tokens, spacing system, and visual style for th
 ## Color Tokens
 
 ### Brand Colors
+
 ```css
---primary-color: #1976d2;     /* Blue - primary actions, links */
---secondary-color: #dc004e;   /* Pink - accents, highlights */
+--primary-color: #1976d2; /* Blue - primary actions, links */
+--secondary-color: #dc004e; /* Pink - accents, highlights */
 ```
 
 ### Semantic Colors
+
 ```css
---success-color: #4caf50;     /* Green - success states, "good" conditions */
---warning-color: #ff9800;     /* Orange - warnings, "fair" conditions */
---error-color: #f44336;       /* Red - errors, "poor" conditions */
+--success-color: #4caf50; /* Green - success states, "good" conditions */
+--warning-color: #ff9800; /* Orange - warnings, "fair" conditions */
+--error-color: #f44336; /* Red - errors, "poor" conditions */
 ```
 
 ### Neutral Colors
+
 ```css
---background-color: #f5f5f5;  /* Light gray - app background */
---surface-color: #ffffff;     /* White - card/component backgrounds */
---border-color: #e0e0e0;      /* Medium gray - borders, dividers */
+--background-color: #f5f5f5; /* Light gray - app background */
+--surface-color: #ffffff; /* White - card/component backgrounds */
+--border-color: #e0e0e0; /* Medium gray - borders, dividers */
 ```
 
 ### Text Colors
+
 ```css
---text-primary: rgba(0, 0, 0, 0.87);    /* Primary text - high emphasis */
---text-secondary: rgba(0, 0, 0, 0.6);   /* Secondary text - medium emphasis */
+--text-primary: rgba(0, 0, 0, 0.87); /* Primary text - high emphasis */
+--text-secondary: rgba(0, 0, 0, 0.6); /* Secondary text - medium emphasis */
 ```
 
 **Accessibility**: All text colors meet WCAG 2.1 AA contrast ratios (4.5:1 minimum) when used on their intended backgrounds.
@@ -43,6 +47,7 @@ All spacing should use multiples of the base unit:
 ```
 
 ### Common Spacing Values
+
 - **0.5x** (4px): Tight spacing, icon padding
 - **1x** (8px): Default spacing between related elements
 - **1.5x** (12px): Moderate spacing
@@ -51,44 +56,69 @@ All spacing should use multiples of the base unit:
 - **4x** (32px): Extra large spacing, page margins
 
 ### Usage in CSS
+
 ```css
-padding: calc(var(--spacing-unit) * 2);           /* 16px */
-margin-bottom: calc(var(--spacing-unit) * 3);     /* 24px */
-gap: var(--spacing-unit);                         /* 8px */
+padding: calc(var(--spacing-unit) * 2); /* 16px */
+margin-bottom: calc(var(--spacing-unit) * 3); /* 24px */
+gap: var(--spacing-unit); /* 8px */
 ```
 
 ## Typography
 
 ### Font Sizes
+
 ```css
-h1 { font-size: 2rem; }        /* 32px - page title */
-h2 { font-size: 1.5rem; }      /* 24px - section heading */
-h3 { font-size: 1.25rem; }     /* 20px - subsection heading */
-body { font-size: 1rem; }      /* 16px - base text */
+h1 {
+  font-size: 2rem;
+} /* 32px - page title */
+h2 {
+  font-size: 1.5rem;
+} /* 24px - section heading */
+h3 {
+  font-size: 1.25rem;
+} /* 20px - subsection heading */
+body {
+  font-size: 1rem;
+} /* 16px - base text */
 ```
 
 ### Font Weights
+
 ```css
-h1, h2, h3, h4, h5, h6 { font-weight: 500; }  /* Medium - headings */
-body { font-weight: 400; }                     /* Normal - body text */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-weight: 500;
+} /* Medium - headings */
+body {
+  font-weight: 400;
+} /* Normal - body text */
 ```
 
 ### Line Heights
+
 - **Headings**: Use browser default (typically 1.2)
 - **Body text**: Use browser default (typically 1.5)
 
 ## Shadows
 
 ### Standard Shadow
+
 ```css
 --shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 ```
+
 **Usage**: Default card shadow, subtle elevation
 
 ### Elevated Shadow
+
 ```css
 --shadow-elevated: 0 4px 8px rgba(0, 0, 0, 0.15);
 ```
+
 **Usage**: Hover states, important cards, modals
 
 ## Border Radius
@@ -117,12 +147,14 @@ body { font-weight: 400; }                     /* Normal - body text */
 ## Usage Guidelines
 
 ### Do's ✅
+
 - **Always use CSS custom properties** (design tokens) for colors, spacing, shadows
 - **Use spacing multipliers** (`calc(var(--spacing-unit) * N)`) for consistency
 - **Follow semantic color meanings** (success = green, error = red, etc.)
 - **Verify color contrast** using browser DevTools or WebAIM checker
 
 ### Don'ts ❌
+
 - **Never hardcode color values** (e.g., `color: #1976d2`)
 - **Never use arbitrary spacing** (e.g., `margin: 13px`)
 - **Never override semantic colors** (e.g., don't use error color for success)
@@ -142,6 +174,7 @@ Pre-defined utility classes for band condition ratings:
 ## Component Patterns
 
 ### Cards
+
 ```css
 .card {
   background: var(--surface-color);
@@ -157,6 +190,7 @@ Pre-defined utility classes for band condition ratings:
 ```
 
 ### Loading States
+
 ```css
 .loading {
   display: flex;
@@ -168,11 +202,12 @@ Pre-defined utility classes for band condition ratings:
 ```
 
 ### Error States
+
 ```css
 .error {
   color: var(--error-color);
   padding: calc(var(--spacing-unit) * 2);
-  background: rgba(244, 67, 54, 0.1);       /* 10% opacity error background */
+  background: rgba(244, 67, 54, 0.1); /* 10% opacity error background */
   border-radius: var(--border-radius);
   border-left: 4px solid var(--error-color);
 }
@@ -185,10 +220,10 @@ The activity grid is a layout system where cards are arranged by "hotness" - how
 ### Grid Configuration
 
 ```css
---activity-columns-desktop: 4;    /* 4 columns on desktop */
---activity-columns-tablet: 2;     /* 2 columns on tablet */
---activity-columns-mobile: 1;     /* 1 column on mobile */
---activity-gap: calc(var(--spacing-unit) * 3);  /* 24px gap */
+--activity-columns-desktop: 4; /* 4 columns on desktop */
+--activity-columns-tablet: 2; /* 2 columns on tablet */
+--activity-columns-mobile: 1; /* 1 column on mobile */
+--activity-gap: calc(var(--spacing-unit) * 3); /* 24px gap */
 --activity-card-min-height: 200px;
 ```
 
@@ -196,12 +231,12 @@ The activity grid is a layout system where cards are arranged by "hotness" - how
 
 Cards can span multiple grid cells:
 
-| Size | Grid Span | Use Case |
-|------|-----------|----------|
-| **standard** (1x1) | 1 column × 1 row | Single metrics, utilities |
-| **wide** (2x1) | 2 columns × 1 row | Charts, tables |
-| **tall** (1x2) | 1 column × 2 rows | Lists, activity feeds |
-| **hero** (2x2) | 2 columns × 2 rows | Primary KPIs, featured metrics |
+| Size               | Grid Span          | Use Case                       |
+| ------------------ | ------------------ | ------------------------------ |
+| **standard** (1x1) | 1 column × 1 row   | Single metrics, utilities      |
+| **wide** (2x1)     | 2 columns × 1 row  | Charts, tables                 |
+| **tall** (1x2)     | 1 column × 2 rows  | Lists, activity feeds          |
+| **hero** (2x2)     | 2 columns × 2 rows | Primary KPIs, featured metrics |
 
 ### Hotness Levels
 
@@ -240,10 +275,11 @@ Higher priority cards appear first in the grid (top-left position).
 
 ```css
 --activity-transition-duration: 300ms;
---activity-transition-timing: cubic-bezier(0.4, 0, 0.2, 1);  /* Material ease-out */
+--activity-transition-timing: cubic-bezier(0.4, 0, 0.2, 1); /* Material ease-out */
 ```
 
 Cards smoothly transition when:
+
 - Priority changes (reordering)
 - Hovering (lift effect)
 - Focusing (accessibility ring)
@@ -253,14 +289,18 @@ Cards smoothly transition when:
 ```tsx
 import { ActivityGrid, ActivityCard } from '../components/activity';
 
-<ActivityGrid cards={[
-  {
-    config: { id: 'solar', type: 'solar-indices', size: 'standard', priority: 85, hotness: 'hot' },
-    component: <ActivityCard config={config} title="Solar Indices" icon="☀️">
-      <SolarIndicesContent data={solarData} />
-    </ActivityCard>
-  }
-]} />
+<ActivityGrid
+  cards={[
+    {
+      config: { id: 'solar', type: 'solar-indices', size: 'standard', priority: 85, hotness: 'hot' },
+      component: (
+        <ActivityCard config={config} title="Solar Indices" icon="☀️">
+          <SolarIndicesContent data={solarData} />
+        </ActivityCard>
+      ),
+    },
+  ]}
+/>;
 ```
 
 ### Responsive Behavior

@@ -6,12 +6,7 @@
 /* Modern header - animated gradient mesh with decorative elements */
 .dashboard-header {
   position: relative;
-  background: linear-gradient(
-    135deg,
-    #6366f1 0%,
-    #8b5cf6 50%,
-    #06b6d4 100%
-  );
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #06b6d4 100%);
   background-size: 200% 200%;
   animation: gradientShift 15s ease infinite;
   backdrop-filter: blur(10px);
@@ -28,7 +23,8 @@
 
 /* Animated gradient background */
 @keyframes gradientShift {
-  0%, 100% {
+  0%,
+  100% {
     background-position: 0% 50%;
   }
   50% {
@@ -44,11 +40,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background-image: radial-gradient(
-    circle at 25% 25%,
-    rgba(255, 255, 255, 0.1) 1px,
-    transparent 1px
-  );
+  background-image: radial-gradient(circle at 25% 25%, rgba(255, 255, 255, 0.1) 1px, transparent 1px);
   background-size: 24px 24px;
   opacity: 0.3;
   pointer-events: none;
@@ -103,7 +95,8 @@
 }
 
 @keyframes iconGlow {
-  0%, 100% {
+  0%,
+  100% {
     filter: drop-shadow(0 0 12px rgba(255, 255, 255, 0.4));
   }
   50% {
@@ -150,7 +143,8 @@
 }
 
 @keyframes livePulse {
-  0%, 100% {
+  0%,
+  100% {
     box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.3);
   }
   50% {
@@ -208,8 +202,12 @@
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 .loading-spinner p {
@@ -225,36 +223,26 @@
 
 /* Dark mode header styles - enhanced gradient mesh */
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) .dashboard-header {
-    background: linear-gradient(
-      135deg,
-      #4f46e5 0%,
-      #7c3aed 50%,
-      #0891b2 100%
-    );
+  :root:not([data-theme='light']) .dashboard-header {
+    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #0891b2 100%);
     box-shadow:
       0 8px 32px rgba(79, 70, 229, 0.4),
       0 4px 16px rgba(0, 0, 0, 0.3);
   }
 
-  :root:not([data-theme="light"]) .dashboard-header::after {
+  :root:not([data-theme='light']) .dashboard-header::after {
     background: var(--background-color);
   }
 }
 
-:root[data-theme="dark"] .dashboard-header {
-  background: linear-gradient(
-    135deg,
-    #4f46e5 0%,
-    #7c3aed 50%,
-    #0891b2 100%
-  );
+:root[data-theme='dark'] .dashboard-header {
+  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #0891b2 100%);
   box-shadow:
     0 8px 32px rgba(79, 70, 229, 0.4),
     0 4px 16px rgba(0, 0, 0, 0.3);
 }
 
-:root[data-theme="dark"] .dashboard-header::after {
+:root[data-theme='dark'] .dashboard-header::after {
   background: var(--background-color);
 }
 

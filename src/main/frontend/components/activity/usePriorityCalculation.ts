@@ -13,10 +13,10 @@ import type { PriorityInput, HotnessLevel } from '../../types/activity';
  * Total weights: 40% + 35% + 20% + 5% = 100%
  */
 const PRIORITY_WEIGHTS = {
-  favorable: 40,      // Base weight for favorable flag
-  score: 35,          // Weight for numeric score
-  rating: 20,         // Weight for rating enum
-  recency: 5,         // Weight for recency (time since update)
+  favorable: 40, // Base weight for favorable flag
+  score: 35, // Weight for numeric score
+  rating: 20, // Weight for rating enum
+  recency: 5, // Weight for recency (time since update)
 };
 
 /**
@@ -68,7 +68,7 @@ export function calculatePriority(input: PriorityInput): number {
   if (input.lastUpdated) {
     const ageMinutes = (Date.now() - input.lastUpdated.getTime()) / 60000;
     // Full points if updated within 5 minutes, decays to 0 over 60 minutes
-    const recencyFactor = Math.max(0, 1 - (ageMinutes / 60));
+    const recencyFactor = Math.max(0, 1 - ageMinutes / 60);
     priority += recencyFactor * PRIORITY_WEIGHTS.recency;
   }
 
@@ -120,13 +120,7 @@ export function usePriorityCalculation(input: PriorityInput) {
     const priority = calculatePriority(input);
     const hotness = priorityToHotness(priority);
     return { priority, hotness };
-  }, [
-    input.favorable,
-    input.score,
-    input.rating,
-    input.lastUpdated,
-    input.userWeight,
-  ]);
+  }, [input]);
 }
 
 /**

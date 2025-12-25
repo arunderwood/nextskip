@@ -55,12 +55,14 @@ open build/reports/pmd/main.html
 **Fix violations, don't suppress them.** Rule exclusions lower the quality bar. Suppressions require documented justification (e.g., `@SuppressWarnings("PMD.TooManyMethods") // Comprehensive test suite`).
 
 **Common Violations**:
+
 - `AvoidLiteralsInIfCondition`: Extract magic numbers to named constants
 - `UseLocaleWithCaseConversions`: Use `toUpperCase(Locale.ROOT)` instead of `toUpperCase()`
 - `OperatorWrap`: Place `+` at start of next line, not end of current line
 - `TooManyMethods`: Add `@SuppressWarnings("PMD.TooManyMethods")` to comprehensive test classes
 
 **Test Naming Convention** (enforced by PMD):
+
 - Java tests MUST use BDD-style: `testMethodName_Scenario_ExpectedResult`
 - Example: `testGetScore_FreshActivation_Returns100`
 
@@ -83,6 +85,7 @@ npm run test:coverage
 ```
 
 **Test Suite**: Comprehensive tests in `src/test/frontend/` covering:
+
 - Priority calculation algorithm
 - Component rendering and behavior
 - Grid sorting and layout
@@ -106,6 +109,7 @@ npm run e2e:headed
 ```
 
 **Test Suite**: E2E tests in `src/test/e2e/` covering:
+
 - Dashboard loads successfully
 - Page title rendering
 - Dashboard cards render
@@ -116,6 +120,36 @@ npm run e2e:headed
 **Local Development**: Playwright automatically starts the application via `./gradlew bootRun` before running tests
 
 **CI Mode**: Tests run against the production JAR artifact to validate the actual deployable build
+
+#### Frontend Linting (ESLint + Prettier)
+
+```bash
+# Check for linting errors
+npm run lint
+
+# Auto-fix linting errors
+npm run lint:fix
+
+# Check formatting
+npm run format:check
+
+# Auto-format code
+npm run format
+```
+
+**Configuration**:
+
+- ESLint: `eslint.config.js` (ESLint 9 flat config with `eslint-config-vaadin`)
+- Prettier: `.prettierrc` (single quotes, 120 char width, trailing commas)
+- Pre-commit: `simple-git-hooks` + `lint-staged` (auto-fix on commit)
+
+**Rules**: Uses Vaadin's official ESLint config with these customizations:
+
+- JSX literals allowed (no i18n requirement)
+- TypeScript strict mode
+- React hooks linting
+- JSX accessibility (jsx-a11y)
+- Performance rules for React
 
 ## Architecture Guidelines
 
@@ -158,17 +192,21 @@ All code should adhere to SOLID design principles:
 ### Key Design Patterns
 
 **Resilience Pattern**: All external API clients use Circuit Breaker + Retry + Cache Fallback
+
 - Configuration in `application.yml`
 - See `NoaaSwpcClient.java` and `HamQslClient.java` for reference implementations
 
 **Type-Safe DTOs**: Java records with built-in validation
+
 - See `NoaaSolarCycleEntry.java` for pattern
 
 **Vaadin Hilla Integration**: Type-safe RPC between Java backend and React frontend
+
 - Backend: `@BrowserCallable` methods in `api/` package
 - Frontend: Auto-generated TypeScript clients in `src/main/frontend/generated/`
 
 **XML Security**: Disable DTD processing to prevent XXE attacks
+
 - See `HamQslClient.java` for pattern
 
 ## Scoring System
@@ -178,6 +216,7 @@ NextSkip uses a score-based system to rank activity cards by "hotness."
 ### Backend Scoring Pattern
 
 Each module's domain models should implement:
+
 1. `isFavorable()` - Boolean for good conditions
 2. `getScore()` - Integer 0-100 for condition quality
 
@@ -188,6 +227,7 @@ See `SolarIndices.java` and `BandCondition.java` for reference.
 Location: `frontend/components/activity/usePriorityCalculation.ts`
 
 Weighted algorithm:
+
 - 40% favorable flag
 - 35% numeric score
 - 20% rating enum
@@ -195,12 +235,12 @@ Weighted algorithm:
 
 ### Hotness Levels
 
-| Score | Hotness | Visual Treatment |
-|-------|---------|------------------|
-| 70-100 | hot | Green glow, pulse animation |
-| 45-69 | warm | Orange tint |
-| 20-44 | neutral | Blue tint |
-| 0-19 | cool | Gray, reduced opacity |
+| Score  | Hotness | Visual Treatment            |
+| ------ | ------- | --------------------------- |
+| 70-100 | hot     | Green glow, pulse animation |
+| 45-69  | warm    | Orange tint                 |
+| 20-44  | neutral | Blue tint                   |
+| 0-19   | cool    | Gray, reduced opacity       |
 
 ### Adding a New Activity Module
 
@@ -233,6 +273,7 @@ src/test/frontend/         # Frontend tests (parallel to src/main)
 ```
 
 **Activity Grid System**:
+
 - Priority-based card layout (highest priority = top-left position)
 - Hotness visual indicators (hot/warm/neutral/cool based on priority)
 - Responsive: 4 columns (desktop) → 2 columns (tablet) → 1 column (mobile)
@@ -257,6 +298,7 @@ src/test/frontend/         # Frontend tests (parallel to src/main)
 - Import components with `Frontend/` alias (configured in `vitest.config.ts`)
 
 **Test Patterns**: See existing test files for reference:
+
 - `src/test/frontend/components/activity/ActivityCard.test.tsx` - Component testing
 - `src/test/frontend/components/activity/usePriorityCalculation.test.ts` - Hook testing
 - `src/test/frontend/components/activity/ActivitySystem.a11y.test.tsx` - Accessibility testing
@@ -266,12 +308,14 @@ src/test/frontend/         # Frontend tests (parallel to src/main)
 ## External Data Sources
 
 ### NOAA Space Weather Prediction Center
+
 - **Endpoint**: `https://services.swpc.noaa.gov/json/solar-cycle/observed-solar-cycle-indices.json`
 - **Data**: Solar Flux Index (SFI), Sunspot Number
 - **Cache TTL**: 5 minutes
 - **Known Issues**: Sometimes returns partial dates - client has fallback parsing
 
 ### HamQSL Solar XML Feed
+
 - **Endpoint**: `http://www.hamqsl.com/solarxml.php`
 - **Data**: Solar indices + band-by-band conditions
 - **Cache TTL**: 30 minutes
@@ -290,6 +334,7 @@ src/test/frontend/         # Frontend tests (parallel to src/main)
 **Critical**: This project uses Java 25 for both compilation and bytecode target.
 
 **build.gradle configuration**:
+
 - `languageVersion = JavaLanguageVersion.of(25)` - Compile with Java 25
 - `sourceCompatibility = JavaVersion.VERSION_25` - Target Java 25 bytecode
 - `targetCompatibility = JavaVersion.VERSION_25`
@@ -297,6 +342,7 @@ src/test/frontend/         # Frontend tests (parallel to src/main)
 **Why**: Spring Boot and Vaadin Hilla require Java 17+. Mockito needs ByteBuddy experimental mode for Java 25.
 
 **Testing JVM args** (configured in build.gradle):
+
 ```
 --add-opens java.base/java.lang=ALL-UNNAMED
 --add-opens java.base/java.util=ALL-UNNAMED
@@ -347,6 +393,7 @@ This repository includes specialized agents and commands in `.claude/`:
 ## Future Development
 
 See `nextskip-project-plan.md` for detailed roadmap:
+
 - **Phase 2**: POTA/SOTA activations module
 - **Phase 3**: Satellite tracking (N2YO, Celestrak)
 - **Phase 4**: Real-time HF activity (PSKReporter MQTT)

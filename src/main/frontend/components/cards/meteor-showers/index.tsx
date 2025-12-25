@@ -21,8 +21,6 @@ import EventStatus from 'Frontend/generated/io/nextskip/common/model/EventStatus
 import type MeteorShower from 'Frontend/generated/io/nextskip/meteors/model/MeteorShower';
 import './MeteorShowerDetails.css';
 
-/* eslint-disable react/jsx-key */
-
 /**
  * Format ZHR with units
  */
@@ -67,12 +65,12 @@ function MeteorShowerDetails({ shower }: { shower: MeteorShower }) {
   return (
     <div className="meteor-shower-details">
       {/* At Peak Indicator */}
-      {isAtPeak && (
+      {isAtPeak ? (
         <div className="peak-indicator">
           <span className="peak-icon">✨</span>
           <span className="peak-text">At Peak Activity!</span>
         </div>
-      )}
+      ) : null}
 
       {/* ZHR Visual Meter */}
       <div className="zhr-meter-section">
@@ -89,15 +87,16 @@ function MeteorShowerDetails({ shower }: { shower: MeteorShower }) {
             trend === 'peak'
               ? 'ZHR at peak activity'
               : trend === 'rising'
-              ? 'ZHR rising toward peak'
-              : trend === 'declining'
-              ? 'ZHR declining after peak'
-              : 'ZHR meter'
+                ? 'ZHR rising toward peak'
+                : trend === 'declining'
+                  ? 'ZHR declining after peak'
+                  : 'ZHR meter'
           }
           aria-valuenow={currentZhr}
           aria-valuemin={0}
           aria-valuemax={peakZhr}
         >
+          {/* eslint-disable react-perf/jsx-no-new-object-as-prop */}
           <div className="zhr-meter-track">
             <div
               className={`zhr-meter-fill ${isAtPeak ? 'at-peak' : trend === 'rising' ? 'rising' : trend === 'declining' ? 'declining' : ''}`}
@@ -111,7 +110,7 @@ function MeteorShowerDetails({ shower }: { shower: MeteorShower }) {
       </div>
 
       {/* Peak Timing Info */}
-      {shower.peakStart && shower.peakEnd && (
+      {shower.peakStart && shower.peakEnd ? (
         <div className="peak-timing-section">
           <span className="timing-icon">📅</span>
           <div className="timing-info">
@@ -121,19 +120,19 @@ function MeteorShowerDetails({ shower }: { shower: MeteorShower }) {
                 month: 'short',
                 day: 'numeric',
                 hour: '2-digit',
-                minute: '2-digit'
+                minute: '2-digit',
               })}
               {' - '}
               {new Date(shower.peakEnd).toLocaleDateString('en-US', {
                 month: 'short',
                 day: 'numeric',
                 hour: '2-digit',
-                minute: '2-digit'
+                minute: '2-digit',
               })}
             </span>
           </div>
         </div>
-      )}
+      ) : null}
     </div>
   );
 }
@@ -141,13 +140,7 @@ function MeteorShowerDetails({ shower }: { shower: MeteorShower }) {
 /**
  * Extended EventCard for meteor showers with additional details
  */
-function MeteorShowerCard({
-  shower,
-  config
-}: {
-  shower: MeteorShower;
-  config: ActivityCardConfig;
-}) {
+function MeteorShowerCard({ shower, config }: { shower: MeteorShower; config: ActivityCardConfig }) {
   return (
     <EventCard event={shower} eventType="meteor-shower" config={config}>
       <MeteorShowerDetails shower={shower} />
@@ -168,9 +161,7 @@ const meteorShowersCard: CardDefinition = {
     if (!showers || showers.length === 0) return null;
 
     // Filter out ended showers
-    const activeShowers = showers.filter(
-      (s): s is MeteorShower => s !== undefined && s.status !== EventStatus.ENDED
-    );
+    const activeShowers = showers.filter((s): s is MeteorShower => s !== undefined && s.status !== EventStatus.ENDED);
 
     if (activeShowers.length === 0) return null;
 
@@ -197,9 +188,7 @@ const meteorShowersCard: CardDefinition = {
     if (!showers) return null;
 
     // Filter to only active/upcoming showers
-    const relevantShowers = showers.filter(
-      (s): s is MeteorShower => s !== undefined && s.status !== EventStatus.ENDED
-    );
+    const relevantShowers = showers.filter((s): s is MeteorShower => s !== undefined && s.status !== EventStatus.ENDED);
 
     // Find the shower by matching the config ID
     const shower = relevantShowers.find((s) => {

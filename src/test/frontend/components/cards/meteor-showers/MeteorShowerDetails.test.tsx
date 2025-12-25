@@ -21,7 +21,7 @@ function calculateZhrTrend(
   peakStart: string,
   peakEnd: string,
   isAtPeak: boolean,
-  currentTime: Date = new Date()
+  currentTime: Date = new Date(),
 ): 'rising' | 'declining' | 'peak' | null {
   if (isAtPeak) return 'peak';
 
@@ -47,7 +47,7 @@ describe('MeteorShowerDetails', () => {
               <span className="zhr-current-value">50/hr</span>
             </div>
           </div>
-        </div>
+        </div>,
       );
 
       expect(screen.getByText('Zenithal Hourly Rate')).toBeInTheDocument();
@@ -61,7 +61,7 @@ describe('MeteorShowerDetails', () => {
             <span className="peak-icon">✨</span>
             <span className="peak-text">At Peak Activity!</span>
           </div>
-        </div>
+        </div>,
       );
 
       expect(screen.getByText('At Peak Activity!')).toBeInTheDocument();
@@ -88,7 +88,7 @@ describe('MeteorShowerDetails', () => {
               </div>
             </div>
           </div>
-        </div>
+        </div>,
       );
 
       const meter = screen.getByRole('meter');
@@ -119,7 +119,7 @@ describe('MeteorShowerDetails', () => {
               </div>
             </div>
           </div>
-        </div>
+        </div>,
       );
 
       const meter = screen.getByRole('meter');
@@ -215,13 +215,20 @@ describe('MeteorShowerDetails', () => {
               <span className="zhr-label">Zenithal Hourly Rate</span>
               <span className="zhr-current-value">50/hr</span>
             </div>
-            <div className="zhr-meter" role="meter" aria-label="ZHR meter" aria-valuenow={50} aria-valuemin={0} aria-valuemax={100}>
+            <div
+              className="zhr-meter"
+              role="meter"
+              aria-label="ZHR meter"
+              aria-valuenow={50}
+              aria-valuemin={0}
+              aria-valuemax={100}
+            >
               <div className="zhr-meter-track">
                 <div className="zhr-meter-fill" style={{ width: '50%' }} />
               </div>
             </div>
           </div>
-        </div>
+        </div>,
       );
 
       const results = await axe(container);
@@ -230,11 +237,18 @@ describe('MeteorShowerDetails', () => {
 
     it('meter has proper ARIA attributes', () => {
       render(
-        <div className="zhr-meter" role="meter" aria-label="ZHR meter" aria-valuenow={50} aria-valuemin={0} aria-valuemax={100}>
+        <div
+          className="zhr-meter"
+          role="meter"
+          aria-label="ZHR meter"
+          aria-valuenow={50}
+          aria-valuemin={0}
+          aria-valuemax={100}
+        >
           <div className="zhr-meter-track">
             <div className="zhr-meter-fill" style={{ width: '50%' }} />
           </div>
-        </div>
+        </div>,
       );
 
       const meter = screen.getByRole('meter');
@@ -257,7 +271,7 @@ describe('MeteorShowerDetails', () => {
           <div className="zhr-meter-track">
             <div className="zhr-meter-fill rising" style={{ width: '50%' }} />
           </div>
-        </div>
+        </div>,
       );
 
       const meter = screen.getByRole('meter');
@@ -277,7 +291,7 @@ describe('MeteorShowerDetails', () => {
           <div className="zhr-meter-track">
             <div className="zhr-meter-fill declining" style={{ width: '30%' }} />
           </div>
-        </div>
+        </div>,
       );
 
       const meter = screen.getByRole('meter');
@@ -297,7 +311,7 @@ describe('MeteorShowerDetails', () => {
           <div className="zhr-meter-track">
             <div className="zhr-meter-fill at-peak" style={{ width: '100%' }} />
           </div>
-        </div>
+        </div>,
       );
 
       const meter = screen.getByRole('meter');
@@ -325,7 +339,7 @@ describe('MeteorShowerDetails', () => {
               </div>
             </div>
           </div>
-        </div>
+        </div>,
       );
 
       const results = await axe(container);
@@ -343,7 +357,7 @@ describe('MeteorShowerDetails', () => {
               <span className="zhr-current-value">Value</span>
             </div>
           </div>
-        </div>
+        </div>,
       );
 
       // Verify class structure exists for CSS media queries

@@ -3,6 +3,7 @@ import { render, screen } from '@testing-library/react';
 import { axe, toHaveNoViolations } from 'jest-axe';
 import PotaActivationsContent from 'Frontend/components/cards/activations/PotaActivationsContent';
 import type Activation from 'Frontend/generated/io/nextskip/activations/model/Activation';
+import ActivationType from 'Frontend/generated/io/nextskip/activations/model/ActivationType';
 
 // Extend Vitest's expect with jest-axe matchers
 expect.extend(toHaveNoViolations);
@@ -11,7 +12,7 @@ describe('PotaActivationsContent', () => {
   const createMockActivation = (overrides?: Partial<Activation>): Activation => ({
     spotId: '123456',
     activatorCallsign: 'W1ABC',
-    type: 'POTA',
+    type: ActivationType.POTA,
     frequency: 14250,
     mode: 'SSB',
     spottedAt: new Date().toISOString(),
@@ -22,6 +23,8 @@ describe('PotaActivationsContent', () => {
       name: 'Test Park',
       regionCode: 'MA',
     },
+    favorable: true,
+    score: 75,
     ...overrides,
   });
 
@@ -104,9 +107,7 @@ describe('PotaActivationsContent', () => {
     vi.setSystemTime(now);
 
     const fiveMinutesAgo = new Date('2025-01-15T11:55:00Z');
-    const activations = [
-      createMockActivation({ spottedAt: fiveMinutesAgo.toISOString() }),
-    ];
+    const activations = [createMockActivation({ spottedAt: fiveMinutesAgo.toISOString() })];
 
     render(<PotaActivationsContent activations={activations} />);
 
@@ -118,7 +119,7 @@ describe('PotaActivationsContent', () => {
 
   it('should limit display to 8 activations with overflow message', () => {
     const manyActivations = Array.from({ length: 10 }, (_, i) =>
-      createMockActivation({ spotId: `${i + 1}`, activatorCallsign: `W${i}ABC` })
+      createMockActivation({ spotId: `${i + 1}`, activatorCallsign: `W${i}ABC` }),
     );
 
     render(<PotaActivationsContent activations={manyActivations} />);
@@ -158,9 +159,7 @@ describe('PotaActivationsContent', () => {
     vi.setSystemTime(now);
 
     const thirtySecondsAgo = new Date('2025-01-15T11:59:30Z');
-    const activations = [
-      createMockActivation({ spottedAt: thirtySecondsAgo.toISOString() }),
-    ];
+    const activations = [createMockActivation({ spottedAt: thirtySecondsAgo.toISOString() })];
 
     render(<PotaActivationsContent activations={activations} />);
 
@@ -174,9 +173,7 @@ describe('PotaActivationsContent', () => {
     vi.setSystemTime(now);
 
     const oneMinuteAgo = new Date('2025-01-15T11:59:00Z');
-    const activations = [
-      createMockActivation({ spottedAt: oneMinuteAgo.toISOString() }),
-    ];
+    const activations = [createMockActivation({ spottedAt: oneMinuteAgo.toISOString() })];
 
     render(<PotaActivationsContent activations={activations} />);
 
@@ -190,9 +187,7 @@ describe('PotaActivationsContent', () => {
     vi.setSystemTime(now);
 
     const twoHoursAgo = new Date('2025-01-15T10:00:00Z');
-    const activations = [
-      createMockActivation({ spottedAt: twoHoursAgo.toISOString() }),
-    ];
+    const activations = [createMockActivation({ spottedAt: twoHoursAgo.toISOString() })];
 
     render(<PotaActivationsContent activations={activations} />);
 
@@ -206,9 +201,7 @@ describe('PotaActivationsContent', () => {
     vi.setSystemTime(now);
 
     const oneHourAgo = new Date('2025-01-15T11:00:00Z');
-    const activations = [
-      createMockActivation({ spottedAt: oneHourAgo.toISOString() }),
-    ];
+    const activations = [createMockActivation({ spottedAt: oneHourAgo.toISOString() })];
 
     render(<PotaActivationsContent activations={activations} />);
 
@@ -218,9 +211,7 @@ describe('PotaActivationsContent', () => {
   });
 
   it('should display "Unknown" for null timestamp', () => {
-    const activations = [
-      createMockActivation({ spottedAt: undefined }),
-    ];
+    const activations = [createMockActivation({ spottedAt: undefined })];
 
     render(<PotaActivationsContent activations={activations} />);
 
@@ -228,9 +219,7 @@ describe('PotaActivationsContent', () => {
   });
 
   it('should display "Unknown" for null frequency', () => {
-    const activations = [
-      createMockActivation({ frequency: undefined }),
-    ];
+    const activations = [createMockActivation({ frequency: undefined })];
 
     render(<PotaActivationsContent activations={activations} />);
 
@@ -255,9 +244,7 @@ describe('PotaActivationsContent', () => {
   });
 
   it('should display "Unknown" for null mode', () => {
-    const activations = [
-      createMockActivation({ mode: undefined }),
-    ];
+    const activations = [createMockActivation({ mode: undefined })];
 
     render(<PotaActivationsContent activations={activations} />);
 

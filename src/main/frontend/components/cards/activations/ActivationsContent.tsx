@@ -23,10 +23,7 @@ interface Props {
 
 function ActivationsContent({ activations, type, emptyMessage }: Props) {
   // Show up to 8 most recent activations (memoized to avoid recalculating)
-  const displayActivations = useMemo(
-    () => activations.slice(0, 8),
-    [activations]
-  );
+  const displayActivations = useMemo(() => activations.slice(0, 8), [activations]);
 
   const contentClass = `${type}-content`;
   const locationClass = type === 'pota' ? 'park-name' : 'summit-name';
@@ -55,32 +52,27 @@ function ActivationsContent({ activations, type, emptyMessage }: Props) {
                 >
                   {activation.activatorCallsign}
                 </a>
-                <span className="reference-code">
-                  {(activation.location as ActivationLocationExt)?.reference}
-                </span>
+                <span className="reference-code">{(activation.location as ActivationLocationExt)?.reference}</span>
               </div>
               <div className="activation-details">
                 <span className="frequency">{formatFrequency(activation.frequency)}</span>
                 <span className="mode">{activation.mode || 'Unknown'}</span>
                 <span className="time-since">{formatTimeSince(activation.spottedAt)}</span>
               </div>
-              {(activation.location as ActivationLocationExt)?.name && (
+              {(activation.location as ActivationLocationExt)?.name ? (
                 <div className={locationClass}>
                   {(activation.location as ActivationLocationExt).name}
-                  {(activation.location as ActivationLocationExt).regionCode &&
-                    `, ${(activation.location as ActivationLocationExt).regionCode}`}
+                  {(activation.location as ActivationLocationExt).regionCode
+                    ? `, ${(activation.location as ActivationLocationExt).regionCode}`
+                    : null}
                 </div>
-              )}
+              ) : null}
             </li>
           ))}
         </ul>
       )}
 
-      {activations.length > 8 && (
-        <div className="more-activations">
-          +{activations.length - 8} more activations
-        </div>
-      )}
+      {activations.length > 8 && <div className="more-activations">+{activations.length - 8} more activations</div>}
     </div>
   );
 }

@@ -79,7 +79,7 @@ export interface ActivityCardProps {
   /** Optional footer content */
   footer?: ReactNode;
   /** Click handler for card interactions */
-  onClick?: () => void;
+  onClick?(): void;
   /** Additional CSS class names */
   className?: string;
   /** Accessibility label */

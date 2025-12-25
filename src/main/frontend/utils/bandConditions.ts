@@ -27,7 +27,7 @@ export function getRatingClass(rating: string): string {
  * Get descriptive text for a band
  */
 export function getBandDescription(band: string): string {
-  const descriptions: { [key: string]: string } = {
+  const descriptions: Record<string, string> = {
     BAND_160M: 'Long distance, nighttime',
     BAND_80M: 'Regional to DX, night',
     BAND_40M: 'All-around workhorse',

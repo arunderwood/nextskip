@@ -1,6 +1,6 @@
 ---
 description: Comprehensive pre-commit validation (Gradle, tests, Spring Boot, Vaadin, frontend)
-argument-hint: ""
+argument-hint: ''
 allowed-tools: Bash, Read, Grep, Glob
 ---
 
@@ -9,6 +9,7 @@ allowed-tools: Bash, Read, Grep, Glob
 ## Purpose
 
 This command validates the entire NextSkip stack (Gradle, Spring Boot, Vaadin, React) to ensure:
+
 - Backend code compiles without errors
 - All backend tests pass
 - All frontend tests pass
@@ -33,6 +34,7 @@ Execute these steps IN ORDER. Use the Bash tool to run each command and report a
 **Execute**: `git status`
 
 **Report**:
+
 - Modified files (if any)
 - Untracked files (if any)
 - Working tree state (clean/dirty)
@@ -42,12 +44,14 @@ Execute these steps IN ORDER. Use the Bash tool to run each command and report a
 **Execute**: `npm run test:run`
 
 This runs all frontend tests including:
+
 - Unit tests (priority calculation algorithm)
 - Component tests (BentoCard, BentoGrid)
 - Accessibility tests (WCAG 2.1 AA compliance)
 - Integration tests
 
 **Report**:
+
 - Test result (PASS or FAIL)
 - Test count (X passing)
 - Test duration (in seconds or milliseconds)
@@ -55,17 +59,39 @@ This runs all frontend tests including:
 
 **Expected**: All tests passing in ~1-2 seconds
 
-### Step 3: Gradle Clean Build
+### Step 3: Frontend Linting
+
+**Execute**: `npm run lint && npm run format:check`
+
+This validates frontend code quality:
+
+- ESLint checks (TypeScript, React, JSX accessibility)
+- Prettier formatting verification
+
+**Report**:
+
+- Lint result (PASS or FAIL)
+- Number of errors and warnings (if any)
+- Format check result (PASS or FAIL)
+- List of files with issues (if any)
+
+**Expected**: 0 errors, 0 warnings, all files formatted
+
+**To Fix Failures**: Run `npm run lint:fix && npm run format` to auto-fix most issues
+
+### Step 4: Gradle Clean Build
 
 **Execute**: `time ./gradlew clean build`
 
 This runs the full build including:
+
 - Compilation (Java 25 bytecode)
 - Backend test execution (all tests)
 - Quality checks (Checkstyle, PMD, SpotBugs, JaCoCo)
 - JAR packaging
 
 **Report**:
+
 - Build result (SUCCESS or FAILURE)
 - Build duration (in seconds)
 - Compilation warnings/errors
@@ -78,34 +104,36 @@ This runs the full build including:
 
 **Expected**: BUILD SUCCESSFUL in 10-15 seconds
 
-### Step 4: Verify Build Artifacts
+### Step 5: Verify Build Artifacts
 
 **Execute**: `ls -lh build/libs/*.jar`
 
 **Report**:
+
 - JAR filename (should be `nextskip-0.0.1-SNAPSHOT.jar`)
 - JAR file size
 - Existence of test reports at `build/reports/tests/test/`
 
-### Step 5: Runtime Validation (Required)
+### Step 6: Runtime Validation (Required)
 
 **⚠️ CRITICAL**: Starting the application is REQUIRED, not optional. Runtime exceptions (dependency injection issues, configuration errors, bean initialization failures) will NOT be caught by tests alone.
 
-**Step 5a: Clear Port 8080**
+**Step 6a: Clear Port 8080**
 
 **Execute**: `lsof -ti :8080 | xargs kill -9`
 
 (This will silently succeed even if no process is running)
 
-**Step 5b: Start Application in Background**
+**Step 6b: Start Application in Background**
 
 **Execute**: `./gradlew bootRun > /tmp/bootrun.log 2>&1 &`
 
-**Step 5c: Wait and Check Logs**
+**Step 6c: Wait and Check Logs**
 
 **Execute**: `sleep 15 && tail -100 /tmp/bootrun.log`
 
 **Report**:
+
 - Startup result (SUCCESS or FAILURE)
 - Startup time (in seconds)
 - Any runtime exceptions or errors
@@ -114,29 +142,32 @@ This runs the full build including:
 - TypeScript errors (should be 0)
 - Application URL confirmation
 
-**Step 5d: Stop Application**
+**Step 6d: Stop Application**
 
 **Execute**: `lsof -ti :8080 | xargs kill -9`
 
 **Expected**:
+
 - Application starts in 5-10 seconds
 - No runtime exceptions
 - TypeScript: 0 errors
 - "Started NextSkipApplication" message in logs
 
-### Step 6: E2E Tests (Playwright)
+### Step 7: E2E Tests (Playwright)
 
 **⚠️ OPTIONAL**: E2E tests are optional for pre-commit validation but recommended before creating pull requests.
 
 **Execute**: `npm run e2e`
 
 This runs Playwright E2E tests including:
+
 - Dashboard loads successfully
 - Page title and header rendering
 - Dashboard cards render after loading
 - Last update timestamp display
 
 **Report**:
+
 - Test result (PASS or FAIL)
 - Test count (X passing)
 - Test duration (in seconds)
@@ -154,7 +185,8 @@ After executing ALL validation steps, provide this structured summary using ACTU
 ## NextSkip Build Validation Report
 
 📊 Git Status: [Clean / X modified, Y untracked files]
-🎨 Frontend Tests: [SUCCESS/FAILURE] ([actual count]/90 passing, [actual duration])
+🎨 Frontend Tests: [SUCCESS/FAILURE] ([actual count] passing, [actual duration])
+🧹 Frontend Linting: [SUCCESS/FAILURE] ([errors] errors, [warnings] warnings)
 🔨 Backend Build: [SUCCESS/FAILURE] ([actual duration]s)
 ✅ Backend Tests: [actual count]/91 passing ([test duration]s)
 📋 Quality Violations:
@@ -177,6 +209,7 @@ After executing ALL validation steps, provide this structured summary using ACTU
 
 📊 Git Status: 1 modified (BentoCard.tsx)
 🎨 Frontend Tests: SUCCESS (all passing, ~900ms)
+🧹 Frontend Linting: SUCCESS (0 errors, 0 warnings)
 🔨 Backend Build: SUCCESS (~12s)
 ✅ Backend Tests: all passing (~7s)
 📋 Quality Violations:
@@ -198,35 +231,42 @@ E2E tests verify dashboard loads correctly.
 ## Troubleshooting
 
 **Port 8080 Already in Use**:
+
 ```bash
 lsof -ti :8080 | xargs kill -9
 ```
 
 **Stale Build Artifacts**:
+
 ```bash
 ./gradlew clean
 ```
 
 **Frontend Test Failures**:
+
 - Check for import path issues (should use `Frontend/` alias)
 - Verify vitest.config.ts is correctly configured
-- Check that test files are in `frontend/tests/` directory
+- Check that test files are in `src/test/frontend/` directory
 - Run `npm test` in watch mode to see detailed errors
 
 **Backend Test Failures**:
+
 - Use `/java-test-debugger` to investigate specific test failures
 - Check recent git changes that might have broken tests
 
 **Quality Check Failures**:
+
 - Quality checks ARE blocking - violations WILL fail the build
 - **FIX violations properly** - do NOT suppress or exclude rules without strong justification
 - See "Handling Quality Violations" section below for proper fix patterns
 
 **npm Command Not Found**:
+
 - Ensure Node.js and npm are installed
 - Run `npm install` to install dependencies
 
 **Runtime Startup Failures**:
+
 - Check `/tmp/bootrun.log` for full error messages and stack traces
 - Common issues:
   - Bean initialization failures (dependency injection errors)
@@ -241,12 +281,14 @@ lsof -ti :8080 | xargs kill -9
 **FIX violations, don't suppress them.** Rule exclusions lower the quality bar.
 
 **Proper fixes**:
+
 - `AvoidDuplicateLiterals` → Extract to `private static final` constants
 - `AvoidLiteralsInIfCondition` → Extract magic numbers to named constants
 - `MethodNamingConventions` → Rename methods to match BDD pattern
 - `UseLocaleWithCaseConversions` → Use `toUpperCase(Locale.ROOT)`
 
 **Suppressions require documented justification**:
+
 ```java
 @SuppressWarnings("PMD.TooManyMethods") // Comprehensive test suite requires many methods
 ```
@@ -274,9 +316,11 @@ lsof -ti :8080 | xargs kill -9
 ## Related Commands
 
 After successful validation:
+
 - `/commit` - Create conventional commit for your changes
 
 If validation fails:
+
 - `/java-test-debugger` - Debug specific backend test failures
 - `/find-refactor-candidates` - Identify code quality issues
 - `/plan-tests` - Plan additional test coverage
@@ -284,12 +328,14 @@ If validation fails:
 ## Notes
 
 **Frontend Test Details**:
-- Tests located in: `frontend/tests/`
+
+- Tests located in: `src/test/frontend/`
 - Test configuration: `vitest.config.ts`
-- Test setup: `frontend/test/setup.ts`
+- Test setup: `src/test/frontend/setup.ts`
 - Coverage target: 80%+ statements/functions/lines
 
 **Backend Test Details**:
+
 - Tests located in: `src/test/java/`
 - Test configuration: `build.gradle` (JUnit 5 platform)
 - Coverage target: 80%+ (JaCoCo)

@@ -15,8 +15,6 @@ import { calculatePriority, priorityToHotness } from '../../activity/usePriority
 import SolarIndicesContent from './SolarIndicesContent';
 import BandConditionsContent, { BandConditionsLegend } from './BandConditionsContent';
 
-/* eslint-disable react/jsx-key */
-
 /**
  * Solar Indices Card Definition
  */
@@ -102,8 +100,7 @@ const bandConditionsCard: CardDefinition = {
 
     // Calculate average score from all bands
     const validConditions = bandConditions.filter((c) => c !== undefined);
-    const avgScore =
-      validConditions.reduce((sum, c) => sum + (c?.score ?? 0), 0) / validConditions.length;
+    const avgScore = validConditions.reduce((sum, c) => sum + (c?.score ?? 0), 0) / validConditions.length;
 
     // Count favorable bands
     const favorableCount = validConditions.filter((c) => c?.favorable === true).length;
@@ -112,11 +109,7 @@ const bandConditionsCard: CardDefinition = {
     // Use best rating among bands
     const hasGood = validConditions.some((c) => c?.rating === 'GOOD');
     const hasFair = validConditions.some((c) => c?.rating === 'FAIR');
-    const bestRating = hasGood
-      ? ('GOOD' as const)
-      : hasFair
-        ? ('FAIR' as const)
-        : ('POOR' as const);
+    const bestRating = hasGood ? ('GOOD' as const) : hasFair ? ('FAIR' as const) : ('POOR' as const);
 
     const priority = calculatePriority({
       favorable: isFavorable,
@@ -140,8 +133,7 @@ const bandConditionsCard: CardDefinition = {
     if (!bandConditions || bandConditions.length === 0) return null;
 
     const validBandConditions = bandConditions.filter(
-      (c): c is import('Frontend/generated/io/nextskip/propagation/model/BandCondition').default =>
-        c !== undefined
+      (c): c is import('Frontend/generated/io/nextskip/propagation/model/BandCondition').default => c !== undefined,
     );
 
     return (

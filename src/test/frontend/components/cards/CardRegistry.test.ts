@@ -1,7 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { registerCard, getRegisteredCards, clearRegistry } from 'Frontend/components/cards/CardRegistry';
 import type { CardDefinition } from 'Frontend/components/cards/types';
-import type { ActivityCardConfig } from 'Frontend/types/activity';
 
 describe('CardRegistry', () => {
   beforeEach(() => {
@@ -21,9 +20,7 @@ describe('CardRegistry', () => {
       canRender: () => true,
       createConfig: () => ({
         id: 'test-card',
-        title: 'Test Card',
-        subtitle: 'Test Subtitle',
-        icon: '🧪',
+        type: 'propagation',
         size: 'standard',
         priority: 50,
         hotness: 'neutral',
@@ -43,9 +40,7 @@ describe('CardRegistry', () => {
       canRender: () => true,
       createConfig: () => ({
         id: 'card-1',
-        title: 'Card 1',
-        subtitle: 'First Card',
-        icon: '1️⃣',
+        type: 'solar-indices',
         size: 'standard',
         priority: 100,
         hotness: 'hot',
@@ -57,9 +52,7 @@ describe('CardRegistry', () => {
       canRender: () => true,
       createConfig: () => ({
         id: 'card-2',
-        title: 'Card 2',
-        subtitle: 'Second Card',
-        icon: '2️⃣',
+        type: 'band-conditions',
         size: 'wide',
         priority: 50,
         hotness: 'warm',

@@ -45,14 +45,14 @@ export function ActivityCard({
     >
       <div className="activity-card__header">
         <div className="activity-card__header-left">
-          {icon && (
+          {icon ? (
             <span className="activity-card__icon" aria-hidden="true">
               {icon}
             </span>
-          )}
+          ) : null}
           <div className="activity-card__title-wrapper">
             <h3 className="activity-card__title">{title}</h3>
-            {subtitle && <p className="activity-card__subtitle">{subtitle}</p>}
+            {subtitle ? <p className="activity-card__subtitle">{subtitle}</p> : null}
           </div>
         </div>
 
@@ -66,7 +66,7 @@ export function ActivityCard({
 
       <div className="activity-card__content">{children}</div>
 
-      {footer && <div className="activity-card__footer">{footer}</div>}
+      {footer ? <div className="activity-card__footer">{footer}</div> : null}
     </CardElement>
   );
 }

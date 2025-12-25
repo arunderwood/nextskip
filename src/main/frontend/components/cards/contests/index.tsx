@@ -20,17 +20,6 @@ import { EventCard } from '../events/EventCard';
 import EventStatus from 'Frontend/generated/io/nextskip/common/model/EventStatus';
 import type Contest from 'Frontend/generated/io/nextskip/contests/model/Contest';
 
-/* eslint-disable react/jsx-key */
-
-/**
- * Convert backend score (0-100) to rating enum for consistency
- */
-function scoreToRating(score: number): 'GOOD' | 'FAIR' | 'POOR' {
-  if (score >= 70) return 'GOOD';
-  if (score >= 40) return 'FAIR';
-  return 'POOR';
-}
-
 /**
  * Contests Card Definition - Creates individual cards for each contest
  */
@@ -44,9 +33,7 @@ const contestsCard: CardDefinition = {
     if (!contests || contests.length === 0) return null;
 
     // Filter out ended contests and undefined values
-    const activeContests = contests.filter(
-      (c): c is Contest => c !== undefined && c.status !== EventStatus.ENDED
-    );
+    const activeContests = contests.filter((c): c is Contest => c !== undefined && c.status !== EventStatus.ENDED);
 
     if (activeContests.length === 0) return null;
 
@@ -79,9 +66,7 @@ const contestsCard: CardDefinition = {
     if (!contests) return null;
 
     // Filter to only active contests (same filter as createConfig)
-    const activeContests = contests.filter(
-      (c): c is Contest => c !== undefined && c.status !== EventStatus.ENDED
-    );
+    const activeContests = contests.filter((c): c is Contest => c !== undefined && c.status !== EventStatus.ENDED);
 
     // Find the contest by matching the config ID
     const contest = activeContests.find((c) => {

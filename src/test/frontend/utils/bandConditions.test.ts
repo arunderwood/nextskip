@@ -7,6 +7,8 @@ import {
   BAND_ORDER,
 } from 'Frontend/utils/bandConditions';
 import type BandCondition from 'Frontend/generated/io/nextskip/propagation/model/BandCondition';
+import FrequencyBand from 'Frontend/generated/io/nextskip/common/model/FrequencyBand';
+import BandConditionRating from 'Frontend/generated/io/nextskip/propagation/model/BandConditionRating';
 
 describe('bandConditions utilities', () => {
   describe('getRatingClass', () => {
@@ -97,18 +99,19 @@ describe('bandConditions utilities', () => {
   });
 
   describe('sortBandConditions', () => {
-    const createCondition = (band: string): BandCondition => ({
+    const createCondition = (band: FrequencyBand): BandCondition => ({
       band,
-      rating: 'GOOD',
+      rating: BandConditionRating.GOOD,
       score: 80,
       favorable: true,
+      confidence: 90,
     });
 
     it('should sort bands in correct order', () => {
       const conditions = [
-        createCondition('BAND_10M'),
-        createCondition('BAND_160M'),
-        createCondition('BAND_40M'),
+        createCondition(FrequencyBand.BAND_10M),
+        createCondition(FrequencyBand.BAND_160M),
+        createCondition(FrequencyBand.BAND_40M),
       ];
 
       const sorted = sortBandConditions(conditions);
@@ -120,16 +123,16 @@ describe('bandConditions utilities', () => {
 
     it('should handle all bands in correct order', () => {
       const conditions = [
-        createCondition('BAND_10M'),
-        createCondition('BAND_12M'),
-        createCondition('BAND_15M'),
-        createCondition('BAND_17M'),
-        createCondition('BAND_20M'),
-        createCondition('BAND_30M'),
-        createCondition('BAND_40M'),
-        createCondition('BAND_80M'),
-        createCondition('BAND_160M'),
-        createCondition('BAND_6M'),
+        createCondition(FrequencyBand.BAND_10M),
+        createCondition(FrequencyBand.BAND_12M),
+        createCondition(FrequencyBand.BAND_15M),
+        createCondition(FrequencyBand.BAND_17M),
+        createCondition(FrequencyBand.BAND_20M),
+        createCondition(FrequencyBand.BAND_30M),
+        createCondition(FrequencyBand.BAND_40M),
+        createCondition(FrequencyBand.BAND_80M),
+        createCondition(FrequencyBand.BAND_160M),
+        createCondition(FrequencyBand.BAND_6M),
       ];
 
       const sorted = sortBandConditions(conditions);
@@ -150,10 +153,18 @@ describe('bandConditions utilities', () => {
 
     it('should place unknown bands at the beginning', () => {
       // Unknown bands get indexOf() = -1, so they sort first
+      // Cast to test function handling of unknown band
+      const unknownCondition = {
+        band: 'unknown' as FrequencyBand,
+        rating: BandConditionRating.GOOD,
+        score: 80,
+        favorable: true,
+        confidence: 90,
+      };
       const conditions = [
-        createCondition('BAND_10M'),
-        createCondition('unknown'),
-        createCondition('BAND_160M'),
+        createCondition(FrequencyBand.BAND_10M),
+        unknownCondition,
+        createCondition(FrequencyBand.BAND_160M),
       ];
 
       const sorted = sortBandConditions(conditions);
@@ -169,7 +180,22 @@ describe('bandConditions utilities', () => {
     });
 
     it('should not mutate original array', () => {
-      const conditions = [createCondition('10m'), createCondition('80m-40m')];
+      // Cast to test function behavior with non-standard band names
+      const cond1 = {
+        band: '10m' as FrequencyBand,
+        rating: BandConditionRating.GOOD,
+        score: 80,
+        favorable: true,
+        confidence: 90,
+      };
+      const cond2 = {
+        band: '80m-40m' as FrequencyBand,
+        rating: BandConditionRating.GOOD,
+        score: 80,
+        favorable: true,
+        confidence: 90,
+      };
+      const conditions = [cond1, cond2];
       const original = [...conditions];
 
       sortBandConditions(conditions);

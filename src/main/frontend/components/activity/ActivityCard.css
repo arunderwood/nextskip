@@ -16,14 +16,15 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.6);
   border: 1px solid rgba(255, 255, 255, 0.3);
   overflow: hidden;
-  transition: transform var(--transition-base),
+  transition:
+    transform var(--transition-base),
     box-shadow var(--transition-base),
     border-color var(--transition-base);
 }
 
 /* Dark mode glass */
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) .activity-card {
+  :root:not([data-theme='light']) .activity-card {
     background: rgba(22, 27, 34, 0.8);
     border: 1px solid rgba(255, 255, 255, 0.1);
     box-shadow:
@@ -32,7 +33,7 @@
   }
 }
 
-:root[data-theme="dark"] .activity-card {
+:root[data-theme='dark'] .activity-card {
   background: rgba(22, 27, 34, 0.8);
   border: 1px solid rgba(255, 255, 255, 0.1);
   box-shadow:
@@ -51,9 +52,7 @@
 
 /* Hotness variants - enhanced with stronger glows and gradients */
 .activity-card--hot {
-  background: linear-gradient(135deg,
-    rgba(16, 185, 129, 0.1) 0%,
-    rgba(255, 255, 255, 0.7) 100%);
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(255, 255, 255, 0.7) 100%);
   border-color: var(--hotness-hot-border);
   box-shadow:
     0 0 8px rgba(16, 185, 129, 0.35),
@@ -63,9 +62,7 @@
 }
 
 .activity-card--warm {
-  background: linear-gradient(135deg,
-    rgba(245, 158, 11, 0.08) 0%,
-    rgba(255, 255, 255, 0.7) 100%);
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.08) 0%, rgba(255, 255, 255, 0.7) 100%);
   border-color: var(--hotness-warm-border);
   box-shadow:
     0 0 15px rgba(245, 158, 11, 0.2),
@@ -74,9 +71,7 @@
 }
 
 .activity-card--neutral {
-  background: linear-gradient(135deg,
-    rgba(99, 102, 241, 0.06) 0%,
-    rgba(255, 255, 255, 0.7) 100%);
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.06) 0%, rgba(255, 255, 255, 0.7) 100%);
   border-color: var(--hotness-neutral-border);
   box-shadow:
     0 4px 6px -1px rgba(0, 0, 0, 0.1),
@@ -93,10 +88,8 @@
 
 /* Dark mode hotness variants */
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) .activity-card--hot {
-    background: linear-gradient(135deg,
-      rgba(52, 211, 153, 0.15) 0%,
-      rgba(22, 27, 34, 0.8) 100%);
+  :root:not([data-theme='light']) .activity-card--hot {
+    background: linear-gradient(135deg, rgba(52, 211, 153, 0.15) 0%, rgba(22, 27, 34, 0.8) 100%);
     box-shadow:
       0 0 10px rgba(52, 211, 153, 0.45),
       0 0 0 1px rgba(52, 211, 153, 0.35),
@@ -104,27 +97,21 @@
       inset 0 1px 0 rgba(255, 255, 255, 0.05);
   }
 
-  :root:not([data-theme="light"]) .activity-card--warm {
-    background: linear-gradient(135deg,
-      rgba(251, 191, 36, 0.12) 0%,
-      rgba(22, 27, 34, 0.8) 100%);
+  :root:not([data-theme='light']) .activity-card--warm {
+    background: linear-gradient(135deg, rgba(251, 191, 36, 0.12) 0%, rgba(22, 27, 34, 0.8) 100%);
     box-shadow:
       0 0 18px rgba(251, 191, 36, 0.3),
       0 4px 6px -1px rgba(0, 0, 0, 0.4),
       inset 0 1px 0 rgba(255, 255, 255, 0.05);
   }
 
-  :root:not([data-theme="light"]) .activity-card--neutral {
-    background: linear-gradient(135deg,
-      rgba(165, 180, 252, 0.08) 0%,
-      rgba(22, 27, 34, 0.8) 100%);
+  :root:not([data-theme='light']) .activity-card--neutral {
+    background: linear-gradient(135deg, rgba(165, 180, 252, 0.08) 0%, rgba(22, 27, 34, 0.8) 100%);
   }
 }
 
-:root[data-theme="dark"] .activity-card--hot {
-  background: linear-gradient(135deg,
-    rgba(52, 211, 153, 0.15) 0%,
-    rgba(22, 27, 34, 0.8) 100%);
+:root[data-theme='dark'] .activity-card--hot {
+  background: linear-gradient(135deg, rgba(52, 211, 153, 0.15) 0%, rgba(22, 27, 34, 0.8) 100%);
   box-shadow:
     0 0 10px rgba(52, 211, 153, 0.45),
     0 0 0 1px rgba(52, 211, 153, 0.35),
@@ -132,20 +119,16 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
-:root[data-theme="dark"] .activity-card--warm {
-  background: linear-gradient(135deg,
-    rgba(251, 191, 36, 0.12) 0%,
-    rgba(22, 27, 34, 0.8) 100%);
+:root[data-theme='dark'] .activity-card--warm {
+  background: linear-gradient(135deg, rgba(251, 191, 36, 0.12) 0%, rgba(22, 27, 34, 0.8) 100%);
   box-shadow:
     0 0 18px rgba(251, 191, 36, 0.3),
     0 4px 6px -1px rgba(0, 0, 0, 0.4),
     inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
-:root[data-theme="dark"] .activity-card--neutral {
-  background: linear-gradient(135deg,
-    rgba(165, 180, 252, 0.08) 0%,
-    rgba(22, 27, 34, 0.8) 100%);
+:root[data-theme='dark'] .activity-card--neutral {
+  background: linear-gradient(135deg, rgba(165, 180, 252, 0.08) 0%, rgba(22, 27, 34, 0.8) 100%);
 }
 
 /* Enhanced hover states */
@@ -188,15 +171,11 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: calc(var(--spacing-unit) * 1.25) calc(var(--spacing-unit) * 1.5);  /* Reduced padding */
+  padding: calc(var(--spacing-unit) * 1.25) calc(var(--spacing-unit) * 1.5); /* Reduced padding */
   border-bottom: 1px solid var(--border-color);
-  gap: var(--spacing-unit);  /* Reduced gap */
+  gap: var(--spacing-unit); /* Reduced gap */
   /* Subtle gradient for visual interest */
-  background: linear-gradient(
-    180deg,
-    rgba(0, 0, 0, 0.02) 0%,
-    transparent 100%
-  );
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.02) 0%, transparent 100%);
 }
 
 .activity-card__header-left {
@@ -221,8 +200,8 @@
 
 .activity-card__title {
   margin: 0;
-  font-size: 0.9375rem;  /* Reduced from 1.125rem */
-  font-weight: 600;  /* Slightly bolder for clarity */
+  font-size: 0.9375rem; /* Reduced from 1.125rem */
+  font-weight: 600; /* Slightly bolder for clarity */
   color: var(--text-primary);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -230,7 +209,7 @@
 }
 
 .activity-card__subtitle {
-  font-size: 0.6875rem;  /* Reduced from 0.75rem */
+  font-size: 0.6875rem; /* Reduced from 0.75rem */
   color: var(--text-secondary);
   margin-top: 1px;
   margin-bottom: 0;
@@ -244,9 +223,9 @@
   display: flex;
   align-items: center;
   gap: calc(var(--spacing-unit) * 0.5);
-  padding: calc(var(--spacing-unit) * 0.375) calc(var(--spacing-unit) * 0.75);  /* Reduced */
+  padding: calc(var(--spacing-unit) * 0.375) calc(var(--spacing-unit) * 0.75); /* Reduced */
   border-radius: calc(var(--border-radius) * 3);
-  font-size: 0.625rem;  /* Reduced from 0.75rem */
+  font-size: 0.625rem; /* Reduced from 0.75rem */
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -298,13 +277,13 @@
 
 .activity-card__content {
   flex: 1;
-  padding: calc(var(--spacing-unit) * 1.5);  /* Reduced from 2 */
+  padding: calc(var(--spacing-unit) * 1.5); /* Reduced from 2 */
   overflow: auto;
   line-height: var(--line-height-compact, 1.4);
 }
 
 .activity-card__footer {
-  padding: calc(var(--spacing-unit) * 1) calc(var(--spacing-unit) * 1.5);  /* Reduced */
+  padding: calc(var(--spacing-unit) * 1) calc(var(--spacing-unit) * 1.5); /* Reduced */
   border-top: 1px solid var(--border-color);
   background: rgba(0, 0, 0, 0.02);
   font-size: var(--font-size-compact-sm);

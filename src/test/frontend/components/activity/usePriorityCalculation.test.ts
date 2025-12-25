@@ -14,9 +14,7 @@ import {
   calculatePriority,
   priorityToHotness,
   usePriorityCalculation,
-} from "Frontend/components/activity/usePriorityCalculation";
-import type { PriorityInput } from "Frontend/components/activity";
-
+} from 'Frontend/components/activity/usePriorityCalculation';
 describe('calculatePriority', () => {
   describe('favorable flag (40% weight)', () => {
     it('should add 40 points when favorable is true', () => {
@@ -222,7 +220,7 @@ describe('usePriorityCalculation hook', () => {
         score: 100,
         rating: 'GOOD',
         lastUpdated: new Date(),
-      })
+      }),
     );
 
     expect(result.current.priority).toBe(100);
@@ -235,7 +233,7 @@ describe('usePriorityCalculation hook', () => {
         favorable: false,
         score: 15,
         rating: 'POOR',
-      })
+      }),
     );
 
     expect(result.current.priority).toBeLessThan(20);
@@ -243,9 +241,7 @@ describe('usePriorityCalculation hook', () => {
   });
 
   it('should handle empty input', () => {
-    const { result } = renderHook(() =>
-      usePriorityCalculation({ favorable: false })
-    );
+    const { result } = renderHook(() => usePriorityCalculation({ favorable: false }));
 
     expect(result.current.priority).toBe(0);
     expect(result.current.hotness).toBe('cool');
