@@ -96,11 +96,10 @@ function MeteorShowerDetails({ shower }: { shower: MeteorShower }) {
           aria-valuemin={0}
           aria-valuemax={peakZhr}
         >
-          {/* eslint-disable react-perf/jsx-no-new-object-as-prop */}
           <div className="zhr-meter-track">
             <div
               className={`zhr-meter-fill ${isAtPeak ? 'at-peak' : trend === 'rising' ? 'rising' : trend === 'declining' ? 'declining' : ''}`}
-              style={{ width: `${zhrPercentage}%` }}
+              style={{ '--zhr-width': `${zhrPercentage}%` } as React.CSSProperties}
             />
           </div>
           <div className="zhr-peak-label">

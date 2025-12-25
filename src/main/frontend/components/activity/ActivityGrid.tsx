@@ -59,8 +59,6 @@ export function ActivityGrid({
   cards,
   columns = 4,
   gap = 3,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  animateReorder = true,
   animationDuration = 300,
   className = '',
 }: ActivityGridProps) {

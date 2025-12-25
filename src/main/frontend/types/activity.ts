@@ -99,8 +99,6 @@ export interface ActivityGridProps {
   columns?: number;
   /** Gap between cards in spacing units (default: 3) */
   gap?: number;
-  /** Whether to animate card reordering (default: true) */
-  animateReorder?: boolean;
   /** Animation duration in ms (default: 300) */
   animationDuration?: number;
   /** Additional CSS class names */

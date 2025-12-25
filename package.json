@@ -13,7 +13,7 @@
     "e2e:headed": "playwright test --headed",
     "lint": "eslint src/main/frontend src/test/frontend",
     "lint:fix": "eslint --fix src/main/frontend src/test/frontend",
-    "lint:sarif": "eslint src/main/frontend src/test/frontend -f @microsoft/eslint-formatter-sarif -o eslint-results.sarif || true",
+    "lint:sarif": "eslint src/main/frontend src/test/frontend --quiet -f @microsoft/eslint-formatter-sarif -o eslint-results.sarif || true",
     "format": "prettier --write \"src/**/*.{ts,tsx,json,css,md}\"",
     "format:check": "prettier --check \"src/**/*.{ts,tsx,json,css,md}\"",
     "prepare": "simple-git-hooks"

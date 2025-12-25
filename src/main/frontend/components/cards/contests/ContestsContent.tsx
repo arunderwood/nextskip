@@ -87,12 +87,11 @@ function ContestsContent({ contests, activeCount, upcomingCount }: Props) {
         </div>
       ) : (
         <ul className="contests-list">
-          {displayContests.map((contest, index) => {
+          {displayContests.map((contest) => {
             const status = getStatusBadge(contest);
 
-            /* eslint-disable react/no-array-index-key */
             return (
-              <li key={`${contest.name}-${index}`} className="contest-item">
+              <li key={`${contest.name}-${contest.startTime}`} className="contest-item">
                 <div className="contest-header">
                   <div className="contest-name">
                     {contest.calendarSourceUrl ? (
