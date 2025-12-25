@@ -14,8 +14,8 @@ function PotaActivationsHelpContent() {
   return (
     <div className="help-content">
       <p>
-        Parks on the Air (POTA) activations currently live. Operators set up portable stations in
-        parks and protected areas while hunters try to contact them.
+        Parks on the Air (POTA) activations currently live. Operators set up portable stations in parks and protected
+        areas while hunters try to contact them.
       </p>
       <p>
         <strong>Hot when:</strong> Many activations on bands with good propagation and fresh spots.
@@ -42,12 +42,12 @@ function SotaActivationsHelpContent() {
   return (
     <div className="help-content">
       <p>
-        Summits on the Air (SOTA) activations currently live. Operators hike to mountain summits and
-        make contacts while chasers work them from home or other locations.
+        Summits on the Air (SOTA) activations currently live. Operators hike to mountain summits and make contacts while
+        chasers work them from home or other locations.
       </p>
       <p>
-        <strong>Hot when:</strong> Active summits on bands with good propagation. Recent spots rank
-        higher since SOTA activations are typically brief.
+        <strong>Hot when:</strong> Active summits on bands with good propagation. Recent spots rank higher since SOTA
+        activations are typically brief.
       </p>
     </div>
   );

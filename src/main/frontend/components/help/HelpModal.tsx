@@ -71,32 +71,18 @@ export function HelpModal({ isOpen, onClose }: HelpModalProps) {
   );
 
   return (
-    <dialog
-      ref={dialogRef}
-      className="help-modal"
-      onClick={handleBackdropClick}
-      aria-labelledby="help-modal-title"
-    >
+    <dialog ref={dialogRef} className="help-modal" onClick={handleBackdropClick} aria-labelledby="help-modal-title">
       <div className="help-modal__container">
         <header className="help-modal__header">
           <h2 id="help-modal-title" className="help-modal__title">
             Help & About
           </h2>
-          <button
-            type="button"
-            className="help-modal__close"
-            onClick={onClose}
-            aria-label="Close help"
-          >
+          <button type="button" className="help-modal__close" onClick={onClose} aria-label="Close help">
             <X size={20} aria-hidden="true" />
           </button>
         </header>
 
-        <HelpNavigation
-          sections={sections}
-          activeSectionId={activeSectionId}
-          onNavigate={handleNavigate}
-        />
+        <HelpNavigation sections={sections} activeSectionId={activeSectionId} onNavigate={handleNavigate} />
 
         <div ref={containerRef} className="help-modal__content">
           <AboutSection />

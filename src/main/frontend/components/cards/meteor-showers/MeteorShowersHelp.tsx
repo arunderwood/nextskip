@@ -14,12 +14,12 @@ function MeteorShowersHelpContent() {
   return (
     <div className="help-content">
       <p>
-        Current and upcoming meteor showers that enable VHF propagation via meteor scatter. Meteors
-        leave ionized trails that briefly reflect radio signals for contacts on 6m and 2m.
+        Current and upcoming meteor showers that enable VHF propagation via meteor scatter. Meteors leave ionized trails
+        that briefly reflect radio signals for contacts on 6m and 2m.
       </p>
       <p>
-        <strong>Hot when:</strong> Active showers near peak dates, especially major showers
-        (Perseids, Geminids) with high ZHR.
+        <strong>Hot when:</strong> Active showers near peak dates, especially major showers (Perseids, Geminids) with
+        high ZHR.
       </p>
     </div>
   );

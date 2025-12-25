@@ -14,12 +14,12 @@ function ContestsHelpContent() {
   return (
     <div className="help-content">
       <p>
-        Upcoming and active amateur radio contests. Contests are timed events where operators
-        exchange brief information and try to make as many contacts as possible.
+        Upcoming and active amateur radio contests. Contests are timed events where operators exchange brief information
+        and try to make as many contacts as possible.
       </p>
       <p>
-        <strong>Hot when:</strong> Major contests are active, especially international events that
-        pack the bands with stations.
+        <strong>Hot when:</strong> Major contests are active, especially international events that pack the bands with
+        stations.
       </p>
     </div>
   );

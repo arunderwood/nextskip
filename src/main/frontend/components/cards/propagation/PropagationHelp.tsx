@@ -14,12 +14,11 @@ function SolarIndicesHelpContent() {
   return (
     <div className="help-content">
       <p>
-        Real-time solar activity measurements (SFI, sunspots, K-index, A-index) that directly affect
-        HF radio propagation conditions.
+        Real-time solar activity measurements (SFI, sunspots, K-index, A-index) that directly affect HF radio
+        propagation conditions.
       </p>
       <p>
-        <strong>Hot when:</strong> High SFI (120+) with low K-index (0-2) indicates excellent
-        propagation.
+        <strong>Hot when:</strong> High SFI (120+) with low K-index (0-2) indicates excellent propagation.
       </p>
     </div>
   );
@@ -32,12 +31,12 @@ function BandConditionsHelpContent() {
   return (
     <div className="help-content">
       <p>
-        Current propagation quality for each HF amateur radio band, with separate day and night
-        predictions rated as Good, Fair, or Poor.
+        Current propagation quality for each HF amateur radio band, with separate day and night predictions rated as
+        Good, Fair, or Poor.
       </p>
       <p>
-        <strong>Hot when:</strong> Multiple bands showing Good conditions, especially the higher
-        bands (15m, 10m) which indicate strong solar activity.
+        <strong>Hot when:</strong> Multiple bands showing Good conditions, especially the higher bands (15m, 10m) which
+        indicate strong solar activity.
       </p>
     </div>
   );
