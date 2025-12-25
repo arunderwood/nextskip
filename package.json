@@ -7,12 +7,13 @@
     "test:ui": "vitest --ui",
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage",
-    "test:ci": "npm run format:check && npm run lint && npm run test:coverage",
+    "test:ci": "npm run format:check && npm run lint && npm run lint:sarif && npm run test:coverage",
     "e2e": "playwright test",
     "e2e:ui": "playwright test --ui",
     "e2e:headed": "playwright test --headed",
     "lint": "eslint src/main/frontend src/test/frontend",
     "lint:fix": "eslint --fix src/main/frontend src/test/frontend",
+    "lint:sarif": "eslint src/main/frontend src/test/frontend -f @microsoft/eslint-formatter-sarif -o eslint-results.sarif || true",
     "format": "prettier --write \"src/**/*.{ts,tsx,json,css,md}\"",
     "format:check": "prettier --check \"src/**/*.{ts,tsx,json,css,md}\"",
     "prepare": "simple-git-hooks"
@@ -44,6 +45,7 @@
   },
   "devDependencies": {
     "@babel/preset-react": "^7.28.5",
+    "@microsoft/eslint-formatter-sarif": "^3.1.0",
     "@playwright/test": "^1.57.0",
     "@preact/signals-react-transform": "0.6.0",
     "@rollup/plugin-replace": "6.0.3",
