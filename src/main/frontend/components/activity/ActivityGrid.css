@@ -1,8 +1,8 @@
 /* ActivityGrid Component Styles - Masonry Layout */
 
 .activity-grid {
-  width: 100%;
-  /* Masonry grid handles layout via RegularMasonryGrid component */
+  /* Padding provides space for box-shadow glow at grid edges */
+  padding: 12px;
 }
 
 /* Card wrapper - masonry handles positioning and sizing via Frame */

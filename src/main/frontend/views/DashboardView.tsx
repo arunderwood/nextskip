@@ -178,15 +178,13 @@ function DashboardView() {
         </div>
       ) : null}
 
-      <div className="dashboard-content">
-        {activityCards.length > 0 ? (
-          <ActivityGrid cards={activityCards} />
-        ) : (
-          <div className="no-data">
-            <p>No propagation data available at this time.</p>
-          </div>
-        )}
-      </div>
+      {activityCards.length > 0 ? (
+        <ActivityGrid cards={activityCards} />
+      ) : (
+        <div className="no-data">
+          <p>No propagation data available at this time.</p>
+        </div>
+      )}
     </div>
   );
 }

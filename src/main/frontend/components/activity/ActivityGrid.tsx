@@ -18,6 +18,9 @@ const SIZE_TO_ASPECT: Record<ActivityCardSize, { width: number; height: number }
   hero: { width: 2, height: 2 },
 };
 
+// Style override to prevent glow clipping at grid edges
+const MASONRY_GRID_STYLE: React.CSSProperties = { overflow: 'visible' };
+
 /**
  * Hook to calculate responsive frame width based on viewport and column count
  */
@@ -84,7 +87,7 @@ export function ActivityGrid({
         } as React.CSSProperties
       }
     >
-      <RegularMasonryGrid frameWidth={frameWidth} gap={gapPx}>
+      <RegularMasonryGrid frameWidth={frameWidth} gap={gapPx} style={MASONRY_GRID_STYLE}>
         {sortedCards.map(({ config, component }) => {
           const aspect = SIZE_TO_ASPECT[config.size];
           return (
