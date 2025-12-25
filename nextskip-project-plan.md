@@ -9,6 +9,7 @@
 **Target User:** Any amateur radio operator wanting a quick overview of current opportunities without checking multiple sites.
 
 **Technical Goals:**
+
 - Learn Spring AI framework through practical application
 - Build a modular monolith that can decompose into microservices
 - Create genuinely useful tool for the ham radio community
@@ -35,6 +36,7 @@ Start as a single deployable unit with strong internal boundaries. Each data sou
 - Isolated external dependencies
 
 This allows later extraction to microservices by:
+
 1. Replacing in-process calls with HTTP/gRPC
 2. Deploying modules as separate containers
 3. Adding message queues between modules if needed
@@ -161,7 +163,7 @@ nextskip:
     hamqsl:
       base-url: http://www.hamqsl.com
       cache-ttl: 30m
-  
+
   spots:
     pskreporter:
       mqtt-host: mqtt.pskreporter.info
@@ -169,7 +171,7 @@ nextskip:
     rbn:
       telnet-host: telnet.reversebeacon.net
       telnet-port: 7000
-  
+
   activations:
     pota:
       base-url: https://api.pota.app
@@ -177,7 +179,7 @@ nextskip:
     sota:
       base-url: https://api2.sota.org.uk/api
       cache-ttl: 60s
-  
+
   satellites:
     n2yo:
       base-url: https://api.n2yo.com/rest/v1/satellite
@@ -193,14 +195,14 @@ Every external call wrapped with circuit breaker + retry + cache fallback:
 ```java
 @Service
 public class NoaaSwpcClient {
-    
+
     @CircuitBreaker(name = "noaa", fallbackMethod = "getCachedIndices")
     @Retry(name = "noaa")
     @Cacheable(value = "solarIndices", unless = "#result == null")
     public SolarIndices fetchSolarIndices() {
         // HTTP call to NOAA
     }
-    
+
     private SolarIndices getCachedIndices(Exception e) {
         return cacheManager.getCache("solarIndices").get("latest", SolarIndices.class);
     }
@@ -240,16 +242,19 @@ Not all ham radio activities are equally suited to NextSkip's aggregation model.
 ### Implementation Tiers
 
 **Tier 1 - Infrastructure & Core Activities** (location-independent):
+
 - HF Propagation (Phase 1 ✅) - Universal conditions, machine-readable feeds
 - Dashboard Infrastructure (Phase 2 ✅) - Multi-card grid, WebSocket, card registration system
 - POTA/SOTA (Phase 3 ✅) - Clear "active now" signal, broad appeal
 - Contests (Phase 4) - Predictable schedule, universal applicability
 
 **Tier 2 - Advanced Activities** (requires aggregation or real-time processing):
+
 - Band Activity / PSKReporter (Phase 5) - Real-time MQTT, statistical aggregation
 - Meteor Scatter (Phase 6) - Meteor shower tracking for MS propagation opportunities
 
 **Tier 3 - Personalized Activities** (requires user input):
+
 - Satellites (Phase 7) - Location-dependent, needs user grid square (was Phase 6)
 - Spring AI Assistant (Phase 8) - Enhancement layer (was Phase 7)
 
@@ -264,10 +269,12 @@ Each activity module must provide scoring data that the frontend uses for card r
 ### Backend Contract
 
 Domain models should implement:
+
 - `isFavorable()` - Boolean indicating if conditions are good for this activity
 - `getScore()` - Numeric score (0-100) representing condition quality
 
 Example from `BandCondition.java`:
+
 ```java
 public boolean isFavorable() {
     return rating == BandConditionRating.GOOD && confidence > 0.5;
@@ -288,32 +295,34 @@ public int getScore() {
 
 The `usePriorityCalculation` hook combines scoring signals into a final score:
 
-| Component | Weight | Description |
-|-----------|--------|-------------|
-| Favorable | 40% | Boolean flag from backend |
-| Score | 35% | Numeric 0-100 from backend |
-| Rating | 20% | Enum mapping (GOOD=100, FAIR=60, etc.) |
-| Recency | 5% | Time decay (fresh data scores higher) |
+| Component | Weight | Description                            |
+| --------- | ------ | -------------------------------------- |
+| Favorable | 40%    | Boolean flag from backend              |
+| Score     | 35%    | Numeric 0-100 from backend             |
+| Rating    | 20%    | Enum mapping (GOOD=100, FAIR=60, etc.) |
+| Recency   | 5%     | Time decay (fresh data scores higher)  |
 
 ### Hotness Levels
 
 Final scores map to visual hotness tiers:
 
-| Score | Hotness | Visual Treatment |
-|-------|---------|------------------|
-| 70-100 | hot | Green glow, pulse animation |
-| 45-69 | warm | Orange tint |
-| 20-44 | neutral | Blue tint |
-| 0-19 | cool | Gray, reduced opacity |
+| Score  | Hotness | Visual Treatment            |
+| ------ | ------- | --------------------------- |
+| 70-100 | hot     | Green glow, pulse animation |
+| 45-69  | warm    | Orange tint                 |
+| 20-44  | neutral | Blue tint                   |
+| 0-19   | cool    | Gray, reduced opacity       |
 
 ---
 
 ## Implementation Phases
 
 ### Phase 1: Project Scaffolding & Propagation Module
+
 **Goal:** Working Spring Boot app with solar/propagation data display
 
 **Tasks:**
+
 1. Initialize Spring Boot project with dependencies
 2. Set up module structure with propagation as first module
 3. Implement NOAA SWPC client (solar flux, K-index, A-index)
@@ -324,6 +333,7 @@ Final scores map to visual hotness tiers:
 8. Add health checks and basic observability
 
 **Dependencies:**
+
 ```xml
 <dependencies>
     <!-- Core -->
@@ -335,7 +345,7 @@ Final scores map to visual hotness tiers:
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-webflux</artifactId>
     </dependency>
-    
+
     <!-- Caching -->
     <dependency>
         <groupId>org.springframework.boot</groupId>
@@ -345,19 +355,19 @@ Final scores map to visual hotness tiers:
         <groupId>com.github.ben-manes.caffeine</groupId>
         <artifactId>caffeine</artifactId>
     </dependency>
-    
+
     <!-- Resilience -->
     <dependency>
         <groupId>io.github.resilience4j</groupId>
         <artifactId>resilience4j-spring-boot3</artifactId>
     </dependency>
-    
+
     <!-- XML Parsing -->
     <dependency>
         <groupId>com.fasterxml.jackson.dataformat</groupId>
         <artifactId>jackson-dataformat-xml</artifactId>
     </dependency>
-    
+
     <!-- Observability -->
     <dependency>
         <groupId>org.springframework.boot</groupId>
@@ -371,6 +381,7 @@ Final scores map to visual hotness tiers:
 ```
 
 **Acceptance Criteria:**
+
 - Dashboard displays current SFI, K-index, A-index
 - Band condition ratings (Good/Fair/Poor) for each HF band
 - Data refreshes automatically, caching prevents API hammering
@@ -379,11 +390,13 @@ Final scores map to visual hotness tiers:
 ---
 
 ### Phase 2: Dashboard Infrastructure
+
 **Goal:** Set up multi-card dashboard infrastructure for adding new activity modules
 
-**Note:** Phase 1 implemented the bento grid with scoring system. This phase extends it to support multiple module types and real-time updates.
+**Note:** Phase 1 implemented the activity grid with scoring system. This phase extends it to support multiple module types and real-time updates.
 
 **Tasks:**
+
 1. Create DashboardService to aggregate multiple modules
 2. Implement WebSocket infrastructure for live updates
 3. Extend `useDashboardCards` hook to support multiple activity types dynamically
@@ -393,11 +406,12 @@ Final scores map to visual hotness tiers:
 7. Dark mode support
 
 **Key Patterns:**
+
 ```typescript
 // Card registration pattern
 interface ActivityCardFactory {
   type: string;
-  createCard: (data: ActivityData) => BentoCardConfig;
+  createCard: (data: ActivityData) => ActivityCardConfig;
 }
 
 // Each module registers its card factory
@@ -405,7 +419,8 @@ const cardFactories = new Map<string, ActivityCardFactory>();
 ```
 
 **Acceptance Criteria:**
-- Multiple card types can coexist in bento grid
+
+- Multiple card types can coexist in activity grid
 - Cards can be added/removed dynamically as modules come online
 - WebSocket infrastructure ready for real-time updates
 - Individual card failures don't crash entire dashboard
@@ -414,22 +429,21 @@ const cardFactories = new Map<string, ActivityCardFactory>();
 ---
 
 ### Phase 3: POTA/SOTA Activations Module
+
 **Goal:** Add POTA/SOTA activity tracking (backend + frontend card)
 
 **Backend Tasks:**
+
 1. Create activations module structure
 2. Implement POTA API client (`https://api.pota.app/spot/activator`)
 3. Implement SOTA API client (`https://api2.sota.org.uk/api/spots`)
 4. Create unified Activation model with `isFavorable()` and `getScore()` methods
 5. Add Hilla endpoint: `@BrowserCallable` in `ActivationEndpoint.java`
 
-**Frontend Tasks:**
-6. Create ActivationsCard component
-7. Implement scoring logic (score based on number of active stations, recency)
-8. Add card factory to dashboard
-9. Display activator count, list with frequencies, and basic filtering (by band, by program)
+**Frontend Tasks:** 6. Create ActivationsCard component 7. Implement scoring logic (score based on number of active stations, recency) 8. Add card factory to dashboard 9. Display activator count, list with frequencies, and basic filtering (by band, by program)
 
 **Key Models:**
+
 ```java
 public record Activation(
     String callsign,
@@ -446,7 +460,8 @@ public record Activation(
 ```
 
 **Acceptance Criteria:**
-- Activations card appears in bento grid sorted by score
+
+- Activations card appears in activity grid sorted by score
 - Shows POTA + SOTA activators currently on air
 - Count displayed prominently ("23 POTA / 7 SOTA on air")
 - Auto-refresh updates card without page reload
@@ -454,27 +469,27 @@ public record Activation(
 ---
 
 ### Phase 4: Contest Calendar Module
+
 **Goal:** Add contest tracking (backend + frontend card)
 
 **Backend Tasks:**
+
 1. Create contests module structure
 2. Parse WA7BNM iCal feed (or maintain curated JSON)
 3. Implement contest state machine (upcoming/active/ended)
 4. Create Contest model with `isFavorable()` and `getScore()` methods
 5. Add Hilla endpoint: `@BrowserCallable` in `ContestEndpoint.java`
 
-**Frontend Tasks:**
-6. Create ContestsCard component
-7. Implement scoring logic (score high when contest is active, medium when starting soon)
-8. Add card factory to dashboard
-9. Display active contests with "ending soon" visual alerts
+**Frontend Tasks:** 6. Create ContestsCard component 7. Implement scoring logic (score high when contest is active, medium when starting soon) 8. Add card factory to dashboard 9. Display active contests with "ending soon" visual alerts
 
 **Data Source Options:**
+
 - WA7BNM iCal: `https://www.contestcalendar.com/calendar.ics` (personal use)
 - Curated JSON file with major contests (fallback)
 - Community-maintained contest list
 
 **Key Models:**
+
 ```java
 public record Contest(
     String name,
@@ -490,7 +505,8 @@ public record Contest(
 ```
 
 **Acceptance Criteria:**
-- Contests card appears in bento grid sorted by score
+
+- Contests card appears in activity grid sorted by score
 - Shows active contests with high score, upcoming with medium score
 - Visual alert for "ending soon" contests
 - Lists upcoming contests in next 7 days
@@ -498,9 +514,11 @@ public record Contest(
 ---
 
 ### Phase 5: Real-time HF Activity (PSKReporter MQTT)
+
 **Goal:** Add real-time band activity tracking (backend + frontend card)
 
 **Backend Tasks:**
+
 1. Create spots module structure
 2. Implement PSKReporter MQTT client using Eclipse Paho
 3. Aggregate spots by band in sliding time windows
@@ -508,14 +526,10 @@ public record Contest(
 5. Create BandActivity model with `isFavorable()` and `getScore()` methods
 6. Add Hilla endpoint: `@BrowserCallable` in `BandActivityEndpoint.java`
 
-**Frontend Tasks:**
-7. Create BandActivityCard component
-8. Implement scoring logic (high score for band openings, medium for active bands)
-9. Add card factory to dashboard
-10. Display per-band activity levels with visual hotness indicators
-11. Use WebSocket for live spot updates (pushes to existing WebSocket infrastructure)
+**Frontend Tasks:** 7. Create BandActivityCard component 8. Implement scoring logic (high score for band openings, medium for active bands) 9. Add card factory to dashboard 10. Display per-band activity levels with visual hotness indicators 11. Use WebSocket for live spot updates (pushes to existing WebSocket infrastructure)
 
 **Dependencies:**
+
 ```xml
 <dependency>
     <groupId>org.eclipse.paho</groupId>
@@ -525,6 +539,7 @@ public record Contest(
 ```
 
 **MQTT Subscription:**
+
 ```java
 // Subscribe to all FT8 spots
 client.subscribe("pskr/filter/v2/+/FT8/#", 0);
@@ -543,6 +558,7 @@ client.subscribe("pskr/filter/v2/+/FT8/#", 0);
 ```
 
 **Key Models:**
+
 ```java
 public record BandActivity(
     FrequencyBand band,
@@ -556,6 +572,7 @@ public record BandActivity(
 ```
 
 **Acceptance Criteria:**
+
 - Real-time spot rate per band displayed
 - Visual indicator when band is unusually active
 - WebSocket pushes updates to dashboard
@@ -564,28 +581,28 @@ public record BandActivity(
 ---
 
 ### Phase 6: Meteor Scatter Module
+
 **Goal:** Add meteor shower tracking for MS propagation opportunities (backend + frontend card)
 
 **Backend Tasks:**
+
 1. Create `meteors/` module structure following established patterns
 2. Implement meteor shower data client (IMO data or curated JSON)
 3. Create `MeteorShower` record implementing `Event` interface
 4. Calculate current activity level based on peak date and ZHR (Zenithal Hourly Rate)
 5. Add `MeteorEndpoint` with `@BrowserCallable`
 
-**Frontend Tasks:**
-6. Create `MeteorShowerCard` component
-7. Implement scoring logic (high score during peak, medium before/after)
-8. Add card factory to dashboard
-9. Display current shower activity level and peak timing
+**Frontend Tasks:** 6. Create `MeteorShowerCard` component 7. Implement scoring logic (high score during peak, medium before/after) 8. Add card factory to dashboard 9. Display current shower activity level and peak timing
 
 **Key Meteor Showers:**
+
 - Quadrantids (Jan 3-4): ZHR 110
 - Perseids (Aug 12-13): ZHR 100
 - Geminids (Dec 13-14): ZHR 150
 - Leonids (Nov 17-18): ZHR 15
 
 **Key Models:**
+
 ```java
 public record MeteorShower(
     String name,
@@ -601,7 +618,8 @@ public record MeteorShower(
 ```
 
 **Acceptance Criteria:**
-- Meteor shower card appears in bento grid sorted by score
+
+- Meteor shower card appears in activity grid sorted by score
 - Shows active showers with high score during peak
 - Shows upcoming showers (next 7 days) with medium score
 - Displays ZHR and time to/from peak
@@ -610,9 +628,11 @@ public record MeteorShower(
 ---
 
 ### Phase 7: Satellite Tracking Module
+
 **Goal:** Add satellite pass tracking (backend + frontend card)
 
 **Backend Tasks:**
+
 1. Create satellites module structure
 2. Implement N2YO API client for pass predictions
 3. Implement Celestrak client for TLE data
@@ -621,14 +641,10 @@ public record MeteorShower(
 6. Create SatellitePass model with `isFavorable()` and `getScore()` methods
 7. Add Hilla endpoint: `@BrowserCallable` in `SatelliteEndpoint.java`
 
-**Frontend Tasks:**
-8. Create SatellitesCard component
-9. Implement scoring logic (high score for passes happening soon with good elevation)
-10. Add card factory to dashboard
-11. Add geolocation support (browser API or manual grid square entry)
-12. Display next 3 passes with countdown timers
+**Frontend Tasks:** 8. Create SatellitesCard component 9. Implement scoring logic (high score for passes happening soon with good elevation) 10. Add card factory to dashboard 11. Add geolocation support (browser API or manual grid square entry) 12. Display next 3 passes with countdown timers
 
 **Dependencies:**
+
 ```xml
 <dependency>
     <groupId>com.github.davidmoten</groupId>
@@ -638,6 +654,7 @@ public record MeteorShower(
 ```
 
 **Key Models:**
+
 ```java
 public record SatellitePass(
     String satelliteName,
@@ -655,7 +672,8 @@ public record SatellitePass(
 ```
 
 **Acceptance Criteria:**
-- Satellites card appears in bento grid sorted by score
+
+- Satellites card appears in activity grid sorted by score
 - Shows passes for user's location (default or specified via geolocation or manual entry)
 - Only shows passes with >20° max elevation (actually workable)
 - Displays time until next pass, uplink/downlink frequencies with countdown
@@ -667,9 +685,11 @@ public record SatellitePass(
 ---
 
 ### Phase 8: Spring AI Integration
+
 **Goal:** Add conversational AI assistant for natural language queries
 
 **Tasks:**
+
 1. Add Spring AI dependencies (OpenAI or Ollama)
 2. Create tool definitions for each module
 3. Implement HamRadioAssistant with tool-calling
@@ -677,6 +697,7 @@ public record SatellitePass(
 5. Optional: Voice input/output
 
 **Dependencies:**
+
 ```xml
 <dependency>
     <groupId>org.springframework.ai</groupId>
@@ -690,12 +711,13 @@ public record SatellitePass(
 ```
 
 **Tool Definitions:**
+
 ```java
 @Component
 public class PropagationTools {
-    
+
     private final PropagationService propagationService;
-    
+
     @Tool(description = "Get current solar indices and band conditions for HF propagation")
     public PropagationSummary getCurrentPropagation() {
         return new PropagationSummary(
@@ -703,7 +725,7 @@ public class PropagationTools {
             propagationService.getBandConditions()
         );
     }
-    
+
     @Tool(description = "Check if a specific HF band is currently open for long-distance propagation")
     public BandCondition checkBand(@ToolParam(description = "Band to check, e.g., '20m', '40m', '15m'") String band) {
         return propagationService.getBandCondition(FrequencyBand.fromString(band));
@@ -712,7 +734,7 @@ public class PropagationTools {
 
 @Component
 public class SatelliteTools {
-    
+
     @Tool(description = "Get upcoming amateur satellite passes for a location")
     public List<SatellitePass> getUpcomingPasses(
         @ToolParam(description = "Latitude in decimal degrees") double lat,
@@ -725,6 +747,7 @@ public class SatelliteTools {
 ```
 
 **Example Interactions:**
+
 - "What should I do on the radio right now?"
 - "Is 15 meters open to Europe?"
 - "When's the next satellite pass for my location?"
@@ -732,6 +755,7 @@ public class SatelliteTools {
 - "What contests are happening this weekend?"
 
 **Acceptance Criteria:**
+
 - Chat interface answers ham radio questions
 - AI calls appropriate tools based on query
 - Responses include real-time data from modules
@@ -742,20 +766,24 @@ public class SatelliteTools {
 ## Testing Strategy
 
 ### Unit Tests
+
 - Test each client in isolation with WireMock
 - Test data parsing/transformation logic
 - Test caching behavior
 
 ### Integration Tests
+
 - Test module interfaces with real (mocked) dependencies
 - Test WebSocket connections
 - Test circuit breaker behavior
 
 ### Contract Tests
+
 - Document external API contracts
 - Alert on upstream API changes
 
 ### Load Tests
+
 - Verify dashboard handles 100+ concurrent users
 - Verify MQTT client handles high spot volume
 
@@ -764,6 +792,7 @@ public class SatelliteTools {
 ## Deployment Considerations
 
 ### Local Development
+
 ```bash
 ./gradlew bootRun
 # or with Docker
@@ -771,12 +800,15 @@ docker-compose up
 ```
 
 ### Production (Single Container)
+
 - Deploy as single Spring Boot JAR
 - Use external Redis for shared caching (optional)
 - Configure appropriate JVM memory
 
 ### Future Microservices Split
+
 When scale demands:
+
 1. Extract high-traffic modules (spots) first
 2. Add message queue (Kafka/RabbitMQ) between services
 3. Deploy modules as separate containers
@@ -825,6 +857,7 @@ When implementing this project, proceed phase by phase:
 6. **Document API contracts** — note rate limits and auth requirements
 
 For each external API integration:
+
 - Verify the endpoint is still active (APIs change)
 - Implement circuit breaker from the start
 - Cache aggressively with appropriate TTLs

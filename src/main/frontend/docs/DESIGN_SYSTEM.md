@@ -215,28 +215,32 @@ Pre-defined utility classes for band condition ratings:
 
 ## Activity Grid System
 
-The activity grid is a layout system where cards are arranged by "hotness" - how favorable conditions are for each activity at the moment.
+The activity grid uses `@masonry-grid/react` to arrange cards by "hotness" - how favorable conditions are for each activity at the moment. Cards are sorted by priority and flow into a responsive masonry layout.
 
 ### Grid Configuration
 
 ```css
---activity-columns-desktop: 4; /* 4 columns on desktop */
---activity-columns-tablet: 2; /* 2 columns on tablet */
---activity-columns-mobile: 1; /* 1 column on mobile */
 --activity-gap: calc(var(--spacing-unit) * 3); /* 24px gap */
---activity-card-min-height: 200px;
+--activity-card-min-height: 160px;
 ```
+
+Responsive column counts are handled by `useResponsiveFrameWidth()` hook:
+
+- Mobile (≤768px): 1 column
+- Tablet (≤1024px): 2 columns
+- Desktop: 4 columns
+- Wide (≥1400px): 6 columns
 
 ### Card Sizes
 
-Cards can span multiple grid cells:
+Cards use Frame aspect ratios (handled by `@masonry-grid/react`):
 
-| Size               | Grid Span          | Use Case                       |
-| ------------------ | ------------------ | ------------------------------ |
-| **standard** (1x1) | 1 column × 1 row   | Single metrics, utilities      |
-| **wide** (2x1)     | 2 columns × 1 row  | Charts, tables                 |
-| **tall** (1x2)     | 1 column × 2 rows  | Lists, activity feeds          |
-| **hero** (2x2)     | 2 columns × 2 rows | Primary KPIs, featured metrics |
+| Size               | Aspect Ratio        | Use Case                       |
+| ------------------ | ------------------- | ------------------------------ |
+| **standard** (1x1) | width: 1, height: 1 | Single metrics, utilities      |
+| **wide** (2x1)     | width: 2, height: 1 | Charts, tables                 |
+| **tall** (1x2)     | width: 1, height: 2 | Lists, activity feeds          |
+| **hero** (2x2)     | width: 2, height: 2 | Primary KPIs, featured metrics |
 
 ### Hotness Levels
 

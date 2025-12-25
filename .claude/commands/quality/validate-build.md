@@ -46,7 +46,7 @@ Execute these steps IN ORDER. Use the Bash tool to run each command and report a
 This runs all frontend tests including:
 
 - Unit tests (priority calculation algorithm)
-- Component tests (BentoCard, BentoGrid)
+- Component tests (ActivityCard, ActivityGrid)
 - Accessibility tests (WCAG 2.1 AA compliance)
 - Integration tests
 
@@ -207,7 +207,7 @@ After executing ALL validation steps, provide this structured summary using ACTU
 ```
 ## NextSkip Build Validation Report
 
-📊 Git Status: 1 modified (BentoCard.tsx)
+📊 Git Status: 1 modified (ActivityCard.tsx)
 🎨 Frontend Tests: SUCCESS (all passing, ~900ms)
 🧹 Frontend Linting: SUCCESS (0 errors, 0 warnings)
 🔨 Backend Build: SUCCESS (~12s)
