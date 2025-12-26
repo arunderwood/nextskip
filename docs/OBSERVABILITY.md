@@ -42,10 +42,24 @@ Omit `VITE_FARO_COLLECTOR_URL` to disable (local dev).
 `VITE_TRACE_CORS_URLS` configures which API requests receive `traceparent` headers for frontend-backend trace linking.
 
 Examples:
+
 - Production: `nextskip\.io`
 - Multiple environments: `nextskip\.io,staging\.nextskip\.com`
 
 Note: Use `\\.` for literal dots (parsed as regex patterns).
+
+### Production Build
+
+Frontend env vars must be available at **Vite build time** (not runtime). Configure in `.env.production`:
+
+```
+VITE_FARO_COLLECTOR_URL=https://faro-collector-{region}.grafana.net/collect/{app-key}
+VITE_TRACE_CORS_URLS=nextskip\.io
+```
+
+The Dockerfile copies this file during the build stage so Vite can inline the values.
+
+> **TODO:** This is a workaround for Render not passing environment variables to Docker builds. Ideally, these values would come from Render's build-time env vars rather than being committed to the repo. Investigate Render's Docker build arg support or alternative deployment platforms.
 
 ### Local Development
 

@@ -17,7 +17,7 @@ COPY build.gradle settings.gradle ./
 # Copy source code
 COPY src/ src/
 COPY package.json package-lock.json ./
-COPY tsconfig.json vite.config.ts types.d.ts ./
+COPY tsconfig.json vite.config.ts types.d.ts .env.production ./
 COPY config/ config/
 
 # Build the application (includes frontend via vaadinBuildFrontend)
