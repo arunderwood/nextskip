@@ -156,11 +156,9 @@ npm run format
 #### Pre-Commit Validation
 
 ```bash
-npm run validate       # Quick: format, typecheck, lint, unit tests (~6s)
-npm run validate:full  # Full: includes E2E tests (~25s)
+npm run validate       # Quick: format, lint, unit tests (~3s)
+npm run validate:full  # Full: includes E2E tests (~20s)
 ```
-
-**Note**: `typecheck` requires generated types to exist. Run `./gradlew bootRun` or `./gradlew build` at least once first.
 
 ## Architecture Guidelines
 
