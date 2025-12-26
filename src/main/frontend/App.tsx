@@ -1,17 +1,20 @@
 import React from 'react';
-import { Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import { FaroRoutes } from '@grafana/faro-react';
 import DashboardView from './views/DashboardView';
 import './styles/App.css';
+
+// Use FaroRoutes only when Faro is initialized (collector URL configured)
+const AppRoutes = import.meta.env.VITE_FARO_COLLECTOR_URL ? FaroRoutes : Routes;
 
 function App() {
   return (
     <div className="app">
       <main className="app-main">
-        <FaroRoutes>
+        <AppRoutes>
           <Route path="/" element={<DashboardView />} />
           <Route path="*" element={<Navigate to="/" replace />} />
-        </FaroRoutes>
+        </AppRoutes>
       </main>
 
       <footer className="app-footer">
