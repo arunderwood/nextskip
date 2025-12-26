@@ -31,7 +31,7 @@ public class MeteorServiceImpl implements MeteorService {
     }
 
     @Override
-    @Cacheable(value = "meteorShowers", unless = "#result.isEmpty()")
+    @Cacheable(value = "meteorShowers", unless = "#result == null")
     public List<MeteorShower> getMeteorShowers() {
         LOG.debug("Fetching meteor showers");
         List<MeteorShower> showers = dataLoader.getShowers(DEFAULT_LOOKAHEAD_DAYS);
