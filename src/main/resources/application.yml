@@ -8,6 +8,11 @@ spring:
   application:
     name: nextskip
 
+# Data Refresh Scheduler Configuration
+nextskip:
+  refresh:
+    eager-load: true  # Warm all caches on application startup
+
 # Resilience4j Circuit Breaker Configuration
 resilience4j:
   circuitbreaker:

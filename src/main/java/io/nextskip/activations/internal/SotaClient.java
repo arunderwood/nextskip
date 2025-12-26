@@ -7,6 +7,7 @@ import io.nextskip.activations.model.Activation;
 import io.nextskip.activations.model.ActivationType;
 import io.nextskip.activations.model.Summit;
 import io.nextskip.common.client.ExternalDataClient;
+import io.nextskip.common.client.RefreshableDataSource;
 import io.nextskip.common.util.ParsingUtils;
 import io.nextskip.propagation.internal.ExternalApiException;
 import org.slf4j.Logger;
@@ -41,11 +42,12 @@ import java.util.List;
  */
 @Component
 @SuppressWarnings("PMD.AvoidCatchingGenericException") // Intentional: wrap unknown exceptions in ExternalApiException
-public class SotaClient implements ExternalDataClient<List<Activation>> {
+public class SotaClient implements ExternalDataClient<List<Activation>>, RefreshableDataSource {
 
     private static final Logger LOG = LoggerFactory.getLogger(SotaClient.class);
 
     private static final String SOURCE_NAME = "SOTA";
+    private static final Duration REFRESH_INTERVAL = Duration.ofMinutes(2);
     private static final String SOTA_URL = "https://api2.sota.org.uk/api/spots/50";
     private static final Duration REQUEST_TIMEOUT = Duration.ofSeconds(10);
     private static final Duration RECENCY_THRESHOLD = Duration.ofMinutes(45);
@@ -70,6 +72,16 @@ public class SotaClient implements ExternalDataClient<List<Activation>> {
     @Override
     public String getSourceName() {
         return SOURCE_NAME + " API";
+    }
+
+    @Override
+    public void refresh() {
+        fetch();
+    }
+
+    @Override
+    public Duration getRefreshInterval() {
+        return REFRESH_INTERVAL;
     }
 
     /**

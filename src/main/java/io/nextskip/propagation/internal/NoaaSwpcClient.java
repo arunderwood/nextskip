@@ -2,6 +2,7 @@ package io.nextskip.propagation.internal;
 
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
+import io.nextskip.common.client.RefreshableDataSource;
 import io.nextskip.propagation.model.SolarIndices;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,11 +35,12 @@ import java.util.List;
  */
 @Component
 @SuppressWarnings("PMD.AvoidCatchingGenericException") // Intentional: wrap unknown exceptions in ExternalApiException
-public class NoaaSwpcClient {
+public class NoaaSwpcClient implements RefreshableDataSource {
 
     private static final Logger LOG = LoggerFactory.getLogger(NoaaSwpcClient.class);
 
     private static final String SOURCE_NAME = "NOAA";
+    private static final Duration REFRESH_INTERVAL = Duration.ofMinutes(5);
     private static final String NOAA_URL =
             "https://services.swpc.noaa.gov/json/solar-cycle/observed-solar-cycle-indices.json";
 
@@ -59,6 +61,21 @@ public class NoaaSwpcClient {
                         .maxInMemorySize(1024 * 1024)) // 1MB limit
                 .build();
         this.cacheManager = cacheManager;
+    }
+
+    @Override
+    public String getSourceName() {
+        return SOURCE_NAME;
+    }
+
+    @Override
+    public void refresh() {
+        fetchSolarIndices();
+    }
+
+    @Override
+    public Duration getRefreshInterval() {
+        return REFRESH_INTERVAL;
     }
 
     /**
