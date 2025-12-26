@@ -21,16 +21,17 @@ export function AboutSection() {
 
       <div className="help-section__content">
         <p>
-          <strong>NextSkip</strong> is a real-time HF propagation dashboard designed for amateur radio operators. It
-          aggregates data from multiple trusted sources to help you make the most of current band conditions.
+          <strong>NextSkip</strong> shows you what&apos;s happening across ham radio right now&mdash;propagation
+          conditions, portable activations, contests, and more&mdash;so you can decide where to spend your time on the
+          air.
         </p>
 
         <h4>Why &ldquo;NextSkip&rdquo;?</h4>
         <p>
-          In amateur radio, &ldquo;skip&rdquo; refers to radio waves that bounce off the ionosphere, allowing
-          long-distance communication that would otherwise be impossible. NextSkip helps you find your next great skip
-          opening&mdash;whether that&apos;s working DX on 10 meters or catching a POTA activation on the other side of
-          the country.
+          In ham radio, &ldquo;skip&rdquo; means radio waves bouncing off the ionosphere for long-distance contacts. But
+          many hams also &ldquo;skip&rdquo; between activities&mdash;chasing DX one day, hunting POTA the next, jumping
+          into a contest on the weekend. NextSkip surfaces the best opportunities so you can find your next skip,
+          whatever that means for you.
         </p>
 
         <h4>Understanding the Dashboard</h4>
@@ -56,8 +57,8 @@ export function AboutSection() {
 
         <h4>Data Sources</h4>
         <p>
-          NextSkip aggregates data from NOAA Space Weather Prediction Center, HamQSL, POTA, and other trusted sources.
-          Data refreshes every 5 minutes to keep you up to date without overwhelming the source servers.
+          NextSkip aggregates data from trusted amateur radio sources including NOAA, HamQSL, POTA, and more. Data
+          refreshes automatically to keep you current.
         </p>
 
         <h4>Open Source</h4>

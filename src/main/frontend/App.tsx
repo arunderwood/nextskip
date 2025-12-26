@@ -15,8 +15,8 @@ function App() {
       </main>
 
       <footer className="app-footer">
-        <p>Data sources: NOAA Space Weather Prediction Center, HamQSL.com</p>
-        <p className="footer-note">Conditions update every 5-30 minutes • For reference only</p>
+        <p>Aggregating data from trusted amateur radio sources</p>
+        <p className="footer-note">Data refreshes automatically • For reference only</p>
       </footer>
     </div>
   );
