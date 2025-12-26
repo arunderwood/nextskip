@@ -7,6 +7,10 @@ import { test, expect } from '@playwright/test';
  */
 test.describe('Dashboard', () => {
   test.beforeEach(async ({ page }) => {
+    // Set visited flag before navigation to prevent first-visit help modal from blocking tests
+    await page.addInitScript(() => {
+      localStorage.setItem('nextskip-visited', 'true');
+    });
     await page.goto('/');
     await page.waitForLoadState('networkidle');
     // Wait for Vaadin to fully initialize by checking for the outlet div to have content
@@ -92,5 +96,26 @@ test.describe('Dashboard', () => {
     // Verify dark theme is still applied
     const theme = await page.evaluate(() => document.documentElement.getAttribute('data-theme'));
     expect(theme).toBe('dark');
+  });
+
+  test('help modal opens on first visit', async ({ page, context }) => {
+    // Create a new page without the visited flag set
+    const freshPage = await context.newPage();
+    await freshPage.goto('/');
+    await freshPage.waitForLoadState('networkidle');
+    await freshPage.waitForSelector('#outlet > *', { timeout: 10000 });
+
+    // Help modal should be visible on first visit
+    const helpModal = freshPage.locator('.help-modal');
+    await expect(helpModal).toBeVisible({ timeout: 5000 });
+
+    // Close the modal
+    const closeButton = freshPage.locator('.help-modal__close');
+    await closeButton.click();
+
+    // Modal should be hidden after closing
+    await expect(helpModal).not.toBeVisible();
+
+    await freshPage.close();
   });
 });

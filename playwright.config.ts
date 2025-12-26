@@ -9,6 +9,8 @@ const isCI = !!process.env.CI;
 export default defineConfig({
   testDir: './src/test/e2e',
   outputDir: './build/playwright-reports/tests',
+  /* Global timeout: 5 minutes max per test */
+  timeout: 5 * 60 * 1000,
   /* Run tests in files in parallel */
   fullyParallel: true,
   /* Fail the build on CI if you accidentally left test.only in the source code */
