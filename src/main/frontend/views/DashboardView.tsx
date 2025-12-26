@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useMemo, Suspense } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { Radio, AlertTriangle } from 'lucide-react';
 import {
   PropagationEndpoint,

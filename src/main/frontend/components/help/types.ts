@@ -68,7 +68,7 @@ export interface HelpModalProps {
   /**
    * Callback when modal requests close (Escape key, backdrop click, close button).
    */
-  onClose: () => void;
+  onClose(): void;
 }
 
 /**
@@ -78,7 +78,7 @@ export interface HelpButtonProps {
   /**
    * Callback when button is clicked.
    */
-  onClick: () => void;
+  onClick(): void;
 }
 
 /**
@@ -98,7 +98,7 @@ export interface HelpNavigationProps {
   /**
    * Callback when a navigation item is clicked.
    */
-  onNavigate: (sectionId: HelpSectionId) => void;
+  onNavigate(sectionId: HelpSectionId): void;
 }
 
 /**
@@ -133,5 +133,5 @@ export interface ScrollspyState {
   /**
    * Function to scroll to a specific section.
    */
-  scrollToSection: (sectionId: HelpSectionId) => void;
+  scrollToSection(sectionId: HelpSectionId): void;
 }

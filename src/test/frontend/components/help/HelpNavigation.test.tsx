@@ -6,7 +6,7 @@ import React from 'react';
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { HelpNavigation } from 'Frontend/components/help/HelpNavigation';
-import type { HelpDefinition, HelpSectionId } from 'Frontend/components/help/types';
+import type { HelpDefinition } from 'Frontend/components/help/types';
 
 describe('HelpNavigation', () => {
   const mockSections: HelpDefinition[] = [

@@ -41,9 +41,7 @@ global.ResizeObserver = class ResizeObserver {
 global.IntersectionObserver = class IntersectionObserver {
   readonly root: Element | null = null;
   readonly rootMargin: string = '';
-  readonly thresholds: ReadonlyArray<number> = [];
-
-  constructor(_callback: IntersectionObserverCallback, _options?: IntersectionObserverInit) {}
+  readonly thresholds: readonly number[] = [];
 
   /* eslint-disable @typescript-eslint/class-methods-use-this */
   observe() {}

@@ -20,9 +20,9 @@ export function HelpNavigation({ sections, activeSectionId, onNavigate }: HelpNa
 
   return (
     <nav className="help-navigation" aria-label="Help sections">
-      <ul className="help-navigation__list" role="tablist">
+      <div className="help-navigation__list" role="tablist">
         {allSections.map((section) => (
-          <li key={section.id} role="presentation">
+          <div key={section.id} role="presentation">
             <button
               type="button"
               role="tab"
@@ -40,9 +40,9 @@ export function HelpNavigation({ sections, activeSectionId, onNavigate }: HelpNa
               ) : null}
               <span className="help-navigation__label">{section.title}</span>
             </button>
-          </li>
+          </div>
         ))}
-      </ul>
+      </div>
     </nav>
   );
 }

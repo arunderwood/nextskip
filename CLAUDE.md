@@ -153,6 +153,13 @@ npm run format
 - JSX accessibility (jsx-a11y)
 - Performance rules for React
 
+#### Pre-Commit Validation
+
+```bash
+npm run validate       # Quick: format, lint, unit tests (~3s)
+npm run validate:full  # Full: includes E2E tests (~20s)
+```
+
 ## Architecture Guidelines
 
 ### Modular Monolith Design

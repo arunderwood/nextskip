@@ -71,6 +71,8 @@ export function HelpModal({ isOpen, onClose }: HelpModalProps) {
   );
 
   return (
+    // Native <dialog> handles keyboard events (Escape to close) - backdrop click is mouse convenience
+    // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-noninteractive-element-interactions
     <dialog ref={dialogRef} className="help-modal" onClick={handleBackdropClick} aria-labelledby="help-modal-title">
       <div className="help-modal__container">
         <header className="help-modal__header">
