@@ -43,10 +43,6 @@ global.IntersectionObserver = class IntersectionObserver {
   readonly rootMargin: string = '';
   readonly thresholds: readonly number[] = [];
 
-  // Empty constructor required for IntersectionObserver mock interface
-  // eslint-disable-next-line @typescript-eslint/no-useless-constructor
-  constructor(_callback: IntersectionObserverCallback, _options?: IntersectionObserverInit) {}
-
   /* eslint-disable @typescript-eslint/class-methods-use-this */
   observe() {}
   unobserve() {}
