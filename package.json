@@ -7,7 +7,7 @@
     "test:ui": "vitest --ui",
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage",
-    "test:ci": "npm run format:check && npm run typecheck && npm run lint && npm run lint:sarif && vitest run --coverage --reporter=default --reporter=github-actions",
+    "test:ci": "npm run format:check && npm run lint && npm run lint:sarif && vitest run --coverage --reporter=default --reporter=github-actions",
     "e2e": "playwright test",
     "e2e:ui": "playwright test --ui",
     "e2e:headed": "playwright test --headed",

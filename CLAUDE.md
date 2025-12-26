@@ -160,6 +160,8 @@ npm run validate       # Quick: format, typecheck, lint, unit tests (~6s)
 npm run validate:full  # Full: includes E2E tests (~25s)
 ```
 
+**Note**: `typecheck` requires generated types to exist. Run `./gradlew bootRun` or `./gradlew build` at least once first.
+
 ## Architecture Guidelines
 
 ### Modular Monolith Design
