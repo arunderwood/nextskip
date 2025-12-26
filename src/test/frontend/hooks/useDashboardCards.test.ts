@@ -380,7 +380,7 @@ describe('useDashboardCards', () => {
       expect(result.current[0].id).toBe('solar-indices');
     });
 
-    it('should have correct id, type, size=wide', () => {
+    it('should have correct id, type, size=tall', () => {
       const dashboardData: DashboardData = {
         propagation: createMockPropagationResponse({
           solarIndices: undefined,
@@ -393,7 +393,7 @@ describe('useDashboardCards', () => {
       expect(result.current[0]).toMatchObject({
         id: 'band-conditions',
         type: 'band-conditions',
-        size: 'hero',
+        size: 'tall',
       });
     });
 
