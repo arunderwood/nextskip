@@ -42,7 +42,7 @@ tasks.named('jar') {
 // The vaadinBuildFrontend task writes to build/resources/main/ AFTER processResources,
 // so we need to explicitly include these files in the bootJar
 tasks.named('bootJar') {
-    dependsOn 'vaadinBuildFrontend'
+    dependsOn 'vaadinBuildFrontend', 'downloadOtelAgent'
 
     // Explicitly copy Vaadin production files into the JAR
     into('BOOT-INF/classes') {
@@ -123,6 +123,27 @@ dependencies {
     // Java 25 compatibility - override Mockito and ByteBuddy
     testImplementation libs.mockito.core
     testImplementation libs.byte.buddy
+}
+
+// OpenTelemetry agent configuration
+def otelAgentVersion = libs.versions.grafana.otel.agent.get()
+def otelAgentDir = layout.buildDirectory.dir("otel-agent")
+def otelAgentJar = otelAgentDir.map { it.file("grafana-opentelemetry-java.jar") }
+
+tasks.register('downloadOtelAgent') {
+    description = 'Downloads the Grafana OpenTelemetry Java agent'
+    group = 'observability'
+
+    outputs.file(otelAgentJar)
+
+    doLast {
+        def agentUrl = "https://github.com/grafana/grafana-opentelemetry-java/releases/download/v${otelAgentVersion}/grafana-opentelemetry-java.jar"
+        def destFile = otelAgentJar.get().asFile
+        destFile.parentFile.mkdirs()
+
+        ant.get(src: agentUrl, dest: destFile, skipexisting: false)
+        println "Downloaded Grafana OTEL agent v${otelAgentVersion} to ${destFile}"
+    }
 }
 
 tasks.named('test') {
