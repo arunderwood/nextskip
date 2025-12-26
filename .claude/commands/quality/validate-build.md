@@ -39,47 +39,26 @@ Execute these steps IN ORDER. Use the Bash tool to run each command and report a
 - Untracked files (if any)
 - Working tree state (clean/dirty)
 
-### Step 2: Frontend Tests
+### Step 2: Frontend Validation
 
-**Execute**: `npm run test:run`
+**Execute**: `npm run validate`
 
-This runs all frontend tests including:
+This runs all frontend checks:
 
-- Unit tests (priority calculation algorithm)
-- Component tests (ActivityCard, ActivityGrid)
-- Accessibility tests (WCAG 2.1 AA compliance)
-- Integration tests
-
-**Report**:
-
-- Test result (PASS or FAIL)
-- Test count (X passing)
-- Test duration (in seconds or milliseconds)
-- Any test failures with error messages
-
-**Expected**: All tests passing in ~1-2 seconds
-
-### Step 3: Frontend Linting
-
-**Execute**: `npm run lint && npm run format:check`
-
-This validates frontend code quality:
-
-- ESLint checks (TypeScript, React, JSX accessibility)
-- Prettier formatting verification
+- Prettier format verification
+- ESLint code quality (TypeScript, React, JSX accessibility)
+- Vitest unit tests (priority algorithm, components, accessibility)
 
 **Report**:
 
-- Lint result (PASS or FAIL)
-- Number of errors and warnings (if any)
-- Format check result (PASS or FAIL)
-- List of files with issues (if any)
+- Overall result (PASS or FAIL)
+- Any specific failures from format, lint, or tests
 
-**Expected**: 0 errors, 0 warnings, all files formatted
+**Expected**: All checks passing in ~2-3 seconds
 
 **To Fix Failures**: Run `npm run lint:fix && npm run format` to auto-fix most issues
 
-### Step 4: Gradle Clean Build
+### Step 3: Gradle Clean Build
 
 **Execute**: `time ./gradlew clean build`
 
@@ -104,7 +83,7 @@ This runs the full build including:
 
 **Expected**: BUILD SUCCESSFUL in 10-15 seconds
 
-### Step 5: Verify Build Artifacts
+### Step 4: Verify Build Artifacts
 
 **Execute**: `ls -lh build/libs/*.jar`
 
@@ -114,21 +93,21 @@ This runs the full build including:
 - JAR file size
 - Existence of test reports at `build/reports/tests/test/`
 
-### Step 6: Runtime Validation (Required)
+### Step 5: Runtime Validation (Required)
 
 **⚠️ CRITICAL**: Starting the application is REQUIRED, not optional. Runtime exceptions (dependency injection issues, configuration errors, bean initialization failures) will NOT be caught by tests alone.
 
-**Step 6a: Clear Port 8080**
+**Step 5a: Clear Port 8080**
 
 **Execute**: `lsof -ti :8080 | xargs kill -9`
 
 (This will silently succeed even if no process is running)
 
-**Step 6b: Start Application in Background**
+**Step 5b: Start Application in Background**
 
 **Execute**: `./gradlew bootRun > /tmp/bootrun.log 2>&1 &`
 
-**Step 6c: Wait and Check Logs**
+**Step 5c: Wait and Check Logs**
 
 **Execute**: `sleep 15 && tail -100 /tmp/bootrun.log`
 
@@ -142,7 +121,7 @@ This runs the full build including:
 - TypeScript errors (should be 0)
 - Application URL confirmation
 
-**Step 6d: Stop Application**
+**Step 5d: Stop Application**
 
 **Execute**: `lsof -ti :8080 | xargs kill -9`
 
@@ -153,7 +132,7 @@ This runs the full build including:
 - TypeScript: 0 errors
 - "Started NextSkipApplication" message in logs
 
-### Step 7: E2E Tests (Playwright)
+### Step 6: E2E Tests (Playwright)
 
 **⚠️ OPTIONAL**: E2E tests are optional for pre-commit validation but recommended before creating pull requests.
 
@@ -185,8 +164,7 @@ After executing ALL validation steps, provide this structured summary using ACTU
 ## NextSkip Build Validation Report
 
 📊 Git Status: [Clean / X modified, Y untracked files]
-🎨 Frontend Tests: [SUCCESS/FAILURE] ([actual count] passing, [actual duration])
-🧹 Frontend Linting: [SUCCESS/FAILURE] ([errors] errors, [warnings] warnings)
+🎨 Frontend Validation: [SUCCESS/FAILURE] (format, lint, tests passing, [actual duration])
 🔨 Backend Build: [SUCCESS/FAILURE] ([actual duration]s)
 ✅ Backend Tests: [actual count]/91 passing ([test duration]s)
 📋 Quality Violations:
@@ -208,8 +186,7 @@ After executing ALL validation steps, provide this structured summary using ACTU
 ## NextSkip Build Validation Report
 
 📊 Git Status: 1 modified (ActivityCard.tsx)
-🎨 Frontend Tests: SUCCESS (all passing, ~900ms)
-🧹 Frontend Linting: SUCCESS (0 errors, 0 warnings)
+🎨 Frontend Validation: SUCCESS (format, lint, tests passing, ~2s)
 🔨 Backend Build: SUCCESS (~12s)
 ✅ Backend Tests: all passing (~7s)
 📋 Quality Violations:
@@ -304,7 +281,7 @@ lsof -ti :8080 | xargs kill -9
 
 ## Success Criteria
 
-- ✅ Frontend tests complete with all tests passing
+- ✅ Frontend validation passes (format, lint, tests)
 - ✅ Backend build completes with SUCCESS status
 - ✅ All backend tests pass
 - ✅ JAR artifact is generated (~80MB)
