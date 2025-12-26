@@ -15,3 +15,13 @@ declare module 'csstype' {
     [index: `--${string}`]: any;
   }
 }
+
+// Vite environment variables
+interface ImportMetaEnv {
+  readonly VITE_FARO_COLLECTOR_URL?: string;
+  readonly VITE_APP_VERSION?: string;
+}
+
+interface ImportMeta {
+  readonly env: ImportMetaEnv;
+}
