@@ -2,6 +2,8 @@ package io.nextskip.activations.internal;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
+import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
+import io.github.resilience4j.retry.RetryRegistry;
 import io.nextskip.activations.model.Activation;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -46,9 +48,14 @@ class CacheIntegrationTest {
     static class WireMockClientConfig {
         @Bean
         @Primary
-        PotaClient wireMockPotaClient(WebClient.Builder webClientBuilder, CacheManager cacheManager) {
+        PotaClient wireMockPotaClient(
+                WebClient.Builder webClientBuilder,
+                CacheManager cacheManager,
+                CircuitBreakerRegistry circuitBreakerRegistry,
+                RetryRegistry retryRegistry) {
             // Access to protected constructor is available because this is in the same package
-            return new PotaClient(webClientBuilder, cacheManager, wireMockServer.baseUrl());
+            return new PotaClient(webClientBuilder, cacheManager,
+                    circuitBreakerRegistry, retryRegistry, wireMockServer.baseUrl());
         }
     }
 

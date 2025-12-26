@@ -1,9 +1,10 @@
-package io.nextskip.propagation.internal;
+package io.nextskip.common.client;
 
 /**
  * Exception thrown when an external API call fails.
  *
- * This can represent network errors, HTTP errors, or other API communication issues.
+ * <p>This can represent network errors, HTTP errors, or other API communication issues.
+ * Used by all external data clients across NextSkip modules.
  */
 public class ExternalApiException extends RuntimeException {
 

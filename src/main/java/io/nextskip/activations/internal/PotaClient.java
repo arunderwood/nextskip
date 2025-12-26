@@ -1,23 +1,16 @@
 package io.nextskip.activations.internal;
 
-import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
-import io.github.resilience4j.retry.annotation.Retry;
+import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
+import io.github.resilience4j.retry.RetryRegistry;
 import io.nextskip.activations.internal.dto.PotaSpotDto;
 import io.nextskip.activations.model.Activation;
 import io.nextskip.activations.model.ActivationType;
 import io.nextskip.activations.model.Park;
-import io.nextskip.common.client.ExternalDataClient;
-import io.nextskip.common.client.RefreshableDataSource;
+import io.nextskip.common.client.AbstractExternalDataClient;
 import io.nextskip.common.util.ParsingUtils;
-import io.nextskip.propagation.internal.ExternalApiException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.cache.CacheManager;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.web.reactive.function.client.WebClientRequestException;
-import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -28,50 +21,62 @@ import java.util.List;
  *
  * <p>Fetches current POTA activations from https://api.pota.app/spot/activator
  *
- * <p>Features:
+ * <p>Extends {@link AbstractExternalDataClient} to inherit:
  * <ul>
  *   <li>Circuit breaker to prevent cascading failures</li>
  *   <li>Retry logic for transient failures</li>
- *   <li>60-second cache TTL for real-time data</li>
- *   <li>Fallback to cached data on failures</li>
+ *   <li>Cache fallback on failures</li>
+ *   <li>Freshness tracking for UI display</li>
  * </ul>
  */
 @Component
-@SuppressWarnings("PMD.AvoidCatchingGenericException") // Intentional: wrap unknown exceptions in ExternalApiException
-public class PotaClient implements ExternalDataClient<List<Activation>>, RefreshableDataSource {
+public class PotaClient extends AbstractExternalDataClient<List<Activation>> {
 
-    private static final Logger LOG = LoggerFactory.getLogger(PotaClient.class);
-
-    private static final String SOURCE_NAME = "POTA";
+    private static final String CLIENT_NAME = "pota";
+    private static final String SOURCE_NAME = "POTA API";
+    private static final String CACHE_NAME = "potaActivations";
+    private static final String CACHE_KEY = "current";
     private static final Duration REFRESH_INTERVAL = Duration.ofMinutes(2);
     private static final String POTA_URL = "https://api.pota.app/spot/activator";
-    private static final Duration REQUEST_TIMEOUT = Duration.ofSeconds(10);
-
-    private final WebClient webClient;
-    private final CacheManager cacheManager;
 
     @org.springframework.beans.factory.annotation.Autowired
-    public PotaClient(WebClient.Builder webClientBuilder, CacheManager cacheManager) {
-        this(webClientBuilder, cacheManager, POTA_URL);
+    public PotaClient(
+            WebClient.Builder webClientBuilder,
+            CacheManager cacheManager,
+            CircuitBreakerRegistry circuitBreakerRegistry,
+            RetryRegistry retryRegistry) {
+        this(webClientBuilder, cacheManager, circuitBreakerRegistry, retryRegistry, POTA_URL);
     }
 
-    protected PotaClient(WebClient.Builder webClientBuilder, CacheManager cacheManager, String baseUrl) {
-        this.webClient = webClientBuilder
-                .baseUrl(baseUrl)
-                .codecs(configurer -> configurer.defaultCodecs()
-                        .maxInMemorySize(2 * 1024 * 1024)) // 2MB limit for spot lists
-                .build();
-        this.cacheManager = cacheManager;
+    protected PotaClient(
+            WebClient.Builder webClientBuilder,
+            CacheManager cacheManager,
+            CircuitBreakerRegistry circuitBreakerRegistry,
+            RetryRegistry retryRegistry,
+            String baseUrl) {
+        super(webClientBuilder, cacheManager, circuitBreakerRegistry, retryRegistry, baseUrl);
+    }
+
+    // ========== AbstractExternalDataClient implementation ==========
+
+    @Override
+    protected String getClientName() {
+        return CLIENT_NAME;
     }
 
     @Override
     public String getSourceName() {
-        return SOURCE_NAME + " API";
+        return SOURCE_NAME;
     }
 
     @Override
-    public void refresh() {
-        fetch();
+    protected String getCacheName() {
+        return CACHE_NAME;
+    }
+
+    @Override
+    protected String getCacheKey() {
+        return CACHE_KEY;
     }
 
     @Override
@@ -79,83 +84,47 @@ public class PotaClient implements ExternalDataClient<List<Activation>>, Refresh
         return REFRESH_INTERVAL;
     }
 
-    /**
-     * Fetch current POTA activations.
-     *
-     * @return List of active POTA spots, or empty list if unavailable
-     * @throws ExternalApiException if the API call fails
-     */
     @Override
-    @CircuitBreaker(name = "pota", fallbackMethod = "getCachedActivations")
-    @Retry(name = "pota")
-    @Cacheable(value = "potaActivations", key = "'current'", unless = "#result == null")
-    public List<Activation> fetch() {
-        LOG.debug("Fetching POTA activations from API");
-
-        try {
-            List<PotaSpotDto> spots = webClient.get()
-                    .retrieve()
-                    .bodyToFlux(PotaSpotDto.class)
-                    .timeout(REQUEST_TIMEOUT)
-                    .collectList()
-                    .block();
-
-            if (spots == null) {
-                LOG.warn("No data received from POTA API");
-                return List.of();
-            }
-
-            List<Activation> activations = spots.stream()
-                    .map(this::toActivation)
-                    .filter(a -> a != null)
-                    .toList();
-
-            LOG.info("Successfully fetched {} POTA activations", activations.size());
-            return activations;
-
-        } catch (WebClientResponseException e) {
-            LOG.error("HTTP error from POTA API: {} {}", e.getStatusCode(), e.getStatusText());
-            throw new ExternalApiException(SOURCE_NAME,
-                    "HTTP " + e.getStatusCode() + " from POTA API: " + e.getStatusText(), e);
-
-        } catch (WebClientRequestException e) {
-            LOG.error("Network error connecting to POTA API", e);
-            throw new ExternalApiException(SOURCE_NAME,
-                    "Network error connecting to POTA API: " + e.getMessage(), e);
-
-        } catch (Exception e) {
-            LOG.error("Unexpected error fetching POTA activations", e);
-            throw new ExternalApiException(SOURCE_NAME,
-                    "Unexpected error fetching POTA data: " + e.getMessage(), e);
-        }
+    protected int getMaxResponseSize() {
+        return 2 * 1024 * 1024; // 2MB limit for spot lists
     }
 
-    /**
-     * Fallback method when POTA service is unavailable.
-     * Returns cached data if available, or empty list.
-     */
-    @SuppressWarnings("unused")
-    private List<Activation> getCachedActivations(Exception e) {
-        LOG.warn("Using cached POTA activations due to: {}", e.getMessage());
+    @Override
+    protected List<Activation> doFetch() {
+        getLog().debug("Fetching POTA activations from API");
 
-        var cache = cacheManager.getCache("potaActivations");
-        if (cache != null) {
-            var cached = cache.get("current");
-            if (cached != null && cached.get() instanceof List<?>) {
-                @SuppressWarnings("unchecked")
-                List<Activation> result = (List<Activation>) cached.get();
-                LOG.info("Returning {} cached POTA activations", result.size());
-                return result;
-            }
+        List<PotaSpotDto> spots = getWebClient().get()
+                .retrieve()
+                .bodyToFlux(PotaSpotDto.class)
+                .timeout(getRequestTimeout())
+                .collectList()
+                .block();
+
+        if (spots == null) {
+            getLog().warn("No data received from POTA API");
+            return List.of();
         }
 
-        LOG.warn("No cached POTA activations available, returning empty list");
+        List<Activation> activations = spots.stream()
+                .map(this::toActivation)
+                .filter(a -> a != null)
+                .toList();
+
+        getLog().info("Successfully fetched {} POTA activations", activations.size());
+        return activations;
+    }
+
+    @Override
+    protected List<Activation> getDefaultValue() {
         return List.of();
     }
+
+    // ========== POTA-specific parsing ==========
 
     /**
      * Convert POTA API DTO to domain Activation model.
      */
+    @SuppressWarnings("PMD.AvoidCatchingGenericException") // Intentional: return null for invalid spots
     private Activation toActivation(PotaSpotDto dto) {
         if (dto == null) {
             return null;
@@ -200,7 +169,7 @@ public class PotaClient implements ExternalDataClient<List<Activation>>, Refresh
             );
 
         } catch (Exception e) {
-            LOG.warn("Error converting POTA spot to activation: {}", e.getMessage());
+            getLog().warn("Error converting POTA spot to activation: {}", e.getMessage());
             return null;
         }
     }

@@ -1,5 +1,6 @@
 package io.nextskip.propagation.internal;
 
+import io.nextskip.common.client.InvalidApiResponseException;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;

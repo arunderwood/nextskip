@@ -33,7 +33,10 @@ class PropagationServiceImplTest {
     private NoaaSwpcClient noaaClient;
 
     @Mock
-    private HamQslClient hamQslClient;
+    private HamQslSolarClient hamQslSolarClient;
+
+    @Mock
+    private HamQslBandClient hamQslBandClient;
 
     private PropagationServiceImpl service;
 
@@ -43,7 +46,7 @@ class PropagationServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        service = new PropagationServiceImpl(noaaClient, hamQslClient);
+        service = new PropagationServiceImpl(noaaClient, hamQslSolarClient, hamQslBandClient);
 
         // Setup test data
         noaaData = new SolarIndices(
@@ -73,8 +76,8 @@ class PropagationServiceImplTest {
 
     @Test
     void shouldGet_CurrentSolarIndices_BothSourcesAvailable() {
-        when(noaaClient.fetchSolarIndices()).thenReturn(noaaData);
-        when(hamQslClient.fetchSolarIndices()).thenReturn(hamQslData);
+        when(noaaClient.fetch()).thenReturn(noaaData);
+        when(hamQslSolarClient.fetch()).thenReturn(hamQslData);
 
         SolarIndices result = service.getCurrentSolarIndices();
 
@@ -87,14 +90,14 @@ class PropagationServiceImplTest {
         assertEquals(8, result.aIndex());
         assertEquals("NOAA SWPC + HamQSL", result.source());
 
-        verify(noaaClient).fetchSolarIndices();
-        verify(hamQslClient).fetchSolarIndices();
+        verify(noaaClient).fetch();
+        verify(hamQslSolarClient).fetch();
     }
 
     @Test
     void shouldGet_CurrentSolarIndices_OnlyNoaaAvailable() {
-        when(noaaClient.fetchSolarIndices()).thenReturn(noaaData);
-        when(hamQslClient.fetchSolarIndices()).thenReturn(null);
+        when(noaaClient.fetch()).thenReturn(noaaData);
+        when(hamQslSolarClient.fetch()).thenReturn(null);
 
         SolarIndices result = service.getCurrentSolarIndices();
 
@@ -102,14 +105,14 @@ class PropagationServiceImplTest {
         assertEquals(noaaData, result);
         assertEquals("NOAA SWPC", result.source());
 
-        verify(noaaClient).fetchSolarIndices();
-        verify(hamQslClient).fetchSolarIndices();
+        verify(noaaClient).fetch();
+        verify(hamQslSolarClient).fetch();
     }
 
     @Test
     void shouldGet_CurrentSolarIndices_OnlyHamQslAvailable() {
-        when(noaaClient.fetchSolarIndices()).thenReturn(null);
-        when(hamQslClient.fetchSolarIndices()).thenReturn(hamQslData);
+        when(noaaClient.fetch()).thenReturn(null);
+        when(hamQslSolarClient.fetch()).thenReturn(hamQslData);
 
         SolarIndices result = service.getCurrentSolarIndices();
 
@@ -117,38 +120,38 @@ class PropagationServiceImplTest {
         assertEquals(hamQslData, result);
         assertEquals("HamQSL", result.source());
 
-        verify(noaaClient).fetchSolarIndices();
-        verify(hamQslClient).fetchSolarIndices();
+        verify(noaaClient).fetch();
+        verify(hamQslSolarClient).fetch();
     }
 
     @Test
     void shouldGet_CurrentSolarIndices_BothSourcesUnavailable() {
-        when(noaaClient.fetchSolarIndices()).thenReturn(null);
-        when(hamQslClient.fetchSolarIndices()).thenReturn(null);
+        when(noaaClient.fetch()).thenReturn(null);
+        when(hamQslSolarClient.fetch()).thenReturn(null);
 
         SolarIndices result = service.getCurrentSolarIndices();
 
         assertNull(result);
 
-        verify(noaaClient).fetchSolarIndices();
-        verify(hamQslClient).fetchSolarIndices();
+        verify(noaaClient).fetch();
+        verify(hamQslSolarClient).fetch();
     }
 
     @Test
     void shouldGet_CurrentSolarIndices_ExceptionHandling() {
-        when(noaaClient.fetchSolarIndices()).thenThrow(new RuntimeException("Network error"));
+        when(noaaClient.fetch()).thenThrow(new RuntimeException("Network error"));
 
         SolarIndices result = service.getCurrentSolarIndices();
 
         // Should handle exception gracefully and return null
         assertNull(result);
 
-        verify(noaaClient).fetchSolarIndices();
+        verify(noaaClient).fetch();
     }
 
     @Test
     void shouldGet_BandConditions_Success() {
-        when(hamQslClient.fetchBandConditions()).thenReturn(bandConditions);
+        when(hamQslBandClient.fetch()).thenReturn(bandConditions);
 
         List<BandCondition> result = service.getBandConditions();
 
@@ -156,24 +159,24 @@ class PropagationServiceImplTest {
         assertEquals(3, result.size());
         assertEquals(bandConditions, result);
 
-        verify(hamQslClient).fetchBandConditions();
+        verify(hamQslBandClient).fetch();
     }
 
     @Test
     void shouldGet_BandConditions_EmptyList() {
-        when(hamQslClient.fetchBandConditions()).thenReturn(List.of());
+        when(hamQslBandClient.fetch()).thenReturn(List.of());
 
         List<BandCondition> result = service.getBandConditions();
 
         assertNotNull(result);
         assertTrue(result.isEmpty());
 
-        verify(hamQslClient).fetchBandConditions();
+        verify(hamQslBandClient).fetch();
     }
 
     @Test
     void shouldGet_BandConditions_ExceptionHandling() {
-        when(hamQslClient.fetchBandConditions())
+        when(hamQslBandClient.fetch())
                 .thenThrow(new RuntimeException("Network error"));
 
         List<BandCondition> result = service.getBandConditions();
@@ -181,12 +184,12 @@ class PropagationServiceImplTest {
         assertNotNull(result);
         assertTrue(result.isEmpty());
 
-        verify(hamQslClient).fetchBandConditions();
+        verify(hamQslBandClient).fetch();
     }
 
     @Test
     void shouldGet_BandCondition_Found() {
-        when(hamQslClient.fetchBandConditions()).thenReturn(bandConditions);
+        when(hamQslBandClient.fetch()).thenReturn(bandConditions);
 
         BandCondition result = service.getBandCondition(FrequencyBand.BAND_20M);
 
@@ -194,18 +197,18 @@ class PropagationServiceImplTest {
         assertEquals(FrequencyBand.BAND_20M, result.band());
         assertEquals(BandConditionRating.GOOD, result.rating());
 
-        verify(hamQslClient).fetchBandConditions();
+        verify(hamQslBandClient).fetch();
     }
 
     @Test
     void shouldGet_BandCondition_NotFound() {
-        when(hamQslClient.fetchBandConditions()).thenReturn(bandConditions);
+        when(hamQslBandClient.fetch()).thenReturn(bandConditions);
 
         BandCondition result = service.getBandCondition(FrequencyBand.BAND_160M);
 
         assertNull(result);
 
-        verify(hamQslClient).fetchBandConditions();
+        verify(hamQslBandClient).fetch();
     }
 
     @Test
@@ -214,13 +217,13 @@ class PropagationServiceImplTest {
 
         assertNull(result);
 
-        verifyNoInteractions(hamQslClient);
+        verifyNoInteractions(hamQslBandClient);
     }
 
     @Test
     void shouldGet_SolarIndicesReactive() {
-        when(noaaClient.fetchSolarIndices()).thenReturn(noaaData);
-        when(hamQslClient.fetchSolarIndices()).thenReturn(hamQslData);
+        when(noaaClient.fetch()).thenReturn(noaaData);
+        when(hamQslSolarClient.fetch()).thenReturn(hamQslData);
 
         Mono<SolarIndices> resultMono = service.getSolarIndicesReactive();
 
@@ -232,13 +235,13 @@ class PropagationServiceImplTest {
                 })
                 .verifyComplete();
 
-        verify(noaaClient).fetchSolarIndices();
-        verify(hamQslClient).fetchSolarIndices();
+        verify(noaaClient).fetch();
+        verify(hamQslSolarClient).fetch();
     }
 
     @Test
     void shouldGet_BandConditionsReactive() {
-        when(hamQslClient.fetchBandConditions()).thenReturn(bandConditions);
+        when(hamQslBandClient.fetch()).thenReturn(bandConditions);
 
         Mono<List<BandCondition>> resultMono = service.getBandConditionsReactive();
 
@@ -249,6 +252,6 @@ class PropagationServiceImplTest {
                 })
                 .verifyComplete();
 
-        verify(hamQslClient).fetchBandConditions();
+        verify(hamQslBandClient).fetch();
     }
 }

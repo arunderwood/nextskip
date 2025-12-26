@@ -2,9 +2,10 @@ package io.nextskip.activations.internal;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
+import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
+import io.github.resilience4j.retry.RetryRegistry;
 import io.nextskip.activations.model.Activation;
 import io.nextskip.activations.model.ActivationType;
-import io.nextskip.propagation.internal.ExternalApiException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -22,6 +23,7 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * Unit tests for SotaClient using WireMock to simulate the SOTA API.
  */
+@SuppressWarnings("PMD.AvoidDuplicateLiterals") // Test JSON fixtures intentionally duplicated
 class SotaClientTest {
 
     private static final String SOTA_API_SOURCE = "SOTA API";
@@ -32,6 +34,8 @@ class SotaClientTest {
     private WireMockServer wireMockServer;
     private SotaClient sotaClient;
     private CacheManager cacheManager;
+    private CircuitBreakerRegistry circuitBreakerRegistry;
+    private RetryRegistry retryRegistry;
 
     @BeforeEach
     void setUp() {
@@ -39,12 +43,17 @@ class SotaClientTest {
         wireMockServer = new WireMockServer(WireMockConfiguration.wireMockConfig().dynamicPort());
         wireMockServer.start();
 
+        // Configure Resilience4j registries with default config
+        circuitBreakerRegistry = CircuitBreakerRegistry.ofDefaults();
+        retryRegistry = RetryRegistry.ofDefaults();
+
         // Configure client to use WireMock server
         String baseUrl = wireMockServer.baseUrl();
         WebClient.Builder webClientBuilder = WebClient.builder();
         cacheManager = new ConcurrentMapCacheManager("sotaActivations");
 
-        sotaClient = new SotaClient(webClientBuilder, cacheManager, baseUrl);
+        sotaClient = new StubSotaClient(webClientBuilder, cacheManager,
+                circuitBreakerRegistry, retryRegistry, baseUrl);
     }
 
     @AfterEach
@@ -57,7 +66,7 @@ class SotaClientTest {
         // Given: Mock SOTA API response with recent and old spots
         Instant now = Instant.now();
         Instant recentTime = now.minus(5, ChronoUnit.MINUTES);
-        Instant oldTime = now.minus(45, ChronoUnit.MINUTES);
+        Instant oldTime = now.minus(50, ChronoUnit.MINUTES);
 
         String jsonResponse = String.format("""
             [
@@ -94,7 +103,7 @@ class SotaClientTest {
         // When: Fetch activations
         List<Activation> result = sotaClient.fetch();
 
-        // Then: Should return only recent activation (within 30 minutes)
+        // Then: Should return only recent activation (within 45 minutes)
         assertNotNull(result);
         assertEquals(1, result.size(), "Should filter to only recent spots");
 
@@ -118,8 +127,8 @@ class SotaClientTest {
 
     @Test
     void shouldFilter_OutOldSpots() {
-        // Given: All spots are older than 30 minutes
-        Instant oldTime = Instant.now().minus(45, ChronoUnit.MINUTES);
+        // Given: All spots are older than 45 minutes
+        Instant oldTime = Instant.now().minus(50, ChronoUnit.MINUTES);
 
         String jsonResponse = String.format("""
             [
@@ -146,7 +155,7 @@ class SotaClientTest {
 
         // Then: Should return empty list
         assertNotNull(result);
-        assertTrue(result.isEmpty(), "Should filter out spots older than 30 minutes");
+        assertTrue(result.isEmpty(), "Should filter out spots older than 45 minutes");
     }
 
     @Test
@@ -239,32 +248,32 @@ class SotaClientTest {
     }
 
     @Test
-    void shouldHandle_HttpErrorWithException() {
+    void shouldHandle_HttpErrorWithFallback() {
         // Given: API returns 500 error
         wireMockServer.stubFor(get(urlEqualTo("/"))
                 .willReturn(aResponse()
                         .withStatus(500)
                         .withBody("Internal Server Error")));
 
-        // When/Then: Should throw ExternalApiException
-        ExternalApiException exception = assertThrows(ExternalApiException.class,
-                () -> sotaClient.fetch());
+        // When: Fetch activations
+        List<Activation> result = sotaClient.fetch();
 
-        assertTrue(exception.getMessage().contains("HTTP 500"));
-        assertTrue(exception.getMessage().contains(SOTA_API_SOURCE));
+        // Then: Should return empty list (fallback)
+        assertNotNull(result);
+        assertTrue(result.isEmpty());
     }
 
     @Test
-    void shouldHandle_NetworkErrorWithException() {
+    void shouldHandle_NetworkErrorWithFallback() {
         // Given: Simulate network error by stopping server
         wireMockServer.stop();
 
-        // When/Then: Should throw ExternalApiException
-        ExternalApiException exception = assertThrows(ExternalApiException.class,
-                () -> sotaClient.fetch());
+        // When: Fetch activations
+        List<Activation> result = sotaClient.fetch();
 
-        assertTrue(exception.getMessage().contains("Network error") ||
-                exception.getMessage().contains("Connection refused"));
+        // Then: Should return empty list (fallback)
+        assertNotNull(result);
+        assertTrue(result.isEmpty());
     }
 
     @Test
@@ -410,5 +419,68 @@ class SotaClientTest {
         assertNotNull(result);
         assertEquals(1, result.size());
         assertNull(result.get(0).frequency());
+    }
+
+    @Test
+    void shouldTrack_FreshnessAfterSuccessfulFetch() {
+        // Given: Valid response with recent spot
+        Instant recentTime = Instant.now().minus(5, ChronoUnit.MINUTES);
+
+        String jsonResponse = String.format("""
+            [
+              {
+                "id": 123456,
+                "activatorCallsign": "W1ABC/P",
+                "summitCode": "W7W/LC-001",
+                "summitDetails": "Mount Test",
+                "frequency": "14.250",
+                "mode": "SSB",
+                "timeStamp": "%s"
+              }
+            ]
+            """, recentTime.truncatedTo(ChronoUnit.SECONDS).toString().replace("Z", ""));
+
+        wireMockServer.stubFor(get(urlEqualTo("/"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader(HEADER_CONTENT_TYPE, CONTENT_TYPE_JSON)
+                        .withBody(jsonResponse)));
+
+        // When: Fetch activations
+        sotaClient.fetch();
+
+        // Then: Freshness tracking should be updated
+        assertNotNull(sotaClient.getLastSuccessfulRefresh());
+        assertFalse(sotaClient.isServingStaleData());
+        assertNotNull(sotaClient.getDataAge());
+    }
+
+    @Test
+    void shouldTrack_StaleDataAfterFailedFetch() {
+        // Given: API returns error
+        wireMockServer.stubFor(get(urlEqualTo("/"))
+                .willReturn(aResponse()
+                        .withStatus(500)
+                        .withBody("Internal Server Error")));
+
+        // When: Fetch activations
+        sotaClient.fetch();
+
+        // Then: Should be serving stale/default data
+        assertTrue(sotaClient.isServingStaleData());
+    }
+
+    /**
+     * Stub subclass that allows URL override for testing.
+     */
+    static class StubSotaClient extends SotaClient {
+        StubSotaClient(
+                WebClient.Builder webClientBuilder,
+                CacheManager cacheManager,
+                CircuitBreakerRegistry circuitBreakerRegistry,
+                RetryRegistry retryRegistry,
+                String testUrl) {
+            super(webClientBuilder, cacheManager, circuitBreakerRegistry, retryRegistry, testUrl);
+        }
     }
 }

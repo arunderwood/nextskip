@@ -1,9 +1,10 @@
-package io.nextskip.propagation.internal;
+package io.nextskip.common.client;
 
 /**
  * Exception thrown when an API response has invalid or unexpected data.
  *
- * This indicates a parsing error, validation failure, or API contract violation.
+ * <p>This indicates a parsing error, validation failure, or API contract violation.
+ * Used by all external data clients across NextSkip modules.
  */
 public class InvalidApiResponseException extends ExternalApiException {
 

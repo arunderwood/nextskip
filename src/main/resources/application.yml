@@ -28,7 +28,10 @@ resilience4j:
       noaa:
         baseConfig: default
         waitDurationInOpenState: 60s
-      hamqsl:
+      hamqsl-solar:
+        baseConfig: default
+        waitDurationInOpenState: 120s  # HamQSL less frequent updates
+      hamqsl-band:
         baseConfig: default
         waitDurationInOpenState: 120s  # HamQSL less frequent updates
       pota:
@@ -52,7 +55,10 @@ resilience4j:
     instances:
       noaa:
         baseConfig: default
-      hamqsl:
+      hamqsl-solar:
+        baseConfig: default
+        maxAttempts: 2  # HamQSL is slower, fewer retries
+      hamqsl-band:
         baseConfig: default
         maxAttempts: 2  # HamQSL is slower, fewer retries
       pota:
