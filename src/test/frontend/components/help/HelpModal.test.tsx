@@ -15,7 +15,8 @@ beforeEach(() => {
 
 describe('HelpModal', () => {
   it('should not be visible when isOpen is false', () => {
-    render(<HelpModal onClose={() => {}} />);
+    // eslint-disable-next-line react/jsx-boolean-value -- false values cannot be omitted
+    render(<HelpModal isOpen={false} onClose={() => {}} />);
 
     const dialog = screen.getByRole('dialog', { hidden: true });
     expect(dialog).not.toHaveAttribute('open');
