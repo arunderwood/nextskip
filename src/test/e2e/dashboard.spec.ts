@@ -103,9 +103,11 @@ test.describe('Dashboard', () => {
     expect(theme).toBe('dark');
   });
 
-  test('help modal opens on first visit', { timeout: 90_000 }, async ({ page, context }) => {
-    // Create a new page without the visited flag set
-    const freshPage = await context.newPage();
+  test('help modal opens on first visit', { timeout: 90_000 }, async ({ browser }) => {
+    // Create a fresh browser context without the visited flag in localStorage
+    const freshContext = await browser.newContext();
+    const freshPage = await freshContext.newPage();
+
     await freshPage.goto('/');
     await freshPage.waitForLoadState('networkidle');
     await freshPage.waitForSelector('#outlet > *', { timeout: 10000 });
@@ -121,6 +123,6 @@ test.describe('Dashboard', () => {
     // Modal should be hidden after closing
     await expect(helpModal).not.toBeVisible();
 
-    await freshPage.close();
+    await freshContext.close();
   });
 });
