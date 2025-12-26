@@ -21,17 +21,17 @@ export function AboutSection() {
 
       <div className="help-section__content">
         <p>
-          <strong>NextSkip</strong> shows you what&apos;s happening across ham radio right now&mdash;propagation
+          <strong>NextSkip</strong> shows you what&apos;s happening across amateur radio right now&mdash;propagation
           conditions, portable activations, contests, and more&mdash;so you can decide where to spend your time on the
           air.
         </p>
 
         <h4>Why &ldquo;NextSkip&rdquo;?</h4>
         <p>
-          In ham radio, &ldquo;skip&rdquo; means radio waves bouncing off the ionosphere for long-distance contacts. But
-          many hams also &ldquo;skip&rdquo; between activities&mdash;chasing DX one day, hunting POTA the next, jumping
-          into a contest on the weekend. NextSkip surfaces the best opportunities so you can find your next skip,
-          whatever that means for you.
+          In amateur radio, &ldquo;skip&rdquo; means radio waves bouncing off the ionosphere for long-distance contacts.
+          But many hams also &ldquo;skip&rdquo; between activities&mdash;chasing DX one day, hunting POTA the next,
+          jumping into a contest on the weekend. NextSkip surfaces the best opportunities so you can find your next
+          skip, whatever that means for you.
         </p>
 
         <h4>Understanding the Dashboard</h4>

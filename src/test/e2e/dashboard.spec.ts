@@ -21,7 +21,7 @@ test.describe('Dashboard', () => {
 
   test('header displays correctly', async ({ page }) => {
     await expect(page.locator('.dashboard-title')).toContainText('NextSkip');
-    await expect(page.locator('.dashboard-subtitle')).toContainText('Find your next skip');
+    await expect(page.locator('.dashboard-subtitle')).toContainText('Amateur Radio Activity Dashboard');
   });
 
   test('dashboard cards render after loading', async ({ page }) => {

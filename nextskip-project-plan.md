@@ -12,7 +12,7 @@
 
 - Learn Spring AI framework through practical application
 - Build a modular monolith that can decompose into microservices
-- Create genuinely useful tool for the ham radio community
+- Create genuinely useful tool for the amateur radio community
 
 ---
 
@@ -229,13 +229,13 @@ public void onSpotReceived(SpotReceivedEvent event) {
 
 ## Activity Prioritization Philosophy
 
-Not all ham radio activities are equally suited to NextSkip's aggregation model. Activities are prioritized for implementation based on:
+Not all amateur radio activities are equally suited to NextSkip's aggregation model. Activities are prioritized for implementation based on:
 
 ### Criteria
 
 1. **Machine Readability**: Does the feed provide structured, parseable data (JSON, XML, API)?
 2. **Geographic Independence**: Can the score be computed without user location?
-3. **Broad Applicability**: Does this activity appeal to a wide segment of the ham radio community?
+3. **Broad Applicability**: Does this activity appeal to a wide segment of the amateur radio community?
 4. **Data Freshness**: How often do conditions change? Real-time feeds score higher than static calendars.
 5. **Scoring Clarity**: Can we define clear "favorable" vs "unfavorable" conditions programmatically?
 
@@ -756,7 +756,7 @@ public class SatelliteTools {
 
 **Acceptance Criteria:**
 
-- Chat interface answers ham radio questions
+- Chat interface answers amateur radio questions
 - AI calls appropriate tools based on query
 - Responses include real-time data from modules
 - Works with either cloud (OpenAI) or local (Ollama) models
