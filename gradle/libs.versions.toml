@@ -4,6 +4,9 @@ vaadin = "25.0.2"
 spring-boot = "4.0.1"
 spring-dependency-management = "1.1.7"
 
+# Observability
+grafana-otel-agent = "2.22.0"
+
 # Quality & testing tools
 # NOTE: checkstyle, pmd, spotbugs-tool, and jacoco versions moved to direct literals in build.gradle
 # to enable Renovate detection. See: https://github.com/renovatebot/renovate/discussions/40147
