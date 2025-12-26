@@ -27,7 +27,7 @@ describe('HelpModal Accessibility', () => {
 
   it('should have no accessibility violations when open', async () => {
     registerHelp(mockHelp);
-    const { container } = render(<HelpModal isOpen={true} onClose={() => {}} />);
+    const { container } = render(<HelpModal isOpen onClose={() => {}} />);
 
     const results = await axe(container);
     expect(results).toHaveNoViolations();
@@ -35,7 +35,7 @@ describe('HelpModal Accessibility', () => {
 
   it('should have proper heading hierarchy', () => {
     registerHelp(mockHelp);
-    render(<HelpModal isOpen={true} onClose={() => {}} />);
+    render(<HelpModal isOpen onClose={() => {}} />);
 
     // Modal title should be h2
     const modalTitle = screen.getByRole('heading', { level: 2, name: /help & about/i });
@@ -47,7 +47,7 @@ describe('HelpModal Accessibility', () => {
   });
 
   it('should have accessible close button', () => {
-    render(<HelpModal isOpen={true} onClose={() => {}} />);
+    render(<HelpModal isOpen onClose={() => {}} />);
 
     const closeButton = screen.getByRole('button', { name: /close help/i });
     expect(closeButton).toBeInTheDocument();
@@ -55,7 +55,7 @@ describe('HelpModal Accessibility', () => {
   });
 
   it('should have proper dialog role and labeling', () => {
-    render(<HelpModal isOpen={true} onClose={() => {}} />);
+    render(<HelpModal isOpen onClose={() => {}} />);
 
     const dialog = screen.getByRole('dialog');
     expect(dialog).toHaveAttribute('aria-labelledby', 'help-modal-title');
@@ -63,7 +63,7 @@ describe('HelpModal Accessibility', () => {
 
   it('should have proper navigation with tablist role', () => {
     registerHelp(mockHelp);
-    render(<HelpModal isOpen={true} onClose={() => {}} />);
+    render(<HelpModal isOpen onClose={() => {}} />);
 
     const tablist = screen.getByRole('tablist');
     expect(tablist).toBeInTheDocument();
@@ -77,7 +77,7 @@ describe('HelpModal Accessibility', () => {
 
   it('should have accessible sections with aria-labelledby', () => {
     registerHelp(mockHelp);
-    render(<HelpModal isOpen={true} onClose={() => {}} />);
+    render(<HelpModal isOpen onClose={() => {}} />);
 
     // Check About section
     const aboutSection = document.getElementById('help-section-about');
@@ -89,7 +89,7 @@ describe('HelpModal Accessibility', () => {
   });
 
   it('close button icon should be hidden from screen readers', () => {
-    render(<HelpModal isOpen={true} onClose={() => {}} />);
+    render(<HelpModal isOpen onClose={() => {}} />);
 
     const closeButton = screen.getByRole('button', { name: /close help/i });
     const svg = closeButton.querySelector('svg');

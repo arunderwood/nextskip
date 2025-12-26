@@ -15,14 +15,14 @@ beforeEach(() => {
 
 describe('HelpModal', () => {
   it('should not be visible when isOpen is false', () => {
-    render(<HelpModal isOpen={false} onClose={() => {}} />);
+    render(<HelpModal onClose={() => {}} />);
 
     const dialog = screen.getByRole('dialog', { hidden: true });
     expect(dialog).not.toHaveAttribute('open');
   });
 
   it('should be visible when isOpen is true', () => {
-    render(<HelpModal isOpen={true} onClose={() => {}} />);
+    render(<HelpModal isOpen onClose={() => {}} />);
 
     const dialog = screen.getByRole('dialog');
     expect(dialog).toHaveAttribute('open');
@@ -30,7 +30,7 @@ describe('HelpModal', () => {
 
   it('should call onClose when close button is clicked', () => {
     const handleClose = vi.fn();
-    render(<HelpModal isOpen={true} onClose={handleClose} />);
+    render(<HelpModal isOpen onClose={handleClose} />);
 
     const closeButton = screen.getByRole('button', { name: /close help/i });
     fireEvent.click(closeButton);
@@ -39,20 +39,20 @@ describe('HelpModal', () => {
   });
 
   it('should have proper aria-labelledby', () => {
-    render(<HelpModal isOpen={true} onClose={() => {}} />);
+    render(<HelpModal isOpen onClose={() => {}} />);
 
     const dialog = screen.getByRole('dialog');
     expect(dialog).toHaveAttribute('aria-labelledby', 'help-modal-title');
   });
 
   it('should render the modal title', () => {
-    render(<HelpModal isOpen={true} onClose={() => {}} />);
+    render(<HelpModal isOpen onClose={() => {}} />);
 
     expect(screen.getByText('Help & About')).toBeInTheDocument();
   });
 
   it('should render the About section', () => {
-    render(<HelpModal isOpen={true} onClose={() => {}} />);
+    render(<HelpModal isOpen onClose={() => {}} />);
 
     expect(screen.getByText('About NextSkip')).toBeInTheDocument();
   });
@@ -66,20 +66,20 @@ describe('HelpModal', () => {
     };
     registerHelp(mockHelp);
 
-    render(<HelpModal isOpen={true} onClose={() => {}} />);
+    render(<HelpModal isOpen onClose={() => {}} />);
 
     expect(screen.getByTestId('solar-content')).toBeInTheDocument();
   });
 
   it('should render navigation tabs', () => {
-    render(<HelpModal isOpen={true} onClose={() => {}} />);
+    render(<HelpModal isOpen onClose={() => {}} />);
 
     expect(screen.getByRole('tablist')).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: /about/i })).toBeInTheDocument();
   });
 
   it('should have proper CSS classes', () => {
-    render(<HelpModal isOpen={true} onClose={() => {}} />);
+    render(<HelpModal isOpen onClose={() => {}} />);
 
     const dialog = screen.getByRole('dialog');
     expect(dialog).toHaveClass('help-modal');
@@ -87,7 +87,7 @@ describe('HelpModal', () => {
 
   it('should close when dialog backdrop is clicked', () => {
     const handleClose = vi.fn();
-    render(<HelpModal isOpen={true} onClose={handleClose} />);
+    render(<HelpModal isOpen onClose={handleClose} />);
 
     const dialog = screen.getByRole('dialog');
     // Simulate clicking on the dialog element itself (backdrop)
@@ -98,7 +98,7 @@ describe('HelpModal', () => {
 
   it('should not close when modal content is clicked', () => {
     const handleClose = vi.fn();
-    render(<HelpModal isOpen={true} onClose={handleClose} />);
+    render(<HelpModal isOpen onClose={handleClose} />);
 
     const container = screen.getByRole('dialog').querySelector('.help-modal__container');
     if (container) {
