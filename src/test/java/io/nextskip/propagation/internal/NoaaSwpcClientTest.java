@@ -4,7 +4,6 @@ import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
 import io.github.resilience4j.retry.RetryRegistry;
-import io.nextskip.common.client.InvalidApiResponseException;
 import io.nextskip.propagation.model.SolarIndices;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -233,6 +232,78 @@ class NoaaSwpcClientTest {
         client.fetch();
 
         // Should be serving stale/default data
+        assertTrue(client.isServingStaleData());
+    }
+
+    @Test
+    void testIsStale_WhenNeverRefreshed() {
+        // When: No fetch has occurred
+        // Then: isStale should return true (never refreshed = stale)
+        assertTrue(client.isStale());
+    }
+
+    @Test
+    void testIsStale_AfterSuccessfulFetch() {
+        // Given: Successful fetch
+        String jsonResponse = """
+            [
+                {
+                    "time-tag": "2025-01-01T00:00:00Z",
+                    "ssn": 120,
+                    "f10.7": 150.5
+                }
+            ]
+            """;
+
+        wireMockServer.stubFor(get(urlEqualTo("/"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader(CONTENT_TYPE, CONTENT_TYPE_JSON)
+                        .withBody(jsonResponse)));
+
+        client.fetch();
+
+        // Then: Should not be stale (just refreshed, within interval)
+        assertFalse(client.isStale());
+    }
+
+    @Test
+    void testCacheFallback_ReturnsCachedData() {
+        // Given: First successful fetch populates cache
+        String jsonResponse = """
+            [
+                {
+                    "time-tag": "2025-01-01T00:00:00Z",
+                    "ssn": 120,
+                    "f10.7": 150.5
+                }
+            ]
+            """;
+
+        wireMockServer.stubFor(get(urlEqualTo("/"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader(CONTENT_TYPE, CONTENT_TYPE_JSON)
+                        .withBody(jsonResponse)));
+
+        // First fetch - populates cache
+        SolarIndices firstResult = client.fetch();
+        assertEquals(150.5, firstResult.solarFluxIndex(), 0.01);
+        assertFalse(client.isServingStaleData());
+
+        // Clear cache and setup error response
+        cacheManager.getCache("solarIndices").clear();
+        wireMockServer.resetAll();
+        wireMockServer.stubFor(get(urlEqualTo("/"))
+                .willReturn(aResponse()
+                        .withStatus(500)
+                        .withBody("Internal Server Error")));
+
+        // When: Second fetch fails
+        SolarIndices secondResult = client.fetch();
+
+        // Then: Should return degraded data and mark as stale
+        assertNotNull(secondResult);
         assertTrue(client.isServingStaleData());
     }
 

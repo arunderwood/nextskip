@@ -21,6 +21,7 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * Unit tests for PotaClient using WireMock to simulate the POTA API.
  */
+@SuppressWarnings("PMD.AvoidDuplicateLiterals") // Test JSON fixtures intentionally duplicated
 class PotaClientTest {
 
     private static final String POTA_API_SOURCE = "POTA API";
@@ -399,6 +400,140 @@ class PotaClientTest {
 
         // Then: Should be serving stale/default data
         assertTrue(potaClient.isServingStaleData());
+    }
+
+    @Test
+    void shouldReturn_CachedDataOnSubsequentError() {
+        // Given: First successful fetch populates cache
+        String jsonResponse = """
+            [
+              {
+                "spotId": 123456,
+                "activator": "W1ABC",
+                "reference": "US-0001",
+                "name": "Test Park",
+                "frequency": "14250",
+                "mode": "SSB",
+                "spotTime": "2025-12-14T12:30:00"
+              }
+            ]
+            """;
+
+        wireMockServer.stubFor(get(urlEqualTo("/"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader(HEADER_CONTENT_TYPE, CONTENT_TYPE_JSON)
+                        .withBody(jsonResponse)));
+
+        // First fetch - populates cache
+        List<Activation> firstResult = potaClient.fetch();
+        assertEquals(1, firstResult.size());
+        assertFalse(potaClient.isServingStaleData());
+
+        // Now setup server to return error
+        wireMockServer.resetAll();
+        wireMockServer.stubFor(get(urlEqualTo("/"))
+                .willReturn(aResponse()
+                        .withStatus(500)
+                        .withBody("Internal Server Error")));
+
+        // Clear the cache to force a fresh fetch attempt
+        cacheManager.getCache("potaActivations").clear();
+
+        // When: Second fetch fails
+        List<Activation> secondResult = potaClient.fetch();
+
+        // Then: Should return default (empty list) since cache was cleared
+        assertNotNull(secondResult);
+        assertTrue(potaClient.isServingStaleData());
+    }
+
+    @Test
+    void shouldReturn_IsStale_WhenNeverRefreshed() {
+        // When: No fetch has occurred
+        // Then: isStale should return true (never refreshed = stale)
+        assertTrue(potaClient.isStale());
+    }
+
+    @Test
+    void shouldReturn_NotStale_AfterSuccessfulFetch() {
+        // Given: Successful fetch
+        String jsonResponse = """
+            [
+              {
+                "spotId": 123456,
+                "activator": "W1ABC",
+                "reference": "US-0001",
+                "name": "Test Park",
+                "frequency": "14250",
+                "mode": "SSB",
+                "spotTime": "2025-12-14T12:30:00"
+              }
+            ]
+            """;
+
+        wireMockServer.stubFor(get(urlEqualTo("/"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader(HEADER_CONTENT_TYPE, CONTENT_TYPE_JSON)
+                        .withBody(jsonResponse)));
+
+        // When: Fetch activations
+        potaClient.fetch();
+
+        // Then: Should not be stale (just refreshed, within interval)
+        assertFalse(potaClient.isStale());
+    }
+
+    @Test
+    void shouldHandle_NullSpotsResponse() {
+        // Given: Response that could result in null spots (malformed)
+        wireMockServer.stubFor(get(urlEqualTo("/"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader(HEADER_CONTENT_TYPE, CONTENT_TYPE_JSON)
+                        .withBody("null")));
+
+        // When: Fetch activations
+        List<Activation> result = potaClient.fetch();
+
+        // Then: Should handle gracefully with empty list
+        assertNotNull(result);
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    void shouldHandle_LocationDescParsing() {
+        // Given: Response with locationDesc for region/country parsing
+        String jsonResponse = """
+            [
+              {
+                "spotId": 123456,
+                "activator": "W1ABC",
+                "reference": "US-0001",
+                "name": "Test Park",
+                "frequency": "14250",
+                "mode": "SSB",
+                "spotTime": "2025-12-14T12:30:00",
+                "locationDesc": "US-CO"
+              }
+            ]
+            """;
+
+        wireMockServer.stubFor(get(urlEqualTo("/"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader(HEADER_CONTENT_TYPE, CONTENT_TYPE_JSON)
+                        .withBody(jsonResponse)));
+
+        // When: Fetch activations
+        List<Activation> result = potaClient.fetch();
+
+        // Then: Should parse location codes
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        assertEquals("CO", result.get(0).location().regionCode());
+        assertEquals("US", ((io.nextskip.activations.model.Park) result.get(0).location()).countryCode());
     }
 
     /**

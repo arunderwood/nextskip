@@ -192,6 +192,26 @@ class HamQslSolarClientTest {
     }
 
     @Test
+    void shouldReturn_IsStale_WhenNeverRefreshed() {
+        assertTrue(client.isStale());
+    }
+
+    @Test
+    void shouldReturn_NotStale_AfterSuccessfulFetch() {
+        String xmlResponse = createValidXmlResponse();
+
+        wireMockServer.stubFor(get(urlEqualTo("/"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader(HEADER_CONTENT_TYPE, CONTENT_TYPE_XML)
+                        .withBody(xmlResponse)));
+
+        client.fetch();
+
+        assertFalse(client.isStale());
+    }
+
+    @Test
     void shouldHandle_DoctypeDeclaration() {
         // HamQSL sometimes returns malformed DOCTYPE - should still parse
         String xmlResponse = """

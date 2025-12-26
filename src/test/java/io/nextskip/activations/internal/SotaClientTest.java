@@ -23,7 +23,10 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * Unit tests for SotaClient using WireMock to simulate the SOTA API.
  */
-@SuppressWarnings("PMD.AvoidDuplicateLiterals") // Test JSON fixtures intentionally duplicated
+@SuppressWarnings({
+    "PMD.AvoidDuplicateLiterals", // Test JSON fixtures intentionally duplicated
+    "PMD.TooManyMethods" // Comprehensive test suite
+})
 class SotaClientTest {
 
     private static final String SOTA_API_SOURCE = "SOTA API";
@@ -468,6 +471,128 @@ class SotaClientTest {
 
         // Then: Should be serving stale/default data
         assertTrue(sotaClient.isServingStaleData());
+    }
+
+    @Test
+    void shouldReturn_IsStale_WhenNeverRefreshed() {
+        // When: No fetch has occurred
+        // Then: isStale should return true (never refreshed = stale)
+        assertTrue(sotaClient.isStale());
+    }
+
+    @Test
+    void shouldReturn_NotStale_AfterSuccessfulFetch() {
+        // Given: Successful fetch with recent spot
+        Instant recentTime = Instant.now().minus(5, ChronoUnit.MINUTES);
+
+        String jsonResponse = String.format("""
+            [
+              {
+                "id": 123456,
+                "activatorCallsign": "W1ABC/P",
+                "summitCode": "W7W/LC-001",
+                "summitDetails": "Mount Test",
+                "frequency": "14.250",
+                "mode": "SSB",
+                "timeStamp": "%s"
+              }
+            ]
+            """, recentTime.truncatedTo(ChronoUnit.SECONDS).toString().replace("Z", ""));
+
+        wireMockServer.stubFor(get(urlEqualTo("/"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader(HEADER_CONTENT_TYPE, CONTENT_TYPE_JSON)
+                        .withBody(jsonResponse)));
+
+        // When: Fetch activations
+        sotaClient.fetch();
+
+        // Then: Should not be stale (just refreshed, within interval)
+        assertFalse(sotaClient.isStale());
+    }
+
+    @Test
+    void shouldHandle_NullSpotsResponse() {
+        // Given: Response that could result in null spots (malformed)
+        wireMockServer.stubFor(get(urlEqualTo("/"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader(HEADER_CONTENT_TYPE, CONTENT_TYPE_JSON)
+                        .withBody("null")));
+
+        // When: Fetch activations
+        List<Activation> result = sotaClient.fetch();
+
+        // Then: Should handle gracefully with empty list
+        assertNotNull(result);
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    void shouldHandle_NullTimestampInSpot() {
+        // Given: Spot with null timestamp
+        String jsonResponse = """
+            [
+              {
+                "id": 123456,
+                "activatorCallsign": "W1ABC/P",
+                "summitCode": "W7W/LC-001",
+                "summitDetails": "Mount Test",
+                "frequency": "14.250",
+                "mode": "SSB",
+                "timeStamp": null
+              }
+            ]
+            """;
+
+        wireMockServer.stubFor(get(urlEqualTo("/"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader(HEADER_CONTENT_TYPE, CONTENT_TYPE_JSON)
+                        .withBody(jsonResponse)));
+
+        // When: Fetch activations
+        List<Activation> result = sotaClient.fetch();
+
+        // Then: Should use current time as fallback and include in results
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        assertNotNull(result.get(0).spottedAt());
+    }
+
+    @Test
+    void shouldHandle_NullSpotIdGracefully() {
+        // Given: Spot with null ID
+        Instant recentTime = Instant.now().minus(5, ChronoUnit.MINUTES);
+
+        String jsonResponse = String.format("""
+            [
+              {
+                "id": null,
+                "activatorCallsign": "W1ABC/P",
+                "summitCode": "W7W/LC-001",
+                "summitDetails": "Mount Test",
+                "frequency": "14.250",
+                "mode": "SSB",
+                "timeStamp": "%s"
+              }
+            ]
+            """, recentTime.truncatedTo(ChronoUnit.SECONDS).toString().replace("Z", ""));
+
+        wireMockServer.stubFor(get(urlEqualTo("/"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader(HEADER_CONTENT_TYPE, CONTENT_TYPE_JSON)
+                        .withBody(jsonResponse)));
+
+        // When: Fetch activations
+        List<Activation> result = sotaClient.fetch();
+
+        // Then: Should handle null ID gracefully
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        assertNull(result.get(0).spotId());
     }
 
     /**

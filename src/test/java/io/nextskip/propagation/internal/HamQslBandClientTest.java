@@ -345,6 +345,26 @@ class HamQslBandClientTest {
         assertTrue(client.isServingStaleData());
     }
 
+    @Test
+    void shouldReturn_IsStale_WhenNeverRefreshed() {
+        assertTrue(client.isStale());
+    }
+
+    @Test
+    void shouldReturn_NotStale_AfterSuccessfulFetch() {
+        String xmlResponse = createValidXmlResponse();
+
+        wireMockServer.stubFor(get(urlEqualTo("/"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader(HEADER_CONTENT_TYPE, CONTENT_TYPE_XML)
+                        .withBody(xmlResponse)));
+
+        client.fetch();
+
+        assertFalse(client.isStale());
+    }
+
     private String createValidXmlResponse() {
         return """
             <?xml version="1.0" encoding="UTF-8"?>
