@@ -1,11 +1,10 @@
 package io.nextskip.contests.internal;
 
-import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
-import io.github.resilience4j.retry.annotation.Retry;
-import io.nextskip.common.client.ExternalDataClient;
-import io.nextskip.common.client.RefreshableDataSource;
+import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
+import io.github.resilience4j.retry.RetryRegistry;
+import io.nextskip.common.client.AbstractExternalDataClient;
+import io.nextskip.common.client.ExternalApiException;
 import io.nextskip.contests.internal.dto.ContestICalDto;
-import io.nextskip.propagation.internal.ExternalApiException;
 import net.fortuna.ical4j.data.CalendarBuilder;
 import net.fortuna.ical4j.model.Calendar;
 import net.fortuna.ical4j.model.Property;
@@ -14,13 +13,9 @@ import net.fortuna.ical4j.model.property.DtEnd;
 import net.fortuna.ical4j.model.property.DtStart;
 import net.fortuna.ical4j.model.property.Summary;
 import net.fortuna.ical4j.model.property.Url;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.cache.CacheManager;
-import org.springframework.cache.annotation.Cacheable;
+import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.web.reactive.function.client.WebClientRequestException;
-import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.io.StringReader;
 import java.time.Duration;
@@ -42,51 +37,72 @@ import java.util.Optional;
  *   <li>Details page URLs (URL property)</li>
  * </ul>
  *
- * <p>Features:
+ * <p>Extends {@link AbstractExternalDataClient} to inherit:
  * <ul>
  *   <li>Circuit breaker to prevent cascading failures</li>
  *   <li>Retry logic for transient failures</li>
- *   <li>30-minute cache TTL (contests don't change frequently)</li>
- *   <li>Fallback to cached data on failures</li>
+ *   <li>Cache fallback on failures</li>
+ *   <li>Freshness tracking for UI display</li>
  * </ul>
  */
-@org.springframework.stereotype.Component
-@SuppressWarnings("PMD.AvoidCatchingGenericException") // Intentional: wrap unknown exceptions in ExternalApiException
-public class ContestCalendarClient implements ExternalDataClient<List<ContestICalDto>>, RefreshableDataSource {
+@Component
+@SuppressWarnings("PMD.AvoidCatchingGenericException") // Intentional: wrap parsing exceptions
+public class ContestCalendarClient extends AbstractExternalDataClient<List<ContestICalDto>> {
 
-    private static final Logger LOG = LoggerFactory.getLogger(ContestCalendarClient.class);
-
-    private static final String SOURCE_NAME = "WA7BNM";
-    private static final Duration REFRESH_INTERVAL = Duration.ofHours(6);
+    private static final String CLIENT_NAME = "contests";
+    private static final String SOURCE_NAME = "WA7BNM Contest Calendar";
     private static final String CACHE_NAME = "contests";
-    private static final String CALENDAR_URL = "https://www.contestcalendar.com/weeklycontcustom.php";
-    private static final Duration REQUEST_TIMEOUT = Duration.ofSeconds(15);
+    private static final String CACHE_KEY = "upcoming";
 
-    private final WebClient webClient;
-    private final CacheManager cacheManager;
+    /**
+     * Refresh interval for data fetching.
+     *
+     * <p>Contest schedules are static and change infrequently. 6 hours is
+     * appropriate for catching schedule updates while minimizing load.
+     *
+     * @see <a href="https://www.contestcalendar.com/terms.php">WA7BNM Terms of Use</a>
+     */
+    private static final Duration REFRESH_INTERVAL = Duration.ofHours(6);
+    private static final String CALENDAR_URL = "https://www.contestcalendar.com/weeklycontcustom.php";
 
     @org.springframework.beans.factory.annotation.Autowired
-    public ContestCalendarClient(WebClient.Builder webClientBuilder, CacheManager cacheManager) {
-        this(webClientBuilder, cacheManager, CALENDAR_URL);
+    public ContestCalendarClient(
+            WebClient.Builder webClientBuilder,
+            CacheManager cacheManager,
+            CircuitBreakerRegistry circuitBreakerRegistry,
+            RetryRegistry retryRegistry) {
+        this(webClientBuilder, cacheManager, circuitBreakerRegistry, retryRegistry, CALENDAR_URL);
     }
 
-    protected ContestCalendarClient(WebClient.Builder webClientBuilder, CacheManager cacheManager, String baseUrl) {
-        this.webClient = webClientBuilder
-                .baseUrl(baseUrl)
-                .codecs(configurer -> configurer.defaultCodecs()
-                        .maxInMemorySize(1024 * 1024)) // 1MB limit
-                .build();
-        this.cacheManager = cacheManager;
+    protected ContestCalendarClient(
+            WebClient.Builder webClientBuilder,
+            CacheManager cacheManager,
+            CircuitBreakerRegistry circuitBreakerRegistry,
+            RetryRegistry retryRegistry,
+            String baseUrl) {
+        super(webClientBuilder, cacheManager, circuitBreakerRegistry, retryRegistry, baseUrl);
+    }
+
+    // ========== AbstractExternalDataClient implementation ==========
+
+    @Override
+    protected String getClientName() {
+        return CLIENT_NAME;
     }
 
     @Override
     public String getSourceName() {
-        return SOURCE_NAME + " Contest Calendar";
+        return SOURCE_NAME;
     }
 
     @Override
-    public void refresh() {
-        fetch();
+    protected String getCacheName() {
+        return CACHE_NAME;
+    }
+
+    @Override
+    protected String getCacheKey() {
+        return CACHE_KEY;
     }
 
     @Override
@@ -94,61 +110,40 @@ public class ContestCalendarClient implements ExternalDataClient<List<ContestICa
         return REFRESH_INTERVAL;
     }
 
-    /**
-     * Fetch upcoming contests from WA7BNM iCal feed.
-     *
-     * @return List of contest DTOs parsed from iCal, or empty list if unavailable
-     * @throws ExternalApiException if the API call fails
-     */
     @Override
-    @CircuitBreaker(name = CACHE_NAME, fallbackMethod = "getCachedContests")
-    @Retry(name = CACHE_NAME)
-    @Cacheable(value = CACHE_NAME, key = "'upcoming'", unless = "#result == null")
-    public List<ContestICalDto> fetch() {
-        LOG.debug("Fetching contests from WA7BNM iCal feed");
-
-        try {
-            // Fetch iCal data as string
-            String icalData = webClient.get()
-                    .retrieve()
-                    .bodyToMono(String.class)
-                    .timeout(REQUEST_TIMEOUT)
-                    .block();
-
-            if (icalData == null || icalData.isBlank()) {
-                LOG.warn("No data received from WA7BNM contest calendar");
-                throw new ExternalApiException(SOURCE_NAME, "Empty response from contest calendar");
-            }
-
-            // Parse iCal using ical4j
-            List<ContestICalDto> contests = parseICalData(icalData);
-
-            LOG.info("Successfully fetched {} contests from WA7BNM", contests.size());
-            return contests;
-
-        } catch (WebClientResponseException e) {
-            // HTTP error (4xx, 5xx)
-            LOG.error("HTTP error from WA7BNM: {} {}", e.getStatusCode(), e.getStatusText());
-            throw new ExternalApiException(SOURCE_NAME,
-                    "HTTP " + e.getStatusCode() + " from WA7BNM: " + e.getStatusText(), e);
-
-        } catch (WebClientRequestException e) {
-            // Network error
-            LOG.error("Network error connecting to WA7BNM", e);
-            throw new ExternalApiException(SOURCE_NAME,
-                    "Network error connecting to WA7BNM: " + e.getMessage(), e);
-
-        } catch (ExternalApiException e) {
-            // Already wrapped - just rethrow
-            throw e;
-
-        } catch (Exception e) {
-            // Unexpected error (including iCal parsing errors)
-            LOG.error("Unexpected error fetching contests from WA7BNM", e);
-            throw new ExternalApiException(SOURCE_NAME,
-                    "Unexpected error fetching contest data: " + e.getMessage(), e);
-        }
+    protected Duration getRequestTimeout() {
+        return Duration.ofSeconds(15); // Longer timeout for contest calendar
     }
+
+    @Override
+    protected List<ContestICalDto> doFetch() {
+        getLog().debug("Fetching contests from WA7BNM iCal feed");
+
+        // Fetch iCal data as string
+        String icalData = getWebClient().get()
+                .retrieve()
+                .bodyToMono(String.class)
+                .timeout(getRequestTimeout())
+                .block();
+
+        if (icalData == null || icalData.isBlank()) {
+            getLog().warn("No data received from WA7BNM contest calendar");
+            throw new ExternalApiException(CLIENT_NAME, "Empty response from contest calendar");
+        }
+
+        // Parse iCal using ical4j
+        List<ContestICalDto> contests = parseICalData(icalData);
+
+        getLog().info("Successfully fetched {} contests from WA7BNM", contests.size());
+        return contests;
+    }
+
+    @Override
+    protected List<ContestICalDto> getDefaultValue() {
+        return List.of();
+    }
+
+    // ========== iCal parsing ==========
 
     /**
      * Parse iCal data into contest DTOs.
@@ -173,13 +168,13 @@ public class ContestCalendarClient implements ExternalDataClient<List<ContestICa
                     contests.add(dto);
                 } catch (Exception e) {
                     // Log and skip malformed events rather than failing the entire fetch
-                    LOG.warn("Skipping malformed contest event: {}", e.getMessage());
+                    getLog().warn("Skipping malformed contest event: {}", e.getMessage());
                 }
             }
 
         } catch (Exception e) {
-            LOG.error("Failed to parse iCal data", e);
-            throw new ExternalApiException(SOURCE_NAME, "Failed to parse iCal data: " + e.getMessage(), e);
+            getLog().error("Failed to parse iCal data", e);
+            throw new ExternalApiException(CLIENT_NAME, "Failed to parse iCal data: " + e.getMessage(), e);
         }
 
         return contests;
@@ -193,7 +188,6 @@ public class ContestCalendarClient implements ExternalDataClient<List<ContestICa
      */
     private ContestICalDto parseEvent(VEvent event) {
         // Extract SUMMARY (contest name)
-        // Note: event.getProperty() returns Optional<Property> in ical4j 4.x
         String summary = event.getProperty(Property.SUMMARY)
                 .map(Summary.class::cast)
                 .map(Summary::getValue)
@@ -203,14 +197,14 @@ public class ContestCalendarClient implements ExternalDataClient<List<ContestICa
         Instant startTime = event.getProperty(Property.DTSTART)
                 .map(DtStart.class::cast)
                 .flatMap(dt -> Optional.ofNullable(dt.getDate()))
-                .map(temporal -> Instant.from(temporal))
+                .map(Instant::from)
                 .orElse(null);
 
         // Extract DTEND (end time)
         Instant endTime = event.getProperty(Property.DTEND)
                 .map(DtEnd.class::cast)
                 .flatMap(dt -> Optional.ofNullable(dt.getDate()))
-                .map(temporal -> Instant.from(temporal))
+                .map(Instant::from)
                 .orElse(null);
 
         // Extract URL (details page)
@@ -220,27 +214,5 @@ public class ContestCalendarClient implements ExternalDataClient<List<ContestICa
                 .orElse(null);
 
         return new ContestICalDto(summary, startTime, endTime, detailsUrl);
-    }
-
-    /**
-     * Fallback method when WA7BNM service is unavailable.
-     * Returns cached data if available.
-     */
-    @SuppressWarnings("unused")
-    private List<ContestICalDto> getCachedContests(Exception e) {
-        LOG.warn("Using cached contests due to: {}", e.getMessage());
-
-        var cache = cacheManager.getCache(CACHE_NAME);
-        if (cache != null) {
-            var cached = cache.get("upcoming", List.class);
-            if (cached != null && !cached.isEmpty()) {
-                LOG.info("Returning {} cached contests", cached.size());
-                return cached;
-            }
-        }
-
-        LOG.error("No cached contests available");
-        // Return empty list rather than null to avoid NPE
-        return List.of();
     }
 }

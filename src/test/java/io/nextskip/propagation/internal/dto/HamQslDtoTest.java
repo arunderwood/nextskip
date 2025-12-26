@@ -1,6 +1,6 @@
 package io.nextskip.propagation.internal.dto;
 
-import io.nextskip.propagation.internal.InvalidApiResponseException;
+import io.nextskip.common.client.InvalidApiResponseException;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;

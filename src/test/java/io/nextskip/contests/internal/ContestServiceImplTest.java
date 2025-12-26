@@ -2,7 +2,7 @@ package io.nextskip.contests.internal;
 
 import io.nextskip.contests.internal.dto.ContestICalDto;
 import io.nextskip.contests.model.Contest;
-import io.nextskip.propagation.internal.ExternalApiException;
+import io.nextskip.common.client.ExternalApiException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

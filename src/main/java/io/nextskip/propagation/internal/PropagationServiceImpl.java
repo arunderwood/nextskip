@@ -17,7 +17,8 @@ import java.util.List;
  *
  * Data sources:
  * - NOAA SWPC: Solar flux index, sunspot number
- * - HamQSL: K-index, A-index, band conditions
+ * - HamQSL Solar: K-index, A-index
+ * - HamQSL Band: Band conditions
  *
  * The service combines data from both sources to provide comprehensive
  * propagation information.
@@ -28,17 +29,22 @@ public class PropagationServiceImpl implements PropagationService {
     private static final Logger LOG = LoggerFactory.getLogger(PropagationServiceImpl.class);
 
     private final NoaaSwpcClient noaaClient;
-    private final HamQslClient hamQslClient;
+    private final HamQslSolarClient hamQslSolarClient;
+    private final HamQslBandClient hamQslBandClient;
 
-    public PropagationServiceImpl(NoaaSwpcClient noaaClient, HamQslClient hamQslClient) {
+    public PropagationServiceImpl(
+            NoaaSwpcClient noaaClient,
+            HamQslSolarClient hamQslSolarClient,
+            HamQslBandClient hamQslBandClient) {
         this.noaaClient = noaaClient;
-        this.hamQslClient = hamQslClient;
+        this.hamQslSolarClient = hamQslSolarClient;
+        this.hamQslBandClient = hamQslBandClient;
     }
 
     /**
      * Get current solar indices by merging data from NOAA SWPC and HamQSL.
      *
-     * <p>Primary error handling via clients' Resilience4j annotations.
+     * <p>Primary error handling via clients' circuit breakers.
      * Service-level fallback ensures dashboard remains functional.
      */
     @Override
@@ -46,8 +52,8 @@ public class PropagationServiceImpl implements PropagationService {
     public SolarIndices getCurrentSolarIndices() {
         try {
             // Fetch from both sources
-            SolarIndices noaaData = noaaClient.fetchSolarIndices();
-            SolarIndices hamQslData = hamQslClient.fetchSolarIndices();
+            SolarIndices noaaData = noaaClient.fetch();
+            SolarIndices hamQslData = hamQslSolarClient.fetch();
 
             // Merge data: prefer NOAA for SFI/sunspots, HamQSL for K/A index
             if (noaaData != null && hamQslData != null) {
@@ -78,14 +84,14 @@ public class PropagationServiceImpl implements PropagationService {
     /**
      * Get current band conditions from HamQSL.
      *
-     * <p>Primary error handling via HamQslClient's Resilience4j annotations.
+     * <p>Primary error handling via HamQslBandClient's circuit breaker.
      * Service-level fallback ensures dashboard remains functional.
      */
     @Override
     @SuppressWarnings("PMD.AvoidCatchingGenericException")
     public List<BandCondition> getBandConditions() {
         try {
-            List<BandCondition> conditions = hamQslClient.fetchBandConditions();
+            List<BandCondition> conditions = hamQslBandClient.fetch();
             LOG.debug("Retrieved {} band conditions", conditions.size());
             return conditions;
         } catch (RuntimeException e) {
