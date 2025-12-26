@@ -5,6 +5,16 @@
   "prHourlyLimit": 0,
   "recreateWhen": "always",
   "labels": ["dependencies"],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "Grafana OTEL Java agent from GitHub releases",
+      "managerFilePatterns": ["/gradle/libs\\.versions\\.toml$/"],
+      "matchStrings": ["grafana-otel-agent\\s*=\\s*\"(?<currentValue>[^\"]+)\""],
+      "depNameTemplate": "grafana/grafana-opentelemetry-java",
+      "datasourceTemplate": "github-releases"
+    }
+  ],
   "packageRules": [
     {
       "description": "Docker - disable all updates (manually managed)",
