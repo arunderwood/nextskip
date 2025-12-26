@@ -39,7 +39,17 @@ public class SotaClient extends AbstractExternalDataClient<List<Activation>> {
     private static final String SOURCE_NAME = "SOTA API";
     private static final String CACHE_NAME = "sotaActivations";
     private static final String CACHE_KEY = "current";
-    private static final Duration REFRESH_INTERVAL = Duration.ofMinutes(2);
+
+    /**
+     * Refresh interval for data fetching.
+     *
+     * <p>SOTA spots are real-time activation data. 1 minute refresh provides
+     * timely alerts for summit activations while being respectful of the API.
+     * No official rate limit documentation is available.
+     *
+     * @see <a href="https://www.sota.org.uk/Sota-Api/Resources">SOTA API Resources</a>
+     */
+    private static final Duration REFRESH_INTERVAL = Duration.ofMinutes(1);
     private static final String SOTA_URL = "https://api2.sota.org.uk/api/spots/50";
     private static final Duration RECENCY_THRESHOLD = Duration.ofMinutes(45);
 

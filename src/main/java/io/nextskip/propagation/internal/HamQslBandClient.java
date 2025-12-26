@@ -51,7 +51,15 @@ public class HamQslBandClient extends AbstractExternalDataClient<List<BandCondit
     private static final String SOURCE_NAME = "HamQSL";
     private static final String CACHE_NAME = "hamqslBand";
     private static final String CACHE_KEY = "conditions";
-    private static final Duration REFRESH_INTERVAL = Duration.ofMinutes(5);
+
+    /**
+     * Refresh interval for data fetching.
+     *
+     * <p>HamQSL data updates every 3 hours, with a minimum polling interval of 15 minutes.
+     *
+     * @see <a href="https://www.hamqsl.com/FAQ.html">HamQSL FAQ - Update Frequencies</a>
+     */
+    private static final Duration REFRESH_INTERVAL = Duration.ofMinutes(30);
     private static final String HAMQSL_URL = "https://www.hamqsl.com/solarxml.php";
 
     // Band condition time period (day vs night)

@@ -38,6 +38,15 @@ public class NoaaSwpcClient extends AbstractExternalDataClient<SolarIndices> {
     private static final String SOURCE_NAME = "NOAA";
     private static final String CACHE_NAME = "solarIndices";
     private static final String CACHE_KEY = "latest";
+
+    /**
+     * Refresh interval for data fetching.
+     *
+     * <p>NOAA SWPC does not publish specific rate limits for this endpoint.
+     * 5 minutes is reasonable for solar conditions monitoring.
+     *
+     * @see <a href="https://www.swpc.noaa.gov/content/data-access">NOAA SWPC Data Access</a>
+     */
     private static final Duration REFRESH_INTERVAL = Duration.ofMinutes(5);
     private static final String NOAA_URL =
             "https://services.swpc.noaa.gov/json/solar-cycle/observed-solar-cycle-indices.json";

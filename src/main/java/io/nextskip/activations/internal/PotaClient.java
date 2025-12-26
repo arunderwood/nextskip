@@ -36,7 +36,15 @@ public class PotaClient extends AbstractExternalDataClient<List<Activation>> {
     private static final String SOURCE_NAME = "POTA API";
     private static final String CACHE_NAME = "potaActivations";
     private static final String CACHE_KEY = "current";
-    private static final Duration REFRESH_INTERVAL = Duration.ofMinutes(2);
+
+    /**
+     * Refresh interval for data fetching.
+     *
+     * <p>POTA spots are real-time activation data. 1 minute refresh provides
+     * timely alerts for park activations while being respectful of the API.
+     * No official rate limit documentation is available.
+     */
+    private static final Duration REFRESH_INTERVAL = Duration.ofMinutes(1);
     private static final String POTA_URL = "https://api.pota.app/spot/activator";
 
     @org.springframework.beans.factory.annotation.Autowired

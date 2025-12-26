@@ -53,6 +53,15 @@ public class ContestCalendarClient extends AbstractExternalDataClient<List<Conte
     private static final String SOURCE_NAME = "WA7BNM Contest Calendar";
     private static final String CACHE_NAME = "contests";
     private static final String CACHE_KEY = "upcoming";
+
+    /**
+     * Refresh interval for data fetching.
+     *
+     * <p>Contest schedules are static and change infrequently. 6 hours is
+     * appropriate for catching schedule updates while minimizing load.
+     *
+     * @see <a href="https://www.contestcalendar.com/terms.php">WA7BNM Terms of Use</a>
+     */
     private static final Duration REFRESH_INTERVAL = Duration.ofHours(6);
     private static final String CALENDAR_URL = "https://www.contestcalendar.com/weeklycontcustom.php";
 
