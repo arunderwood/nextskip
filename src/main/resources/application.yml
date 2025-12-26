@@ -8,11 +8,6 @@ spring:
   application:
     name: nextskip
 
-  cache:
-    type: caffeine
-    caffeine:
-      spec: maximumSize=500,expireAfterWrite=10m
-
 # Resilience4j Circuit Breaker Configuration
 resilience4j:
   circuitbreaker:

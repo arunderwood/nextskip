@@ -15,7 +15,9 @@ import java.util.concurrent.TimeUnit;
  * Defines cache TTLs for different data sources:
  * - solarIndices: 5 minutes (NOAA data)
  * - bandConditions: 30 minutes (HamQSL data)
- * - activations: 60 seconds (POTA/SOTA real-time spots)
+ * - potaActivations: 2 minutes (POTA real-time spots)
+ * - sotaActivations: 2 minutes (SOTA real-time spots)
+ * - meteorShowers: 2 hours (meteor shower data)
  * - contests: 6 hours refresh (contest schedules are stable)
  * - tleData: 6 hours (Satellite TLE data)
  * - default: 10 minutes
@@ -62,6 +64,27 @@ public class CacheConfig {
             Caffeine.newBuilder()
                 .expireAfterWrite(6, TimeUnit.HOURS)
                 .maximumSize(200)
+                .recordStats()
+                .build());
+
+        cacheManager.registerCustomCache("potaActivations",
+            Caffeine.newBuilder()
+                .expireAfterWrite(2, TimeUnit.MINUTES)
+                .maximumSize(100)
+                .recordStats()
+                .build());
+
+        cacheManager.registerCustomCache("sotaActivations",
+            Caffeine.newBuilder()
+                .expireAfterWrite(2, TimeUnit.MINUTES)
+                .maximumSize(100)
+                .recordStats()
+                .build());
+
+        cacheManager.registerCustomCache("meteorShowers",
+            Caffeine.newBuilder()
+                .expireAfterWrite(2, TimeUnit.HOURS)
+                .maximumSize(50)
                 .recordStats()
                 .build());
 

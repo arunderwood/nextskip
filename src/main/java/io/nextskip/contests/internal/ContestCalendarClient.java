@@ -91,7 +91,7 @@ public class ContestCalendarClient implements ExternalDataClient<List<ContestICa
     @Override
     @CircuitBreaker(name = CACHE_NAME, fallbackMethod = "getCachedContests")
     @Retry(name = CACHE_NAME)
-    @Cacheable(value = CACHE_NAME, key = "'upcoming'", unless = "#result == null || #result.isEmpty()")
+    @Cacheable(value = CACHE_NAME, key = "'upcoming'", unless = "#result == null")
     public List<ContestICalDto> fetch() {
         LOG.debug("Fetching contests from WA7BNM iCal feed");
 

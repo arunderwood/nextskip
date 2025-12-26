@@ -81,7 +81,7 @@ public class SotaClient implements ExternalDataClient<List<Activation>> {
     @Override
     @CircuitBreaker(name = "sota", fallbackMethod = "getCachedActivations")
     @Retry(name = "sota")
-    @Cacheable(value = "sotaActivations", key = "'current'", unless = "#result == null || #result.isEmpty()")
+    @Cacheable(value = "sotaActivations", key = "'current'", unless = "#result == null")
     public List<Activation> fetch() {
         LOG.debug("Fetching SOTA activations from API");
 

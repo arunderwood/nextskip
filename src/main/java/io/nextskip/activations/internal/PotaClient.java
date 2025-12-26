@@ -76,7 +76,7 @@ public class PotaClient implements ExternalDataClient<List<Activation>> {
     @Override
     @CircuitBreaker(name = "pota", fallbackMethod = "getCachedActivations")
     @Retry(name = "pota")
-    @Cacheable(value = "potaActivations", key = "'current'", unless = "#result == null || #result.isEmpty()")
+    @Cacheable(value = "potaActivations", key = "'current'", unless = "#result == null")
     public List<Activation> fetch() {
         LOG.debug("Fetching POTA activations from API");
 
