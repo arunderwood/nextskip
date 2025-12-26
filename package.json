@@ -22,6 +22,8 @@
     "prepare": "simple-git-hooks"
   },
   "dependencies": {
+    "@grafana/faro-web-sdk": "^2.1.0",
+    "@grafana/faro-web-tracing": "^2.1.0",
     "@masonry-grid/react": "^1.1.1",
     "@vaadin/aura": "25.0.1",
     "@vaadin/common-frontend": "0.0.19",
