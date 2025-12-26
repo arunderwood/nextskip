@@ -17,7 +17,7 @@ Amateur radio has many activities—DX chasing, POTA/SOTA activations, contestin
 
 | Term           | Definition                                                                                |
 | -------------- | ----------------------------------------------------------------------------------------- |
-| **Activity**   | A category of ham radio pursuit that NextSkip tracks (DX, POTA, contesting, etc.)         |
+| **Activity**   | A category of amateur radio pursuit that NextSkip tracks (DX, POTA, contesting, etc.)         |
 | **Conditions** | The current state of an activity - whether it's a good time to engage                     |
 | **Score**      | A numerical rating (0-100) representing how favorable conditions are                      |
 | **Hotness**    | The visual tier derived from score: hot (70+), warm (45-69), neutral (20-44), cool (0-19) |

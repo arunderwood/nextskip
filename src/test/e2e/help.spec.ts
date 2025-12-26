@@ -5,27 +5,36 @@ import { test, expect } from '@playwright/test';
  *
  * Tests the help modal functionality including opening, closing,
  * navigation, accessibility, and responsive behavior.
+ *
+ * Timeout guidelines:
+ * - Simple UI checks: 30s
+ * - Tests needing API data: 60s
+ * - Tests with page reload/new context: 90s
  */
 test.describe('Help System', () => {
   test.beforeEach(async ({ page }) => {
+    // Set visited flag before navigation to prevent first-visit help modal from auto-opening
+    await page.addInitScript(() => {
+      localStorage.setItem('nextskip-visited', 'true');
+    });
     await page.goto('/');
     await page.waitForLoadState('networkidle');
     await page.waitForSelector('#outlet > *', { timeout: 10000 });
     // Wait for loading to complete
-    await page.waitForSelector('.loading', { state: 'hidden', timeout: 10000 });
+    await page.waitForSelector('.loading', { state: 'hidden', timeout: 30000 });
   });
 
-  test('help button is visible in header', async ({ page }) => {
+  test('help button is visible in header', { timeout: 30_000 }, async ({ page }) => {
     const helpButton = page.locator('.help-button');
     await expect(helpButton).toBeVisible();
   });
 
-  test('help button has accessible label', async ({ page }) => {
+  test('help button has accessible label', { timeout: 30_000 }, async ({ page }) => {
     const helpButton = page.locator('.help-button');
     await expect(helpButton).toHaveAttribute('aria-label', 'Open help and about');
   });
 
-  test('modal opens when help button clicked', async ({ page }) => {
+  test('modal opens when help button clicked', { timeout: 30_000 }, async ({ page }) => {
     const helpButton = page.locator('.help-button');
     await helpButton.click();
 
@@ -34,14 +43,14 @@ test.describe('Help System', () => {
     await expect(modal).toBeVisible();
   });
 
-  test('modal displays correct title', async ({ page }) => {
+  test('modal displays correct title', { timeout: 30_000 }, async ({ page }) => {
     await page.locator('.help-button').click();
 
     const title = page.locator('.help-modal__title');
     await expect(title).toHaveText('Help & About');
   });
 
-  test('modal closes on close button click', async ({ page }) => {
+  test('modal closes on close button click', { timeout: 30_000 }, async ({ page }) => {
     await page.locator('.help-button').click();
     await expect(page.locator('dialog.help-modal')).toHaveAttribute('open');
 
@@ -50,7 +59,7 @@ test.describe('Help System', () => {
     await expect(page.locator('dialog.help-modal')).not.toHaveAttribute('open');
   });
 
-  test('modal closes on Escape key', async ({ page }) => {
+  test('modal closes on Escape key', { timeout: 30_000 }, async ({ page }) => {
     await page.locator('.help-button').click();
     await expect(page.locator('dialog.help-modal')).toHaveAttribute('open');
 
@@ -59,7 +68,7 @@ test.describe('Help System', () => {
     await expect(page.locator('dialog.help-modal')).not.toHaveAttribute('open');
   });
 
-  test('modal closes on backdrop click', async ({ page }) => {
+  test('modal closes on backdrop click', { timeout: 30_000 }, async ({ page }) => {
     await page.locator('.help-button').click();
     const modal = page.locator('dialog.help-modal');
     await expect(modal).toHaveAttribute('open');
@@ -71,7 +80,7 @@ test.describe('Help System', () => {
     await expect(modal).not.toHaveAttribute('open');
   });
 
-  test('all navigation tabs are visible', async ({ page }) => {
+  test('all navigation tabs are visible', { timeout: 30_000 }, async ({ page }) => {
     await page.locator('.help-button').click();
 
     const tablist = page.locator('[role="tablist"]');
@@ -85,7 +94,7 @@ test.describe('Help System', () => {
     expect(await tabs.count()).toBeGreaterThanOrEqual(2);
   });
 
-  test('About section is first in content', async ({ page }) => {
+  test('About section is first in content', { timeout: 30_000 }, async ({ page }) => {
     await page.locator('.help-button').click();
 
     const aboutSection = page.locator('#help-section-about');
@@ -95,7 +104,7 @@ test.describe('Help System', () => {
     await expect(aboutSection.locator('h3')).toHaveText('About NextSkip');
   });
 
-  test('clicking navigation tab scrolls to section', async ({ page }) => {
+  test('clicking navigation tab scrolls to section', { timeout: 30_000 }, async ({ page }) => {
     await page.locator('.help-button').click();
 
     // Click on a tab that's not About
@@ -112,7 +121,7 @@ test.describe('Help System', () => {
     }
   });
 
-  test('modal has proper ARIA attributes', async ({ page }) => {
+  test('modal has proper ARIA attributes', { timeout: 30_000 }, async ({ page }) => {
     await page.locator('.help-button').click();
 
     const modal = page.locator('dialog.help-modal');
@@ -123,7 +132,7 @@ test.describe('Help System', () => {
     await expect(closeButton).toHaveAttribute('aria-label', 'Close help');
   });
 
-  test('can navigate tabs with keyboard', async ({ page }) => {
+  test('can navigate tabs with keyboard', { timeout: 30_000 }, async ({ page }) => {
     await page.locator('.help-button').click();
 
     // Focus on the first tab
@@ -138,7 +147,7 @@ test.describe('Help System', () => {
     await expect(page.locator('dialog.help-modal')).toHaveAttribute('open');
   });
 
-  test('modal respects dark theme', async ({ page }) => {
+  test('modal respects dark theme', { timeout: 30_000 }, async ({ page }) => {
     // Switch to dark mode first
     const themeToggle = page.locator('.theme-toggle');
     await themeToggle.click();
@@ -160,13 +169,17 @@ test.describe('Help System - Mobile', () => {
   test.use({ viewport: { width: 375, height: 667 } }); // iPhone SE
 
   test.beforeEach(async ({ page }) => {
+    // Set visited flag before navigation to prevent first-visit help modal from auto-opening
+    await page.addInitScript(() => {
+      localStorage.setItem('nextskip-visited', 'true');
+    });
     await page.goto('/');
     await page.waitForLoadState('networkidle');
     await page.waitForSelector('#outlet > *', { timeout: 10000 });
-    await page.waitForSelector('.loading', { state: 'hidden', timeout: 10000 });
+    await page.waitForSelector('.loading', { state: 'hidden', timeout: 30000 });
   });
 
-  test('modal displays as full-screen sheet', async ({ page }) => {
+  test('modal displays as full-screen sheet', { timeout: 30_000 }, async ({ page }) => {
     await page.locator('.help-button').click();
 
     const modal = page.locator('dialog.help-modal');
@@ -183,7 +196,7 @@ test.describe('Help System - Mobile', () => {
     }
   });
 
-  test('navigation tabs are horizontally scrollable', async ({ page }) => {
+  test('navigation tabs are horizontally scrollable', { timeout: 30_000 }, async ({ page }) => {
     await page.locator('.help-button').click();
 
     const navList = page.locator('.help-navigation__list');
@@ -197,7 +210,7 @@ test.describe('Help System - Mobile', () => {
     expect(overflowX).toBe('auto');
   });
 
-  test('close button remains accessible', async ({ page }) => {
+  test('close button remains accessible', { timeout: 30_000 }, async ({ page }) => {
     await page.locator('.help-button').click();
 
     const closeButton = page.locator('.help-modal__close');

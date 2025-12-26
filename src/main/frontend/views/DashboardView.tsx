@@ -32,7 +32,15 @@ function DashboardView() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
-  const [isHelpOpen, setIsHelpOpen] = useState(false);
+  const [isHelpOpen, setIsHelpOpen] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    const hasVisited = localStorage.getItem('nextskip-visited');
+    if (!hasVisited) {
+      localStorage.setItem('nextskip-visited', 'true');
+      return true; // Open help on first visit
+    }
+    return false;
+  });
 
   // Memoize fetchData to avoid recreation on every render
   // Hilla pattern: Keep async/await with generated endpoint methods
@@ -63,7 +71,7 @@ function DashboardView() {
 
   useEffect(() => {
     // Set document title
-    document.title = 'NextSkip - Find your next skip';
+    document.title = 'NextSkip - Amateur Radio Activity Dashboard';
 
     // Initial fetch
     fetchData();
@@ -169,7 +177,7 @@ function DashboardView() {
             </div>
           </div>
           <p className="dashboard-subtitle">
-            Find your next skip
+            Amateur Radio Activity Dashboard
             <span className="last-update" aria-live="polite" aria-atomic="true">
               Updated {lastUpdate.toLocaleTimeString()}
             </span>

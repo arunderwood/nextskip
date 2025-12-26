@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-NextSkip is a real-time ham radio activity dashboard that helps operators find the best opportunities across propagation conditions, portable activations, contests, and more. Built as a modular monolith using Spring Boot, Vaadin Hilla, and React.
+NextSkip is a real-time amateur radio activity dashboard that helps operators find the best opportunities across propagation conditions, portable activations, contests, and more. Built as a modular monolith using Spring Boot, Vaadin Hilla, and React.
 
 **Architecture**: Each activity module aggregates data from trusted sources, calculates condition scores, and surfaces opportunities through a score-sorted dashboard.
 
