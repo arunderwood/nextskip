@@ -5,6 +5,7 @@ import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.fasterxml.jackson.dataformat.xml.deser.FromXmlParser;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
+import io.nextskip.common.client.RefreshableDataSource;
 import io.nextskip.common.model.FrequencyBand;
 import io.nextskip.propagation.internal.dto.HamQslDto.BandConditionEntry;
 import io.nextskip.propagation.internal.dto.HamQslDto.HamQslData;
@@ -43,11 +44,12 @@ import java.util.List;
  */
 @Component
 @SuppressWarnings("PMD.AvoidCatchingGenericException") // Intentional: wrap unknown exceptions in ExternalApiException
-public class HamQslClient {
+public class HamQslClient implements RefreshableDataSource {
 
     private static final Logger LOG = LoggerFactory.getLogger(HamQslClient.class);
 
     private static final String SOURCE_NAME = "HamQSL";
+    private static final Duration REFRESH_INTERVAL = Duration.ofMinutes(5);
     private static final String CACHE_KEY = "hamqsl";
     private static final String HAMQSL_URL = "https://www.hamqsl.com/solarxml.php";
 
@@ -78,6 +80,22 @@ public class HamQslClient {
 
         // Use pre-initialized XmlMapper to avoid constructor exceptions
         this.xmlMapper = SHARED_XML_MAPPER;
+    }
+
+    @Override
+    public String getSourceName() {
+        return SOURCE_NAME;
+    }
+
+    @Override
+    public void refresh() {
+        fetchSolarIndices();
+        fetchBandConditions();
+    }
+
+    @Override
+    public Duration getRefreshInterval() {
+        return REFRESH_INTERVAL;
     }
 
     /**

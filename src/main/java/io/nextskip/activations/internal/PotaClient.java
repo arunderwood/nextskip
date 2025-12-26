@@ -7,6 +7,7 @@ import io.nextskip.activations.model.Activation;
 import io.nextskip.activations.model.ActivationType;
 import io.nextskip.activations.model.Park;
 import io.nextskip.common.client.ExternalDataClient;
+import io.nextskip.common.client.RefreshableDataSource;
 import io.nextskip.common.util.ParsingUtils;
 import io.nextskip.propagation.internal.ExternalApiException;
 import org.slf4j.Logger;
@@ -37,11 +38,12 @@ import java.util.List;
  */
 @Component
 @SuppressWarnings("PMD.AvoidCatchingGenericException") // Intentional: wrap unknown exceptions in ExternalApiException
-public class PotaClient implements ExternalDataClient<List<Activation>> {
+public class PotaClient implements ExternalDataClient<List<Activation>>, RefreshableDataSource {
 
     private static final Logger LOG = LoggerFactory.getLogger(PotaClient.class);
 
     private static final String SOURCE_NAME = "POTA";
+    private static final Duration REFRESH_INTERVAL = Duration.ofMinutes(2);
     private static final String POTA_URL = "https://api.pota.app/spot/activator";
     private static final Duration REQUEST_TIMEOUT = Duration.ofSeconds(10);
 
@@ -65,6 +67,16 @@ public class PotaClient implements ExternalDataClient<List<Activation>> {
     @Override
     public String getSourceName() {
         return SOURCE_NAME + " API";
+    }
+
+    @Override
+    public void refresh() {
+        fetch();
+    }
+
+    @Override
+    public Duration getRefreshInterval() {
+        return REFRESH_INTERVAL;
     }
 
     /**

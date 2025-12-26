@@ -1,5 +1,6 @@
 package io.nextskip.meteors.internal;
 
+import io.nextskip.common.client.RefreshableDataSource;
 import io.nextskip.common.model.EventStatus;
 import io.nextskip.meteors.api.MeteorService;
 import io.nextskip.meteors.model.MeteorShower;
@@ -8,6 +9,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
@@ -19,15 +21,31 @@ import java.util.Optional;
  * filtered views for different use cases.
  */
 @Service
-public class MeteorServiceImpl implements MeteorService {
+public class MeteorServiceImpl implements MeteorService, RefreshableDataSource {
 
     private static final Logger LOG = LoggerFactory.getLogger(MeteorServiceImpl.class);
     private static final int DEFAULT_LOOKAHEAD_DAYS = 30;
+    private static final Duration REFRESH_INTERVAL = Duration.ofHours(1);
 
     private final MeteorShowerDataLoader dataLoader;
 
     public MeteorServiceImpl(MeteorShowerDataLoader dataLoader) {
         this.dataLoader = dataLoader;
+    }
+
+    @Override
+    public String getSourceName() {
+        return "Meteor Showers";
+    }
+
+    @Override
+    public void refresh() {
+        getMeteorShowers();
+    }
+
+    @Override
+    public Duration getRefreshInterval() {
+        return REFRESH_INTERVAL;
     }
 
     @Override

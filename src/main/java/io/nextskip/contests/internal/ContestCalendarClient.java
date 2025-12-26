@@ -3,6 +3,7 @@ package io.nextskip.contests.internal;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
 import io.nextskip.common.client.ExternalDataClient;
+import io.nextskip.common.client.RefreshableDataSource;
 import io.nextskip.contests.internal.dto.ContestICalDto;
 import io.nextskip.propagation.internal.ExternalApiException;
 import net.fortuna.ical4j.data.CalendarBuilder;
@@ -51,11 +52,12 @@ import java.util.Optional;
  */
 @org.springframework.stereotype.Component
 @SuppressWarnings("PMD.AvoidCatchingGenericException") // Intentional: wrap unknown exceptions in ExternalApiException
-public class ContestCalendarClient implements ExternalDataClient<List<ContestICalDto>> {
+public class ContestCalendarClient implements ExternalDataClient<List<ContestICalDto>>, RefreshableDataSource {
 
     private static final Logger LOG = LoggerFactory.getLogger(ContestCalendarClient.class);
 
     private static final String SOURCE_NAME = "WA7BNM";
+    private static final Duration REFRESH_INTERVAL = Duration.ofHours(6);
     private static final String CACHE_NAME = "contests";
     private static final String CALENDAR_URL = "https://www.contestcalendar.com/weeklycontcustom.php";
     private static final Duration REQUEST_TIMEOUT = Duration.ofSeconds(15);
@@ -80,6 +82,16 @@ public class ContestCalendarClient implements ExternalDataClient<List<ContestICa
     @Override
     public String getSourceName() {
         return SOURCE_NAME + " Contest Calendar";
+    }
+
+    @Override
+    public void refresh() {
+        fetch();
+    }
+
+    @Override
+    public Duration getRefreshInterval() {
+        return REFRESH_INTERVAL;
     }
 
     /**
