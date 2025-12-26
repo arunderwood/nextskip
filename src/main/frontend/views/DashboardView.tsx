@@ -63,7 +63,7 @@ function DashboardView() {
 
   useEffect(() => {
     // Set document title
-    document.title = 'NextSkip - HF Propagation Dashboard';
+    document.title = 'NextSkip - Find your next skip';
 
     // Initial fetch
     fetchData();
@@ -169,7 +169,7 @@ function DashboardView() {
             </div>
           </div>
           <p className="dashboard-subtitle">
-            HF Propagation Dashboard
+            Find your next skip
             <span className="last-update" aria-live="polite" aria-atomic="true">
               Updated {lastUpdate.toLocaleTimeString()}
             </span>

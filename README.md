@@ -2,9 +2,9 @@
 
 ## Overview
 
-**NextSkip answers one question: "What's hot right now?"**
+**NextSkip helps you find your next skip.**
 
-Amateur radio is a hobby with many activities inside it—DX chasing, POTA/SOTA hunting, contesting, satellite work, and more. Each has conditions that make it an optimal time to engage. NextSkip aggregates real-time data from these activities, scores their current conditions, and presents a score-sorted dashboard where the best opportunities float to the top.
+Amateur radio has many activities—DX chasing, POTA/SOTA activations, contesting, satellite work, meteor scatter, and more. Each has conditions that make it an optimal time to engage. NextSkip aggregates real-time data, scores current conditions, and surfaces the best opportunities so you know where to spend your time on the air.
 
 ### How It Works
 
@@ -29,16 +29,16 @@ Amateur radio is a hobby with many activities inside it—DX chasing, POTA/SOTA 
 
 NextSkip focuses on activities with **machine-readable, computable, or predictable conditions**:
 
-| Activity                 | Feed                       | Status                         |
-| ------------------------ | -------------------------- | ------------------------------ |
-| HF Propagation           | NOAA SWPC, HamQSL          | ✅ Phase 1 Complete            |
-| Dashboard Infrastructure | Multi-card grid, WebSocket | 🔜 Phase 2                     |
-| POTA/SOTA                | api.pota.app, SOTA API     | 🔜 Phase 3                     |
-| Contests                 | WA7BNM calendar            | 🔜 Phase 4                     |
-| Band Activity            | PSKReporter MQTT           | 🔜 Phase 5                     |
-| Satellites               | N2YO, Celestrak            | ⏳ Phase 6 (requires location) |
+| Activity       | Data Sources            |
+| -------------- | ----------------------- |
+| HF Propagation | NOAA SWPC, HamQSL       |
+| POTA/SOTA      | POTA API, SOTA API      |
+| Contests       | Contest calendars       |
+| Meteor Showers | Astronomical data       |
+| Satellites     | Orbital prediction APIs |
+| Band Activity  | PSKReporter, RBN        |
 
-Location-dependent activities (like satellite passes) are planned for later phases.
+The platform is actively expanding to cover more activities and data sources.
 
 Built with Spring Boot, Vaadin Hilla, and React.
 
