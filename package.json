@@ -7,7 +7,7 @@
     "test:ui": "vitest --ui",
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage",
-    "test:ci": "npm run format:check && npm run lint && npm run lint:sarif && vitest run --coverage --reporter=default --reporter=github-actions",
+    "test:ci": "npm run format:check && npm run typecheck && npm run lint && npm run lint:sarif && vitest run --coverage --reporter=default --reporter=github-actions",
     "e2e": "playwright test",
     "e2e:ui": "playwright test --ui",
     "e2e:headed": "playwright test --headed",
@@ -16,7 +16,8 @@
     "lint:sarif": "eslint src/main/frontend src/test/frontend --quiet -f @microsoft/eslint-formatter-sarif -o eslint-results.sarif || true",
     "format": "prettier --write \"src/**/*.{ts,tsx,json,css,md}\"",
     "format:check": "prettier --check \"src/**/*.{ts,tsx,json,css,md}\"",
-    "validate": "npm run format:check && npm run lint && npm run test:run",
+    "typecheck": "tsc --noEmit",
+    "validate": "npm run format:check && npm run typecheck && npm run lint && npm run test:run",
     "validate:full": "npm run validate && npm run e2e",
     "prepare": "simple-git-hooks"
   },

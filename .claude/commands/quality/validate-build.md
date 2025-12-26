@@ -46,15 +46,16 @@ Execute these steps IN ORDER. Use the Bash tool to run each command and report a
 This runs all frontend checks:
 
 - Prettier format verification
+- TypeScript compilation (tsc --noEmit)
 - ESLint code quality (TypeScript, React, JSX accessibility)
 - Vitest unit tests (priority algorithm, components, accessibility)
 
 **Report**:
 
 - Overall result (PASS or FAIL)
-- Any specific failures from format, lint, or tests
+- Any specific failures from format, typecheck, lint, or tests
 
-**Expected**: All checks passing in ~2-3 seconds
+**Expected**: All checks passing in ~6 seconds
 
 **To Fix Failures**: Run `npm run lint:fix && npm run format` to auto-fix most issues
 

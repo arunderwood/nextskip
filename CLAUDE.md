@@ -156,8 +156,8 @@ npm run format
 #### Pre-Commit Validation
 
 ```bash
-npm run validate       # Quick: format, lint, unit tests (~3s)
-npm run validate:full  # Full: includes E2E tests (~20s)
+npm run validate       # Quick: format, typecheck, lint, unit tests (~6s)
+npm run validate:full  # Full: includes E2E tests (~25s)
 ```
 
 ## Architecture Guidelines
