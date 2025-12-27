@@ -41,6 +41,22 @@ test.describe('Help System', () => {
     await expect(modal).toBeVisible();
   });
 
+  test('modal container has visible height', { timeout: 30_000 }, async ({ page }) => {
+    // Regression test for Safari CSS bug where modal showed as thin line
+    // due to percentage-based height without explicit parent height
+    await page.locator('.help-button').click();
+
+    const container = page.locator('.help-modal__container');
+    await expect(container).toBeVisible();
+
+    const box = await container.boundingBox();
+    expect(box).not.toBeNull();
+    if (box) {
+      // Container should have substantial height (not a thin line)
+      expect(box.height).toBeGreaterThan(200);
+    }
+  });
+
   test('modal displays correct title', { timeout: 30_000 }, async ({ page }) => {
     await page.locator('.help-button').click();
 
