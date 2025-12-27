@@ -170,6 +170,12 @@ tasks.register('downloadPyroscopeAgent') {
 tasks.named('test') {
     useJUnitPlatform()
 
+    // Parallel test execution for faster CI builds
+    // GitHub runners have 4 cores, so run up to 4 test JVMs in parallel
+    maxParallelForks = Runtime.runtime.availableProcessors()
+    // Fork new JVM every 50 tests to prevent memory leaks
+    forkEvery = 50
+
     // Required for Java 25 compatibility with Mockito/ByteBuddy
     // --add-opens: Allows reflective access to JDK internals
     // -Dnet.bytebuddy.experimental=true: Enables ByteBuddy's experimental Java 25 support
