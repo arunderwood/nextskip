@@ -18,7 +18,8 @@
     "format:check": "prettier --check \"src/**/*.{ts,tsx,json,css,md}\"",
     "typecheck": "tsc --noEmit",
     "validate": "npm run format:check && npm run lint && npm run test:run",
-    "validate:full": "npm run validate && npm run e2e"
+    "validate:full": "npm run validate && npm run e2e",
+    "generate-pwa-icons": "pwa-asset-generator src/main/resources/static/favicon.svg src/main/resources/static/icons --icon-only --favicon --background '#0d1117' --type png --padding 0"
   },
   "dependencies": {
     "@dr.pogodin/react-helmet": "^3.0.5",
@@ -91,10 +92,9 @@
     "typescript": "^5.9.3",
     "vite": "7.3.0",
     "vite-plugin-checker": "^0.12.0",
+    "vite-plugin-pwa": "^1.2.0",
     "vitest": "^4.0.15",
-    "workbox-build": "^7.4.0",
-    "workbox-core": "^7.4.0",
-    "workbox-precaching": "^7.4.0"
+    "workbox-build": "7.4.0"
   },
   "overrides": {
     "eslint-plugin-react": "7.36.1",
@@ -236,6 +236,6 @@
       "vite-plugin-checker": "0.12.0",
       "workbox-build": "7.4.0"
     },
-    "hash": "0fd27eef16b5e1ac5dccf2fd39afe1628bdd2c4b95fe71de51a3293df521a96f"
+    "hash": "76df7af01091bde46180a128005f59950963e4330064065390f925780088c300"
   }
 }
