@@ -21,6 +21,7 @@
     "validate:full": "npm run validate && npm run e2e"
   },
   "dependencies": {
+    "@dr.pogodin/react-helmet": "^3.0.5",
     "@grafana/faro-react": "^2.1.0",
     "@grafana/faro-web-tracing": "^2.1.0",
     "@masonry-grid/react": "^1.1.1",

@@ -16,6 +16,7 @@ import { useDashboardCards } from '../hooks/useDashboardCards';
 import { getRegisteredCards } from '../components/cards/CardRegistry';
 import { ThemeToggle } from '../components/ThemeToggle';
 import { HelpButton, HelpModal } from '../components/help';
+import { Seo } from '../components/seo';
 import './DashboardView.css';
 
 // Import card modules to trigger registration
@@ -70,9 +71,6 @@ function DashboardView() {
   }, []); // Empty deps: setState functions are stable, Hilla endpoint methods are static
 
   useEffect(() => {
-    // Set document title
-    document.title = 'NextSkip - Amateur Radio Activity Dashboard';
-
     // Initial fetch
     fetchData();
 
@@ -164,6 +162,7 @@ function DashboardView() {
 
   return (
     <div className="dashboard">
+      <Seo title="Amateur Radio Activity Dashboard" />
       <header className="dashboard-header">
         <div className="header-info">
           <div className="header-row">
