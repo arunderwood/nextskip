@@ -20,8 +20,9 @@ if (collectorUrl) {
   initializeFaro({
     url: collectorUrl,
     app: {
-      name: 'nextskip',
+      name: 'nextskip-frontend',
       version: import.meta.env.VITE_APP_VERSION || '0.0.0',
+      environment: import.meta.env.VITE_ENVIRONMENT || 'development',
     },
     instrumentations: [
       ...getWebInstrumentations(),
