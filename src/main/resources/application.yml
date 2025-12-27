@@ -3,6 +3,14 @@ server:
   compression:
     enabled: true
     mime-types: text/html,text/xml,text/plain,text/css,application/javascript,application/json
+  # Trust X-Forwarded-* headers from Render's reverse proxy
+  forward-headers-strategy: framework
+  servlet:
+    session:
+      cookie:
+        same-site: lax
+        secure: true
+        http-only: true
 
 spring:
   application:
