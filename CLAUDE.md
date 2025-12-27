@@ -143,7 +143,6 @@ npm run format
 
 - ESLint: `eslint.config.js` (ESLint 9 flat config with `eslint-config-vaadin`)
 - Prettier: `.prettierrc` (single quotes, 120 char width, trailing commas)
-- Pre-commit: `simple-git-hooks` + `lint-staged` (auto-fix on commit)
 
 **Rules**: Uses Vaadin's official ESLint config with these customizations:
 
