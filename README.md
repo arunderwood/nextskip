@@ -4,6 +4,8 @@
 
 **NextSkip helps you find your next skip.**
 
+🌐 **[Visit the live site at nextskip.io](https://nextskip.io)**
+
 Amateur radio has many activities—DX chasing, POTA/SOTA activations, contesting, satellite work, meteor scatter, and more. Each has conditions that make it an optimal time to engage. NextSkip aggregates real-time data, scores current conditions, and surfaces the best opportunities so you know where to spend your time on the air.
 
 ### How It Works
