@@ -62,7 +62,18 @@ export function AboutSection() {
         </p>
 
         <h4>Open Source</h4>
-        <p>NextSkip is an open source project. Contributions, bug reports, and feature requests are welcome!</p>
+        <p>
+          NextSkip is an open source project. Contributions, bug reports, and feature requests are welcome! Visit the{' '}
+          <a
+            href="https://github.com/arunderwood/nextskip"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="help-section__link"
+          >
+            GitHub repository
+          </a>{' '}
+          to get involved.
+        </p>
       </div>
     </section>
   );
