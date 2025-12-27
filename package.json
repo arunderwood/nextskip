@@ -47,7 +47,9 @@
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-router": "7.10.1",
-    "react-router-dom": "^7.10.1"
+    "react-router-dom": "^7.10.1",
+    "react-schemaorg": "^2.0.0",
+    "schema-dts": "^1.1.5"
   },
   "devDependencies": {
     "@babel/preset-react": "^7.28.5",
@@ -181,7 +183,9 @@
     "@vaadin/vertical-layout": "25.0.1",
     "@vaadin/virtual-list": "25.0.1",
     "@grafana/faro-react": "$@grafana/faro-react",
-    "@grafana/faro-web-tracing": "$@grafana/faro-web-tracing"
+    "@grafana/faro-web-tracing": "$@grafana/faro-web-tracing",
+    "react-schemaorg": "$react-schemaorg",
+    "schema-dts": "$schema-dts"
   },
   "vaadin": {
     "dependencies": {
