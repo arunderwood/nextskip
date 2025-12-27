@@ -35,6 +35,16 @@ NextSkip is a real-time amateur radio activity dashboard that helps operators fi
 lsof -ti :8080 | xargs kill -9
 ```
 
+### PWA Icons
+
+Regenerate PWA icons after modifying `favicon.svg`:
+
+```bash
+npm run generate-pwa-icons
+```
+
+Icons are generated to `src/main/resources/META-INF/resources/icons/` (Vaadin's static asset location).
+
 ### Quality Checks
 
 Quality checks are **blocking** - violations will fail the build. Always run `./gradlew check` before committing.

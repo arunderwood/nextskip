@@ -19,7 +19,7 @@
     "typecheck": "tsc --noEmit",
     "validate": "npm run format:check && npm run lint && npm run test:run",
     "validate:full": "npm run validate && npm run e2e",
-    "generate-pwa-icons": "pwa-asset-generator src/main/resources/static/favicon.svg src/main/resources/static/icons --icon-only --favicon --background '#0d1117' --type png --padding 0"
+    "generate-pwa-icons": "pwa-asset-generator src/main/resources/static/favicon.svg src/main/resources/META-INF/resources/icons --icon-only --favicon --background '#0d1117' --type png --padding 0"
   },
   "dependencies": {
     "@dr.pogodin/react-helmet": "^3.0.5",
