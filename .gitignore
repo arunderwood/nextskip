@@ -46,7 +46,7 @@ src/main/bundles/
 vite.generated.ts
 webpack.generated.js
 pnpmfile.js
-index.html
+/index.html
 *.tsbuildinfo
 tsconfig.tsbuildinfo
 
