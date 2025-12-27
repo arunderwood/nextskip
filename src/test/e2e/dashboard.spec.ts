@@ -17,8 +17,7 @@ test.describe('Dashboard', () => {
       localStorage.setItem('nextskip-visited', 'true');
     });
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
-    // Wait for Vaadin to fully initialize by checking for the outlet div to have content
+    // Wait for Vaadin to fully initialize - this is the actual ready signal
     await page.waitForSelector('#outlet > *', { timeout: 10000 });
   });
 
@@ -73,7 +72,7 @@ test.describe('Dashboard', () => {
 
     // Click once to go to dark
     await themeToggle.click();
-    await page.waitForTimeout(100);
+    await expect(page.locator('html[data-theme="dark"]')).toBeVisible();
 
     // Click again to go to light
     await themeToggle.click();
@@ -95,7 +94,6 @@ test.describe('Dashboard', () => {
 
     // Reload the page
     await page.reload();
-    await page.waitForLoadState('networkidle');
     await page.waitForSelector('#outlet > *', { timeout: 10000 });
 
     // Verify dark theme is still applied
@@ -109,7 +107,6 @@ test.describe('Dashboard', () => {
     const freshPage = await freshContext.newPage();
 
     await freshPage.goto('/');
-    await freshPage.waitForLoadState('networkidle');
     await freshPage.waitForSelector('#outlet > *', { timeout: 10000 });
 
     // Help modal should be visible on first visit
