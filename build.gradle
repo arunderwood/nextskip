@@ -42,7 +42,7 @@ tasks.named('jar') {
 // The vaadinBuildFrontend task writes to build/resources/main/ AFTER processResources,
 // so we need to explicitly include these files in the bootJar
 tasks.named('bootJar') {
-    dependsOn 'vaadinBuildFrontend', 'downloadOtelAgent'
+    dependsOn 'vaadinBuildFrontend', 'downloadOtelAgent', 'downloadPyroscopeAgent'
 
     // Explicitly copy Vaadin production files into the JAR
     into('BOOT-INF/classes') {
@@ -143,6 +143,27 @@ tasks.register('downloadOtelAgent') {
 
         ant.get(src: agentUrl, dest: destFile, skipexisting: false)
         println "Downloaded Grafana OTEL agent v${otelAgentVersion} to ${destFile}"
+    }
+}
+
+// Pyroscope profiling agent configuration
+def pyroscopeAgentVersion = libs.versions.pyroscope.agent.get()
+def pyroscopeAgentDir = layout.buildDirectory.dir("pyroscope-agent")
+def pyroscopeAgentJar = pyroscopeAgentDir.map { it.file("pyroscope.jar") }
+
+tasks.register('downloadPyroscopeAgent') {
+    description = 'Downloads the Pyroscope Java profiling agent'
+    group = 'observability'
+
+    outputs.file(pyroscopeAgentJar)
+
+    doLast {
+        def agentUrl = "https://github.com/grafana/pyroscope-java/releases/download/v${pyroscopeAgentVersion}/pyroscope.jar"
+        def destFile = pyroscopeAgentJar.get().asFile
+        destFile.parentFile.mkdirs()
+
+        ant.get(src: agentUrl, dest: destFile, skipexisting: false)
+        println "Downloaded Pyroscope agent v${pyroscopeAgentVersion} to ${destFile}"
     }
 }
 

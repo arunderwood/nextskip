@@ -18,7 +18,19 @@ npm install --package-lock-only
 This syncs npm `package.json` and `package-lock.json` with Gradle-managed Vaadin versions.
 
 **Ignored npm packages** (controlled by Vaadin Gradle plugin):
+
 - `@vaadin/*`, `react*`, `lit`, `vite`, `typescript`, `workbox-*`
+
+## Observability Agents
+
+Renovate tracks these Java agents via custom regex managers:
+
+| Agent        | Version Catalog Key  | GitHub Repo                          |
+| ------------ | -------------------- | ------------------------------------ |
+| Grafana OTEL | `grafana-otel-agent` | `grafana/grafana-opentelemetry-java` |
+| Pyroscope    | `pyroscope-agent`    | `grafana/pyroscope-java`             |
+
+Both are downloaded at build time by Gradle tasks (`downloadOtelAgent`, `downloadPyroscopeAgent`) and included in the Docker image.
 
 ## Gradle Dependency Locking
 
@@ -29,6 +41,7 @@ The `gradle.lockfile` is required for Renovate to detect changes and trigger pos
 ## Renovate PAT Permissions
 
 Fine-grained token scoped to this repo with:
+
 - Contents: Read and write
 - Pull requests: Read and write
 - Commit statuses: Read and write

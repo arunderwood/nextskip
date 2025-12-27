@@ -6,6 +6,7 @@ spring-dependency-management = "1.1.7"
 
 # Observability
 grafana-otel-agent = "2.22.0"
+pyroscope-agent = "2.1.2"
 
 # Quality & testing tools
 # NOTE: checkstyle, pmd, spotbugs-tool, and jacoco versions moved to direct literals in build.gradle

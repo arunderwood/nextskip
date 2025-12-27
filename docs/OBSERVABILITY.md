@@ -17,6 +17,34 @@ Disable agent: `OTEL_JAVAAGENT_ENABLED=false`
 
 Agent version: `gradle/libs.versions.toml` → `grafana-otel-agent`
 
+## Continuous Profiling (Pyroscope)
+
+Continuous profiling via [Grafana Pyroscope Java agent](https://grafana.com/docs/pyroscope/latest/configure-client/language-sdks/java/).
+
+### Configuration
+
+Get credentials: [Grafana Cloud Portal](https://grafana.com/products/cloud/) → Your Stack → Profiles → Configure
+
+| Variable                        | Value                                                 |
+| ------------------------------- | ----------------------------------------------------- |
+| `PYROSCOPE_APPLICATION_NAME`    | `nextskip`                                            |
+| `PYROSCOPE_SERVER_ADDRESS`      | `https://profiles-prod-XXX.grafana.net` (from portal) |
+| `PYROSCOPE_BASIC_AUTH_USER`     | `<instance-id>` (from portal)                         |
+| `PYROSCOPE_BASIC_AUTH_PASSWORD` | `<api-key>` (from portal)                             |
+
+### Full Profiling (CPU + Allocation + Lock)
+
+| Variable                   | Value    | Description                        |
+| -------------------------- | -------- | ---------------------------------- |
+| `PYROSCOPE_FORMAT`         | `jfr`    | JFR format for multi-event support |
+| `PYROSCOPE_PROFILER_EVENT` | `itimer` | CPU profiling event type           |
+| `PYROSCOPE_PROFILER_ALLOC` | `512k`   | Allocation profiling threshold     |
+| `PYROSCOPE_PROFILER_LOCK`  | `10ms`   | Lock contention threshold          |
+
+Disable: Omit `PYROSCOPE_SERVER_ADDRESS` (agent gracefully handles missing config).
+
+Agent version: `gradle/libs.versions.toml` → `pyroscope-agent`
+
 ## Frontend
 
 Uses [Grafana Faro React SDK](https://grafana.com/docs/grafana-cloud/monitor-applications/frontend-observability/) for browser telemetry with React Router integration.

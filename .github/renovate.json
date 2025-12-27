@@ -13,6 +13,14 @@
       "matchStrings": ["grafana-otel-agent\\s*=\\s*\"(?<currentValue>[^\"]+)\""],
       "depNameTemplate": "grafana/grafana-opentelemetry-java",
       "datasourceTemplate": "github-releases"
+    },
+    {
+      "customType": "regex",
+      "description": "Pyroscope Java agent from GitHub releases",
+      "managerFilePatterns": ["/gradle/libs\\.versions\\.toml$/"],
+      "matchStrings": ["pyroscope-agent\\s*=\\s*\"(?<currentValue>[^\"]+)\""],
+      "depNameTemplate": "grafana/pyroscope-java",
+      "datasourceTemplate": "github-releases"
     }
   ],
   "packageRules": [
