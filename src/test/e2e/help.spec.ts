@@ -18,10 +18,8 @@ test.describe('Help System', () => {
       localStorage.setItem('nextskip-visited', 'true');
     });
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
-    await page.waitForSelector('#outlet > *', { timeout: 10000 });
-    // Wait for loading to complete
-    await page.waitForSelector('.loading', { state: 'hidden', timeout: 30000 });
+    // Wait for Vaadin to fully initialize and help button to be ready
+    await page.waitForSelector('.help-button', { timeout: 10000 });
   });
 
   test('help button is visible in header', { timeout: 30_000 }, async ({ page }) => {
@@ -112,12 +110,9 @@ test.describe('Help System', () => {
     if (await solarTab.isVisible()) {
       await solarTab.click();
 
-      // Give time for smooth scroll
-      await page.waitForTimeout(500);
-
-      // The section should be in view
+      // The section should scroll into view
       const solarSection = page.locator('#help-section-solar-indices');
-      await expect(solarSection).toBeInViewport();
+      await expect(solarSection).toBeInViewport({ timeout: 2000 });
     }
   });
 
@@ -174,9 +169,8 @@ test.describe('Help System - Mobile', () => {
       localStorage.setItem('nextskip-visited', 'true');
     });
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
-    await page.waitForSelector('#outlet > *', { timeout: 10000 });
-    await page.waitForSelector('.loading', { state: 'hidden', timeout: 30000 });
+    // Wait for Vaadin to fully initialize and help button to be ready
+    await page.waitForSelector('.help-button', { timeout: 10000 });
   });
 
   test('modal displays as full-screen sheet', { timeout: 30_000 }, async ({ page }) => {
