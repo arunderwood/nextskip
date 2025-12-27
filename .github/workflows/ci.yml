@@ -23,7 +23,7 @@ jobs:
       - name: Validate Gradle wrapper
         uses: gradle/actions/wrapper-validation@v5
 
-  backend-test:
+  backend:
     needs: validate
     runs-on: ubuntu-latest
     permissions:
@@ -39,8 +39,22 @@ jobs:
           distribution: 'temurin'
           java-version: '25'
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: 'npm'
+
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v5
+
+      - name: Cache observability agents
+        uses: actions/cache@v4
+        with:
+          path: |
+            build/otel-agent
+            build/pyroscope-agent
+          key: agents-${{ hashFiles('gradle/libs.versions.toml') }}
 
       - name: Run tests with quality checks
         run: ./gradlew check jacocoTestReport
@@ -73,6 +87,25 @@ jobs:
           files: build/reports/jacoco/test/jacocoTestReport.xml
           flags: backend
           token: ${{ secrets.CODECOV_TOKEN }}
+
+      - name: Determine version
+        id: version
+        run: |
+          if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+            echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+          else
+            echo "version=0.0.1-${GITHUB_SHA::7}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Build production JAR
+        run: ./gradlew build -Pvaadin.productionMode=true -Pversion=${{ steps.version.outputs.version }} -x test -x check
+
+      - name: Upload JAR artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: application-jar
+          path: build/libs/*.jar
+          retention-days: 7
 
   frontend-test:
     needs: validate
@@ -118,51 +151,8 @@ jobs:
           flags: frontend
           token: ${{ secrets.CODECOV_TOKEN }}
 
-  build-jar:
-    needs: [backend-test, frontend-test]
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v6
-
-      - name: Setup Java (Temurin 25)
-        uses: actions/setup-java@v5
-        with:
-          distribution: 'temurin'
-          java-version: '25'
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version: '24'
-          cache: 'npm'
-
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v5
-
-      - name: Determine version
-        id: version
-        run: |
-          if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
-            echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
-          else
-            echo "version=0.0.1-${GITHUB_SHA::7}" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Build production JAR
-        run: ./gradlew build -Pvaadin.productionMode=true -Pversion=${{ steps.version.outputs.version }} -x test -x check
-
-      - name: Upload JAR artifact
-        uses: actions/upload-artifact@v6
-        with:
-          name: application-jar
-          path: build/libs/*.jar
-          retention-days: 7
-
   e2e-test:
-    needs: build-jar
+    needs: [backend, frontend-test]
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
@@ -191,6 +181,12 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
 
       - name: Install Playwright browsers
         run: npx playwright install chromium --with-deps
