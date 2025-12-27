@@ -10,6 +10,7 @@
   background: transparent;
   max-width: min(90vw, 800px);
   max-height: 85vh;
+  height: 85vh; /* Explicit height for Safari - required for child percentage heights */
   width: 100%;
   margin: auto;
   overflow: visible;
