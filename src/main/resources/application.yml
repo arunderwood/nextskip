@@ -7,6 +7,13 @@ server:
 spring:
   application:
     name: nextskip
+  # Static resource caching for PWA
+  web:
+    resources:
+      cache:
+        cachecontrol:
+          max-age: 3600
+          cache-public: true
 
 # Data Refresh Scheduler Configuration
 nextskip:
