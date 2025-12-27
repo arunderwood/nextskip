@@ -21,6 +21,7 @@ interface ImportMetaEnv {
   readonly VITE_FARO_COLLECTOR_URL?: string;
   readonly VITE_TRACE_CORS_URLS?: string;
   readonly VITE_APP_VERSION?: string;
+  readonly VITE_ENVIRONMENT?: string;
 }
 
 interface ImportMeta {
