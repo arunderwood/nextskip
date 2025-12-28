@@ -261,6 +261,7 @@ jacocoTestCoverageVerification {
 deltaCoverageReport {
     diffSource {
         git.diffBase.set('refs/remotes/origin/main')
+        git.useNativeGit.set(true)  // Use native git for shallow clone compatibility
     }
 
     reports {
