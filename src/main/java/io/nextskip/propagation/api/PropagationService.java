@@ -50,4 +50,15 @@ public interface PropagationService {
      * @return Mono of band conditions list
      */
     Mono<List<BandCondition>> getBandConditionsReactive();
+
+    /**
+     * Get propagation data formatted for dashboard display.
+     *
+     * <p>Returns solar indices and band conditions combined in a response object.
+     * This is the primary method for dashboard presentation, providing a complete
+     * response object ready for frontend consumption.
+     *
+     * @return PropagationResponse with solar indices and band conditions
+     */
+    PropagationResponse getPropagationResponse();
 }

@@ -1,6 +1,7 @@
 package io.nextskip.propagation.internal;
 
 import io.nextskip.common.model.FrequencyBand;
+import io.nextskip.propagation.api.PropagationResponse;
 import io.nextskip.propagation.api.PropagationService;
 import io.nextskip.propagation.model.BandCondition;
 import io.nextskip.propagation.model.SolarIndices;
@@ -121,5 +122,20 @@ public class PropagationServiceImpl implements PropagationService {
     @Override
     public Mono<List<BandCondition>> getBandConditionsReactive() {
         return Mono.fromCallable(this::getBandConditions);
+    }
+
+    @Override
+    public PropagationResponse getPropagationResponse() {
+        LOG.debug("Building propagation response for dashboard");
+
+        SolarIndices solarIndices = getCurrentSolarIndices();
+        List<BandCondition> bandConditions = getBandConditions();
+
+        PropagationResponse response = new PropagationResponse(solarIndices, bandConditions);
+
+        LOG.debug("Returning propagation response: {} band conditions",
+                bandConditions != null ? bandConditions.size() : 0);
+
+        return response;
     }
 }

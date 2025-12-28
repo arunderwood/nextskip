@@ -1,8 +1,10 @@
 package io.nextskip.activations.internal;
 
+import io.nextskip.activations.api.ActivationsResponse;
 import io.nextskip.activations.api.ActivationsService;
 import io.nextskip.activations.model.Activation;
 import io.nextskip.activations.model.ActivationsSummary;
+import io.nextskip.activations.model.ActivationType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -92,5 +94,35 @@ public class ActivationsServiceImpl implements ActivationsService {
             LOG.warn("Failed to fetch SOTA activations: {}", e.getMessage());
             return List.of();
         }
+    }
+
+    @Override
+    public ActivationsResponse getActivationsResponse() {
+        LOG.debug("Building activations response for dashboard");
+
+        ActivationsSummary summary = getActivationsSummary();
+
+        // Separate activations by type (business logic in service layer)
+        List<Activation> potaActivations = summary.activations().stream()
+                .filter(a -> a.type() == ActivationType.POTA)
+                .toList();
+
+        List<Activation> sotaActivations = summary.activations().stream()
+                .filter(a -> a.type() == ActivationType.SOTA)
+                .toList();
+
+        int totalCount = potaActivations.size() + sotaActivations.size();
+
+        ActivationsResponse response = new ActivationsResponse(
+                potaActivations,
+                sotaActivations,
+                totalCount,
+                summary.lastUpdated()
+        );
+
+        LOG.debug("Returning activations response: {} POTA, {} SOTA (total: {})",
+                potaActivations.size(), sotaActivations.size(), totalCount);
+
+        return response;
     }
 }

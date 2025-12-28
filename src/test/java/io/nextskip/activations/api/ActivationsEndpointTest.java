@@ -1,7 +1,6 @@
 package io.nextskip.activations.api;
 
 import io.nextskip.activations.model.Activation;
-import io.nextskip.activations.model.ActivationsSummary;
 import io.nextskip.activations.model.ActivationType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -17,6 +16,10 @@ import static org.mockito.Mockito.*;
 
 /**
  * Unit tests for ActivationsEndpoint.
+ *
+ * <p>Since the endpoint is now a thin delegate to the service layer,
+ * these tests verify that the endpoint correctly delegates to the service
+ * and returns the service's response unchanged.
  */
 @ExtendWith(MockitoExtension.class)
 class ActivationsEndpointTest {
@@ -33,22 +36,25 @@ class ActivationsEndpointTest {
 
     @Test
     void should_ReturnActivationsResponseWithBothPotaAndSota() {
-        // Given: Service returns summary with both POTA and SOTA activations
+        // Given: Service returns response with both POTA and SOTA activations
         Instant now = Instant.now();
-        List<Activation> activations = List.of(
+        List<Activation> potaActivations = List.of(
                 createPotaActivation("1"),
-                createPotaActivation("2"),
+                createPotaActivation("2")
+        );
+        List<Activation> sotaActivations = List.of(
                 createSotaActivation("3"),
                 createSotaActivation("4")
         );
-        ActivationsSummary summary = new ActivationsSummary(activations, 2, 2, now);
+        ActivationsResponse serviceResponse = new ActivationsResponse(
+                potaActivations, sotaActivations, 4, now);
 
-        when(activationsService.getActivationsSummary()).thenReturn(summary);
+        when(activationsService.getActivationsResponse()).thenReturn(serviceResponse);
 
         // When: Get activations
         ActivationsResponse response = endpoint.getActivations();
 
-        // Then: Should separate POTA and SOTA correctly
+        // Then: Should return service response
         assertNotNull(response);
         assertEquals(2, response.potaActivations().size(), "Should have 2 POTA activations");
         assertEquals(2, response.sotaActivations().size(), "Should have 2 SOTA activations");
@@ -63,21 +69,22 @@ class ActivationsEndpointTest {
         response.sotaActivations().forEach(a ->
                 assertEquals(ActivationType.SOTA, a.type()));
 
-        verify(activationsService).getActivationsSummary();
+        verify(activationsService).getActivationsResponse();
     }
 
     @Test
     void should_ReturnOnlyPotaActivationsWhenNoSota() {
-        // Given: Service returns summary with only POTA activations
+        // Given: Service returns response with only POTA activations
         Instant now = Instant.now();
-        List<Activation> activations = List.of(
+        List<Activation> potaActivations = List.of(
                 createPotaActivation("1"),
                 createPotaActivation("2"),
                 createPotaActivation("3")
         );
-        ActivationsSummary summary = new ActivationsSummary(activations, 3, 0, now);
+        ActivationsResponse serviceResponse = new ActivationsResponse(
+                potaActivations, List.of(), 3, now);
 
-        when(activationsService.getActivationsSummary()).thenReturn(summary);
+        when(activationsService.getActivationsResponse()).thenReturn(serviceResponse);
 
         // When: Get activations
         ActivationsResponse response = endpoint.getActivations();
@@ -89,20 +96,21 @@ class ActivationsEndpointTest {
         assertEquals(3, response.totalCount(), "Should have 3 total activations");
         assertEquals(now, response.lastUpdated());
 
-        verify(activationsService).getActivationsSummary();
+        verify(activationsService).getActivationsResponse();
     }
 
     @Test
     void should_ReturnOnlySotaActivationsWhenNoPota() {
-        // Given: Service returns summary with only SOTA activations
+        // Given: Service returns response with only SOTA activations
         Instant now = Instant.now();
-        List<Activation> activations = List.of(
+        List<Activation> sotaActivations = List.of(
                 createSotaActivation("1"),
                 createSotaActivation("2")
         );
-        ActivationsSummary summary = new ActivationsSummary(activations, 0, 2, now);
+        ActivationsResponse serviceResponse = new ActivationsResponse(
+                List.of(), sotaActivations, 2, now);
 
-        when(activationsService.getActivationsSummary()).thenReturn(summary);
+        when(activationsService.getActivationsResponse()).thenReturn(serviceResponse);
 
         // When: Get activations
         ActivationsResponse response = endpoint.getActivations();
@@ -114,16 +122,17 @@ class ActivationsEndpointTest {
         assertEquals(2, response.totalCount(), "Should have 2 total activations");
         assertEquals(now, response.lastUpdated());
 
-        verify(activationsService).getActivationsSummary();
+        verify(activationsService).getActivationsResponse();
     }
 
     @Test
     void should_ReturnEmptyListsWhenNoActivations() {
-        // Given: Service returns empty summary
+        // Given: Service returns empty response
         Instant now = Instant.now();
-        ActivationsSummary summary = new ActivationsSummary(List.of(), 0, 0, now);
+        ActivationsResponse serviceResponse = new ActivationsResponse(
+                List.of(), List.of(), 0, now);
 
-        when(activationsService.getActivationsSummary()).thenReturn(summary);
+        when(activationsService.getActivationsResponse()).thenReturn(serviceResponse);
 
         // When: Get activations
         ActivationsResponse response = endpoint.getActivations();
@@ -135,23 +144,26 @@ class ActivationsEndpointTest {
         assertEquals(0, response.totalCount(), "Should have 0 total activations");
         assertEquals(now, response.lastUpdated());
 
-        verify(activationsService).getActivationsSummary();
+        verify(activationsService).getActivationsResponse();
     }
 
     @Test
     void should_CalculateTotalCountCorrectly() {
-        // Given: Service returns summary with mixed activations
+        // Given: Service returns response with mixed activations
         Instant now = Instant.now();
-        List<Activation> activations = List.of(
+        List<Activation> potaActivations = List.of(
                 createPotaActivation("1"),
-                createSotaActivation("2"),
                 createPotaActivation("3"),
-                createSotaActivation("4"),
                 createPotaActivation("5")
         );
-        ActivationsSummary summary = new ActivationsSummary(activations, 3, 2, now);
+        List<Activation> sotaActivations = List.of(
+                createSotaActivation("2"),
+                createSotaActivation("4")
+        );
+        ActivationsResponse serviceResponse = new ActivationsResponse(
+                potaActivations, sotaActivations, 5, now);
 
-        when(activationsService.getActivationsSummary()).thenReturn(summary);
+        when(activationsService.getActivationsResponse()).thenReturn(serviceResponse);
 
         // When: Get activations
         ActivationsResponse response = endpoint.getActivations();
@@ -161,7 +173,7 @@ class ActivationsEndpointTest {
         assertEquals(2, response.sotaActivations().size());
         assertEquals(5, response.totalCount(), "Total count should equal POTA + SOTA");
 
-        verify(activationsService).getActivationsSummary();
+        verify(activationsService).getActivationsResponse();
     }
 
     @Test
@@ -189,9 +201,10 @@ class ActivationsEndpointTest {
                 "POTA API",
                 park
         );
-        ActivationsSummary summary = new ActivationsSummary(List.of(detailed), 1, 0, now);
+        ActivationsResponse serviceResponse = new ActivationsResponse(
+                List.of(detailed), List.of(), 1, now);
 
-        when(activationsService.getActivationsSummary()).thenReturn(summary);
+        when(activationsService.getActivationsResponse()).thenReturn(serviceResponse);
 
         // When: Get activations
         ActivationsResponse response = endpoint.getActivations();
@@ -218,25 +231,28 @@ class ActivationsEndpointTest {
         assertEquals(42.5, ((io.nextskip.activations.model.Park) returned.location()).latitude());
         assertEquals(-71.3, ((io.nextskip.activations.model.Park) returned.location()).longitude());
 
-        verify(activationsService).getActivationsSummary();
+        verify(activationsService).getActivationsResponse();
     }
 
     @Test
     void should_HandleMixedActivationsWithCorrectCounts() {
         // Given: Uneven distribution of POTA and SOTA
         Instant now = Instant.now();
-        List<Activation> activations = List.of(
+        List<Activation> potaActivations = List.of(
                 createPotaActivation("1"),
                 createPotaActivation("2"),
                 createPotaActivation("3"),
                 createPotaActivation("4"),
-                createPotaActivation("5"),
+                createPotaActivation("5")
+        );
+        List<Activation> sotaActivations = List.of(
                 createSotaActivation("6"),
                 createSotaActivation("7")
         );
-        ActivationsSummary summary = new ActivationsSummary(activations, 5, 2, now);
+        ActivationsResponse serviceResponse = new ActivationsResponse(
+                potaActivations, sotaActivations, 7, now);
 
-        when(activationsService.getActivationsSummary()).thenReturn(summary);
+        when(activationsService.getActivationsResponse()).thenReturn(serviceResponse);
 
         // When: Get activations
         ActivationsResponse response = endpoint.getActivations();
@@ -246,7 +262,7 @@ class ActivationsEndpointTest {
         assertEquals(2, response.sotaActivations().size());
         assertEquals(7, response.totalCount());
 
-        verify(activationsService).getActivationsSummary();
+        verify(activationsService).getActivationsResponse();
     }
 
     /**
