@@ -120,6 +120,6 @@ vaadin:
 # PostHog Analytics Proxy Configuration
 posthog:
   proxy:
-    enabled: true
+    enabled: false
     ingest-url: https://us.i.posthog.com
     assets-url: https://us-assets.i.posthog.com
