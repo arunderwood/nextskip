@@ -13,6 +13,7 @@ pyroscope-agent = "2.1.2"
 # to enable Renovate detection. See: https://github.com/renovatebot/renovate/discussions/40147
 spotbugs-plugin = "6.4.8"
 pitest = "1.19.0-rc.2"
+delta-coverage = "3.5.1"
 
 # Dependencies (not managed by Spring Boot BOM)
 resilience4j = "2.3.0"
@@ -30,6 +31,7 @@ spring-dependency-management = { id = "io.spring.dependency-management", version
 vaadin = { id = "com.vaadin", version.ref = "vaadin" }
 spotbugs = { id = "com.github.spotbugs", version.ref = "spotbugs-plugin" }
 pitest = { id = "info.solidsoft.pitest", version.ref = "pitest" }
+delta-coverage = { id = "io.github.gw-kit.delta-coverage", version.ref = "delta-coverage" }
 
 [libraries]
 # Vaadin with Hilla

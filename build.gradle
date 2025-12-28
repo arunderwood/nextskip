@@ -10,6 +10,7 @@ plugins {
     alias(libs.plugins.spotbugs)
     id 'jacoco'
     alias(libs.plugins.pitest)
+    alias(libs.plugins.delta.coverage)
 }
 
 group = 'io.nextskip'
@@ -257,6 +258,25 @@ jacocoTestCoverageVerification {
     }
 }
 
+deltaCoverageReport {
+    diffSource {
+        git.diffBase.set('refs/remotes/origin/main')
+    }
+
+    reports {
+        html.set(true)
+        console.set(true)
+    }
+
+    reportViews {
+        test {
+            violationRules {
+                failIfCoverageLessThan(0.65)
+            }
+        }
+    }
+}
+
 pitest {
     targetClasses = ['io.nextskip.*']
     targetTests = ['io.nextskip.*']
@@ -267,7 +287,7 @@ pitest {
 }
 
 // Enable coverage verification in check task for local feedback
-// Skip locally if needed: ./gradlew check -x jacocoTestCoverageVerification
+// Skip locally if needed: ./gradlew check -x jacocoTestCoverageVerification -x deltaCoverage
 tasks.named('check') {
-    dependsOn jacocoTestCoverageVerification
+    dependsOn jacocoTestCoverageVerification, 'deltaCoverage'
 }
