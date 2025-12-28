@@ -1,6 +1,8 @@
 package io.nextskip.contests.internal;
 
+import io.nextskip.common.model.EventStatus;
 import io.nextskip.contests.api.ContestService;
+import io.nextskip.contests.api.ContestsResponse;
 import io.nextskip.contests.internal.dto.ContestICalDto;
 import io.nextskip.contests.model.Contest;
 import org.slf4j.Logger;
@@ -8,6 +10,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
 import java.util.Set;
 
@@ -84,5 +88,37 @@ public class ContestServiceImpl implements ContestService {
                 dto.detailsUrl(), // calendar source URL
                 null      // official rules URL - not available in iCal feed (TODO: scrape from details page)
         );
+    }
+
+    @Override
+    public ContestsResponse getContestsResponse() {
+        LOG.debug("Building contests response for dashboard");
+
+        List<Contest> contests = getUpcomingContests();
+
+        // Calculate counts by status (business logic in service layer)
+        int activeCount = (int) contests.stream()
+                .filter(c -> c.getStatus() == EventStatus.ACTIVE)
+                .count();
+
+        int upcomingCount = (int) contests.stream()
+                .filter(c -> c.getStatus() == EventStatus.UPCOMING)
+                .filter(c -> c.getTimeRemaining().compareTo(Duration.ofHours(24)) <= 0)
+                .count();
+
+        int totalCount = contests.size();
+
+        ContestsResponse response = new ContestsResponse(
+                contests,
+                activeCount,
+                upcomingCount,
+                totalCount,
+                Instant.now()
+        );
+
+        LOG.debug("Returning contests response: {} active, {} upcoming soon, {} total",
+                activeCount, upcomingCount, totalCount);
+
+        return response;
     }
 }

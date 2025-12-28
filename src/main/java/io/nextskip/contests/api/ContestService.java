@@ -22,4 +22,15 @@ public interface ContestService {
      * @return List of upcoming contests, or empty list if unavailable
      */
     List<Contest> getUpcomingContests();
+
+    /**
+     * Get upcoming contest data formatted for dashboard display.
+     *
+     * <p>Returns contests with pre-calculated counts by status. This is the
+     * primary method for dashboard presentation, providing a complete response
+     * object ready for frontend consumption.
+     *
+     * @return ContestsResponse with upcoming contests and metadata
+     */
+    ContestsResponse getContestsResponse();
 }

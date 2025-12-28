@@ -61,11 +61,16 @@ class PropagationEndpointTest {
 
     @Test
     void shouldGet_PropagationData_Success() {
-        when(propagationService.getCurrentSolarIndices()).thenReturn(testSolarIndices);
-        when(propagationService.getBandConditions()).thenReturn(testBandConditions);
+        // Given: Service returns response with solar indices and band conditions
+        PropagationResponse serviceResponse = new PropagationResponse(
+                testSolarIndices, testBandConditions);
 
+        when(propagationService.getPropagationResponse()).thenReturn(serviceResponse);
+
+        // When
         PropagationResponse response = endpoint.getPropagationData();
 
+        // Then
         assertNotNull(response);
         assertNotNull(response.solarIndices());
         assertNotNull(response.bandConditions());
@@ -74,57 +79,68 @@ class PropagationEndpointTest {
         assertEquals(150.5, response.solarIndices().solarFluxIndex(), 0.01);
         assertEquals(5, response.bandConditions().size());
 
-        verify(propagationService).getCurrentSolarIndices();
-        verify(propagationService).getBandConditions();
+        verify(propagationService).getPropagationResponse();
     }
 
     @Test
     void shouldGet_PropagationData_NullSolarIndices() {
-        when(propagationService.getCurrentSolarIndices()).thenReturn(null);
-        when(propagationService.getBandConditions()).thenReturn(testBandConditions);
+        // Given: Service returns response with null solar indices
+        PropagationResponse serviceResponse = new PropagationResponse(
+                null, testBandConditions);
 
+        when(propagationService.getPropagationResponse()).thenReturn(serviceResponse);
+
+        // When
         PropagationResponse response = endpoint.getPropagationData();
 
+        // Then
         assertNotNull(response);
         assertNull(response.solarIndices());
         assertNotNull(response.bandConditions());
         assertEquals(5, response.bandConditions().size());
 
-        verify(propagationService).getCurrentSolarIndices();
-        verify(propagationService).getBandConditions();
+        verify(propagationService).getPropagationResponse();
     }
 
     @Test
     void shouldGet_PropagationData_EmptyBandConditions() {
-        when(propagationService.getCurrentSolarIndices()).thenReturn(testSolarIndices);
-        when(propagationService.getBandConditions()).thenReturn(List.of());
+        // Given: Service returns response with empty band conditions
+        PropagationResponse serviceResponse = new PropagationResponse(
+                testSolarIndices, List.of());
 
+        when(propagationService.getPropagationResponse()).thenReturn(serviceResponse);
+
+        // When
         PropagationResponse response = endpoint.getPropagationData();
 
+        // Then
         assertNotNull(response);
         assertNotNull(response.solarIndices());
         assertNotNull(response.bandConditions());
         assertTrue(response.bandConditions().isEmpty());
 
-        verify(propagationService).getCurrentSolarIndices();
-        verify(propagationService).getBandConditions();
+        verify(propagationService).getPropagationResponse();
     }
 
     @Test
     void shouldGet_PropagationData_BothNull() {
-        when(propagationService.getCurrentSolarIndices()).thenReturn(null);
-        when(propagationService.getBandConditions()).thenReturn(null);
+        // Given: Service returns response with null solar indices and null band conditions
+        PropagationResponse serviceResponse = new PropagationResponse(
+                null, null);
 
+        when(propagationService.getPropagationResponse()).thenReturn(serviceResponse);
+
+        // When
         PropagationResponse response = endpoint.getPropagationData();
 
+        // Then
         assertNotNull(response);
         assertNull(response.solarIndices());
         // Defensive copying converts null to empty list
         assertNotNull(response.bandConditions());
         assertTrue(response.bandConditions().isEmpty());
 
-        verify(propagationService).getCurrentSolarIndices();
-        verify(propagationService).getBandConditions();
+        verify(propagationService).getPropagationResponse();
     }
 
     @Test
@@ -184,18 +200,24 @@ class PropagationEndpointTest {
     }
 
     @Test
-    void shouldReturn_ResponseTimestamp() throws InterruptedException {
-        when(propagationService.getCurrentSolarIndices()).thenReturn(testSolarIndices);
-        when(propagationService.getBandConditions()).thenReturn(testBandConditions);
-
+    void shouldReturn_ResponseTimestamp() {
+        // Given: Service returns response with timestamp set
         Instant before = Instant.now();
-        Thread.sleep(10); // Small delay to ensure timestamp difference
-        PropagationResponse response = endpoint.getPropagationData();
+        PropagationResponse serviceResponse = new PropagationResponse(
+                testSolarIndices, testBandConditions);
         Instant after = Instant.now();
 
+        when(propagationService.getPropagationResponse()).thenReturn(serviceResponse);
+
+        // When
+        PropagationResponse response = endpoint.getPropagationData();
+
+        // Then: Endpoint passes through the service's timestamp
         assertNotNull(response.timestamp());
-        assertTrue(response.timestamp().isAfter(before));
-        assertTrue(response.timestamp().isBefore(after));
+        assertFalse(response.timestamp().isBefore(before));
+        assertFalse(response.timestamp().isAfter(after));
+
+        verify(propagationService).getPropagationResponse();
     }
 
     @Test

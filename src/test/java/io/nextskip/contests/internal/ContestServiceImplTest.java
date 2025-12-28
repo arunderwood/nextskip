@@ -191,4 +191,102 @@ class ContestServiceImplTest {
         assertEquals("Contest Without URL", contest.name());
         // calendarSourceUrl will be null
     }
+
+    // ========== getContestsResponse() tests ==========
+
+    @Test
+    void testGetContestsResponse_CountsActiveContests() {
+        Instant now = Instant.now();
+        List<ContestICalDto> dtos = List.of(
+                // Active contest (started 1 hour ago, ends in 23 hours)
+                new ContestICalDto("Active Contest 1",
+                        now.minus(1, ChronoUnit.HOURS),
+                        now.plus(23, ChronoUnit.HOURS), null),
+                // Active contest (started 12 hours ago, ends in 12 hours)
+                new ContestICalDto("Active Contest 2",
+                        now.minus(12, ChronoUnit.HOURS),
+                        now.plus(12, ChronoUnit.HOURS), null),
+                // Upcoming contest (starts in 2 hours)
+                new ContestICalDto("Upcoming Contest",
+                        now.plus(2, ChronoUnit.HOURS),
+                        now.plus(26, ChronoUnit.HOURS), null)
+        );
+
+        when(calendarClient.fetch()).thenReturn(dtos);
+
+        io.nextskip.contests.api.ContestsResponse response = service.getContestsResponse();
+
+        assertNotNull(response);
+        assertEquals(2, response.activeCount(), "Should count 2 active contests");
+        assertEquals(3, response.totalCount(), "Should have 3 total contests");
+    }
+
+    @Test
+    void testGetContestsResponse_CountsUpcomingWithin24Hours() {
+        Instant now = Instant.now();
+        List<ContestICalDto> dtos = List.of(
+                // Upcoming within 24 hours (starts in 2 hours)
+                new ContestICalDto("Upcoming Soon 1",
+                        now.plus(2, ChronoUnit.HOURS),
+                        now.plus(26, ChronoUnit.HOURS), null),
+                // Upcoming within 24 hours (starts in 12 hours)
+                new ContestICalDto("Upcoming Soon 2",
+                        now.plus(12, ChronoUnit.HOURS),
+                        now.plus(36, ChronoUnit.HOURS), null),
+                // Upcoming but beyond 24 hours (starts in 48 hours)
+                new ContestICalDto("Upcoming Later",
+                        now.plus(48, ChronoUnit.HOURS),
+                        now.plus(72, ChronoUnit.HOURS), null),
+                // Active contest (should not count as upcoming)
+                new ContestICalDto("Active Contest",
+                        now.minus(1, ChronoUnit.HOURS),
+                        now.plus(23, ChronoUnit.HOURS), null)
+        );
+
+        when(calendarClient.fetch()).thenReturn(dtos);
+
+        io.nextskip.contests.api.ContestsResponse response = service.getContestsResponse();
+
+        assertNotNull(response);
+        assertEquals(2, response.upcomingCount(), "Should count 2 upcoming contests within 24 hours");
+        assertEquals(1, response.activeCount(), "Should count 1 active contest");
+        assertEquals(4, response.totalCount(), "Should have 4 total contests");
+    }
+
+    @Test
+    void testGetContestsResponse_CalculatesTotalCount() {
+        Instant now = Instant.now();
+        List<ContestICalDto> dtos = List.of(
+                new ContestICalDto("Contest 1", now.plus(1, ChronoUnit.HOURS), now.plus(25, ChronoUnit.HOURS), null),
+                new ContestICalDto("Contest 2", now.plus(48, ChronoUnit.HOURS), now.plus(72, ChronoUnit.HOURS), null),
+                new ContestICalDto("Contest 3", now.plus(96, ChronoUnit.HOURS), now.plus(120, ChronoUnit.HOURS), null),
+                new ContestICalDto("Contest 4", now.plus(144, ChronoUnit.HOURS), now.plus(168, ChronoUnit.HOURS), null),
+                new ContestICalDto("Contest 5", now.plus(192, ChronoUnit.HOURS), now.plus(216, ChronoUnit.HOURS), null)
+        );
+
+        when(calendarClient.fetch()).thenReturn(dtos);
+
+        io.nextskip.contests.api.ContestsResponse response = service.getContestsResponse();
+
+        assertNotNull(response);
+        assertEquals(5, response.totalCount(), "Total should match contest list size");
+        assertEquals(5, response.contests().size(), "Contests list should have 5 items");
+    }
+
+    @Test
+    void testGetContestsResponse_SetsTimestamp() {
+        Instant before = Instant.now();
+
+        when(calendarClient.fetch()).thenReturn(List.of());
+
+        io.nextskip.contests.api.ContestsResponse response = service.getContestsResponse();
+        Instant after = Instant.now();
+
+        assertNotNull(response);
+        assertNotNull(response.lastUpdated(), "Response should have lastUpdated timestamp");
+        assertTrue(!response.lastUpdated().isBefore(before),
+                "Timestamp should be at or after test start");
+        assertTrue(!response.lastUpdated().isAfter(after),
+                "Timestamp should be at or before test end");
+    }
 }

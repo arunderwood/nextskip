@@ -24,6 +24,9 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class ActivationsServiceImplTest {
 
+    private static final String TEST_CALLSIGN_POTA = "W1ABC";
+    private static final String TEST_CALLSIGN_SOTA = "W3XYZ/P";
+
     @Mock
     private PotaClient potaClient;
 
@@ -41,11 +44,11 @@ class ActivationsServiceImplTest {
     void shouldCombine_PotaAndSotaActivations() {
         // Given: Both clients return data
         List<Activation> potaActivations = List.of(
-                createPotaActivation("1", "W1ABC"),
+                createPotaActivation("1", TEST_CALLSIGN_POTA),
                 createPotaActivation("2", "K2DEF")
         );
         List<Activation> sotaActivations = List.of(
-                createSotaActivation("3", "W3XYZ/P")
+                createSotaActivation("3", TEST_CALLSIGN_SOTA)
         );
 
         when(potaClient.fetch()).thenReturn(potaActivations);
@@ -70,7 +73,7 @@ class ActivationsServiceImplTest {
     void shouldHandle_PotaClientFailure() {
         // Given: POTA client throws exception, SOTA succeeds
         when(potaClient.fetch()).thenThrow(new RuntimeException("POTA API unavailable"));
-        when(sotaClient.fetch()).thenReturn(List.of(createSotaActivation("1", "W1ABC/P")));
+        when(sotaClient.fetch()).thenReturn(List.of(createSotaActivation("1", TEST_CALLSIGN_SOTA)));
 
         // When
         ActivationsSummary summary = service.getActivationsSummary();
@@ -89,7 +92,7 @@ class ActivationsServiceImplTest {
     @Test
     void shouldHandle_SotaClientFailure() {
         // Given: SOTA client throws exception, POTA succeeds
-        when(potaClient.fetch()).thenReturn(List.of(createPotaActivation("1", "W1ABC")));
+        when(potaClient.fetch()).thenReturn(List.of(createPotaActivation("1", TEST_CALLSIGN_POTA)));
         when(sotaClient.fetch()).thenThrow(new RuntimeException("SOTA API unavailable"));
 
         // When
@@ -162,6 +165,88 @@ class ActivationsServiceImplTest {
         assertTrue(
                 summary.lastUpdated().equals(after) || summary.lastUpdated().isBefore(after),
                 "Timestamp should be at or before end time"
+        );
+    }
+
+    // ========== getActivationsResponse() tests ==========
+
+    @Test
+    void testGetActivationsResponse_SeparatesActivationsByType() {
+        // Given: Mixed POTA and SOTA activations
+        List<Activation> potaActivations = List.of(
+                createPotaActivation("1", TEST_CALLSIGN_POTA),
+                createPotaActivation("2", "K2DEF")
+        );
+        List<Activation> sotaActivations = List.of(
+                createSotaActivation("3", TEST_CALLSIGN_SOTA)
+        );
+
+        when(potaClient.fetch()).thenReturn(potaActivations);
+        when(sotaClient.fetch()).thenReturn(sotaActivations);
+
+        // When
+        io.nextskip.activations.api.ActivationsResponse response = service.getActivationsResponse();
+
+        // Then: Should separate by type
+        assertNotNull(response);
+        assertEquals(2, response.potaActivations().size(), "Should have 2 POTA activations");
+        assertEquals(1, response.sotaActivations().size(), "Should have 1 SOTA activation");
+
+        // Verify types are correctly separated
+        assertTrue(response.potaActivations().stream()
+                        .allMatch(a -> a.type() == ActivationType.POTA),
+                "potaActivations should only contain POTA type");
+        assertTrue(response.sotaActivations().stream()
+                        .allMatch(a -> a.type() == ActivationType.SOTA),
+                "sotaActivations should only contain SOTA type");
+    }
+
+    @Test
+    void testGetActivationsResponse_CalculatesTotalCount() {
+        // Given
+        List<Activation> potaActivations = List.of(
+                createPotaActivation("1", TEST_CALLSIGN_POTA),
+                createPotaActivation("2", "K2DEF"),
+                createPotaActivation("3", "N3GHI")
+        );
+        List<Activation> sotaActivations = List.of(
+                createSotaActivation("4", "W4XYZ/P"),
+                createSotaActivation("5", "K5LMN/P")
+        );
+
+        when(potaClient.fetch()).thenReturn(potaActivations);
+        when(sotaClient.fetch()).thenReturn(sotaActivations);
+
+        // When
+        io.nextskip.activations.api.ActivationsResponse response = service.getActivationsResponse();
+
+        // Then
+        assertEquals(5, response.totalCount(), "Total count should be sum of POTA and SOTA");
+        assertEquals(response.potaActivations().size() + response.sotaActivations().size(),
+                response.totalCount(),
+                "Total should equal sum of both lists");
+    }
+
+    @Test
+    void testGetActivationsResponse_IncludesLastUpdated() {
+        // Given
+        Instant before = Instant.now();
+        when(potaClient.fetch()).thenReturn(List.of());
+        when(sotaClient.fetch()).thenReturn(List.of());
+
+        // When
+        io.nextskip.activations.api.ActivationsResponse response = service.getActivationsResponse();
+        Instant after = Instant.now();
+
+        // Then
+        assertNotNull(response.lastUpdated(), "Response should include lastUpdated timestamp");
+        assertTrue(
+                !response.lastUpdated().isBefore(before),
+                "lastUpdated should be at or after test start"
+        );
+        assertTrue(
+                !response.lastUpdated().isAfter(after),
+                "lastUpdated should be at or before test end"
         );
     }
 

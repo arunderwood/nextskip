@@ -38,16 +38,7 @@ public class PropagationEndpoint {
      */
     public PropagationResponse getPropagationData() {
         LOG.debug("Fetching propagation data for dashboard");
-
-        SolarIndices solarIndices = propagationService.getCurrentSolarIndices();
-        List<BandCondition> bandConditions = propagationService.getBandConditions();
-
-        PropagationResponse response = new PropagationResponse(solarIndices, bandConditions);
-
-        LOG.debug("Returning propagation data: {} band conditions",
-                  bandConditions != null ? bandConditions.size() : 0);
-
-        return response;
+        return propagationService.getPropagationResponse();
     }
 
     /**

@@ -254,4 +254,86 @@ class PropagationServiceImplTest {
 
         verify(hamQslBandClient).fetch();
     }
+
+    // ========== getPropagationResponse() tests ==========
+
+    @Test
+    void testGetPropagationResponse_CombinesSolarAndBandData() {
+        // Given: Both solar indices and band conditions available
+        when(noaaClient.fetch()).thenReturn(noaaData);
+        when(hamQslSolarClient.fetch()).thenReturn(hamQslData);
+        when(hamQslBandClient.fetch()).thenReturn(bandConditions);
+
+        // When
+        io.nextskip.propagation.api.PropagationResponse response = service.getPropagationResponse();
+
+        // Then
+        assertNotNull(response);
+        assertNotNull(response.solarIndices(), "Response should include solar indices");
+        assertNotNull(response.bandConditions(), "Response should include band conditions");
+
+        // Verify solar data is included
+        assertEquals(150.5, response.solarIndices().solarFluxIndex(), 0.01);
+        assertEquals("NOAA SWPC + HamQSL", response.solarIndices().source());
+
+        // Verify band conditions are included
+        assertEquals(3, response.bandConditions().size());
+        assertTrue(response.bandConditions().stream()
+                .anyMatch(bc -> bc.band() == FrequencyBand.BAND_20M));
+
+        verify(noaaClient).fetch();
+        verify(hamQslSolarClient).fetch();
+        verify(hamQslBandClient).fetch();
+    }
+
+    @Test
+    void testGetPropagationResponse_HandlesNullSolarIndices() {
+        // Given: Solar indices unavailable, band conditions available
+        when(noaaClient.fetch()).thenReturn(null);
+        when(hamQslSolarClient.fetch()).thenReturn(null);
+        when(hamQslBandClient.fetch()).thenReturn(bandConditions);
+
+        // When
+        io.nextskip.propagation.api.PropagationResponse response = service.getPropagationResponse();
+
+        // Then: Should still return response with null solar indices
+        assertNotNull(response);
+        assertNull(response.solarIndices(), "Solar indices should be null when unavailable");
+        assertNotNull(response.bandConditions(), "Band conditions should still be present");
+        assertEquals(3, response.bandConditions().size());
+    }
+
+    @Test
+    void testGetPropagationResponse_HandlesEmptyBandConditions() {
+        // Given: Solar indices available, band conditions empty
+        when(noaaClient.fetch()).thenReturn(noaaData);
+        when(hamQslSolarClient.fetch()).thenReturn(hamQslData);
+        when(hamQslBandClient.fetch()).thenReturn(List.of());
+
+        // When
+        io.nextskip.propagation.api.PropagationResponse response = service.getPropagationResponse();
+
+        // Then: Should return response with empty band conditions list
+        assertNotNull(response);
+        assertNotNull(response.solarIndices(), "Solar indices should be present");
+        assertNotNull(response.bandConditions(), "Band conditions should not be null");
+        assertTrue(response.bandConditions().isEmpty(), "Band conditions should be empty");
+    }
+
+    @Test
+    void testGetPropagationResponse_HandlesNullBandConditionsFromClient() {
+        // Given: Band client returns null (defensive test for null branch in logging)
+        when(noaaClient.fetch()).thenReturn(noaaData);
+        when(hamQslSolarClient.fetch()).thenReturn(hamQslData);
+        when(hamQslBandClient.fetch()).thenReturn(null);
+
+        // When
+        io.nextskip.propagation.api.PropagationResponse response = service.getPropagationResponse();
+
+        // Then: Should handle null gracefully (defensive copying converts to empty list)
+        assertNotNull(response);
+        assertNotNull(response.solarIndices());
+        // PropagationResponse's compact constructor converts null to empty list
+        assertNotNull(response.bandConditions());
+    }
 }
