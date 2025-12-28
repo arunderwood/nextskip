@@ -271,3 +271,14 @@ pitest {
 tasks.named('check') {
     dependsOn jacocoTestCoverageVerification
 }
+
+// Vaadin's vaadinPrepareFrontend runs npm install but doesn't declare
+// package-lock.json as an input. This causes Gradle's build cache to
+// restore stale outputs when new npm dependencies are added.
+// Adding package-lock.json as an input ensures the cache invalidates
+// when dependencies change.
+plugins.withId('com.vaadin') {
+    tasks.named('vaadinPrepareFrontend') {
+        inputs.file('package-lock.json').withPathSensitivity(PathSensitivity.RELATIVE)
+    }
+}
