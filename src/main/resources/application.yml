@@ -116,3 +116,10 @@ logging:
 vaadin:
   pnpm:
     enable: false
+
+# PostHog Analytics Proxy Configuration
+posthog:
+  proxy:
+    enabled: true
+    ingest-url: https://us.i.posthog.com
+    assets-url: https://us-assets.i.posthog.com

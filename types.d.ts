@@ -22,6 +22,8 @@ interface ImportMetaEnv {
   readonly VITE_TRACE_CORS_URLS?: string;
   readonly VITE_APP_VERSION?: string;
   readonly VITE_ENVIRONMENT?: string;
+  readonly VITE_POSTHOG_KEY?: string;
+  readonly VITE_POSTHOG_HOST?: string;
 }
 
 interface ImportMeta {
