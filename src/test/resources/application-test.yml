@@ -1,0 +1,27 @@
+# Test profile configuration
+# Testcontainers provides datasource config via @ServiceConnection
+
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: none  # Liquibase handles schema creation
+    show-sql: true
+
+  # Ensure Liquibase runs in tests
+  liquibase:
+    enabled: true
+    change-log: classpath:db/changelog/db.changelog-master.yaml
+
+# Disable eager cache loading in tests (faster startup)
+nextskip:
+  refresh:
+    eager-load: false
+
+# Reduce logging noise in tests
+logging:
+  level:
+    org.testcontainers: WARN
+    com.github.dockerjava: WARN
+    org.hibernate.SQL: DEBUG
+    liquibase: DEBUG
+    org.springframework.boot.autoconfigure.liquibase: DEBUG

@@ -29,6 +29,15 @@ This command validates the entire NextSkip stack (Gradle, Spring Boot, Vaadin, R
 
 Execute these steps IN ORDER. Use the Bash tool to run each command and report actual results:
 
+### Step 0: Start Database (if not running)
+
+**Execute**: `docker-compose up -d`
+
+**Report**:
+- PostgreSQL container status (running/started)
+
+**Note**: Skip if PostgreSQL is already running. Testcontainers tests don't require this step - they use ephemeral containers. See [docs/DATABASE.md](../../../docs/DATABASE.md) for database troubleshooting.
+
 ### Step 1: Git Status Check
 
 **Execute**: `git status`
@@ -248,7 +257,7 @@ lsof -ti :8080 | xargs kill -9
 - Common issues:
   - Bean initialization failures (dependency injection errors)
   - Configuration property errors (missing or invalid application.yml values)
-  - Database connection issues (if using external DB)
+  - Database connection issues (run `docker-compose up -d`, see [docs/DATABASE.md](../../../docs/DATABASE.md))
   - Port conflicts (use `lsof -ti :8080` to check)
 - Verify all required environment variables are set
 - Check that gradle.properties settings are compatible with the application

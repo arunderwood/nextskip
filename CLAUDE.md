@@ -35,6 +35,22 @@ NextSkip is a real-time amateur radio activity dashboard that helps operators fi
 lsof -ti :8080 | xargs kill -9
 ```
 
+### Database
+
+See [docs/DATABASE.md](docs/DATABASE.md) for complete database documentation.
+
+**Quick Start**:
+
+```bash
+# Start PostgreSQL
+docker-compose up -d
+
+# Start application
+./gradlew bootRun
+```
+
+**Prerequisites**: Docker (for local PostgreSQL via Docker Compose)
+
 ### PWA Icons
 
 Regenerate PWA icons after modifying `favicon.svg`:
