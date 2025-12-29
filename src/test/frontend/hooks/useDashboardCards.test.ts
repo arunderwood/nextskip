@@ -167,124 +167,106 @@ describe('useDashboardCards', () => {
       expect(result.current).toEqual([]);
     });
 
-    it('should calculate average score correctly', () => {
+    it('should create individual card for each band condition', () => {
       const dashboardData: DashboardData = {
         propagation: createMockPropagationResponse({
           solarIndices: undefined,
           bandConditions: [
-            createMockBandCondition({ score: 60 }),
-            createMockBandCondition({ score: 80 }),
-            createMockBandCondition({ score: 100 }),
+            createMockBandCondition({ band: FrequencyBand.BAND_20M, score: 60 }),
+            createMockBandCondition({ band: FrequencyBand.BAND_40M, score: 80 }),
+            createMockBandCondition({ band: FrequencyBand.BAND_10M, score: 100 }),
           ],
         }),
       };
       const { result } = renderHook(() => useDashboardCards(dashboardData));
 
-      expect(result.current).toHaveLength(1);
-      expect(result.current[0].id).toBe('band-conditions');
-      // Average score = (60 + 80 + 100) / 3 = 80
-      // This contributes 35% * 80 = 28 points to priority
-      expect(result.current[0].priority).toBeGreaterThanOrEqual(25);
+      // Should create 3 individual cards (one per band)
+      expect(result.current).toHaveLength(3);
+      expect(result.current.map((c) => c.id)).toContain('band-BAND_20M');
+      expect(result.current.map((c) => c.id)).toContain('band-BAND_40M');
+      expect(result.current.map((c) => c.id)).toContain('band-BAND_10M');
     });
 
-    it('should set favorable=true when majority favorable', () => {
+    it('should use individual band score as priority', () => {
       const dashboardData: DashboardData = {
         propagation: createMockPropagationResponse({
           solarIndices: undefined,
           bandConditions: [
-            createMockBandCondition({ favorable: true, score: 80 }),
-            createMockBandCondition({ favorable: true, score: 75 }),
-            createMockBandCondition({ favorable: false, score: 50 }),
+            createMockBandCondition({ band: FrequencyBand.BAND_20M, score: 80 }),
+            createMockBandCondition({ band: FrequencyBand.BAND_40M, score: 60 }),
           ],
         }),
       };
       const { result } = renderHook(() => useDashboardCards(dashboardData));
 
-      expect(result.current).toHaveLength(1);
-      // Majority favorable (2/3) should add 40 points to priority
-      expect(result.current[0].priority).toBeGreaterThanOrEqual(60);
+      // Each card should use its individual band's score as priority
+      const band20m = result.current.find((c) => c.id === 'band-BAND_20M');
+      const band40m = result.current.find((c) => c.id === 'band-BAND_40M');
+
+      expect(band20m?.priority).toBe(80);
+      expect(band40m?.priority).toBe(60);
     });
 
-    it('should set favorable=false when minority favorable', () => {
+    it('should assign hotness based on individual band score', () => {
       const dashboardData: DashboardData = {
         propagation: createMockPropagationResponse({
           solarIndices: undefined,
           bandConditions: [
-            createMockBandCondition({ favorable: true, score: 80 }),
-            createMockBandCondition({ favorable: false, score: 50 }),
-            createMockBandCondition({ favorable: false, score: 40 }),
+            createMockBandCondition({ band: FrequencyBand.BAND_20M, score: 85 }), // hot (>70)
+            createMockBandCondition({ band: FrequencyBand.BAND_40M, score: 50 }), // warm (45-69)
+            createMockBandCondition({ band: FrequencyBand.BAND_10M, score: 15 }), // cool (<20)
           ],
         }),
       };
       const { result } = renderHook(() => useDashboardCards(dashboardData));
 
-      expect(result.current).toHaveLength(1);
-      // Minority favorable (1/3) should NOT add 40 points
-      expect(result.current[0].priority).toBeLessThan(60);
+      const band20m = result.current.find((c) => c.id === 'band-BAND_20M');
+      const band40m = result.current.find((c) => c.id === 'band-BAND_40M');
+      const band10m = result.current.find((c) => c.id === 'band-BAND_10M');
+
+      expect(band20m?.hotness).toBe('hot');
+      expect(band40m?.hotness).toBe('warm');
+      expect(band10m?.hotness).toBe('cool');
     });
 
-    it('should select GOOD as best rating when present', () => {
+    it('should handle undefined score as 0 priority', () => {
       const dashboardData: DashboardData = {
         propagation: createMockPropagationResponse({
           solarIndices: undefined,
-          bandConditions: [
-            createMockBandCondition({ rating: BandConditionRating.GOOD, score: 80 }),
-            createMockBandCondition({ rating: BandConditionRating.FAIR, score: 60 }),
-            createMockBandCondition({ rating: BandConditionRating.POOR, score: 30 }),
-          ],
+          bandConditions: [createMockBandCondition({ band: FrequencyBand.BAND_20M, score: undefined })],
         }),
       };
       const { result } = renderHook(() => useDashboardCards(dashboardData));
 
       expect(result.current).toHaveLength(1);
-      // GOOD rating adds 20 points, so priority should reflect this
-      expect(result.current[0].priority).toBeGreaterThanOrEqual(40);
+      expect(result.current[0].priority).toBe(0);
     });
 
-    it('should select FAIR as best rating when no GOOD', () => {
-      const dataWithFair: DashboardData = {
-        propagation: createMockPropagationResponse({
-          solarIndices: undefined,
-          bandConditions: [
-            createMockBandCondition({ rating: BandConditionRating.FAIR, score: 60, favorable: true }),
-            createMockBandCondition({ rating: BandConditionRating.POOR, score: 30, favorable: true }),
-          ],
-        }),
-      };
-      const dataWithPoor: DashboardData = {
-        propagation: createMockPropagationResponse({
-          solarIndices: undefined,
-          bandConditions: [
-            createMockBandCondition({ rating: BandConditionRating.POOR, score: 60, favorable: true }),
-            createMockBandCondition({ rating: BandConditionRating.POOR, score: 30, favorable: true }),
-          ],
-        }),
-      };
-
-      const { result: fairResult } = renderHook(() => useDashboardCards(dataWithFair));
-      const { result: poorResult } = renderHook(() => useDashboardCards(dataWithPoor));
-
-      // FAIR rating (12 points) should give higher priority than POOR rating (4 points)
-      expect(fairResult.current[0].priority).toBeGreaterThan(poorResult.current[0].priority);
-    });
-
-    it('should handle undefined values in band conditions', () => {
+    it('should use band-condition type for all individual cards', () => {
       const dashboardData: DashboardData = {
         propagation: createMockPropagationResponse({
           solarIndices: undefined,
           bandConditions: [
-            createMockBandCondition({ score: 80 }),
-            createMockBandCondition({ score: undefined, favorable: true }),
-            createMockBandCondition({ score: 60 }),
+            createMockBandCondition({ band: FrequencyBand.BAND_20M }),
+            createMockBandCondition({ band: FrequencyBand.BAND_40M }),
           ],
         }),
       };
       const { result } = renderHook(() => useDashboardCards(dashboardData));
 
-      expect(result.current).toHaveLength(1);
-      expect(result.current[0].id).toBe('band-conditions');
-      // Should not crash and should calculate from valid values
-      expect(result.current[0].priority).toBeGreaterThanOrEqual(0);
+      expect(result.current.every((c) => c.type === 'band-condition')).toBe(true);
+    });
+
+    it('should use standard size for individual band cards', () => {
+      const dashboardData: DashboardData = {
+        propagation: createMockPropagationResponse({
+          solarIndices: undefined,
+          bandConditions: [createMockBandCondition({ band: FrequencyBand.BAND_20M })],
+        }),
+      };
+      const { result } = renderHook(() => useDashboardCards(dashboardData));
+
+      expect(result.current[0].size).toBe('standard');
     });
   });
 
@@ -293,14 +275,14 @@ describe('useDashboardCards', () => {
       const dashboardData: DashboardData = {
         propagation: createMockPropagationResponse({
           solarIndices: undefined,
-          bandConditions: [createMockBandCondition()],
+          bandConditions: [createMockBandCondition({ band: FrequencyBand.BAND_20M })],
         }),
       };
       const { result } = renderHook(() => useDashboardCards(dashboardData));
 
-      // Only band-conditions card should be present
+      // Only individual band cards should be present (no solar-indices)
       expect(result.current).toHaveLength(1);
-      expect(result.current[0].id).toBe('band-conditions');
+      expect(result.current[0].id).toBe('band-BAND_20M');
     });
 
     it('should have correct id, type, size', () => {
@@ -380,78 +362,77 @@ describe('useDashboardCards', () => {
       expect(result.current[0].id).toBe('solar-indices');
     });
 
-    it('should have correct id, type, size=tall', () => {
+    it('should have correct id, type, size for individual band cards', () => {
       const dashboardData: DashboardData = {
         propagation: createMockPropagationResponse({
           solarIndices: undefined,
-          bandConditions: [createMockBandCondition()],
+          bandConditions: [createMockBandCondition({ band: FrequencyBand.BAND_20M })],
         }),
       };
       const { result } = renderHook(() => useDashboardCards(dashboardData));
 
       expect(result.current).toHaveLength(1);
       expect(result.current[0]).toMatchObject({
-        id: 'band-conditions',
-        type: 'band-conditions',
-        size: 'tall',
+        id: 'band-BAND_20M',
+        type: 'band-condition',
+        size: 'standard',
       });
     });
 
-    it('should calculate priority correctly', () => {
+    it('should use individual band score as priority', () => {
       const dashboardData: DashboardData = {
         propagation: createMockPropagationResponse({
           solarIndices: undefined,
           bandConditions: [
-            createMockBandCondition({ favorable: true, score: 100, rating: BandConditionRating.GOOD }),
-            createMockBandCondition({ favorable: true, score: 100, rating: BandConditionRating.GOOD }),
+            createMockBandCondition({ band: FrequencyBand.BAND_20M, score: 100 }),
+            createMockBandCondition({ band: FrequencyBand.BAND_40M, score: 80 }),
           ],
         }),
       };
       const { result } = renderHook(() => useDashboardCards(dashboardData));
 
-      expect(result.current).toHaveLength(1);
-      // favorable(40) + avg score 100(35) + GOOD rating(20) = 95
-      expect(result.current[0].priority).toBeGreaterThanOrEqual(90);
+      expect(result.current).toHaveLength(2);
+      // Each card uses its individual band's score as priority
+      const band20m = result.current.find((c) => c.id === 'band-BAND_20M');
+      const band40m = result.current.find((c) => c.id === 'band-BAND_40M');
+      expect(band20m?.priority).toBe(100);
+      expect(band40m?.priority).toBe(80);
     });
 
-    it('should calculate hotness correctly', () => {
-      const hotData: DashboardData = {
+    it('should calculate hotness for individual band cards', () => {
+      const dashboardData: DashboardData = {
         propagation: createMockPropagationResponse({
           solarIndices: undefined,
           bandConditions: [
-            createMockBandCondition({ favorable: true, score: 100, rating: BandConditionRating.GOOD }),
-            createMockBandCondition({ favorable: true, score: 100, rating: BandConditionRating.GOOD }),
-          ],
-        }),
-      };
-      const coolData: DashboardData = {
-        propagation: createMockPropagationResponse({
-          solarIndices: undefined,
-          bandConditions: [
-            createMockBandCondition({ favorable: false, score: 20, rating: BandConditionRating.POOR }),
-            createMockBandCondition({ favorable: false, score: 10, rating: BandConditionRating.POOR }),
+            createMockBandCondition({ band: FrequencyBand.BAND_20M, score: 100 }), // hot
+            createMockBandCondition({ band: FrequencyBand.BAND_40M, score: 10 }), // cool
           ],
         }),
       };
 
-      const { result: hotResult } = renderHook(() => useDashboardCards(hotData));
-      const { result: coolResult } = renderHook(() => useDashboardCards(coolData));
+      const { result } = renderHook(() => useDashboardCards(dashboardData));
 
-      expect(hotResult.current[0].hotness).toBe('hot');
-      expect(coolResult.current[0].hotness).toBe('cool');
+      const band20m = result.current.find((c) => c.id === 'band-BAND_20M');
+      const band40m = result.current.find((c) => c.id === 'band-BAND_40M');
+
+      expect(band20m?.hotness).toBe('hot');
+      expect(band40m?.hotness).toBe('cool');
     });
   });
 
   describe('combined output', () => {
-    it('should return both cards when all data present', () => {
+    it('should return solar card plus individual band cards when all data present', () => {
       const dashboardData: DashboardData = {
         propagation: createMockPropagationResponse(),
       };
       const { result } = renderHook(() => useDashboardCards(dashboardData));
 
-      expect(result.current).toHaveLength(2);
-      expect(result.current[0].id).toBe('solar-indices');
-      expect(result.current[1].id).toBe('band-conditions');
+      // 1 solar + 3 individual band cards
+      expect(result.current).toHaveLength(4);
+      expect(result.current.find((c) => c.id === 'solar-indices')).toBeDefined();
+      expect(result.current.find((c) => c.id === 'band-BAND_80M')).toBeDefined();
+      expect(result.current.find((c) => c.id === 'band-BAND_40M')).toBeDefined();
+      expect(result.current.find((c) => c.id === 'band-BAND_20M')).toBeDefined();
     });
 
     it('should return only solar card when bands missing', () => {
@@ -466,7 +447,7 @@ describe('useDashboardCards', () => {
       expect(result.current[0].id).toBe('solar-indices');
     });
 
-    it('should return only band card when solar missing', () => {
+    it('should return only individual band cards when solar missing', () => {
       const dashboardData: DashboardData = {
         propagation: createMockPropagationResponse({
           solarIndices: undefined,
@@ -474,8 +455,12 @@ describe('useDashboardCards', () => {
       };
       const { result } = renderHook(() => useDashboardCards(dashboardData));
 
-      expect(result.current).toHaveLength(1);
-      expect(result.current[0].id).toBe('band-conditions');
+      // 3 individual band cards from default mock
+      expect(result.current).toHaveLength(3);
+      expect(result.current.every((c) => c.id.startsWith('band-BAND_'))).toBe(true);
+      expect(result.current.find((c) => c.id === 'band-BAND_80M')).toBeDefined();
+      expect(result.current.find((c) => c.id === 'band-BAND_40M')).toBeDefined();
+      expect(result.current.find((c) => c.id === 'band-BAND_20M')).toBeDefined();
     });
 
     it('should filter null configs correctly', () => {

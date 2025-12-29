@@ -26,17 +26,32 @@ function SolarIndicesHelpContent() {
 
 /**
  * Band Conditions Help Content
+ *
+ * Rating definitions based on HamQSL/N0NBH calculations:
+ * @see https://www.hamqsl.com/FAQ.html
+ * @see https://www.sdra.do/en/2024/04/25/entendiendo-el-banner-de-condiciones-en-las-bandas-de-hf/
  */
 function BandConditionsHelpContent() {
   return (
     <div className="help-content">
       <p>
-        Current propagation quality for each HF amateur radio band, with separate day and night predictions rated as
-        Good, Fair, or Poor.
+        Each HF band is displayed as an individual card, sorted by propagation quality. Bands with the best conditions
+        appear first on the dashboard.
       </p>
+      <ul>
+        <li>
+          <strong>Good:</strong> Long-distance DX via multiple ionospheric hops
+        </li>
+        <li>
+          <strong>Fair:</strong> Regional contacts possible with 1-2 hops
+        </li>
+        <li>
+          <strong>Poor:</strong> Skywave propagation largely unavailable
+        </li>
+      </ul>
       <p>
-        <strong>Hot when:</strong> Multiple bands showing Good conditions, especially the higher bands (15m, 10m) which
-        indicate strong solar activity.
+        <strong>Hot when:</strong> Band shows Good conditions, indicating strong ionospheric support for long-distance
+        contacts.
       </p>
     </div>
   );
@@ -52,7 +67,7 @@ const solarIndicesHelp: HelpDefinition = {
 };
 
 const bandConditionsHelp: HelpDefinition = {
-  id: 'band-conditions',
+  id: 'band-condition',
   title: 'Band Conditions',
   icon: <Radio size={16} />,
   order: 20,
