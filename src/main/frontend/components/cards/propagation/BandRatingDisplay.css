@@ -1,0 +1,134 @@
+/**
+ * BandRatingDisplay - Styles for individual band condition cards.
+ *
+ * Provides compact, centered display of band propagation rating.
+ * Rating badge styles extracted from BandConditionsTable.css.
+ */
+
+/* Container for band rating display - optically centered (above mathematical center) */
+.band-rating-display {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  min-height: 100%;
+  flex: 1;
+  /* Asymmetric padding: ~40/60 ratio for optical centering */
+  padding: calc(var(--spacing-unit) * 1.5) calc(var(--spacing-unit) * 1) calc(var(--spacing-unit) * 3);
+  text-align: center;
+}
+
+/* Styled container similar to Solar Indices index-item */
+.band-condition-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(var(--spacing-unit) * 1);
+  padding: calc(var(--spacing-unit) * 2);
+  background: var(--surface-color);
+  border-radius: var(--border-radius);
+  border: 1px solid var(--border-color);
+  width: 100%;
+  max-width: 200px;
+}
+
+/* Small label above the rating */
+.condition-label {
+  font-size: 0.6875rem;
+  color: var(--text-secondary);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+/* Prominent rating section */
+.rating-prominent {
+  display: flex;
+  justify-content: center;
+}
+
+/* Frequency range display */
+.frequency-range {
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  font-family: var(--font-mono, monospace);
+  letter-spacing: 0.025em;
+}
+
+/* Rating badge base styles */
+.rating-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: calc(var(--spacing-unit) * 0.5);
+  padding: calc(var(--spacing-unit) * 0.5) calc(var(--spacing-unit) * 1);
+  border-radius: calc(var(--border-radius) * 2);
+  font-weight: 500;
+  font-size: 0.8125rem;
+  text-transform: capitalize;
+}
+
+/* Large variant for prominent display */
+.rating-badge--large {
+  padding: calc(var(--spacing-unit) * 1) calc(var(--spacing-unit) * 2);
+  font-size: 1.125rem;
+  gap: calc(var(--spacing-unit) * 0.75);
+}
+
+.rating-badge--large .rating-icon {
+  font-size: 1.25rem;
+}
+
+/* Rating icon container */
+.rating-icon {
+  display: flex;
+  align-items: center;
+  font-size: 0.9375rem;
+  font-weight: bold;
+}
+
+/* Rating text */
+.rating-text {
+  font-weight: 600;
+}
+
+/* Rating color variants */
+.rating-good {
+  background: rgba(76, 175, 80, 0.15);
+  color: #2e7d32;
+  border: 1px solid rgba(76, 175, 80, 0.3);
+}
+
+.rating-fair {
+  background: rgba(255, 152, 0, 0.15);
+  color: #ef6c00;
+  border: 1px solid rgba(255, 152, 0, 0.3);
+}
+
+.rating-poor {
+  background: rgba(244, 67, 54, 0.15);
+  color: #c62828;
+  border: 1px solid rgba(244, 67, 54, 0.3);
+}
+
+.rating-unknown {
+  background: rgba(158, 158, 158, 0.15);
+  color: #616161;
+  border: 1px solid rgba(158, 158, 158, 0.3);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .band-rating-display {
+    padding: calc(var(--spacing-unit) * 0.75);
+  }
+
+  .band-condition-container {
+    padding: calc(var(--spacing-unit) * 1.5);
+    max-width: 180px;
+  }
+
+  .rating-badge--large {
+    padding: calc(var(--spacing-unit) * 0.75) calc(var(--spacing-unit) * 1.5);
+    font-size: 1rem;
+  }
+}

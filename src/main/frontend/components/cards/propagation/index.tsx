@@ -10,10 +10,12 @@ import { Sun, Radio } from 'lucide-react';
 import { registerCard } from '../CardRegistry';
 import type { CardDefinition, DashboardData } from '../types';
 import type { ActivityCardConfig } from 'Frontend/types/activity';
+import type BandCondition from 'Frontend/generated/io/nextskip/propagation/model/BandCondition';
 import { ActivityCard } from '../../activity';
 import { calculatePriority, priorityToHotness } from '../../activity/usePriorityCalculation';
+import { formatBandName } from 'Frontend/utils/bandConditions';
 import SolarIndicesContent from './SolarIndicesContent';
-import BandConditionsContent, { BandConditionsLegend } from './BandConditionsContent';
+import { BandRatingDisplay } from './BandRatingDisplay';
 
 /**
  * Solar Indices Card Definition
@@ -87,69 +89,64 @@ const solarIndicesCard: CardDefinition = {
 };
 
 /**
- * Band Conditions Card Definition
+ * Band Condition Cards - Individual cards for each HF band.
+ *
+ * Creates separate cards for each band, allowing independent sorting
+ * based on individual band propagation quality.
+ *
+ * SOLID Compliance:
+ * - Single Responsibility: Each card represents one band's conditions
+ * - Open-Closed: New bands are automatically included from backend data
+ * - Liskov Substitution: All BandCondition implementations work with this card
+ * - Dependency Inversion: Depends on BandCondition abstraction from generated types
  */
-const bandConditionsCard: CardDefinition = {
+const bandConditionCards: CardDefinition = {
   canRender: (data: DashboardData) => {
     return !!(data.propagation?.bandConditions && data.propagation.bandConditions.length > 0);
   },
 
-  createConfig: (data: DashboardData) => {
+  createConfig: (data: DashboardData): ActivityCardConfig[] | null => {
     const bandConditions = data.propagation?.bandConditions;
     if (!bandConditions || bandConditions.length === 0) return null;
 
-    // Calculate average score from all bands
-    const validConditions = bandConditions.filter((c) => c !== undefined);
-    const avgScore = validConditions.reduce((sum, c) => sum + (c?.score ?? 0), 0) / validConditions.length;
+    // Filter valid conditions and create individual card for each band
+    return bandConditions
+      .filter((c): c is BandCondition => c !== undefined)
+      .map((condition) => {
+        // Use backend score directly (0-100 from BandCondition.getScore())
+        const score = condition.score ?? 0;
 
-    // Count favorable bands
-    const favorableCount = validConditions.filter((c) => c?.favorable === true).length;
-    const isFavorable = favorableCount > validConditions.length / 2;
-
-    // Use best rating among bands
-    const hasGood = validConditions.some((c) => c?.rating === 'GOOD');
-    const hasFair = validConditions.some((c) => c?.rating === 'FAIR');
-    const bestRating = hasGood ? ('GOOD' as const) : hasFair ? ('FAIR' as const) : ('POOR' as const);
-
-    const priority = calculatePriority({
-      favorable: isFavorable,
-      score: avgScore,
-      rating: bestRating,
-    });
-
-    const hotness = priorityToHotness(priority);
-
-    return {
-      id: 'band-conditions',
-      type: 'band-conditions',
-      size: 'tall',
-      priority,
-      hotness,
-    };
+        return {
+          id: `band-${condition.band}`,
+          type: 'band-condition',
+          size: 'standard' as const,
+          priority: score,
+          hotness: priorityToHotness(score),
+        };
+      });
   },
 
   render: (data: DashboardData, config: ActivityCardConfig) => {
     const bandConditions = data.propagation?.bandConditions;
-    if (!bandConditions || bandConditions.length === 0) return null;
+    if (!bandConditions) return null;
 
-    const validBandConditions = bandConditions.filter(
-      (c): c is import('Frontend/generated/io/nextskip/propagation/model/BandCondition').default => c !== undefined,
-    );
+    // Find band by matching config ID
+    const condition = bandConditions.find((c) => c && `band-${c.band}` === config.id);
+    if (!condition) return null;
 
     return (
       <ActivityCard
         config={config}
-        title="HF Band Conditions"
+        title={formatBandName(condition.band ?? '')}
         icon={<Radio size={20} />}
-        subtitle="Current propagation by amateur radio band"
-        footer={<BandConditionsLegend />}
+        subtitle="Band Forecast"
       >
-        <BandConditionsContent bandConditions={validBandConditions} />
+        <BandRatingDisplay condition={condition} />
       </ActivityCard>
     );
   },
 };
 
-// Register both cards with the global registry
+// Register cards with the global registry
 registerCard(solarIndicesCard);
-registerCard(bandConditionsCard);
+registerCard(bandConditionCards);

@@ -34,6 +34,7 @@ export type ActivityType =
   | 'propagation'
   | 'solar-indices'
   | 'band-conditions'
+  | 'band-condition'
   | 'pota-activations'
   | 'sota-activations'
   | 'contests'
