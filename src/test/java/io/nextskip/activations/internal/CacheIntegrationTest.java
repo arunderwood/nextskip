@@ -5,6 +5,7 @@ import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
 import io.github.resilience4j.retry.RetryRegistry;
 import io.nextskip.activations.model.Activation;
+import io.nextskip.test.AbstractIntegrationTest;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -12,15 +13,10 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
-import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.cache.CacheManager;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.web.reactive.function.client.WebClient;
-import org.testcontainers.postgresql.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.util.List;
 
@@ -37,16 +33,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * </ul>
  */
 @SpringBootTest
-@Testcontainers
-@ActiveProfiles("test")
-class CacheIntegrationTest {
-
-    @Container
-    @ServiceConnection
-    static PostgreSQLContainer postgres = new PostgreSQLContainer("postgres:17")
-            .withDatabaseName("nextskip_test")
-            .withUsername("test")
-            .withPassword("test");
+class CacheIntegrationTest extends AbstractIntegrationTest {
 
     private static WireMockServer wireMockServer;
 

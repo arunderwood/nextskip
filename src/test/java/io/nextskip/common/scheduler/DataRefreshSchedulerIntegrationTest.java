@@ -1,15 +1,11 @@
 package io.nextskip.common.scheduler;
 
 import io.nextskip.common.client.RefreshableDataSource;
+import io.nextskip.test.AbstractIntegrationTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
-import org.testcontainers.postgresql.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.util.List;
 
@@ -26,19 +22,10 @@ import static org.junit.jupiter.api.Assertions.*;
  * </ul>
  */
 @SpringBootTest
-@Testcontainers
-@ActiveProfiles("test")
 @TestPropertySource(properties = {
     "nextskip.refresh.eager-load=false"  // Disable eager loading for test stability
 })
-class DataRefreshSchedulerIntegrationTest {
-
-    @Container
-    @ServiceConnection
-    static PostgreSQLContainer postgres = new PostgreSQLContainer("postgres:17")
-            .withDatabaseName("nextskip_test")
-            .withUsername("test")
-            .withPassword("test");
+class DataRefreshSchedulerIntegrationTest extends AbstractIntegrationTest {
 
     @Autowired
     private DataRefreshScheduler scheduler;

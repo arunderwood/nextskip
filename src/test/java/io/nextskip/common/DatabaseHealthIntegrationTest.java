@@ -2,14 +2,11 @@ package io.nextskip.common;
 
 import io.nextskip.common.model.DatabaseHealth;
 import io.nextskip.common.repository.DatabaseHealthRepository;
+import io.nextskip.test.AbstractIntegrationTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
-import org.springframework.test.context.ActiveProfiles;
-import org.testcontainers.postgresql.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
@@ -30,18 +27,14 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  *   <li>Liquibase migrations run on startup</li>
  *   <li>JPA repository operations work correctly</li>
  * </ul>
+ *
+ * <p>Uses {@code @Transactional} to ensure test isolation - each test runs in a
+ * transaction that is rolled back after completion, preventing data leakage
+ * between tests when using a shared database container.
  */
 @SpringBootTest
-@Testcontainers
-@ActiveProfiles("test")
-class DatabaseHealthIntegrationTest {
-
-    @Container
-    @ServiceConnection
-    static PostgreSQLContainer postgres = new PostgreSQLContainer("postgres:17")
-            .withDatabaseName("nextskip_test")
-            .withUsername("test")
-            .withPassword("test");
+@Transactional
+class DatabaseHealthIntegrationTest extends AbstractIntegrationTest {
 
     @Autowired
     private DataSource dataSource;

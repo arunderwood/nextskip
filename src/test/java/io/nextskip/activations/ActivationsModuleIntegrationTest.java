@@ -6,14 +6,10 @@ import io.nextskip.activations.api.ActivationsService;
 import io.nextskip.activations.internal.ActivationsServiceImpl;
 import io.nextskip.activations.internal.PotaClient;
 import io.nextskip.activations.internal.SotaClient;
+import io.nextskip.test.AbstractIntegrationTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
-import org.springframework.test.context.ActiveProfiles;
-import org.testcontainers.postgresql.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -24,16 +20,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * Tests with real API clients to verify the full integration stack.
  */
 @SpringBootTest
-@Testcontainers
-@ActiveProfiles("test")
-class ActivationsModuleIntegrationTest {
-
-    @Container
-    @ServiceConnection
-    static PostgreSQLContainer postgres = new PostgreSQLContainer("postgres:17")
-            .withDatabaseName("nextskip_test")
-            .withUsername("test")
-            .withPassword("test");
+class ActivationsModuleIntegrationTest extends AbstractIntegrationTest {
 
     @Autowired
     private ActivationsEndpoint endpoint;
