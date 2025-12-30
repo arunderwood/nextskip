@@ -1,0 +1,113 @@
+databaseChangeLog:
+  - changeSet:
+      id: 006-create-activations-table
+      author: nextskip
+      comment: Activation spots table with denormalized location fields for POTA/SOTA
+      changes:
+        - createTable:
+            tableName: activations
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: spot_id
+                  type: varchar(100)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: activator_callsign
+                  type: varchar(20)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: type
+                  type: varchar(10)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: frequency
+                  type: double precision
+              - column:
+                  name: mode
+                  type: varchar(20)
+              - column:
+                  name: spotted_at
+                  type: timestamp with time zone
+                  constraints:
+                    nullable: false
+              - column:
+                  name: qso_count
+                  type: int
+              - column:
+                  name: source
+                  type: varchar(50)
+                  constraints:
+                    nullable: false
+              # Common location fields (from ActivationLocation interface)
+              - column:
+                  name: location_reference
+                  type: varchar(50)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: location_name
+                  type: varchar(200)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: location_region_code
+                  type: varchar(10)
+              # Park-specific fields (null for SOTA activations)
+              - column:
+                  name: park_country_code
+                  type: varchar(10)
+              - column:
+                  name: park_grid
+                  type: varchar(10)
+              - column:
+                  name: park_latitude
+                  type: double precision
+              - column:
+                  name: park_longitude
+                  type: double precision
+              # Summit-specific fields (null for POTA activations)
+              - column:
+                  name: summit_association_code
+                  type: varchar(20)
+        - addUniqueConstraint:
+            tableName: activations
+            columnNames: spot_id, source
+            constraintName: uk_activation_spot_source
+        - createIndex:
+            indexName: idx_activations_spotted_at
+            tableName: activations
+            columns:
+              - column:
+                  name: spotted_at
+                  descending: true
+        - createIndex:
+            indexName: idx_activations_type_spotted
+            tableName: activations
+            columns:
+              - column:
+                  name: type
+              - column:
+                  name: spotted_at
+                  descending: true
+        - createIndex:
+            indexName: idx_activations_callsign
+            tableName: activations
+            columns:
+              - column:
+                  name: activator_callsign
+        - sql:
+            comment: CHECK constraint for valid ActivationType enum values
+            sql: >
+              ALTER TABLE activations
+              ADD CONSTRAINT chk_activations_type_valid
+              CHECK (type IN ('POTA', 'SOTA'))

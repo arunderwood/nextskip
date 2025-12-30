@@ -1,0 +1,72 @@
+databaseChangeLog:
+  - changeSet:
+      id: 003-create-band-conditions-table
+      author: nextskip
+      comment: Band propagation conditions table with enum CHECK constraints
+      changes:
+        - createTable:
+            tableName: band_conditions
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: band
+                  type: varchar(20)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: rating
+                  type: varchar(10)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: confidence
+                  type: double precision
+                  constraints:
+                    nullable: false
+              - column:
+                  name: notes
+                  type: varchar(500)
+              - column:
+                  name: recorded_at
+                  type: timestamp with time zone
+                  constraints:
+                    nullable: false
+        - createIndex:
+            indexName: idx_band_conditions_band
+            tableName: band_conditions
+            columns:
+              - column:
+                  name: band
+        - createIndex:
+            indexName: idx_band_conditions_recorded_at
+            tableName: band_conditions
+            columns:
+              - column:
+                  name: recorded_at
+                  descending: true
+        - sql:
+            comment: CHECK constraint for valid FrequencyBand enum values
+            sql: >
+              ALTER TABLE band_conditions
+              ADD CONSTRAINT chk_band_conditions_band_valid
+              CHECK (band IN ('BAND_160M', 'BAND_80M', 'BAND_60M', 'BAND_40M',
+                              'BAND_30M', 'BAND_20M', 'BAND_17M', 'BAND_15M',
+                              'BAND_12M', 'BAND_10M', 'BAND_6M', 'BAND_2M'))
+        - sql:
+            comment: CHECK constraint for valid BandConditionRating enum values
+            sql: >
+              ALTER TABLE band_conditions
+              ADD CONSTRAINT chk_band_conditions_rating_valid
+              CHECK (rating IN ('GOOD', 'FAIR', 'POOR', 'UNKNOWN'))
+        - sql:
+            comment: CHECK constraint for confidence range 0.0-1.0
+            sql: >
+              ALTER TABLE band_conditions
+              ADD CONSTRAINT chk_band_conditions_confidence_range
+              CHECK (confidence >= 0.0 AND confidence <= 1.0)

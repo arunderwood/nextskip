@@ -121,6 +121,9 @@ dependencies {
     runtimeOnly libs.postgresql
     implementation libs.spring.boot.starter.liquibase
 
+    // SpotBugs annotations (for @SuppressFBWarnings)
+    compileOnly 'com.github.spotbugs:spotbugs-annotations:4.9.8'
+
     // Testing
     testImplementation libs.spring.boot.starter.test
     testImplementation libs.reactor.test
