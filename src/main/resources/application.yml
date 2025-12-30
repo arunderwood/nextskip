@@ -49,6 +49,7 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: false
+        generate_statistics: true  # Enable Hibernate metrics via hibernate-micrometer
 
   # Liquibase Configuration
   liquibase:
@@ -134,6 +135,21 @@ management:
     export:
       prometheus:
         enabled: true
+    data:
+      repository:
+        autotime:
+          enabled: true  # Enable Spring Data repository method timing
+
+# JDBC Observability (datasource-micrometer)
+jdbc:
+  datasource-proxy:
+    enabled: true
+    query:
+      enable-logging: false  # Set true for debug query logging
+  includes:
+    - CONNECTION
+    - QUERY
+    - FETCH
 
 # Logging Configuration
 logging:
