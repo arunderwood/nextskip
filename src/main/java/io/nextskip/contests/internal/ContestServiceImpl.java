@@ -1,9 +1,10 @@
 package io.nextskip.contests.internal;
 
+import com.github.benmanes.caffeine.cache.LoadingCache;
+import io.nextskip.common.config.CacheConfig;
 import io.nextskip.common.model.EventStatus;
 import io.nextskip.contests.api.ContestService;
 import io.nextskip.contests.api.ContestsResponse;
-import io.nextskip.contests.internal.dto.ContestICalDto;
 import io.nextskip.contests.model.Contest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,81 +14,37 @@ import org.springframework.stereotype.Service;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
-import java.util.Set;
 
 /**
  * Implementation of ContestService.
  *
- * <p>Fetches contest data from the WA7BNM iCal feed and converts it into
- * domain models for the dashboard.
+ * <p>Reads contest data from the LoadingCache backed by the database.
+ * Cache is populated by ContestRefreshTask which fetches from the
+ * WA7BNM iCal feed, saves to DB, then triggers async cache refresh.
  */
 @Service
 public class ContestServiceImpl implements ContestService {
 
     private static final Logger LOG = LoggerFactory.getLogger(ContestServiceImpl.class);
 
-    private final ContestCalendarClient calendarClient;
+    private final LoadingCache<String, List<Contest>> contestsCache;
 
     @Autowired
-    public ContestServiceImpl(ContestCalendarClient calendarClient) {
-        this.calendarClient = calendarClient;
+    public ContestServiceImpl(LoadingCache<String, List<Contest>> contestsCache) {
+        this.contestsCache = contestsCache;
     }
 
     @Override
     public List<Contest> getUpcomingContests() {
-        LOG.debug("Fetching upcoming contests");
+        LOG.debug("Fetching upcoming contests from cache");
 
-        // Fetch raw iCal data from WA7BNM
-        List<ContestICalDto> dtos = fetchContestDtos();
-
-        // Convert DTOs to domain models
-        List<Contest> contests = dtos.stream()
-                .map(this::toContest)
-                .toList();
-
-        LOG.info("Retrieved {} upcoming contests", contests.size());
-        return contests;
-    }
-
-    /**
-     * Fetch contest DTOs from the calendar client.
-     *
-     * <p>Primary error handling via ContestCalendarClient's Resilience4j annotations.
-     * Service-level fallback ensures dashboard remains functional.
-     *
-     * @return list of contest DTOs, or empty list on error
-     */
-    @SuppressWarnings("PMD.AvoidCatchingGenericException")
-    private List<ContestICalDto> fetchContestDtos() {
-        try {
-            return calendarClient.fetch();
-        } catch (RuntimeException e) {
-            LOG.error("Failed to fetch contests from calendar: {}", e.getMessage());
-            return List.of();
+        List<Contest> contests = contestsCache.get(CacheConfig.CACHE_KEY);
+        if (contests == null) {
+            contests = List.of();
         }
-    }
 
-    /**
-     * Convert a contest DTO to a domain model.
-     *
-     * <p>Since the iCal feed doesn't include metadata like bands, modes, or sponsor,
-     * we populate these fields with defaults. Future enhancement: scrape the details
-     * page URL to extract this information.
-     *
-     * @param dto the DTO from iCal parsing
-     * @return the domain model
-     */
-    private Contest toContest(ContestICalDto dto) {
-        return new Contest(
-                dto.summary(),
-                dto.startTime(),
-                dto.endTime(),
-                Set.of(), // bands - not available in iCal feed (TODO: scrape from details page)
-                Set.of(), // modes - not available in iCal feed (TODO: scrape from details page)
-                null,     // sponsor - not available in iCal feed (TODO: scrape from details page)
-                dto.detailsUrl(), // calendar source URL
-                null      // official rules URL - not available in iCal feed (TODO: scrape from details page)
-        );
+        LOG.info("Retrieved {} upcoming contests from cache", contests.size());
+        return contests;
     }
 
     @Override

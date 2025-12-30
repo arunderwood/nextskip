@@ -1,5 +1,6 @@
 package io.nextskip.activations.internal.scheduler;
 
+import com.github.benmanes.caffeine.cache.LoadingCache;
 import com.github.kagkarlsson.scheduler.task.helper.RecurringTask;
 import com.github.kagkarlsson.scheduler.task.helper.Tasks;
 import com.github.kagkarlsson.scheduler.task.schedule.FixedDelay;
@@ -8,6 +9,7 @@ import io.nextskip.activations.model.Activation;
 import io.nextskip.activations.model.ActivationType;
 import io.nextskip.activations.persistence.entity.ActivationEntity;
 import io.nextskip.activations.persistence.repository.ActivationRepository;
+import io.nextskip.common.config.CacheConfig;
 import io.nextskip.common.scheduler.DataRefreshException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,8 +24,8 @@ import java.util.List;
 /**
  * Recurring task for refreshing SOTA activation data.
  *
- * <p>Fetches recent SOTA spots from the API and persists them to the database.
- * Old data is automatically cleaned up to prevent unbounded growth.
+ * <p>Fetches recent SOTA spots from the API, persists them to the database,
+ * and triggers an async cache refresh. Old data is automatically cleaned up.
  *
  * <p>Task runs every 1 minute (matching the original refresh interval).
  */
@@ -38,31 +40,41 @@ public class SotaRefreshTask {
     /**
      * Creates the recurring task bean for SOTA data refresh.
      *
-     * @param sotaClient the SOTA API client
-     * @param repository the activation repository for persistence
+     * @param sotaClient       the SOTA API client
+     * @param repository       the activation repository for persistence
+     * @param activationsCache the LoadingCache to refresh after DB write
      * @return the configured recurring task
      */
     @Bean
     public RecurringTask<Void> sotaRecurringTask(
             SotaClient sotaClient,
-            ActivationRepository repository) {
+            ActivationRepository repository,
+            LoadingCache<String, List<Activation>> activationsCache) {
 
         return Tasks.recurring(TASK_NAME, FixedDelay.of(REFRESH_INTERVAL))
                 .execute((taskInstance, executionContext) ->
-                        executeRefresh(sotaClient, repository));
+                        executeRefresh(sotaClient, repository, activationsCache));
     }
 
     /**
      * Executes the SOTA data refresh.
      *
+     * <p>Fetches data from API, saves to database, then triggers async cache refresh.
+     * The cache refresh is non-blocking - old cached value is served during refresh.
+     *
      * <p>This method is package-private to allow testing.
      *
-     * @param sotaClient the SOTA API client
-     * @param repository the activation repository
+     * @param sotaClient       the SOTA API client
+     * @param repository       the activation repository
+     * @param activationsCache the cache to refresh
      */
     @Transactional
     @SuppressWarnings("PMD.AvoidCatchingGenericException") // API client can throw various exceptions
-    void executeRefresh(SotaClient sotaClient, ActivationRepository repository) {
+    void executeRefresh(
+            SotaClient sotaClient,
+            ActivationRepository repository,
+            LoadingCache<String, List<Activation>> activationsCache) {
+
         LOG.debug("Executing SOTA refresh task");
 
         try {
@@ -80,7 +92,10 @@ public class SotaRefreshTask {
             Instant cutoff = Instant.now().minus(DATA_RETENTION);
             int deleted = repository.deleteBySpottedAtBefore(cutoff);
 
-            LOG.info("SOTA refresh complete: {} activations saved, {} old records deleted",
+            // Trigger async cache refresh (non-blocking)
+            activationsCache.refresh(CacheConfig.CACHE_KEY);
+
+            LOG.info("SOTA refresh complete: {} activations saved, {} old records deleted, cache refresh triggered",
                     entities.size(), deleted);
 
         } catch (Exception e) {

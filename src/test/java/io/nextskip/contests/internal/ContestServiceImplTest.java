@@ -1,8 +1,8 @@
 package io.nextskip.contests.internal;
 
-import io.nextskip.contests.internal.dto.ContestICalDto;
+import com.github.benmanes.caffeine.cache.LoadingCache;
+import io.nextskip.common.config.CacheConfig;
 import io.nextskip.contests.model.Contest;
-import io.nextskip.common.client.ExternalApiException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -12,6 +12,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -21,46 +22,41 @@ import static org.mockito.Mockito.when;
 
 /**
  * Unit tests for ContestServiceImpl.
+ *
+ * Tests the service layer that reads contest data from the LoadingCache.
  */
 @ExtendWith(MockitoExtension.class)
 class ContestServiceImplTest {
 
     @Mock
-    private ContestCalendarClient calendarClient;
+    private LoadingCache<String, List<Contest>> contestsCache;
 
     private ContestServiceImpl service;
 
     @BeforeEach
     void setUp() {
-        service = new ContestServiceImpl(calendarClient);
+        service = new ContestServiceImpl(contestsCache);
     }
 
     @Test
     void testGetUpcomingContests_Success() {
         Instant now = Instant.now();
-        List<ContestICalDto> dtos = List.of(
-                new ContestICalDto(
-                        "ARRL 10-Meter Contest",
+        List<Contest> contests = List.of(
+                createContest("ARRL 10-Meter Contest",
                         now.plus(24, ChronoUnit.HOURS),
-                        now.plus(48, ChronoUnit.HOURS),
-                        "https://contestcalendar.com/arrl-10m"
-                ),
-                new ContestICalDto(
-                        "CQ WW DX CW",
+                        now.plus(48, ChronoUnit.HOURS)),
+                createContest("CQ WW DX CW",
                         now.plus(72, ChronoUnit.HOURS),
-                        now.plus(120, ChronoUnit.HOURS),
-                        "https://contestcalendar.com/cqww"
-                )
+                        now.plus(120, ChronoUnit.HOURS))
         );
 
-        when(calendarClient.fetch()).thenReturn(dtos);
+        when(contestsCache.get(CacheConfig.CACHE_KEY)).thenReturn(contests);
 
         List<Contest> result = service.getUpcomingContests();
 
         assertNotNull(result);
         assertEquals(2, result.size());
 
-        // Verify first contest
         Contest contest1 = result.stream()
                 .filter(c -> c.name().contains("10-Meter"))
                 .findFirst()
@@ -68,128 +64,54 @@ class ContestServiceImplTest {
         assertEquals("ARRL 10-Meter Contest", contest1.name());
         assertNotNull(contest1.startTime());
         assertNotNull(contest1.endTime());
-        assertEquals("https://contestcalendar.com/arrl-10m", contest1.calendarSourceUrl());
 
-        // Bands, modes, sponsor, officialRulesUrl should be empty/null (not available from iCal)
-        assertTrue(contest1.bands().isEmpty());
-        assertTrue(contest1.modes().isEmpty());
-
-        verify(calendarClient).fetch();
+        verify(contestsCache).get(CacheConfig.CACHE_KEY);
     }
 
     @Test
     void testGetUpcomingContests_Empty() {
-        when(calendarClient.fetch()).thenReturn(List.of());
+        when(contestsCache.get(CacheConfig.CACHE_KEY)).thenReturn(List.of());
 
         List<Contest> result = service.getUpcomingContests();
 
         assertNotNull(result);
         assertTrue(result.isEmpty());
 
-        verify(calendarClient).fetch();
+        verify(contestsCache).get(CacheConfig.CACHE_KEY);
     }
 
     @Test
-    void testGetUpcomingContests_ClientException() {
-        when(calendarClient.fetch()).thenThrow(new ExternalApiException("WA7BNM", "Connection failed"));
+    void testGetUpcomingContests_NullFromCache() {
+        when(contestsCache.get(CacheConfig.CACHE_KEY)).thenReturn(null);
 
         List<Contest> result = service.getUpcomingContests();
 
-        // Service should catch exception and return empty list (graceful degradation)
+        // Should handle null gracefully
         assertNotNull(result);
         assertTrue(result.isEmpty());
 
-        verify(calendarClient).fetch();
-    }
-
-    @Test
-    void testGetUpcomingContests_RuntimeException() {
-        when(calendarClient.fetch()).thenThrow(new RuntimeException("Unexpected error"));
-
-        List<Contest> result = service.getUpcomingContests();
-
-        // Service should catch exception and return empty list (graceful degradation)
-        assertNotNull(result);
-        assertTrue(result.isEmpty());
-
-        verify(calendarClient).fetch();
-    }
-
-    @Test
-    void testGetUpcomingContests_ContestConversion() {
-        Instant start = Instant.now().plus(1, ChronoUnit.HOURS);
-        Instant end = Instant.now().plus(25, ChronoUnit.HOURS);
-
-        List<ContestICalDto> dtos = List.of(
-                new ContestICalDto(
-                        "Test Contest",
-                        start,
-                        end,
-                        "https://example.com/contest"
-                )
-        );
-
-        when(calendarClient.fetch()).thenReturn(dtos);
-
-        List<Contest> result = service.getUpcomingContests();
-
-        assertNotNull(result);
-        assertEquals(1, result.size());
-
-        Contest contest = result.get(0);
-        assertEquals("Test Contest", contest.name());
-        assertEquals(start, contest.startTime());
-        assertEquals(end, contest.endTime());
-        assertEquals("https://example.com/contest", contest.calendarSourceUrl());
-
-        // Verify default values for unavailable iCal fields
-        assertNotNull(contest.bands());
-        assertTrue(contest.bands().isEmpty());
-        assertNotNull(contest.modes());
-        assertTrue(contest.modes().isEmpty());
+        verify(contestsCache).get(CacheConfig.CACHE_KEY);
     }
 
     @Test
     void testGetUpcomingContests_MultipleContests() {
         Instant now = Instant.now();
-        List<ContestICalDto> dtos = List.of(
-                new ContestICalDto("Contest 1", now.plus(1, ChronoUnit.HOURS), now.plus(25, ChronoUnit.HOURS), null),
-                new ContestICalDto("Contest 2", now.plus(48, ChronoUnit.HOURS), now.plus(72, ChronoUnit.HOURS), null),
-                new ContestICalDto("Contest 3", now.plus(96, ChronoUnit.HOURS), now.plus(120, ChronoUnit.HOURS), null)
+        List<Contest> contests = List.of(
+                createContest("Contest 1", now.plus(1, ChronoUnit.HOURS), now.plus(25, ChronoUnit.HOURS)),
+                createContest("Contest 2", now.plus(48, ChronoUnit.HOURS), now.plus(72, ChronoUnit.HOURS)),
+                createContest("Contest 3", now.plus(96, ChronoUnit.HOURS), now.plus(120, ChronoUnit.HOURS))
         );
 
-        when(calendarClient.fetch()).thenReturn(dtos);
+        when(contestsCache.get(CacheConfig.CACHE_KEY)).thenReturn(contests);
 
         List<Contest> result = service.getUpcomingContests();
 
         assertEquals(3, result.size());
 
-        // All contests should be converted
+        // All contests should be present
         assertTrue(result.stream().anyMatch(c -> "Contest 1".equals(c.name())));
         assertTrue(result.stream().anyMatch(c -> "Contest 2".equals(c.name())));
         assertTrue(result.stream().anyMatch(c -> "Contest 3".equals(c.name())));
-    }
-
-    @Test
-    void testGetUpcomingContests_NullDetailsUrl() {
-        Instant start = Instant.now().plus(1, ChronoUnit.HOURS);
-        Instant end = start.plus(24, ChronoUnit.HOURS);
-
-        List<ContestICalDto> dtos = List.of(
-                new ContestICalDto("Contest Without URL", start, end, null)
-        );
-
-        when(calendarClient.fetch()).thenReturn(dtos);
-
-        List<Contest> result = service.getUpcomingContests();
-
-        assertNotNull(result);
-        assertEquals(1, result.size());
-
-        // Should handle null URL gracefully
-        Contest contest = result.get(0);
-        assertEquals("Contest Without URL", contest.name());
-        // calendarSourceUrl will be null
     }
 
     // ========== getContestsResponse() tests ==========
@@ -197,22 +119,22 @@ class ContestServiceImplTest {
     @Test
     void testGetContestsResponse_CountsActiveContests() {
         Instant now = Instant.now();
-        List<ContestICalDto> dtos = List.of(
+        List<Contest> contests = List.of(
                 // Active contest (started 1 hour ago, ends in 23 hours)
-                new ContestICalDto("Active Contest 1",
+                createContest("Active Contest 1",
                         now.minus(1, ChronoUnit.HOURS),
-                        now.plus(23, ChronoUnit.HOURS), null),
+                        now.plus(23, ChronoUnit.HOURS)),
                 // Active contest (started 12 hours ago, ends in 12 hours)
-                new ContestICalDto("Active Contest 2",
+                createContest("Active Contest 2",
                         now.minus(12, ChronoUnit.HOURS),
-                        now.plus(12, ChronoUnit.HOURS), null),
+                        now.plus(12, ChronoUnit.HOURS)),
                 // Upcoming contest (starts in 2 hours)
-                new ContestICalDto("Upcoming Contest",
+                createContest("Upcoming Contest",
                         now.plus(2, ChronoUnit.HOURS),
-                        now.plus(26, ChronoUnit.HOURS), null)
+                        now.plus(26, ChronoUnit.HOURS))
         );
 
-        when(calendarClient.fetch()).thenReturn(dtos);
+        when(contestsCache.get(CacheConfig.CACHE_KEY)).thenReturn(contests);
 
         io.nextskip.contests.api.ContestsResponse response = service.getContestsResponse();
 
@@ -224,26 +146,26 @@ class ContestServiceImplTest {
     @Test
     void testGetContestsResponse_CountsUpcomingWithin24Hours() {
         Instant now = Instant.now();
-        List<ContestICalDto> dtos = List.of(
+        List<Contest> contests = List.of(
                 // Upcoming within 24 hours (starts in 2 hours)
-                new ContestICalDto("Upcoming Soon 1",
+                createContest("Upcoming Soon 1",
                         now.plus(2, ChronoUnit.HOURS),
-                        now.plus(26, ChronoUnit.HOURS), null),
+                        now.plus(26, ChronoUnit.HOURS)),
                 // Upcoming within 24 hours (starts in 12 hours)
-                new ContestICalDto("Upcoming Soon 2",
+                createContest("Upcoming Soon 2",
                         now.plus(12, ChronoUnit.HOURS),
-                        now.plus(36, ChronoUnit.HOURS), null),
+                        now.plus(36, ChronoUnit.HOURS)),
                 // Upcoming but beyond 24 hours (starts in 48 hours)
-                new ContestICalDto("Upcoming Later",
+                createContest("Upcoming Later",
                         now.plus(48, ChronoUnit.HOURS),
-                        now.plus(72, ChronoUnit.HOURS), null),
+                        now.plus(72, ChronoUnit.HOURS)),
                 // Active contest (should not count as upcoming)
-                new ContestICalDto("Active Contest",
+                createContest("Active Contest",
                         now.minus(1, ChronoUnit.HOURS),
-                        now.plus(23, ChronoUnit.HOURS), null)
+                        now.plus(23, ChronoUnit.HOURS))
         );
 
-        when(calendarClient.fetch()).thenReturn(dtos);
+        when(contestsCache.get(CacheConfig.CACHE_KEY)).thenReturn(contests);
 
         io.nextskip.contests.api.ContestsResponse response = service.getContestsResponse();
 
@@ -256,15 +178,15 @@ class ContestServiceImplTest {
     @Test
     void testGetContestsResponse_CalculatesTotalCount() {
         Instant now = Instant.now();
-        List<ContestICalDto> dtos = List.of(
-                new ContestICalDto("Contest 1", now.plus(1, ChronoUnit.HOURS), now.plus(25, ChronoUnit.HOURS), null),
-                new ContestICalDto("Contest 2", now.plus(48, ChronoUnit.HOURS), now.plus(72, ChronoUnit.HOURS), null),
-                new ContestICalDto("Contest 3", now.plus(96, ChronoUnit.HOURS), now.plus(120, ChronoUnit.HOURS), null),
-                new ContestICalDto("Contest 4", now.plus(144, ChronoUnit.HOURS), now.plus(168, ChronoUnit.HOURS), null),
-                new ContestICalDto("Contest 5", now.plus(192, ChronoUnit.HOURS), now.plus(216, ChronoUnit.HOURS), null)
+        List<Contest> contests = List.of(
+                createContest("Contest 1", now.plus(1, ChronoUnit.HOURS), now.plus(25, ChronoUnit.HOURS)),
+                createContest("Contest 2", now.plus(48, ChronoUnit.HOURS), now.plus(72, ChronoUnit.HOURS)),
+                createContest("Contest 3", now.plus(96, ChronoUnit.HOURS), now.plus(120, ChronoUnit.HOURS)),
+                createContest("Contest 4", now.plus(144, ChronoUnit.HOURS), now.plus(168, ChronoUnit.HOURS)),
+                createContest("Contest 5", now.plus(192, ChronoUnit.HOURS), now.plus(216, ChronoUnit.HOURS))
         );
 
-        when(calendarClient.fetch()).thenReturn(dtos);
+        when(contestsCache.get(CacheConfig.CACHE_KEY)).thenReturn(contests);
 
         io.nextskip.contests.api.ContestsResponse response = service.getContestsResponse();
 
@@ -277,7 +199,7 @@ class ContestServiceImplTest {
     void testGetContestsResponse_SetsTimestamp() {
         Instant before = Instant.now();
 
-        when(calendarClient.fetch()).thenReturn(List.of());
+        when(contestsCache.get(CacheConfig.CACHE_KEY)).thenReturn(List.of());
 
         io.nextskip.contests.api.ContestsResponse response = service.getContestsResponse();
         Instant after = Instant.now();
@@ -288,5 +210,21 @@ class ContestServiceImplTest {
                 "Timestamp should be at or after test start");
         assertTrue(!response.lastUpdated().isAfter(after),
                 "Timestamp should be at or before test end");
+    }
+
+    /**
+     * Helper method to create a test Contest.
+     */
+    private Contest createContest(String name, Instant start, Instant end) {
+        return new Contest(
+                name,
+                start,
+                end,
+                Set.of(),
+                Set.of(),
+                null,   // sponsor
+                null,   // officialRulesUrl
+                "https://example.com/contest"  // calendarSourceUrl
+        );
     }
 }

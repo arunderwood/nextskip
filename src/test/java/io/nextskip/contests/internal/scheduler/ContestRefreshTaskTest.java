@@ -1,10 +1,13 @@
 package io.nextskip.contests.internal.scheduler;
 
+import com.github.benmanes.caffeine.cache.LoadingCache;
 import com.github.kagkarlsson.scheduler.task.ExecutionContext;
 import com.github.kagkarlsson.scheduler.task.TaskInstance;
 import com.github.kagkarlsson.scheduler.task.helper.RecurringTask;
+import io.nextskip.common.config.CacheConfig;
 import io.nextskip.contests.internal.ContestCalendarClient;
 import io.nextskip.contests.internal.dto.ContestICalDto;
+import io.nextskip.contests.model.Contest;
 import io.nextskip.contests.persistence.entity.ContestEntity;
 import io.nextskip.contests.persistence.repository.ContestRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -39,6 +42,9 @@ class ContestRefreshTaskTest {
     @Mock
     private ContestRepository repository;
 
+    @Mock
+    private LoadingCache<String, List<Contest>> contestsCache;
+
     private ContestRefreshTask task;
 
     @BeforeEach
@@ -48,7 +54,7 @@ class ContestRefreshTaskTest {
 
     @Test
     void testContestRefreshTask_ReturnsValidRecurringTask() {
-        RecurringTask<Void> recurringTask = task.contestRecurringTask(contestClient, repository);
+        RecurringTask<Void> recurringTask = task.contestRecurringTask(contestClient, repository, contestsCache);
 
         assertThat(recurringTask).isNotNull();
         assertThat(recurringTask.getName()).isEqualTo("contest-refresh");
@@ -60,7 +66,7 @@ class ContestRefreshTaskTest {
         List<ContestICalDto> dtos = createTestDtos();
         when(contestClient.fetch()).thenReturn(dtos);
 
-        RecurringTask<Void> recurringTask = task.contestRecurringTask(contestClient, repository);
+        RecurringTask<Void> recurringTask = task.contestRecurringTask(contestClient, repository, contestsCache);
         TaskInstance<Void> taskInstance = (TaskInstance<Void>) org.mockito.Mockito.mock(TaskInstance.class);
         ExecutionContext executionContext = org.mockito.Mockito.mock(ExecutionContext.class);
 
@@ -74,7 +80,7 @@ class ContestRefreshTaskTest {
         List<ContestICalDto> dtos = createTestDtos();
         when(contestClient.fetch()).thenReturn(dtos);
 
-        task.executeRefresh(contestClient, repository);
+        task.executeRefresh(contestClient, repository, contestsCache);
 
         verify(contestClient).fetch();
     }
@@ -84,7 +90,7 @@ class ContestRefreshTaskTest {
         List<ContestICalDto> dtos = createTestDtos();
         when(contestClient.fetch()).thenReturn(dtos);
 
-        task.executeRefresh(contestClient, repository);
+        task.executeRefresh(contestClient, repository, contestsCache);
 
         verify(repository).deleteAll();
     }
@@ -94,7 +100,7 @@ class ContestRefreshTaskTest {
         List<ContestICalDto> dtos = createTestDtos();
         when(contestClient.fetch()).thenReturn(dtos);
 
-        task.executeRefresh(contestClient, repository);
+        task.executeRefresh(contestClient, repository, contestsCache);
 
         @SuppressWarnings("unchecked")
         ArgumentCaptor<List<ContestEntity>> captor = ArgumentCaptor.forClass(List.class);
@@ -106,10 +112,20 @@ class ContestRefreshTaskTest {
     }
 
     @Test
+    void testExecuteRefresh_TriggersCacheRefresh() {
+        List<ContestICalDto> dtos = createTestDtos();
+        when(contestClient.fetch()).thenReturn(dtos);
+
+        task.executeRefresh(contestClient, repository, contestsCache);
+
+        verify(contestsCache).refresh(CacheConfig.CACHE_KEY);
+    }
+
+    @Test
     void testExecuteRefresh_ClientThrowsException_PropagatesException() {
         when(contestClient.fetch()).thenThrow(new RuntimeException("Contest API error"));
 
-        assertThatThrownBy(() -> task.executeRefresh(contestClient, repository))
+        assertThatThrownBy(() -> task.executeRefresh(contestClient, repository, contestsCache))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("Contest refresh failed");
 
@@ -121,7 +137,7 @@ class ContestRefreshTaskTest {
     void testExecuteRefresh_EmptyList_DeletesAllAndSavesNothing() {
         when(contestClient.fetch()).thenReturn(Collections.emptyList());
 
-        task.executeRefresh(contestClient, repository);
+        task.executeRefresh(contestClient, repository, contestsCache);
 
         verify(repository).deleteAll();
 

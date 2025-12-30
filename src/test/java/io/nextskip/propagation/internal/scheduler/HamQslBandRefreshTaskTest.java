@@ -1,8 +1,10 @@
 package io.nextskip.propagation.internal.scheduler;
 
+import com.github.benmanes.caffeine.cache.LoadingCache;
 import com.github.kagkarlsson.scheduler.task.ExecutionContext;
 import com.github.kagkarlsson.scheduler.task.TaskInstance;
 import com.github.kagkarlsson.scheduler.task.helper.RecurringTask;
+import io.nextskip.common.config.CacheConfig;
 import io.nextskip.common.model.FrequencyBand;
 import io.nextskip.propagation.internal.HamQslBandClient;
 import io.nextskip.propagation.model.BandCondition;
@@ -39,6 +41,9 @@ class HamQslBandRefreshTaskTest {
     @Mock
     private BandConditionRepository repository;
 
+    @Mock
+    private LoadingCache<String, List<BandCondition>> bandConditionsCache;
+
     private HamQslBandRefreshTask task;
 
     @BeforeEach
@@ -48,7 +53,8 @@ class HamQslBandRefreshTaskTest {
 
     @Test
     void testHamQslBandRefreshTask_ReturnsValidRecurringTask() {
-        RecurringTask<Void> recurringTask = task.hamQslBandRecurringTask(hamQslBandClient, repository);
+        RecurringTask<Void> recurringTask = task.hamQslBandRecurringTask(
+                hamQslBandClient, repository, bandConditionsCache);
 
         assertThat(recurringTask).isNotNull();
         assertThat(recurringTask.getName()).isEqualTo("hamqsl-band-refresh");
@@ -60,7 +66,8 @@ class HamQslBandRefreshTaskTest {
         List<BandCondition> conditions = createTestConditions();
         when(hamQslBandClient.fetch()).thenReturn(conditions);
 
-        RecurringTask<Void> recurringTask = task.hamQslBandRecurringTask(hamQslBandClient, repository);
+        RecurringTask<Void> recurringTask = task.hamQslBandRecurringTask(
+                hamQslBandClient, repository, bandConditionsCache);
         TaskInstance<Void> taskInstance = (TaskInstance<Void>) org.mockito.Mockito.mock(TaskInstance.class);
         ExecutionContext executionContext = org.mockito.Mockito.mock(ExecutionContext.class);
 
@@ -74,7 +81,7 @@ class HamQslBandRefreshTaskTest {
         List<BandCondition> conditions = createTestConditions();
         when(hamQslBandClient.fetch()).thenReturn(conditions);
 
-        task.executeRefresh(hamQslBandClient, repository);
+        task.executeRefresh(hamQslBandClient, repository, bandConditionsCache);
 
         verify(hamQslBandClient).fetch();
     }
@@ -84,7 +91,7 @@ class HamQslBandRefreshTaskTest {
         List<BandCondition> conditions = createTestConditions();
         when(hamQslBandClient.fetch()).thenReturn(conditions);
 
-        task.executeRefresh(hamQslBandClient, repository);
+        task.executeRefresh(hamQslBandClient, repository, bandConditionsCache);
 
         @SuppressWarnings("unchecked")
         ArgumentCaptor<List<BandConditionEntity>> captor = ArgumentCaptor.forClass(List.class);
@@ -95,10 +102,20 @@ class HamQslBandRefreshTaskTest {
     }
 
     @Test
+    void testExecuteRefresh_TriggersCacheRefresh() {
+        List<BandCondition> conditions = createTestConditions();
+        when(hamQslBandClient.fetch()).thenReturn(conditions);
+
+        task.executeRefresh(hamQslBandClient, repository, bandConditionsCache);
+
+        verify(bandConditionsCache).refresh(CacheConfig.CACHE_KEY);
+    }
+
+    @Test
     void testExecuteRefresh_ClientThrowsException_PropagatesException() {
         when(hamQslBandClient.fetch()).thenThrow(new RuntimeException("HamQSL Band API error"));
 
-        assertThatThrownBy(() -> task.executeRefresh(hamQslBandClient, repository))
+        assertThatThrownBy(() -> task.executeRefresh(hamQslBandClient, repository, bandConditionsCache))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("HamQSL band refresh failed");
 
@@ -109,7 +126,7 @@ class HamQslBandRefreshTaskTest {
     void testExecuteRefresh_EmptyList_SavesNothing() {
         when(hamQslBandClient.fetch()).thenReturn(Collections.emptyList());
 
-        task.executeRefresh(hamQslBandClient, repository);
+        task.executeRefresh(hamQslBandClient, repository, bandConditionsCache);
 
         @SuppressWarnings("unchecked")
         ArgumentCaptor<List<BandConditionEntity>> captor = ArgumentCaptor.forClass(List.class);

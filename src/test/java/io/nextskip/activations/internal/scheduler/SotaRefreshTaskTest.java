@@ -1,5 +1,6 @@
 package io.nextskip.activations.internal.scheduler;
 
+import com.github.benmanes.caffeine.cache.LoadingCache;
 import com.github.kagkarlsson.scheduler.task.ExecutionContext;
 import com.github.kagkarlsson.scheduler.task.TaskInstance;
 import com.github.kagkarlsson.scheduler.task.helper.RecurringTask;
@@ -9,6 +10,7 @@ import io.nextskip.activations.model.ActivationType;
 import io.nextskip.activations.model.Summit;
 import io.nextskip.activations.persistence.entity.ActivationEntity;
 import io.nextskip.activations.persistence.repository.ActivationRepository;
+import io.nextskip.common.config.CacheConfig;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -39,6 +41,9 @@ class SotaRefreshTaskTest {
     @Mock
     private ActivationRepository repository;
 
+    @Mock
+    private LoadingCache<String, List<Activation>> activationsCache;
+
     private SotaRefreshTask task;
 
     @BeforeEach
@@ -48,7 +53,7 @@ class SotaRefreshTaskTest {
 
     @Test
     void testSotaRefreshTask_ReturnsValidRecurringTask() {
-        RecurringTask<Void> recurringTask = task.sotaRecurringTask(sotaClient, repository);
+        RecurringTask<Void> recurringTask = task.sotaRecurringTask(sotaClient, repository, activationsCache);
 
         assertThat(recurringTask).isNotNull();
         assertThat(recurringTask.getName()).isEqualTo("sota-refresh");
@@ -61,7 +66,7 @@ class SotaRefreshTaskTest {
         when(sotaClient.fetch()).thenReturn(List.of(activation));
         when(repository.deleteBySpottedAtBefore(any())).thenReturn(0);
 
-        RecurringTask<Void> recurringTask = task.sotaRecurringTask(sotaClient, repository);
+        RecurringTask<Void> recurringTask = task.sotaRecurringTask(sotaClient, repository, activationsCache);
         TaskInstance<Void> taskInstance = (TaskInstance<Void>) org.mockito.Mockito.mock(TaskInstance.class);
         ExecutionContext executionContext = org.mockito.Mockito.mock(ExecutionContext.class);
 
@@ -76,7 +81,7 @@ class SotaRefreshTaskTest {
         when(sotaClient.fetch()).thenReturn(List.of(activation));
         when(repository.deleteBySpottedAtBefore(any())).thenReturn(0);
 
-        task.executeRefresh(sotaClient, repository);
+        task.executeRefresh(sotaClient, repository, activationsCache);
 
         verify(sotaClient).fetch();
     }
@@ -87,7 +92,7 @@ class SotaRefreshTaskTest {
         when(sotaClient.fetch()).thenReturn(List.of(activation));
         when(repository.deleteBySpottedAtBefore(any())).thenReturn(0);
 
-        task.executeRefresh(sotaClient, repository);
+        task.executeRefresh(sotaClient, repository, activationsCache);
 
         @SuppressWarnings("unchecked")
         ArgumentCaptor<List<ActivationEntity>> captor = ArgumentCaptor.forClass(List.class);
@@ -103,16 +108,27 @@ class SotaRefreshTaskTest {
         when(sotaClient.fetch()).thenReturn(List.of(activation));
         when(repository.deleteBySpottedAtBefore(any())).thenReturn(3);
 
-        task.executeRefresh(sotaClient, repository);
+        task.executeRefresh(sotaClient, repository, activationsCache);
 
         verify(repository).deleteBySpottedAtBefore(any());
+    }
+
+    @Test
+    void testExecuteRefresh_TriggersCacheRefresh() {
+        Activation activation = createTestActivation();
+        when(sotaClient.fetch()).thenReturn(List.of(activation));
+        when(repository.deleteBySpottedAtBefore(any())).thenReturn(0);
+
+        task.executeRefresh(sotaClient, repository, activationsCache);
+
+        verify(activationsCache).refresh(CacheConfig.CACHE_KEY);
     }
 
     @Test
     void testExecuteRefresh_ClientThrowsException_PropagatesException() {
         when(sotaClient.fetch()).thenThrow(new RuntimeException("SOTA API error"));
 
-        assertThatThrownBy(() -> task.executeRefresh(sotaClient, repository))
+        assertThatThrownBy(() -> task.executeRefresh(sotaClient, repository, activationsCache))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("SOTA refresh failed");
 
@@ -124,7 +140,7 @@ class SotaRefreshTaskTest {
         when(sotaClient.fetch()).thenReturn(Collections.emptyList());
         when(repository.deleteBySpottedAtBefore(any())).thenReturn(0);
 
-        task.executeRefresh(sotaClient, repository);
+        task.executeRefresh(sotaClient, repository, activationsCache);
 
         @SuppressWarnings("unchecked")
         ArgumentCaptor<List<ActivationEntity>> captor = ArgumentCaptor.forClass(List.class);

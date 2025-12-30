@@ -1,5 +1,7 @@
 package io.nextskip.propagation.internal;
 
+import com.github.benmanes.caffeine.cache.LoadingCache;
+import io.nextskip.common.config.CacheConfig;
 import io.nextskip.common.model.FrequencyBand;
 import io.nextskip.propagation.api.PropagationResponse;
 import io.nextskip.propagation.api.PropagationService;
@@ -10,95 +12,64 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
-import java.time.Instant;
 import java.util.List;
 
 /**
- * Implementation of PropagationService that aggregates data from multiple sources.
+ * Implementation of PropagationService.
  *
- * Data sources:
- * - NOAA SWPC: Solar flux index, sunspot number
- * - HamQSL Solar: K-index, A-index
- * - HamQSL Band: Band conditions
+ * <p>Reads propagation data from LoadingCaches backed by the database.
+ * Caches are populated by scheduler tasks:
+ * - NoaaRefreshTask and HamQslSolarRefreshTask for solar indices
+ * - HamQslBandRefreshTask for band conditions
  *
- * The service combines data from both sources to provide comprehensive
- * propagation information.
+ * <p>Solar indices are automatically merged by the cache loader (NOAA for
+ * SFI/sunspots, HamQSL for K/A indices).
  */
 @Service
 public class PropagationServiceImpl implements PropagationService {
 
     private static final Logger LOG = LoggerFactory.getLogger(PropagationServiceImpl.class);
 
-    private final NoaaSwpcClient noaaClient;
-    private final HamQslSolarClient hamQslSolarClient;
-    private final HamQslBandClient hamQslBandClient;
+    private final LoadingCache<String, SolarIndices> solarIndicesCache;
+    private final LoadingCache<String, List<BandCondition>> bandConditionsCache;
 
     public PropagationServiceImpl(
-            NoaaSwpcClient noaaClient,
-            HamQslSolarClient hamQslSolarClient,
-            HamQslBandClient hamQslBandClient) {
-        this.noaaClient = noaaClient;
-        this.hamQslSolarClient = hamQslSolarClient;
-        this.hamQslBandClient = hamQslBandClient;
+            LoadingCache<String, SolarIndices> solarIndicesCache,
+            LoadingCache<String, List<BandCondition>> bandConditionsCache) {
+        this.solarIndicesCache = solarIndicesCache;
+        this.bandConditionsCache = bandConditionsCache;
     }
 
     /**
-     * Get current solar indices by merging data from NOAA SWPC and HamQSL.
+     * Get current solar indices from cache.
      *
-     * <p>Primary error handling via clients' circuit breakers.
-     * Service-level fallback ensures dashboard remains functional.
+     * <p>Returns merged data from NOAA SWPC and HamQSL (merging done by cache loader).
      */
     @Override
-    @SuppressWarnings("PMD.AvoidCatchingGenericException")
     public SolarIndices getCurrentSolarIndices() {
-        try {
-            // Fetch from both sources
-            SolarIndices noaaData = noaaClient.fetch();
-            SolarIndices hamQslData = hamQslSolarClient.fetch();
-
-            // Merge data: prefer NOAA for SFI/sunspots, HamQSL for K/A index
-            if (noaaData != null && hamQslData != null) {
-                return new SolarIndices(
-                        noaaData.solarFluxIndex(),  // From NOAA
-                        hamQslData.aIndex(),        // From HamQSL
-                        hamQslData.kIndex(),        // From HamQSL
-                        noaaData.sunspotNumber(),   // From NOAA
-                        Instant.now(),
-                        "NOAA SWPC + HamQSL"
-                );
-            } else if (noaaData != null) {
-                LOG.warn("HamQSL data unavailable, using NOAA data only");
-                return noaaData;
-            } else if (hamQslData != null) {
-                LOG.warn("NOAA data unavailable, using HamQSL data only");
-                return hamQslData;
-            } else {
-                LOG.error("Both NOAA and HamQSL data unavailable");
-                return null;
-            }
-        } catch (RuntimeException e) {
-            LOG.error("Error fetching solar indices: {}", e.getMessage());
-            return null;
+        LOG.debug("Fetching solar indices from cache");
+        SolarIndices indices = solarIndicesCache.get(CacheConfig.CACHE_KEY);
+        if (indices != null) {
+            LOG.debug("Retrieved solar indices: SFI={}, K={}",
+                    indices.solarFluxIndex(), indices.kIndex());
+        } else {
+            LOG.warn("No solar indices available in cache");
         }
+        return indices;
     }
 
     /**
-     * Get current band conditions from HamQSL.
-     *
-     * <p>Primary error handling via HamQslBandClient's circuit breaker.
-     * Service-level fallback ensures dashboard remains functional.
+     * Get current band conditions from cache.
      */
     @Override
-    @SuppressWarnings("PMD.AvoidCatchingGenericException")
     public List<BandCondition> getBandConditions() {
-        try {
-            List<BandCondition> conditions = hamQslBandClient.fetch();
-            LOG.debug("Retrieved {} band conditions", conditions.size());
-            return conditions;
-        } catch (RuntimeException e) {
-            LOG.error("Error fetching band conditions: {}", e.getMessage());
-            return List.of();
+        LOG.debug("Fetching band conditions from cache");
+        List<BandCondition> conditions = bandConditionsCache.get(CacheConfig.CACHE_KEY);
+        if (conditions == null) {
+            conditions = List.of();
         }
+        LOG.debug("Retrieved {} band conditions from cache", conditions.size());
+        return conditions;
     }
 
     @Override
@@ -134,7 +105,7 @@ public class PropagationServiceImpl implements PropagationService {
         PropagationResponse response = new PropagationResponse(solarIndices, bandConditions);
 
         LOG.debug("Returning propagation response: {} band conditions",
-                bandConditions != null ? bandConditions.size() : 0);
+                bandConditions.size());
 
         return response;
     }
