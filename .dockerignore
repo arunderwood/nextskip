@@ -36,3 +36,20 @@ src/test/e2e/
 playwright-report/
 test-results/
 coverage/
+
+# Docker Compose (local development only)
+docker-compose.yml
+docker-compose*.yml
+
+# CI/CD configs
+codecov.yml
+
+# Code formatting (dev-only)
+.prettierrc
+.prettierignore
+
+# Lint/test configs (not needed for production JAR build)
+eslint.config.js
+vitest.config.ts
+playwright.config.ts
+tsconfig.node.json
