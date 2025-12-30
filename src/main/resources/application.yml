@@ -11,11 +11,10 @@ server:
         same-site: lax
         secure: true
         http-only: true
-  # Memory optimization: Reduce thread pool (default 200 threads × 1MB = 200MB)
   tomcat:
     threads:
-      max: 20
-      min-spare: 2
+      max: 50
+      min-spare: 5
 
 spring:
   application:
@@ -35,9 +34,8 @@ spring:
     password: ${DATABASE_PASSWORD:nextskip}
     driver-class-name: org.postgresql.Driver
     hikari:
-      # Memory optimization: Reduce pool size (each connection uses memory)
-      maximum-pool-size: 3
-      minimum-idle: 1
+      maximum-pool-size: 10
+      minimum-idle: 2
       connection-timeout: 30000
       idle-timeout: 600000
       max-lifetime: 1800000
