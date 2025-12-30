@@ -74,17 +74,24 @@ public class DataRefreshScheduler implements DisposableBean {
             LOG.info("Cache warming complete");
         }
 
+        // Stagger refresh timing to prevent concurrent memory spikes
+        // Each source starts 10 seconds after the previous to spread load
+        long staggerOffsetSeconds = 0;
         for (RefreshableDataSource source : sources) {
             // Use the refresh interval as both initial delay and period
-            // This prevents immediate execution of the scheduled task
-            Instant firstRun = Instant.now().plus(source.getRefreshInterval());
+            // Add stagger offset to prevent all sources refreshing simultaneously
+            Instant firstRun = Instant.now()
+                    .plus(source.getRefreshInterval())
+                    .plusSeconds(staggerOffsetSeconds);
             ScheduledFuture<?> future = taskScheduler.scheduleAtFixedRate(
                     () -> safeRefresh(source),
                     firstRun,
                     source.getRefreshInterval()
             );
             scheduledTasks.add(future);
-            LOG.info("Scheduled {} to refresh every {}", source.getSourceName(), source.getRefreshInterval());
+            LOG.info("Scheduled {} to refresh every {} (offset: {}s)",
+                    source.getSourceName(), source.getRefreshInterval(), staggerOffsetSeconds);
+            staggerOffsetSeconds += 10;
         }
     }
 
