@@ -8,6 +8,9 @@ spring-dependency-management = "1.1.7"
 grafana-otel-agent = "2.22.0"
 pyroscope-agent = "2.1.2"
 
+# Build utilities
+download-plugin = "5.6.0"
+
 # Quality & testing tools
 # NOTE: checkstyle, pmd, spotbugs-tool, and jacoco versions moved to direct literals in build.gradle
 # to enable Renovate detection. See: https://github.com/renovatebot/renovate/discussions/40147
@@ -33,6 +36,7 @@ spring-dependency-management = { id = "io.spring.dependency-management", version
 vaadin = { id = "com.vaadin", version.ref = "vaadin" }
 spotbugs = { id = "com.github.spotbugs", version.ref = "spotbugs-plugin" }
 pitest = { id = "info.solidsoft.pitest", version.ref = "pitest" }
+download = { id = "de.undercouch.download", version.ref = "download-plugin" }
 
 [libraries]
 # Vaadin with Hilla

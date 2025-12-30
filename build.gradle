@@ -3,6 +3,7 @@ plugins {
     alias(libs.plugins.spring.boot)
     alias(libs.plugins.spring.dependency.management)
     alias(libs.plugins.vaadin)
+    alias(libs.plugins.download)
 
     // Code quality plugins
     id 'checkstyle'
@@ -136,43 +137,29 @@ dependencies {
 // OpenTelemetry agent configuration
 def otelAgentVersion = libs.versions.grafana.otel.agent.get()
 def otelAgentDir = layout.buildDirectory.dir("otel-agent")
-def otelAgentJar = otelAgentDir.map { it.file("grafana-opentelemetry-java.jar") }
 
-tasks.register('downloadOtelAgent') {
+tasks.register('downloadOtelAgent', Download) {
     description = 'Downloads the Grafana OpenTelemetry Java agent'
     group = 'observability'
 
-    outputs.file(otelAgentJar)
-
-    doLast {
-        def agentUrl = "https://github.com/grafana/grafana-opentelemetry-java/releases/download/v${otelAgentVersion}/grafana-opentelemetry-java.jar"
-        def destFile = otelAgentJar.get().asFile
-        destFile.parentFile.mkdirs()
-
-        ant.get(src: agentUrl, dest: destFile, skipexisting: false)
-        println "Downloaded Grafana OTEL agent v${otelAgentVersion} to ${destFile}"
-    }
+    src "https://github.com/grafana/grafana-opentelemetry-java/releases/download/v${otelAgentVersion}/grafana-opentelemetry-java.jar"
+    dest otelAgentDir.map { it.file("grafana-opentelemetry-java.jar") }
+    overwrite false
+    retries 3
 }
 
 // Pyroscope profiling agent configuration
 def pyroscopeAgentVersion = libs.versions.pyroscope.agent.get()
 def pyroscopeAgentDir = layout.buildDirectory.dir("pyroscope-agent")
-def pyroscopeAgentJar = pyroscopeAgentDir.map { it.file("pyroscope.jar") }
 
-tasks.register('downloadPyroscopeAgent') {
+tasks.register('downloadPyroscopeAgent', Download) {
     description = 'Downloads the Pyroscope Java profiling agent'
     group = 'observability'
 
-    outputs.file(pyroscopeAgentJar)
-
-    doLast {
-        def agentUrl = "https://github.com/grafana/pyroscope-java/releases/download/v${pyroscopeAgentVersion}/pyroscope.jar"
-        def destFile = pyroscopeAgentJar.get().asFile
-        destFile.parentFile.mkdirs()
-
-        ant.get(src: agentUrl, dest: destFile, skipexisting: false)
-        println "Downloaded Pyroscope agent v${pyroscopeAgentVersion} to ${destFile}"
-    }
+    src "https://github.com/grafana/pyroscope-java/releases/download/v${pyroscopeAgentVersion}/pyroscope.jar"
+    dest pyroscopeAgentDir.map { it.file("pyroscope.jar") }
+    overwrite false
+    retries 3
 }
 
 tasks.named('test') {
