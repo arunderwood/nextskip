@@ -121,6 +121,10 @@ dependencies {
     runtimeOnly libs.postgresql
     implementation libs.spring.boot.starter.liquibase
 
+    // Database observability
+    implementation 'net.ttddyy.observation:datasource-micrometer-spring-boot:2.0.1'
+    implementation 'org.hibernate.orm:hibernate-micrometer'
+
     // SpotBugs annotations (for @SuppressFBWarnings)
     compileOnly 'com.github.spotbugs:spotbugs-annotations:4.9.8'
 

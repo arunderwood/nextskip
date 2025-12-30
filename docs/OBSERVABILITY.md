@@ -45,6 +45,69 @@ Disable: Omit `PYROSCOPE_SERVER_ADDRESS` (agent gracefully handles missing confi
 
 Agent version: `gradle/libs.versions.toml` → `pyroscope-agent`
 
+## Database Observability
+
+JDBC and JPA metrics via [datasource-micrometer](https://jdbc-observations.github.io/datasource-micrometer/docs/current/docs/html/) and [hibernate-micrometer](https://docs.spring.io/spring-boot/reference/actuator/metrics.html).
+
+### Metrics Exposed
+
+| Metric | Type | Description |
+|--------|------|-------------|
+| `jdbc.query` | Timer | Query execution timing |
+| `jdbc.connection` | Timer | Connection lifecycle timing |
+| `jdbc.connection.commit` | Counter | Commit operations |
+| `jdbc.connection.rollback` | Counter | Rollback operations |
+| `jdbc.result-set` | Timer | ResultSet operation timing |
+| `hibernate.sessions.open` | Gauge | Open session count |
+| `hibernate.entities.loads` | Counter | Entity loads |
+| `hibernate.query.executions` | Counter | Query execution count |
+| `spring.data.repository.invocations` | Timer | Repository method timing |
+
+### HikariCP Connection Pool
+
+Already exposed via Spring Boot Actuator:
+
+| Metric | Description |
+|--------|-------------|
+| `hikaricp.connections.active` | Active connections |
+| `hikaricp.connections.idle` | Idle connections |
+| `hikaricp.connections.pending` | Threads waiting for connection |
+| `hikaricp.connections.timeout` | Connection acquisition timeouts |
+| `hikaricp.connections.acquire` | Connection acquisition timing |
+| `hikaricp.connections.usage` | Connection usage duration |
+
+### OTEL JDBC Tracing
+
+The Grafana OTEL Java agent automatically traces JDBC calls with these span attributes:
+
+- `db.system`: postgresql
+- `db.name`: nextskip
+- `db.statement`: SQL query text
+- `db.operation`: SELECT/INSERT/UPDATE/DELETE
+
+View traces in Grafana Tempo.
+
+### Configuration
+
+JDBC proxy configuration (application.yml):
+
+```yaml
+jdbc:
+  datasource-proxy:
+    enabled: true
+    query:
+      enable-logging: true  # Enable for debug query logging
+      log-level: DEBUG
+  includes:
+    - CONNECTION  # Connection lifecycle
+    - QUERY       # SQL query execution
+    - FETCH       # ResultSet operations
+```
+
+### Grafana Dashboard
+
+Import [Spring Boot HikariCP/JDBC dashboard](https://grafana.com/grafana/dashboards/6083-spring-boot-hikaricp-jdbc/) for visualization.
+
 ## Frontend
 
 Uses [Grafana Faro React SDK](https://grafana.com/docs/grafana-cloud/monitor-applications/frontend-observability/) for browser telemetry with React Router integration.
