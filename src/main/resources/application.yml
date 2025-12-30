@@ -11,10 +11,18 @@ server:
         same-site: lax
         secure: true
         http-only: true
+  # Memory optimization: Reduce thread pool (default 200 threads × 1MB = 200MB)
+  tomcat:
+    threads:
+      max: 20
+      min-spare: 2
 
 spring:
   application:
     name: nextskip
+  # Memory optimization: Delay bean creation until first use
+  main:
+    lazy-initialization: true
   # Static resource caching for PWA
   web:
     resources:
@@ -30,8 +38,9 @@ spring:
     password: ${DATABASE_PASSWORD:nextskip}
     driver-class-name: org.postgresql.Driver
     hikari:
-      maximum-pool-size: 10
-      minimum-idle: 2
+      # Memory optimization: Reduce pool size (each connection uses memory)
+      maximum-pool-size: 3
+      minimum-idle: 1
       connection-timeout: 30000
       idle-timeout: 600000
       max-lifetime: 1800000
