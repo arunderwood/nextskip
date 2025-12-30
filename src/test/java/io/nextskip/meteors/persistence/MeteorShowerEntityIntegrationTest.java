@@ -278,6 +278,41 @@ class MeteorShowerEntityIntegrationTest extends AbstractIntegrationTest {
         assertTrue(atPeak.isAtPeak());
     }
 
+    // === Setter Coverage Tests ===
+
+    @Test
+    void testSetters_AllFields_UpdatesEntity() {
+        // Given: An entity created via constructor
+        var entity = createPerseidsEntity(Instant.now());
+        var saved = repository.save(entity);
+
+        // When: Update all fields via setters
+        var newPeakStart = Instant.now().plus(20, ChronoUnit.DAYS);
+        var newPeakEnd = Instant.now().plus(21, ChronoUnit.DAYS);
+        var newVisibilityStart = Instant.now().plus(15, ChronoUnit.DAYS);
+        var newVisibilityEnd = Instant.now().plus(25, ChronoUnit.DAYS);
+        saved.setName(GEMINIDS_NAME);
+        saved.setCode(GEMINIDS_CODE);
+        saved.setPeakStart(newPeakStart);
+        saved.setPeakEnd(newPeakEnd);
+        saved.setVisibilityStart(newVisibilityStart);
+        saved.setVisibilityEnd(newVisibilityEnd);
+        saved.setPeakZhr(120);
+        saved.setParentBody("3200 Phaethon");
+        saved.setInfoUrl("https://example.com/geminids");
+
+        // Then: All getters should return updated values
+        assertEquals(GEMINIDS_NAME, saved.getName());
+        assertEquals(GEMINIDS_CODE, saved.getCode());
+        assertEquals(newPeakStart, saved.getPeakStart());
+        assertEquals(newPeakEnd, saved.getPeakEnd());
+        assertEquals(newVisibilityStart, saved.getVisibilityStart());
+        assertEquals(newVisibilityEnd, saved.getVisibilityEnd());
+        assertEquals(120, saved.getPeakZhr());
+        assertEquals("3200 Phaethon", saved.getParentBody());
+        assertEquals("https://example.com/geminids", saved.getInfoUrl());
+    }
+
     // Helper methods
 
     private MeteorShower createPerseidsDomain() {

@@ -215,6 +215,33 @@ class SolarIndicesEntityIntegrationTest extends AbstractIntegrationTest {
         assertTrue(favorable.isFavorable());
     }
 
+    // === Setter Coverage Tests ===
+
+    @Test
+    void testSetters_AllFields_UpdatesEntity() {
+        // Given: An entity created via constructor
+        var now = Instant.now();
+        var entity = new SolarIndicesEntity(150.5, 10, 3, 100, now, SOURCE_NOAA);
+        var saved = repository.save(entity);
+
+        // When: Update all fields via setters
+        var newTime = Instant.now().plus(1, ChronoUnit.HOURS);
+        saved.setSolarFluxIndex(175.0);
+        saved.setAIndex(15);
+        saved.setKIndex(5);
+        saved.setSunspotNumber(120);
+        saved.setTimestamp(newTime);
+        saved.setSource(SOURCE_HAMQSL);
+
+        // Then: All getters should return updated values
+        assertEquals(175.0, saved.getSolarFluxIndex());
+        assertEquals(15, saved.getAIndex());
+        assertEquals(5, saved.getKIndex());
+        assertEquals(120, saved.getSunspotNumber());
+        assertEquals(newTime, saved.getTimestamp());
+        assertEquals(SOURCE_HAMQSL, saved.getSource());
+    }
+
     private SolarIndices createSampleDomain() {
         return new SolarIndices(150.5, 10, 3, 100, Instant.now(), SOURCE_NOAA);
     }

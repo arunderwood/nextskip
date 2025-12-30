@@ -95,6 +95,9 @@
         <properties>
             <!-- Default is 10, allowing 20 for Spring Boot controllers/services -->
             <property name="maxmethods" value="20"/>
+            <!-- Exclude test classes - comprehensive test suites naturally have many methods -->
+            <property name="violationSuppressXPath"
+                      value="//ClassDeclaration[matches(@SimpleName, '.*Test$|.*Tests$|.*IT$')]"/>
         </properties>
     </rule>
 

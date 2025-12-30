@@ -456,6 +456,53 @@ class ActivationEntityIntegrationTest extends AbstractIntegrationTest {
         assertEquals(PARK_LATITUDE, reloaded.getParkLatitude());
     }
 
+    // === Setter Coverage Tests ===
+
+    @Test
+    void testSetters_AllFields_UpdatesEntity() {
+        // Given: An entity created via constructor
+        var now = Instant.now();
+        var entity = createPotaEntity(now);
+        var saved = repository.save(entity);
+
+        // When: Update all fields via setters
+        var newTime = Instant.now();
+        saved.setSpotId("new-spot-id");
+        saved.setActivatorCallsign("W9XYZ");
+        saved.setType(ActivationType.SOTA);
+        saved.setFrequency(21.0);
+        saved.setMode(MODE_CW);
+        saved.setSpottedAt(newTime);
+        saved.setQsoCount(25);
+        saved.setSource("NEW_SOURCE");
+        saved.setLocationReference("NEW-REF");
+        saved.setLocationName("New Location");
+        saved.setLocationRegionCode("TX");
+        saved.setParkCountryCode("CA");
+        saved.setParkGrid("EM10");
+        saved.setParkLatitude(35.0);
+        saved.setParkLongitude(-100.0);
+        saved.setSummitAssociationCode("W5T");
+
+        // Then: All getters should return updated values
+        assertEquals("new-spot-id", saved.getSpotId());
+        assertEquals("W9XYZ", saved.getActivatorCallsign());
+        assertEquals(ActivationType.SOTA, saved.getType());
+        assertEquals(21.0, saved.getFrequency());
+        assertEquals(MODE_CW, saved.getMode());
+        assertEquals(newTime, saved.getSpottedAt());
+        assertEquals(25, saved.getQsoCount());
+        assertEquals("NEW_SOURCE", saved.getSource());
+        assertEquals("NEW-REF", saved.getLocationReference());
+        assertEquals("New Location", saved.getLocationName());
+        assertEquals("TX", saved.getLocationRegionCode());
+        assertEquals("CA", saved.getParkCountryCode());
+        assertEquals("EM10", saved.getParkGrid());
+        assertEquals(35.0, saved.getParkLatitude());
+        assertEquals(-100.0, saved.getParkLongitude());
+        assertEquals("W5T", saved.getSummitAssociationCode());
+    }
+
     // Helper methods
 
     private Activation createPotaDomain() {

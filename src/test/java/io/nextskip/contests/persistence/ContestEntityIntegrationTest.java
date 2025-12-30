@@ -368,6 +368,97 @@ class ContestEntityIntegrationTest extends AbstractIntegrationTest {
         assertTrue(repository.findById(contestId).isEmpty());
     }
 
+    // === Setter Coverage Tests ===
+
+    @Test
+    void testSetters_AllFields_UpdatesEntity() {
+        // Given: An entity created via constructor
+        var entity = createArrl10mEntity(Instant.now());
+        var saved = repository.save(entity);
+
+        // When: Update all fields via setters
+        var newStart = Instant.now().plus(1, ChronoUnit.DAYS);
+        var newEnd = Instant.now().plus(3, ChronoUnit.DAYS);
+        saved.setName("New Contest Name");
+        saved.setStartTime(newStart);
+        saved.setEndTime(newEnd);
+        saved.setBands(Set.of(FrequencyBand.BAND_40M, FrequencyBand.BAND_80M));
+        saved.setModes(Set.of(MODE_RTTY, MODE_FT8));
+        saved.setSponsor("New Sponsor");
+        saved.setCalendarSourceUrl("https://new.example.com/calendar");
+        saved.setOfficialRulesUrl("https://new.example.com/rules");
+
+        // Then: All getters should return updated values
+        assertEquals("New Contest Name", saved.getName());
+        assertEquals(newStart, saved.getStartTime());
+        assertEquals(newEnd, saved.getEndTime());
+        assertEquals(Set.of(FrequencyBand.BAND_40M, FrequencyBand.BAND_80M), saved.getBands());
+        assertEquals(Set.of(MODE_RTTY, MODE_FT8), saved.getModes());
+        assertEquals("New Sponsor", saved.getSponsor());
+        assertEquals("https://new.example.com/calendar", saved.getCalendarSourceUrl());
+        assertEquals("https://new.example.com/rules", saved.getOfficialRulesUrl());
+    }
+
+    @Test
+    void testSetBands_NullValue_CreatesEmptySet() {
+        // Given: An entity with existing bands
+        var entity = createArrl10mEntity(Instant.now());
+        assertFalse(entity.getBands().isEmpty());
+
+        // When: Set bands to null
+        entity.setBands(null);
+
+        // Then: Should have empty set
+        assertTrue(entity.getBands().isEmpty());
+    }
+
+    @Test
+    void testSetModes_NullValue_CreatesEmptySet() {
+        // Given: An entity with existing modes
+        var entity = createArrl10mEntity(Instant.now());
+        assertFalse(entity.getModes().isEmpty());
+
+        // When: Set modes to null
+        entity.setModes(null);
+
+        // Then: Should have empty set
+        assertTrue(entity.getModes().isEmpty());
+    }
+
+    @Test
+    void testConstructor_NullBands_CreatesEmptySet() {
+        // Given/When: Create entity with null bands
+        var now = Instant.now();
+        var entity = new ContestEntity(
+                TEST_CONTEST_NAME,
+                now.plus(1, ChronoUnit.DAYS),
+                now.plus(2, ChronoUnit.DAYS),
+                null, Set.of(MODE_CW),
+                null, null, null
+        );
+
+        // Then: Bands should be empty, not null
+        assertNotNull(entity.getBands());
+        assertTrue(entity.getBands().isEmpty());
+    }
+
+    @Test
+    void testConstructor_NullModes_CreatesEmptySet() {
+        // Given/When: Create entity with null modes
+        var now = Instant.now();
+        var entity = new ContestEntity(
+                TEST_CONTEST_NAME,
+                now.plus(1, ChronoUnit.DAYS),
+                now.plus(2, ChronoUnit.DAYS),
+                Set.of(FrequencyBand.BAND_20M), null,
+                null, null, null
+        );
+
+        // Then: Modes should be empty, not null
+        assertNotNull(entity.getModes());
+        assertTrue(entity.getModes().isEmpty());
+    }
+
     // Helper methods
 
     private Contest createArrl10mDomain() {

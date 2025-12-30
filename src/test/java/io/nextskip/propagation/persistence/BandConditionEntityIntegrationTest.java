@@ -285,4 +285,30 @@ class BandConditionEntityIntegrationTest extends AbstractIntegrationTest {
             assertEquals(rating, found.get().getRating());
         }
     }
+
+    // === Setter Coverage Tests ===
+
+    @Test
+    void testSetters_AllFields_UpdatesEntity() {
+        // Given: An entity created via constructor
+        var now = Instant.now();
+        var entity = new BandConditionEntity(
+                FrequencyBand.BAND_20M, BandConditionRating.GOOD, 0.85, "Initial notes", now);
+        var saved = repository.save(entity);
+
+        // When: Update all fields via setters
+        var newTime = Instant.now().plus(1, ChronoUnit.HOURS);
+        saved.setBand(FrequencyBand.BAND_40M);
+        saved.setRating(BandConditionRating.FAIR);
+        saved.setConfidence(0.65);
+        saved.setNotes("Updated notes");
+        saved.setRecordedAt(newTime);
+
+        // Then: All getters should return updated values
+        assertEquals(FrequencyBand.BAND_40M, saved.getBand());
+        assertEquals(BandConditionRating.FAIR, saved.getRating());
+        assertEquals(0.65, saved.getConfidence());
+        assertEquals("Updated notes", saved.getNotes());
+        assertEquals(newTime, saved.getRecordedAt());
+    }
 }
