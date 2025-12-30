@@ -81,6 +81,7 @@ Built with Spring Boot, Vaadin Hilla, and React.
 
 - Java (see `.tool-versions` for specific version)
 - Node.js (see `.tool-versions` for specific version)
+- Docker (for local database, see [docs/DATABASE.md](docs/DATABASE.md))
 - Internet connection (for fetching propagation data)
 
 ## Quick Start
@@ -88,6 +89,9 @@ Built with Spring Boot, Vaadin Hilla, and React.
 ### Build and Run
 
 ```bash
+# Start PostgreSQL (first time)
+docker-compose up -d
+
 # Build the project
 ./gradlew build
 

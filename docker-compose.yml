@@ -1,0 +1,24 @@
+# Docker Compose for NextSkip local development
+# Usage: docker-compose up -d
+# See docs/DATABASE.md for complete documentation
+
+services:
+  postgres:
+    image: postgres:18
+    container_name: nextskip-postgres
+    environment:
+      POSTGRES_DB: nextskip
+      POSTGRES_USER: nextskip
+      POSTGRES_PASSWORD: nextskip
+    ports:
+      - "5432:5432"
+    volumes:
+      - nextskip-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nextskip -d nextskip"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  nextskip-postgres-data:

@@ -23,6 +23,34 @@ spring:
           max-age: 3600
           cache-public: true
 
+  # Database Configuration
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/nextskip}
+    username: ${DATABASE_USERNAME:nextskip}
+    password: ${DATABASE_PASSWORD:nextskip}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+
+  # JPA Configuration
+  jpa:
+    hibernate:
+      ddl-auto: validate  # Liquibase handles schema
+    open-in-view: false   # Performance: disable OSIV anti-pattern
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: false
+
+  # Liquibase Configuration
+  liquibase:
+    enabled: true
+    change-log: classpath:db/changelog/db.changelog-master.yaml
+
 # Data Refresh Scheduler Configuration
 nextskip:
   refresh:

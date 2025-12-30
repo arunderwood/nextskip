@@ -1,10 +1,10 @@
 package io.nextskip.common.scheduler;
 
 import io.nextskip.common.client.RefreshableDataSource;
+import io.nextskip.test.AbstractIntegrationTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 
 import java.util.List;
@@ -22,11 +22,10 @@ import static org.junit.jupiter.api.Assertions.*;
  * </ul>
  */
 @SpringBootTest
-@ActiveProfiles("test")
 @TestPropertySource(properties = {
     "nextskip.refresh.eager-load=false"  // Disable eager loading for test stability
 })
-class DataRefreshSchedulerIntegrationTest {
+class DataRefreshSchedulerIntegrationTest extends AbstractIntegrationTest {
 
     @Autowired
     private DataRefreshScheduler scheduler;

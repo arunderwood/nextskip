@@ -154,13 +154,27 @@ jobs:
   e2e-test:
     needs: [backend, frontend-test]
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 10
     strategy:
       fail-fast: false
       matrix:
         browser: [chromium, firefox, webkit]
     permissions:
       contents: read
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_DB: nextskip
+          POSTGRES_USER: nextskip
+          POSTGRES_PASSWORD: nextskip
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 5
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
@@ -197,10 +211,16 @@ jobs:
 
       - name: Start application in background
         run: |
-          java -jar build/libs/*.jar --server.port=8080 --vaadin.launch-browser=false > app.log 2>&1 &
+          java -jar build/libs/*.jar \
+            --server.port=8080 \
+            --vaadin.launch-browser=false \
+            --spring.datasource.url=jdbc:postgresql://localhost:5432/nextskip \
+            --spring.datasource.username=nextskip \
+            --spring.datasource.password=nextskip \
+            > app.log 2>&1 &
           echo $! > app.pid
           # Wait for app to be ready
-          timeout 180 bash -c 'until curl -sf http://localhost:8080/actuator/health > /dev/null; do sleep 2; done'
+          timeout 60 bash -c 'until curl -sf http://localhost:8080/actuator/health > /dev/null; do sleep 2; done'
 
       - name: Run E2E tests
         run: npx playwright test --project=${{ matrix.browser }}

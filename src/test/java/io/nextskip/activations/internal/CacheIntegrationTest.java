@@ -5,6 +5,7 @@ import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
 import io.github.resilience4j.retry.RetryRegistry;
 import io.nextskip.activations.model.Activation;
+import io.nextskip.test.AbstractIntegrationTest;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -15,7 +16,6 @@ import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.cache.CacheManager;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import java.util.List;
@@ -33,8 +33,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * </ul>
  */
 @SpringBootTest
-@ActiveProfiles("test")
-class CacheIntegrationTest {
+class CacheIntegrationTest extends AbstractIntegrationTest {
 
     private static WireMockServer wireMockServer;
 

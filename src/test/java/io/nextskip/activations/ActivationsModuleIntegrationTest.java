@@ -6,10 +6,10 @@ import io.nextskip.activations.api.ActivationsService;
 import io.nextskip.activations.internal.ActivationsServiceImpl;
 import io.nextskip.activations.internal.PotaClient;
 import io.nextskip.activations.internal.SotaClient;
+import io.nextskip.test.AbstractIntegrationTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.ActiveProfiles;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -20,8 +20,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * Tests with real API clients to verify the full integration stack.
  */
 @SpringBootTest
-@ActiveProfiles("test")
-class ActivationsModuleIntegrationTest {
+class ActivationsModuleIntegrationTest extends AbstractIntegrationTest {
 
     @Autowired
     private ActivationsEndpoint endpoint;
