@@ -120,6 +120,8 @@ resilience4j:
 
 # Actuator Configuration
 management:
+  server:
+    port: 9090  # Render only exposes PORT env var; keeps metrics off public internet
   endpoints:
     web:
       exposure:
