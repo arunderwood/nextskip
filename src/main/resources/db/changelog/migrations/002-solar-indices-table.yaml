@@ -1,0 +1,53 @@
+databaseChangeLog:
+  - changeSet:
+      id: 002-create-solar-indices-table
+      author: nextskip
+      comment: Solar indices table for HF propagation forecasting data from NOAA and HamQSL
+      changes:
+        - createTable:
+            tableName: solar_indices
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: solar_flux_index
+                  type: double precision
+                  constraints:
+                    nullable: false
+              - column:
+                  name: a_index
+                  type: int
+                  constraints:
+                    nullable: false
+              - column:
+                  name: k_index
+                  type: int
+                  constraints:
+                    nullable: false
+              - column:
+                  name: sunspot_number
+                  type: int
+                  constraints:
+                    nullable: false
+              - column:
+                  name: timestamp
+                  type: timestamp with time zone
+                  constraints:
+                    nullable: false
+              - column:
+                  name: source
+                  type: varchar(50)
+                  constraints:
+                    nullable: false
+        - createIndex:
+            indexName: idx_solar_indices_timestamp
+            tableName: solar_indices
+            columns:
+              - column:
+                  name: timestamp
+                  descending: true

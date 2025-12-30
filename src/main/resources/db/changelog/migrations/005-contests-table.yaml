@@ -1,0 +1,130 @@
+databaseChangeLog:
+  - changeSet:
+      id: 005-create-contests-table
+      author: nextskip
+      comment: Contest events table with junction tables for bands and modes
+      changes:
+        - createTable:
+            tableName: contests
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: name
+                  type: varchar(200)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: start_time
+                  type: timestamp with time zone
+                  constraints:
+                    nullable: false
+              - column:
+                  name: end_time
+                  type: timestamp with time zone
+                  constraints:
+                    nullable: false
+              - column:
+                  name: sponsor
+                  type: varchar(100)
+              - column:
+                  name: calendar_source_url
+                  type: varchar(500)
+              - column:
+                  name: official_rules_url
+                  type: varchar(500)
+        - createIndex:
+            indexName: idx_contests_start_time
+            tableName: contests
+            columns:
+              - column:
+                  name: start_time
+        - createIndex:
+            indexName: idx_contests_end_time
+            tableName: contests
+            columns:
+              - column:
+                  name: end_time
+        - sql:
+            comment: CHECK constraint for end_time after start_time
+            sql: >
+              ALTER TABLE contests
+              ADD CONSTRAINT chk_contests_time_order
+              CHECK (end_time > start_time)
+
+  - changeSet:
+      id: 005-create-contest-bands-table
+      author: nextskip
+      comment: Junction table for contest frequency bands (ElementCollection)
+      changes:
+        - createTable:
+            tableName: contest_bands
+            columns:
+              - column:
+                  name: contest_id
+                  type: bigint
+                  constraints:
+                    nullable: false
+              - column:
+                  name: band
+                  type: varchar(20)
+                  constraints:
+                    nullable: false
+        - addForeignKeyConstraint:
+            baseTableName: contest_bands
+            baseColumnNames: contest_id
+            referencedTableName: contests
+            referencedColumnNames: id
+            constraintName: fk_contest_bands_contest
+            onDelete: CASCADE
+        - createIndex:
+            indexName: idx_contest_bands_contest_id
+            tableName: contest_bands
+            columns:
+              - column:
+                  name: contest_id
+        - sql:
+            comment: CHECK constraint for valid FrequencyBand enum values
+            sql: >
+              ALTER TABLE contest_bands
+              ADD CONSTRAINT chk_contest_bands_band_valid
+              CHECK (band IN ('BAND_160M', 'BAND_80M', 'BAND_60M', 'BAND_40M',
+                              'BAND_30M', 'BAND_20M', 'BAND_17M', 'BAND_15M',
+                              'BAND_12M', 'BAND_10M', 'BAND_6M', 'BAND_2M'))
+
+  - changeSet:
+      id: 005-create-contest-modes-table
+      author: nextskip
+      comment: Junction table for contest operating modes (ElementCollection)
+      changes:
+        - createTable:
+            tableName: contest_modes
+            columns:
+              - column:
+                  name: contest_id
+                  type: bigint
+                  constraints:
+                    nullable: false
+              - column:
+                  name: mode
+                  type: varchar(20)
+                  constraints:
+                    nullable: false
+        - addForeignKeyConstraint:
+            baseTableName: contest_modes
+            baseColumnNames: contest_id
+            referencedTableName: contests
+            referencedColumnNames: id
+            constraintName: fk_contest_modes_contest
+            onDelete: CASCADE
+        - createIndex:
+            indexName: idx_contest_modes_contest_id
+            tableName: contest_modes
+            columns:
+              - column:
+                  name: contest_id

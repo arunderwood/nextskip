@@ -1,0 +1,99 @@
+databaseChangeLog:
+  - changeSet:
+      id: 004-create-meteor-showers-table
+      author: nextskip
+      comment: Meteor shower events table for meteor scatter propagation planning
+      changes:
+        - createTable:
+            tableName: meteor_showers
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: name
+                  type: varchar(100)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: code
+                  type: varchar(10)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: peak_start
+                  type: timestamp with time zone
+                  constraints:
+                    nullable: false
+              - column:
+                  name: peak_end
+                  type: timestamp with time zone
+                  constraints:
+                    nullable: false
+              - column:
+                  name: visibility_start
+                  type: timestamp with time zone
+                  constraints:
+                    nullable: false
+              - column:
+                  name: visibility_end
+                  type: timestamp with time zone
+                  constraints:
+                    nullable: false
+              - column:
+                  name: peak_zhr
+                  type: int
+                  constraints:
+                    nullable: false
+              - column:
+                  name: parent_body
+                  type: varchar(100)
+              - column:
+                  name: info_url
+                  type: varchar(500)
+        - createIndex:
+            indexName: idx_meteor_showers_peak_start
+            tableName: meteor_showers
+            columns:
+              - column:
+                  name: peak_start
+        - createIndex:
+            indexName: idx_meteor_showers_visibility_start
+            tableName: meteor_showers
+            columns:
+              - column:
+                  name: visibility_start
+        - createIndex:
+            indexName: idx_meteor_showers_code
+            tableName: meteor_showers
+            columns:
+              - column:
+                  name: code
+        - sql:
+            comment: CHECK constraint for positive ZHR
+            sql: >
+              ALTER TABLE meteor_showers
+              ADD CONSTRAINT chk_meteor_showers_peak_zhr_positive
+              CHECK (peak_zhr > 0)
+        - sql:
+            comment: CHECK constraint for peak window within visibility window
+            sql: >
+              ALTER TABLE meteor_showers
+              ADD CONSTRAINT chk_meteor_showers_peak_within_visibility
+              CHECK (peak_start >= visibility_start AND peak_end <= visibility_end)
+        - sql:
+            comment: CHECK constraint for peak_end after peak_start
+            sql: >
+              ALTER TABLE meteor_showers
+              ADD CONSTRAINT chk_meteor_showers_peak_order
+              CHECK (peak_end > peak_start)
+        - sql:
+            comment: CHECK constraint for visibility_end after visibility_start
+            sql: >
+              ALTER TABLE meteor_showers
+              ADD CONSTRAINT chk_meteor_showers_visibility_order
+              CHECK (visibility_end > visibility_start)
