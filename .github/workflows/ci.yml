@@ -163,7 +163,7 @@ jobs:
       contents: read
     services:
       postgres:
-        image: postgres:17
+        image: postgres:18
         env:
           POSTGRES_DB: nextskip
           POSTGRES_USER: nextskip

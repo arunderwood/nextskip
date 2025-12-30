@@ -20,7 +20,7 @@ public final class TestPostgresContainer {
     private static final PostgreSQLContainer INSTANCE;
 
     static {
-        INSTANCE = new PostgreSQLContainer("postgres:17")
+        INSTANCE = new PostgreSQLContainer("postgres:18")
                 .withDatabaseName("nextskip_test")
                 .withUsername("test")
                 .withPassword("test");
