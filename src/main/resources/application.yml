@@ -20,9 +20,6 @@ server:
 spring:
   application:
     name: nextskip
-  # Memory optimization: Delay bean creation until first use
-  main:
-    lazy-initialization: true
   # Static resource caching for PWA
   web:
     resources:
