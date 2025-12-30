@@ -82,17 +82,23 @@ public class CacheConfig {
         return Caffeine.newBuilder()
                 .expireAfterWrite(ACTIVATIONS_EXPIRY)
                 .recordStats()
-                .build(key -> {
-                    LOG.debug("Loading activations from database");
-                    Instant cutoff = Instant.now().minus(ACTIVATIONS_RETENTION);
-                    List<Activation> activations = repository
-                            .findBySpottedAtAfterOrderBySpottedAtDesc(cutoff)
-                            .stream()
-                            .map(ActivationEntity::toDomain)
-                            .toList();
-                    LOG.info("Loaded {} activations from database", activations.size());
-                    return activations;
-                });
+                .build(key -> loadActivations(repository));
+    }
+
+    /**
+     * Loads activations from the database.
+     * Package-private for testing.
+     */
+    List<Activation> loadActivations(ActivationRepository repository) {
+        LOG.debug("Loading activations from database");
+        Instant cutoff = Instant.now().minus(ACTIVATIONS_RETENTION);
+        List<Activation> activations = repository
+                .findBySpottedAtAfterOrderBySpottedAtDesc(cutoff)
+                .stream()
+                .map(ActivationEntity::toDomain)
+                .toList();
+        LOG.info("Loaded {} activations from database", activations.size());
+        return activations;
     }
 
     /**
@@ -118,8 +124,9 @@ public class CacheConfig {
 
     /**
      * Loads and merges solar indices from NOAA and HamQSL sources.
+     * Package-private for testing.
      */
-    private SolarIndices loadAndMergeSolarIndices(SolarIndicesRepository repository) {
+    SolarIndices loadAndMergeSolarIndices(SolarIndicesRepository repository) {
         Optional<SolarIndicesEntity> noaaOpt = repository.findTopBySourceOrderByTimestampDesc("noaa");
         Optional<SolarIndicesEntity> hamqslOpt = repository.findTopBySourceOrderByTimestampDesc("hamqsl");
 
@@ -164,17 +171,23 @@ public class CacheConfig {
         return Caffeine.newBuilder()
                 .expireAfterWrite(BAND_CONDITIONS_EXPIRY)
                 .recordStats()
-                .build(key -> {
-                    LOG.debug("Loading band conditions from database");
-                    Instant cutoff = Instant.now().minus(BAND_CONDITIONS_RETENTION);
-                    List<BandCondition> conditions = repository
-                            .findByRecordedAtAfterOrderByRecordedAtDesc(cutoff)
-                            .stream()
-                            .map(BandConditionEntity::toDomain)
-                            .toList();
-                    LOG.info("Loaded {} band conditions from database", conditions.size());
-                    return conditions;
-                });
+                .build(key -> loadBandConditions(repository));
+    }
+
+    /**
+     * Loads band conditions from the database.
+     * Package-private for testing.
+     */
+    List<BandCondition> loadBandConditions(BandConditionRepository repository) {
+        LOG.debug("Loading band conditions from database");
+        Instant cutoff = Instant.now().minus(BAND_CONDITIONS_RETENTION);
+        List<BandCondition> conditions = repository
+                .findByRecordedAtAfterOrderByRecordedAtDesc(cutoff)
+                .stream()
+                .map(BandConditionEntity::toDomain)
+                .toList();
+        LOG.info("Loaded {} band conditions from database", conditions.size());
+        return conditions;
     }
 
     /**
@@ -191,17 +204,23 @@ public class CacheConfig {
         return Caffeine.newBuilder()
                 .expireAfterWrite(CONTESTS_EXPIRY)
                 .recordStats()
-                .build(key -> {
-                    LOG.debug("Loading contests from database");
-                    // Load contests ending after now (active + upcoming)
-                    List<Contest> contests = repository
-                            .findByEndTimeAfterOrderByStartTimeAsc(Instant.now())
-                            .stream()
-                            .map(ContestEntity::toDomain)
-                            .toList();
-                    LOG.info("Loaded {} contests from database", contests.size());
-                    return contests;
-                });
+                .build(key -> loadContests(repository));
+    }
+
+    /**
+     * Loads contests from the database.
+     * Package-private for testing.
+     */
+    List<Contest> loadContests(ContestRepository repository) {
+        LOG.debug("Loading contests from database");
+        // Load contests ending after now (active + upcoming)
+        List<Contest> contests = repository
+                .findByEndTimeAfterOrderByStartTimeAsc(Instant.now())
+                .stream()
+                .map(ContestEntity::toDomain)
+                .toList();
+        LOG.info("Loaded {} contests from database", contests.size());
+        return contests;
     }
 
     /**
@@ -218,17 +237,23 @@ public class CacheConfig {
         return Caffeine.newBuilder()
                 .expireAfterWrite(METEOR_SHOWERS_EXPIRY)
                 .recordStats()
-                .build(key -> {
-                    LOG.debug("Loading meteor showers from database");
-                    Instant now = Instant.now();
-                    // Load showers where visibility window hasn't ended
-                    List<MeteorShower> showers = repository
-                            .findByVisibilityStartBeforeAndVisibilityEndAfterOrderByPeakStartAsc(now, now)
-                            .stream()
-                            .map(MeteorShowerEntity::toDomain)
-                            .toList();
-                    LOG.info("Loaded {} meteor showers from database", showers.size());
-                    return showers;
-                });
+                .build(key -> loadMeteorShowers(repository));
+    }
+
+    /**
+     * Loads meteor showers from the database.
+     * Package-private for testing.
+     */
+    List<MeteorShower> loadMeteorShowers(MeteorShowerRepository repository) {
+        LOG.debug("Loading meteor showers from database");
+        Instant now = Instant.now();
+        // Load showers where visibility window hasn't ended
+        List<MeteorShower> showers = repository
+                .findByVisibilityStartBeforeAndVisibilityEndAfterOrderByPeakStartAsc(now, now)
+                .stream()
+                .map(MeteorShowerEntity::toDomain)
+                .toList();
+        LOG.info("Loaded {} meteor showers from database", showers.size());
+        return showers;
     }
 }
