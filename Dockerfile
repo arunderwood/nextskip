@@ -34,18 +34,18 @@ COPY --from=builder /app/build/otel-agent/grafana-opentelemetry-java.jar otel-ag
 COPY --from=builder /app/build/pyroscope-agent/pyroscope.jar pyroscope-agent.jar
 
 # Distroless runs as non-root by default (uid 65532)
-# JVM memory optimizations for 512MB container (distroless doesn't support JAVA_OPTS)
-# - MaxRAMPercentage=50.0: ~256MB heap leaves room for metaspace + agents
-# - MaxMetaspaceSize=160m: Cap metaspace growth (baseline ~152MB)
-# - ReservedCodeCacheSize=64m: Limit CodeHeap (baseline ~36MB)
-# - UseSerialGC: Lower overhead than G1 for small heaps
-# - Xss256k: Reduce thread stack from 1MB to 256KB
+# JVM settings for 2GB container (distroless doesn't support JAVA_OPTS)
+# - MaxRAMPercentage=60.0: ~1.2GB heap with room for metaspace + agents
+# - MaxMetaspaceSize=256m: Headroom for Hibernate/Spring class loading
+# - ReservedCodeCacheSize=128m: Room for JIT compilation
+# - G1GC: Better throughput than SerialGC for larger heaps
+# - Xss512k: Comfortable thread stack size
 ENV JAVA_TOOL_OPTIONS="-XX:+UseContainerSupport \
-  -XX:MaxRAMPercentage=50.0 \
-  -XX:MaxMetaspaceSize=160m \
-  -XX:ReservedCodeCacheSize=64m \
-  -XX:+UseSerialGC \
-  -Xss256k"
+  -XX:MaxRAMPercentage=60.0 \
+  -XX:MaxMetaspaceSize=256m \
+  -XX:ReservedCodeCacheSize=128m \
+  -XX:+UseG1GC \
+  -Xss512k"
 
 EXPOSE 8080
 
