@@ -1,5 +1,7 @@
 package io.nextskip.propagation.internal.scheduler;
 
+import com.github.kagkarlsson.scheduler.task.ExecutionContext;
+import com.github.kagkarlsson.scheduler.task.TaskInstance;
 import com.github.kagkarlsson.scheduler.task.helper.RecurringTask;
 import io.nextskip.propagation.internal.HamQslSolarClient;
 import io.nextskip.propagation.model.SolarIndices;
@@ -48,6 +50,21 @@ class HamQslSolarRefreshTaskTest {
 
         assertThat(recurringTask).isNotNull();
         assertThat(recurringTask.getName()).isEqualTo("hamqsl-solar-refresh");
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void testHamQslSolarRecurringTask_ExecuteHandler_InvokesRefresh() {
+        SolarIndices indices = createTestSolarIndices();
+        when(hamQslSolarClient.fetch()).thenReturn(indices);
+
+        RecurringTask<Void> recurringTask = task.hamQslSolarRecurringTask(hamQslSolarClient, repository);
+        TaskInstance<Void> taskInstance = (TaskInstance<Void>) org.mockito.Mockito.mock(TaskInstance.class);
+        ExecutionContext executionContext = org.mockito.Mockito.mock(ExecutionContext.class);
+
+        recurringTask.execute(taskInstance, executionContext);
+
+        verify(hamQslSolarClient).fetch();
     }
 
     @Test

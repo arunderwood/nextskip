@@ -1,5 +1,7 @@
 package io.nextskip.meteors.internal.scheduler;
 
+import com.github.kagkarlsson.scheduler.task.ExecutionContext;
+import com.github.kagkarlsson.scheduler.task.TaskInstance;
 import com.github.kagkarlsson.scheduler.task.helper.RecurringTask;
 import io.nextskip.meteors.internal.MeteorShowerDataLoader;
 import io.nextskip.meteors.model.MeteorShower;
@@ -50,6 +52,21 @@ class MeteorRefreshTaskTest {
 
         assertThat(recurringTask).isNotNull();
         assertThat(recurringTask.getName()).isEqualTo("meteor-refresh");
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void testMeteorRecurringTask_ExecuteHandler_InvokesRefresh() {
+        List<MeteorShower> showers = createTestShowers();
+        when(dataLoader.getShowers(anyInt())).thenReturn(showers);
+
+        RecurringTask<Void> recurringTask = task.meteorRecurringTask(dataLoader, repository);
+        TaskInstance<Void> taskInstance = (TaskInstance<Void>) org.mockito.Mockito.mock(TaskInstance.class);
+        ExecutionContext executionContext = org.mockito.Mockito.mock(ExecutionContext.class);
+
+        recurringTask.execute(taskInstance, executionContext);
+
+        verify(dataLoader).getShowers(30);
     }
 
     @Test

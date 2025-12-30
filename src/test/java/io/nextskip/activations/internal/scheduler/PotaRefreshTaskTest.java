@@ -1,5 +1,7 @@
 package io.nextskip.activations.internal.scheduler;
 
+import com.github.kagkarlsson.scheduler.task.ExecutionContext;
+import com.github.kagkarlsson.scheduler.task.TaskInstance;
 import com.github.kagkarlsson.scheduler.task.helper.RecurringTask;
 import io.nextskip.activations.internal.PotaClient;
 import io.nextskip.activations.model.Activation;
@@ -50,6 +52,23 @@ class PotaRefreshTaskTest {
 
         assertThat(recurringTask).isNotNull();
         assertThat(recurringTask.getName()).isEqualTo("pota-refresh");
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void testPotaRecurringTask_ExecuteHandler_InvokesRefresh() {
+        Activation activation = createTestActivation();
+        when(potaClient.fetch()).thenReturn(List.of(activation));
+        when(repository.deleteBySpottedAtBefore(any())).thenReturn(0);
+
+        RecurringTask<Void> recurringTask = task.potaRecurringTask(potaClient, repository);
+        TaskInstance<Void> taskInstance = (TaskInstance<Void>) org.mockito.Mockito.mock(TaskInstance.class);
+        ExecutionContext executionContext = org.mockito.Mockito.mock(ExecutionContext.class);
+
+        // This invokes the lambda, providing coverage for line 52
+        recurringTask.execute(taskInstance, executionContext);
+
+        verify(potaClient).fetch();
     }
 
     @Test

@@ -1,5 +1,7 @@
 package io.nextskip.activations.internal.scheduler;
 
+import com.github.kagkarlsson.scheduler.task.ExecutionContext;
+import com.github.kagkarlsson.scheduler.task.TaskInstance;
 import com.github.kagkarlsson.scheduler.task.helper.RecurringTask;
 import io.nextskip.activations.internal.SotaClient;
 import io.nextskip.activations.model.Activation;
@@ -50,6 +52,22 @@ class SotaRefreshTaskTest {
 
         assertThat(recurringTask).isNotNull();
         assertThat(recurringTask.getName()).isEqualTo("sota-refresh");
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void testSotaRecurringTask_ExecuteHandler_InvokesRefresh() {
+        Activation activation = createTestActivation();
+        when(sotaClient.fetch()).thenReturn(List.of(activation));
+        when(repository.deleteBySpottedAtBefore(any())).thenReturn(0);
+
+        RecurringTask<Void> recurringTask = task.sotaRecurringTask(sotaClient, repository);
+        TaskInstance<Void> taskInstance = (TaskInstance<Void>) org.mockito.Mockito.mock(TaskInstance.class);
+        ExecutionContext executionContext = org.mockito.Mockito.mock(ExecutionContext.class);
+
+        recurringTask.execute(taskInstance, executionContext);
+
+        verify(sotaClient).fetch();
     }
 
     @Test

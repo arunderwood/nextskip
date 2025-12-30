@@ -1,5 +1,7 @@
 package io.nextskip.propagation.internal.scheduler;
 
+import com.github.kagkarlsson.scheduler.task.ExecutionContext;
+import com.github.kagkarlsson.scheduler.task.TaskInstance;
 import com.github.kagkarlsson.scheduler.task.helper.RecurringTask;
 import io.nextskip.propagation.internal.NoaaSwpcClient;
 import io.nextskip.propagation.model.SolarIndices;
@@ -48,6 +50,21 @@ class NoaaRefreshTaskTest {
 
         assertThat(recurringTask).isNotNull();
         assertThat(recurringTask.getName()).isEqualTo("noaa-refresh");
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void testNoaaRecurringTask_ExecuteHandler_InvokesRefresh() {
+        SolarIndices indices = createTestSolarIndices();
+        when(noaaClient.fetch()).thenReturn(indices);
+
+        RecurringTask<Void> recurringTask = task.noaaRecurringTask(noaaClient, repository);
+        TaskInstance<Void> taskInstance = (TaskInstance<Void>) org.mockito.Mockito.mock(TaskInstance.class);
+        ExecutionContext executionContext = org.mockito.Mockito.mock(ExecutionContext.class);
+
+        recurringTask.execute(taskInstance, executionContext);
+
+        verify(noaaClient).fetch();
     }
 
     @Test

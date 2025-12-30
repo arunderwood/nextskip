@@ -1,5 +1,7 @@
 package io.nextskip.contests.internal.scheduler;
 
+import com.github.kagkarlsson.scheduler.task.ExecutionContext;
+import com.github.kagkarlsson.scheduler.task.TaskInstance;
 import com.github.kagkarlsson.scheduler.task.helper.RecurringTask;
 import io.nextskip.contests.internal.ContestCalendarClient;
 import io.nextskip.contests.internal.dto.ContestICalDto;
@@ -50,6 +52,21 @@ class ContestRefreshTaskTest {
 
         assertThat(recurringTask).isNotNull();
         assertThat(recurringTask.getName()).isEqualTo("contest-refresh");
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void testContestRecurringTask_ExecuteHandler_InvokesRefresh() {
+        List<ContestICalDto> dtos = createTestDtos();
+        when(contestClient.fetch()).thenReturn(dtos);
+
+        RecurringTask<Void> recurringTask = task.contestRecurringTask(contestClient, repository);
+        TaskInstance<Void> taskInstance = (TaskInstance<Void>) org.mockito.Mockito.mock(TaskInstance.class);
+        ExecutionContext executionContext = org.mockito.Mockito.mock(ExecutionContext.class);
+
+        recurringTask.execute(taskInstance, executionContext);
+
+        verify(contestClient).fetch();
     }
 
     @Test

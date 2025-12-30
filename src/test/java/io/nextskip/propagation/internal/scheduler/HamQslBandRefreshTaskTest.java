@@ -1,5 +1,7 @@
 package io.nextskip.propagation.internal.scheduler;
 
+import com.github.kagkarlsson.scheduler.task.ExecutionContext;
+import com.github.kagkarlsson.scheduler.task.TaskInstance;
 import com.github.kagkarlsson.scheduler.task.helper.RecurringTask;
 import io.nextskip.common.model.FrequencyBand;
 import io.nextskip.propagation.internal.HamQslBandClient;
@@ -50,6 +52,21 @@ class HamQslBandRefreshTaskTest {
 
         assertThat(recurringTask).isNotNull();
         assertThat(recurringTask.getName()).isEqualTo("hamqsl-band-refresh");
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void testHamQslBandRecurringTask_ExecuteHandler_InvokesRefresh() {
+        List<BandCondition> conditions = createTestConditions();
+        when(hamQslBandClient.fetch()).thenReturn(conditions);
+
+        RecurringTask<Void> recurringTask = task.hamQslBandRecurringTask(hamQslBandClient, repository);
+        TaskInstance<Void> taskInstance = (TaskInstance<Void>) org.mockito.Mockito.mock(TaskInstance.class);
+        ExecutionContext executionContext = org.mockito.Mockito.mock(ExecutionContext.class);
+
+        recurringTask.execute(taskInstance, executionContext);
+
+        verify(hamQslBandClient).fetch();
     }
 
     @Test
