@@ -1,6 +1,6 @@
 # Database Configuration
 
-NextSkip uses PostgreSQL 17 for persistent data storage.
+NextSkip uses PostgreSQL 18 for persistent data storage.
 
 ## Local Development
 
