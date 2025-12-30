@@ -8,11 +8,18 @@ allowed-tools: Read, Grep, Glob, Bash(git *), Task, AskUserQuestion, mcp__github
 
 ## Workflow
 
-### 1. Fetch Issue
+### 1. Sync with Main
+
+Ensure branch is up to date with `origin/main` before planning (unless explicitly told otherwise):
+```bash
+git fetch origin main && git rebase origin/main
+```
+
+### 2. Fetch Issue
 
 Parse `$1` as either issue number or full GitHub URL. Use GitHub MCP tools to retrieve the issue content, labels, and comments.
 
-### 2. Explore Codebase
+### 3. Explore Codebase
 
 Launch Explore agents to understand:
 - Files/packages mentioned in the issue
@@ -21,15 +28,15 @@ Launch Explore agents to understand:
 
 Compare the issue's implementation details against current codebase state.
 
-### 3. Research Alternatives
+### 4. Research Alternatives
 
 If `$ARGUMENTS` includes questions about alternatives or approaches, research and compare options considering project conventions.
 
-### 4. Clarify
+### 5. Clarify
 
 Ask clarifying questions about ambiguous requirements or implementation choices before planning.
 
-### 5. Create Plan
+### 6. Create Plan
 
 Enter **planning mode** to create an implementation plan that:
 
