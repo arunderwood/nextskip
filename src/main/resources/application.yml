@@ -56,7 +56,15 @@ spring:
     enabled: true
     change-log: classpath:db/changelog/db.changelog-master.yaml
 
-# Data Refresh Scheduler Configuration
+# db-scheduler Configuration
+db-scheduler:
+  enabled: true
+  threads: 2  # Match previous ThreadPoolTaskScheduler pool size
+  polling-interval: 10s  # How often to check for due tasks
+  heartbeat-interval: 5m  # Heartbeat for detecting dead executions
+  shutdown-max-wait: 30s  # Max wait time on graceful shutdown
+
+# Data Refresh Scheduler Configuration (legacy - to be removed)
 nextskip:
   refresh:
     eager-load: true  # Warm all caches on application startup

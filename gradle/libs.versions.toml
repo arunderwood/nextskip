@@ -30,6 +30,9 @@ byte-buddy = "1.18.3"
 # Database testing
 testcontainers = "2.0.3"
 
+# Scheduling
+db-scheduler = "15.6.0"
+
 [plugins]
 spring-boot = { id = "org.springframework.boot", version.ref = "spring-boot" }
 spring-dependency-management = { id = "io.spring.dependency-management", version.ref = "spring-dependency-management" }
@@ -56,6 +59,9 @@ spring-boot-starter-data-jpa = { module = "org.springframework.boot:spring-boot-
 # Database
 postgresql = { module = "org.postgresql:postgresql" }
 spring-boot-starter-liquibase = { module = "org.springframework.boot:spring-boot-starter-liquibase" }
+
+# Scheduling
+db-scheduler-spring-boot-starter = { module = "com.github.kagkarlsson:db-scheduler-spring-boot-starter", version.ref = "db-scheduler" }
 
 # Testcontainers (2.x uses testcontainers- prefix for modules)
 spring-boot-testcontainers = { module = "org.springframework.boot:spring-boot-testcontainers" }

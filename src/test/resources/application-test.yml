@@ -17,6 +17,12 @@ nextskip:
   refresh:
     eager-load: false
 
+# db-scheduler test configuration
+db-scheduler:
+  enabled: true
+  immediate-execution-enabled: false
+  polling-interval: 1h  # Very long interval to prevent execution during tests
+
 # Reduce logging noise in tests
 logging:
   level:
