@@ -98,6 +98,7 @@ const customConfig: UserConfigFn = (env) => {
       'import.meta.env.VITE_FARO_COLLECTOR_URL': JSON.stringify(envVars.VITE_FARO_COLLECTOR_URL || ''),
       'import.meta.env.VITE_TRACE_CORS_URLS': JSON.stringify(envVars.VITE_TRACE_CORS_URLS || ''),
       'import.meta.env.VITE_APP_VERSION': JSON.stringify(envVars.VITE_APP_VERSION || ''),
+      'import.meta.env.VITE_ENVIRONMENT': JSON.stringify(envVars.VITE_ENVIRONMENT || 'development'),
       'import.meta.env.VITE_POSTHOG_KEY': JSON.stringify(envVars.VITE_POSTHOG_KEY || ''),
       'import.meta.env.VITE_POSTHOG_HOST': JSON.stringify(envVars.VITE_POSTHOG_HOST || ''),
     },
