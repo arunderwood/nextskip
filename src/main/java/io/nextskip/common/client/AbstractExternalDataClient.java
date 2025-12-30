@@ -46,7 +46,7 @@ import java.util.function.Supplier;
     "PMD.ConstructorCallsOverridableMethod" // Safe: getClientName/getMaxResponseSize return constants
 })
 public abstract class AbstractExternalDataClient<T>
-        implements ExternalDataClient<T>, RefreshableDataSource {
+        implements ExternalDataClient<T> {
 
     private final Logger log = LoggerFactory.getLogger(getClass());
 
@@ -142,6 +142,15 @@ public abstract class AbstractExternalDataClient<T>
      */
     protected abstract T getDefaultValue();
 
+    /**
+     * Returns the recommended refresh interval for this data source.
+     *
+     * <p>Used for freshness tracking via {@link #isStale()}.
+     *
+     * @return the refresh interval (e.g., {@code Duration.ofMinutes(5)})
+     */
+    public abstract Duration getRefreshInterval();
+
     // ========== Configurable methods (override if needed) ==========
 
     /**
@@ -226,13 +235,6 @@ public abstract class AbstractExternalDataClient<T>
             log.warn("Fetch failed for {}, attempting fallback: {}", getSourceName(), e.getMessage());
             return getFallbackData(e);
         }
-    }
-
-    // ========== RefreshableDataSource implementation ==========
-
-    @Override
-    public void refresh() {
-        fetch();
     }
 
     // ========== Freshness tracking API ==========
