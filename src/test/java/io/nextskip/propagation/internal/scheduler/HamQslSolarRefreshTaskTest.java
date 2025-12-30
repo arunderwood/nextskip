@@ -1,8 +1,10 @@
 package io.nextskip.propagation.internal.scheduler;
 
+import com.github.benmanes.caffeine.cache.LoadingCache;
 import com.github.kagkarlsson.scheduler.task.ExecutionContext;
 import com.github.kagkarlsson.scheduler.task.TaskInstance;
 import com.github.kagkarlsson.scheduler.task.helper.RecurringTask;
+import io.nextskip.common.config.CacheConfig;
 import io.nextskip.propagation.internal.HamQslSolarClient;
 import io.nextskip.propagation.model.SolarIndices;
 import io.nextskip.propagation.persistence.entity.SolarIndicesEntity;
@@ -37,6 +39,9 @@ class HamQslSolarRefreshTaskTest {
     @Mock
     private SolarIndicesRepository repository;
 
+    @Mock
+    private LoadingCache<String, SolarIndices> solarIndicesCache;
+
     private HamQslSolarRefreshTask task;
 
     @BeforeEach
@@ -46,7 +51,8 @@ class HamQslSolarRefreshTaskTest {
 
     @Test
     void testHamQslSolarRefreshTask_ReturnsValidRecurringTask() {
-        RecurringTask<Void> recurringTask = task.hamQslSolarRecurringTask(hamQslSolarClient, repository);
+        RecurringTask<Void> recurringTask = task.hamQslSolarRecurringTask(
+                hamQslSolarClient, repository, solarIndicesCache);
 
         assertThat(recurringTask).isNotNull();
         assertThat(recurringTask.getName()).isEqualTo("hamqsl-solar-refresh");
@@ -58,7 +64,8 @@ class HamQslSolarRefreshTaskTest {
         SolarIndices indices = createTestSolarIndices();
         when(hamQslSolarClient.fetch()).thenReturn(indices);
 
-        RecurringTask<Void> recurringTask = task.hamQslSolarRecurringTask(hamQslSolarClient, repository);
+        RecurringTask<Void> recurringTask = task.hamQslSolarRecurringTask(
+                hamQslSolarClient, repository, solarIndicesCache);
         TaskInstance<Void> taskInstance = (TaskInstance<Void>) org.mockito.Mockito.mock(TaskInstance.class);
         ExecutionContext executionContext = org.mockito.Mockito.mock(ExecutionContext.class);
 
@@ -72,7 +79,7 @@ class HamQslSolarRefreshTaskTest {
         SolarIndices indices = createTestSolarIndices();
         when(hamQslSolarClient.fetch()).thenReturn(indices);
 
-        task.executeRefresh(hamQslSolarClient, repository);
+        task.executeRefresh(hamQslSolarClient, repository, solarIndicesCache);
 
         verify(hamQslSolarClient).fetch();
     }
@@ -82,7 +89,7 @@ class HamQslSolarRefreshTaskTest {
         SolarIndices indices = createTestSolarIndices();
         when(hamQslSolarClient.fetch()).thenReturn(indices);
 
-        task.executeRefresh(hamQslSolarClient, repository);
+        task.executeRefresh(hamQslSolarClient, repository, solarIndicesCache);
 
         ArgumentCaptor<SolarIndicesEntity> captor = ArgumentCaptor.forClass(SolarIndicesEntity.class);
         verify(repository).save(captor.capture());
@@ -93,10 +100,20 @@ class HamQslSolarRefreshTaskTest {
     }
 
     @Test
+    void testExecuteRefresh_TriggersCacheRefresh() {
+        SolarIndices indices = createTestSolarIndices();
+        when(hamQslSolarClient.fetch()).thenReturn(indices);
+
+        task.executeRefresh(hamQslSolarClient, repository, solarIndicesCache);
+
+        verify(solarIndicesCache).refresh(CacheConfig.CACHE_KEY);
+    }
+
+    @Test
     void testExecuteRefresh_ClientReturnsNull_SkipsSave() {
         when(hamQslSolarClient.fetch()).thenReturn(null);
 
-        task.executeRefresh(hamQslSolarClient, repository);
+        task.executeRefresh(hamQslSolarClient, repository, solarIndicesCache);
 
         verify(repository, never()).save(any());
     }
@@ -105,7 +122,7 @@ class HamQslSolarRefreshTaskTest {
     void testExecuteRefresh_ClientThrowsException_PropagatesException() {
         when(hamQslSolarClient.fetch()).thenThrow(new RuntimeException("HamQSL API error"));
 
-        assertThatThrownBy(() -> task.executeRefresh(hamQslSolarClient, repository))
+        assertThatThrownBy(() -> task.executeRefresh(hamQslSolarClient, repository, solarIndicesCache))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("HamQSL solar refresh failed");
 

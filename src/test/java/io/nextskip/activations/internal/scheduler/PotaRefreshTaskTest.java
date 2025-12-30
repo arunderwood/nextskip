@@ -1,5 +1,6 @@
 package io.nextskip.activations.internal.scheduler;
 
+import com.github.benmanes.caffeine.cache.LoadingCache;
 import com.github.kagkarlsson.scheduler.task.ExecutionContext;
 import com.github.kagkarlsson.scheduler.task.TaskInstance;
 import com.github.kagkarlsson.scheduler.task.helper.RecurringTask;
@@ -9,6 +10,7 @@ import io.nextskip.activations.model.ActivationType;
 import io.nextskip.activations.model.Park;
 import io.nextskip.activations.persistence.entity.ActivationEntity;
 import io.nextskip.activations.persistence.repository.ActivationRepository;
+import io.nextskip.common.config.CacheConfig;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -39,6 +41,9 @@ class PotaRefreshTaskTest {
     @Mock
     private ActivationRepository repository;
 
+    @Mock
+    private LoadingCache<String, List<Activation>> activationsCache;
+
     private PotaRefreshTask task;
 
     @BeforeEach
@@ -48,7 +53,7 @@ class PotaRefreshTaskTest {
 
     @Test
     void testPotaRefreshTask_ReturnsValidRecurringTask() {
-        RecurringTask<Void> recurringTask = task.potaRecurringTask(potaClient, repository);
+        RecurringTask<Void> recurringTask = task.potaRecurringTask(potaClient, repository, activationsCache);
 
         assertThat(recurringTask).isNotNull();
         assertThat(recurringTask.getName()).isEqualTo("pota-refresh");
@@ -61,7 +66,7 @@ class PotaRefreshTaskTest {
         when(potaClient.fetch()).thenReturn(List.of(activation));
         when(repository.deleteBySpottedAtBefore(any())).thenReturn(0);
 
-        RecurringTask<Void> recurringTask = task.potaRecurringTask(potaClient, repository);
+        RecurringTask<Void> recurringTask = task.potaRecurringTask(potaClient, repository, activationsCache);
         TaskInstance<Void> taskInstance = (TaskInstance<Void>) org.mockito.Mockito.mock(TaskInstance.class);
         ExecutionContext executionContext = org.mockito.Mockito.mock(ExecutionContext.class);
 
@@ -77,7 +82,7 @@ class PotaRefreshTaskTest {
         when(potaClient.fetch()).thenReturn(List.of(activation));
         when(repository.deleteBySpottedAtBefore(any())).thenReturn(0);
 
-        task.executeRefresh(potaClient, repository);
+        task.executeRefresh(potaClient, repository, activationsCache);
 
         verify(potaClient).fetch();
     }
@@ -88,7 +93,7 @@ class PotaRefreshTaskTest {
         when(potaClient.fetch()).thenReturn(List.of(activation));
         when(repository.deleteBySpottedAtBefore(any())).thenReturn(0);
 
-        task.executeRefresh(potaClient, repository);
+        task.executeRefresh(potaClient, repository, activationsCache);
 
         @SuppressWarnings("unchecked")
         ArgumentCaptor<List<ActivationEntity>> captor = ArgumentCaptor.forClass(List.class);
@@ -104,16 +109,27 @@ class PotaRefreshTaskTest {
         when(potaClient.fetch()).thenReturn(List.of(activation));
         when(repository.deleteBySpottedAtBefore(any())).thenReturn(5);
 
-        task.executeRefresh(potaClient, repository);
+        task.executeRefresh(potaClient, repository, activationsCache);
 
         verify(repository).deleteBySpottedAtBefore(any());
+    }
+
+    @Test
+    void testExecuteRefresh_TriggersCacheRefresh() {
+        Activation activation = createTestActivation();
+        when(potaClient.fetch()).thenReturn(List.of(activation));
+        when(repository.deleteBySpottedAtBefore(any())).thenReturn(0);
+
+        task.executeRefresh(potaClient, repository, activationsCache);
+
+        verify(activationsCache).refresh(CacheConfig.CACHE_KEY);
     }
 
     @Test
     void testExecuteRefresh_ClientThrowsException_PropagatesException() {
         when(potaClient.fetch()).thenThrow(new RuntimeException("API error"));
 
-        assertThatThrownBy(() -> task.executeRefresh(potaClient, repository))
+        assertThatThrownBy(() -> task.executeRefresh(potaClient, repository, activationsCache))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("POTA refresh failed");
 
@@ -125,7 +141,7 @@ class PotaRefreshTaskTest {
         when(potaClient.fetch()).thenReturn(Collections.emptyList());
         when(repository.deleteBySpottedAtBefore(any())).thenReturn(0);
 
-        task.executeRefresh(potaClient, repository);
+        task.executeRefresh(potaClient, repository, activationsCache);
 
         @SuppressWarnings("unchecked")
         ArgumentCaptor<List<ActivationEntity>> captor = ArgumentCaptor.forClass(List.class);

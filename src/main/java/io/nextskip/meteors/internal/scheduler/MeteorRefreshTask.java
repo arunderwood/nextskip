@@ -1,8 +1,10 @@
 package io.nextskip.meteors.internal.scheduler;
 
+import com.github.benmanes.caffeine.cache.LoadingCache;
 import com.github.kagkarlsson.scheduler.task.helper.RecurringTask;
 import com.github.kagkarlsson.scheduler.task.helper.Tasks;
 import com.github.kagkarlsson.scheduler.task.schedule.FixedDelay;
+import io.nextskip.common.config.CacheConfig;
 import io.nextskip.common.scheduler.DataRefreshException;
 import io.nextskip.meteors.internal.MeteorShowerDataLoader;
 import io.nextskip.meteors.model.MeteorShower;
@@ -21,9 +23,9 @@ import java.util.List;
 /**
  * Recurring task for refreshing meteor shower data.
  *
- * <p>Loads meteor shower data from the curated JSON file and computes
- * concrete dates for the current and upcoming year. Since meteor shower
- * dates are annual and predictable, this primarily handles year transitions.
+ * <p>Loads meteor shower data from the curated JSON file, computes concrete
+ * dates for the current and upcoming year, persists them to the database,
+ * and triggers async cache refresh.
  *
  * <p>Task runs every 1 hour (shower dates are static, but allows for
  * year-end transitions and data file updates).
@@ -39,31 +41,41 @@ public class MeteorRefreshTask {
     /**
      * Creates the recurring task bean for meteor shower data refresh.
      *
-     * @param dataLoader the meteor shower data loader
-     * @param repository the meteor shower repository for persistence
+     * @param dataLoader         the meteor shower data loader
+     * @param repository         the meteor shower repository for persistence
+     * @param meteorShowersCache the LoadingCache to refresh after DB write
      * @return the configured recurring task
      */
     @Bean
     public RecurringTask<Void> meteorRecurringTask(
             MeteorShowerDataLoader dataLoader,
-            MeteorShowerRepository repository) {
+            MeteorShowerRepository repository,
+            LoadingCache<String, List<MeteorShower>> meteorShowersCache) {
 
         return Tasks.recurring(TASK_NAME, FixedDelay.of(REFRESH_INTERVAL))
                 .execute((taskInstance, executionContext) ->
-                        executeRefresh(dataLoader, repository));
+                        executeRefresh(dataLoader, repository, meteorShowersCache));
     }
 
     /**
      * Executes the meteor shower data refresh.
      *
+     * <p>Loads data from JSON file, saves to database, then triggers async cache refresh.
+     * The cache refresh is non-blocking - old cached value is served during refresh.
+     *
      * <p>This method is package-private to allow testing.
      *
-     * @param dataLoader the meteor shower data loader
-     * @param repository the meteor shower repository
+     * @param dataLoader         the meteor shower data loader
+     * @param repository         the meteor shower repository
+     * @param meteorShowersCache the cache to refresh
      */
     @Transactional
     @SuppressWarnings("PMD.AvoidCatchingGenericException") // Data loader can throw various exceptions
-    void executeRefresh(MeteorShowerDataLoader dataLoader, MeteorShowerRepository repository) {
+    void executeRefresh(
+            MeteorShowerDataLoader dataLoader,
+            MeteorShowerRepository repository,
+            LoadingCache<String, List<MeteorShower>> meteorShowersCache) {
+
         LOG.debug("Executing meteor refresh task");
 
         try {
@@ -79,7 +91,11 @@ public class MeteorRefreshTask {
             repository.deleteAll();
             repository.saveAll(entities);
 
-            LOG.info("Meteor refresh complete: {} showers saved", entities.size());
+            // Trigger async cache refresh (non-blocking)
+            meteorShowersCache.refresh(CacheConfig.CACHE_KEY);
+
+            LOG.info("Meteor refresh complete: {} showers saved, cache refresh triggered",
+                    entities.size());
 
         } catch (Exception e) {
             LOG.error("Meteor refresh failed: {}", e.getMessage(), e);

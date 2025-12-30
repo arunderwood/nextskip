@@ -1,8 +1,10 @@
 package io.nextskip.activations.internal;
 
+import com.github.benmanes.caffeine.cache.LoadingCache;
 import io.nextskip.activations.model.Activation;
 import io.nextskip.activations.model.ActivationsSummary;
 import io.nextskip.activations.model.ActivationType;
+import io.nextskip.common.config.CacheConfig;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -18,8 +20,7 @@ import static org.mockito.Mockito.*;
 /**
  * Unit tests for ActivationsServiceImpl.
  *
- * Tests the service layer that aggregates POTA and SOTA activations,
- * including error handling when clients fail.
+ * Tests the service layer that reads POTA and SOTA activations from the LoadingCache.
  */
 @ExtendWith(MockitoExtension.class)
 class ActivationsServiceImplTest {
@@ -28,31 +29,25 @@ class ActivationsServiceImplTest {
     private static final String TEST_CALLSIGN_SOTA = "W3XYZ/P";
 
     @Mock
-    private PotaClient potaClient;
-
-    @Mock
-    private SotaClient sotaClient;
+    private LoadingCache<String, List<Activation>> activationsCache;
 
     private ActivationsServiceImpl service;
 
     @BeforeEach
     void setUp() {
-        service = new ActivationsServiceImpl(potaClient, sotaClient);
+        service = new ActivationsServiceImpl(activationsCache);
     }
 
     @Test
     void shouldCombine_PotaAndSotaActivations() {
-        // Given: Both clients return data
-        List<Activation> potaActivations = List.of(
+        // Given: Cache returns combined POTA and SOTA activations
+        List<Activation> allActivations = List.of(
                 createPotaActivation("1", TEST_CALLSIGN_POTA),
-                createPotaActivation("2", "K2DEF")
-        );
-        List<Activation> sotaActivations = List.of(
+                createPotaActivation("2", "K2DEF"),
                 createSotaActivation("3", TEST_CALLSIGN_SOTA)
         );
 
-        when(potaClient.fetch()).thenReturn(potaActivations);
-        when(sotaClient.fetch()).thenReturn(sotaActivations);
+        when(activationsCache.get(CacheConfig.CACHE_KEY)).thenReturn(allActivations);
 
         // When
         ActivationsSummary summary = service.getActivationsSummary();
@@ -64,75 +59,14 @@ class ActivationsServiceImplTest {
         assertEquals(1, summary.sotaCount(), "Should count SOTA activations");
         assertNotNull(summary.lastUpdated(), "Should set timestamp");
 
-        // Verify both clients were called
-        verify(potaClient).fetch();
-        verify(sotaClient).fetch();
+        // Verify cache was called
+        verify(activationsCache).get(CacheConfig.CACHE_KEY);
     }
 
     @Test
-    void shouldHandle_PotaClientFailure() {
-        // Given: POTA client throws exception, SOTA succeeds
-        when(potaClient.fetch()).thenThrow(new RuntimeException("POTA API unavailable"));
-        when(sotaClient.fetch()).thenReturn(List.of(createSotaActivation("1", TEST_CALLSIGN_SOTA)));
-
-        // When
-        ActivationsSummary summary = service.getActivationsSummary();
-
-        // Then: Should gracefully degrade
-        assertNotNull(summary);
-        assertEquals(1, summary.activations().size(), "Should include SOTA activations");
-        assertEquals(0, summary.potaCount(), "POTA count should be 0 on failure");
-        assertEquals(1, summary.sotaCount(), "SOTA count should be 1");
-
-        // Verify both clients were called
-        verify(potaClient).fetch();
-        verify(sotaClient).fetch();
-    }
-
-    @Test
-    void shouldHandle_SotaClientFailure() {
-        // Given: SOTA client throws exception, POTA succeeds
-        when(potaClient.fetch()).thenReturn(List.of(createPotaActivation("1", TEST_CALLSIGN_POTA)));
-        when(sotaClient.fetch()).thenThrow(new RuntimeException("SOTA API unavailable"));
-
-        // When
-        ActivationsSummary summary = service.getActivationsSummary();
-
-        // Then: Should gracefully degrade
-        assertNotNull(summary);
-        assertEquals(1, summary.activations().size(), "Should include POTA activations");
-        assertEquals(1, summary.potaCount(), "POTA count should be 1");
-        assertEquals(0, summary.sotaCount(), "SOTA count should be 0 on failure");
-
-        verify(potaClient).fetch();
-        verify(sotaClient).fetch();
-    }
-
-    @Test
-    void shouldHandle_BothClientFailures() {
-        // Given: Both clients fail
-        when(potaClient.fetch()).thenThrow(new RuntimeException("POTA API down"));
-        when(sotaClient.fetch()).thenThrow(new RuntimeException("SOTA API down"));
-
-        // When
-        ActivationsSummary summary = service.getActivationsSummary();
-
-        // Then: Should return empty summary
-        assertNotNull(summary);
-        assertEquals(0, summary.activations().size(), "Should have no activations");
-        assertEquals(0, summary.potaCount(), "POTA count should be 0");
-        assertEquals(0, summary.sotaCount(), "SOTA count should be 0");
-        assertNotNull(summary.lastUpdated(), "Should still set timestamp");
-
-        verify(potaClient).fetch();
-        verify(sotaClient).fetch();
-    }
-
-    @Test
-    void shouldHandle_EmptyResults() {
-        // Given: Both clients return empty lists
-        when(potaClient.fetch()).thenReturn(List.of());
-        when(sotaClient.fetch()).thenReturn(List.of());
+    void shouldHandle_EmptyCache() {
+        // Given: Cache returns empty list
+        when(activationsCache.get(CacheConfig.CACHE_KEY)).thenReturn(List.of());
 
         // When
         ActivationsSummary summary = service.getActivationsSummary();
@@ -146,11 +80,26 @@ class ActivationsServiceImplTest {
     }
 
     @Test
+    void shouldHandle_NullFromCache() {
+        // Given: Cache returns null (edge case)
+        when(activationsCache.get(CacheConfig.CACHE_KEY)).thenReturn(null);
+
+        // When
+        ActivationsSummary summary = service.getActivationsSummary();
+
+        // Then: Should handle null gracefully
+        assertNotNull(summary);
+        assertEquals(0, summary.activations().size(), "Should have no activations");
+        assertEquals(0, summary.potaCount(), "POTA count should be 0");
+        assertEquals(0, summary.sotaCount(), "SOTA count should be 0");
+        assertNotNull(summary.lastUpdated(), "Should still set timestamp");
+    }
+
+    @Test
     void shouldSet_RecentLastUpdatedTimestamp() {
         // Given
         Instant before = Instant.now();
-        when(potaClient.fetch()).thenReturn(List.of());
-        when(sotaClient.fetch()).thenReturn(List.of());
+        when(activationsCache.get(CacheConfig.CACHE_KEY)).thenReturn(List.of());
 
         // When
         ActivationsSummary summary = service.getActivationsSummary();
@@ -172,17 +121,14 @@ class ActivationsServiceImplTest {
 
     @Test
     void testGetActivationsResponse_SeparatesActivationsByType() {
-        // Given: Mixed POTA and SOTA activations
-        List<Activation> potaActivations = List.of(
+        // Given: Mixed POTA and SOTA activations from cache
+        List<Activation> allActivations = List.of(
                 createPotaActivation("1", TEST_CALLSIGN_POTA),
-                createPotaActivation("2", "K2DEF")
-        );
-        List<Activation> sotaActivations = List.of(
+                createPotaActivation("2", "K2DEF"),
                 createSotaActivation("3", TEST_CALLSIGN_SOTA)
         );
 
-        when(potaClient.fetch()).thenReturn(potaActivations);
-        when(sotaClient.fetch()).thenReturn(sotaActivations);
+        when(activationsCache.get(CacheConfig.CACHE_KEY)).thenReturn(allActivations);
 
         // When
         io.nextskip.activations.api.ActivationsResponse response = service.getActivationsResponse();
@@ -204,18 +150,15 @@ class ActivationsServiceImplTest {
     @Test
     void testGetActivationsResponse_CalculatesTotalCount() {
         // Given
-        List<Activation> potaActivations = List.of(
+        List<Activation> allActivations = List.of(
                 createPotaActivation("1", TEST_CALLSIGN_POTA),
                 createPotaActivation("2", "K2DEF"),
-                createPotaActivation("3", "N3GHI")
-        );
-        List<Activation> sotaActivations = List.of(
+                createPotaActivation("3", "N3GHI"),
                 createSotaActivation("4", "W4XYZ/P"),
                 createSotaActivation("5", "K5LMN/P")
         );
 
-        when(potaClient.fetch()).thenReturn(potaActivations);
-        when(sotaClient.fetch()).thenReturn(sotaActivations);
+        when(activationsCache.get(CacheConfig.CACHE_KEY)).thenReturn(allActivations);
 
         // When
         io.nextskip.activations.api.ActivationsResponse response = service.getActivationsResponse();
@@ -231,8 +174,7 @@ class ActivationsServiceImplTest {
     void testGetActivationsResponse_IncludesLastUpdated() {
         // Given
         Instant before = Instant.now();
-        when(potaClient.fetch()).thenReturn(List.of());
-        when(sotaClient.fetch()).thenReturn(List.of());
+        when(activationsCache.get(CacheConfig.CACHE_KEY)).thenReturn(List.of());
 
         // When
         io.nextskip.activations.api.ActivationsResponse response = service.getActivationsResponse();

@@ -1,8 +1,10 @@
 package io.nextskip.propagation.internal.scheduler;
 
+import com.github.benmanes.caffeine.cache.LoadingCache;
 import com.github.kagkarlsson.scheduler.task.helper.RecurringTask;
 import com.github.kagkarlsson.scheduler.task.helper.Tasks;
 import com.github.kagkarlsson.scheduler.task.schedule.FixedDelay;
+import io.nextskip.common.config.CacheConfig;
 import io.nextskip.common.scheduler.DataRefreshException;
 import io.nextskip.propagation.internal.NoaaSwpcClient;
 import io.nextskip.propagation.model.SolarIndices;
@@ -21,7 +23,8 @@ import java.time.Instant;
  * Recurring task for refreshing NOAA SWPC solar indices data.
  *
  * <p>Fetches current solar indices (SFI, sunspot number) from NOAA's
- * Space Weather Prediction Center and persists them to the database.
+ * Space Weather Prediction Center, persists them to the database,
+ * and triggers an async cache refresh. NOAA provides SFI and sunspots.
  *
  * <p>Task runs every 5 minutes (matching the NOAA client refresh interval).
  */
@@ -36,31 +39,41 @@ public class NoaaRefreshTask {
     /**
      * Creates the recurring task bean for NOAA data refresh.
      *
-     * @param noaaClient the NOAA SWPC API client
-     * @param repository the solar indices repository for persistence
+     * @param noaaClient       the NOAA SWPC API client
+     * @param repository       the solar indices repository for persistence
+     * @param solarIndicesCache the LoadingCache to refresh after DB write
      * @return the configured recurring task
      */
     @Bean
     public RecurringTask<Void> noaaRecurringTask(
             NoaaSwpcClient noaaClient,
-            SolarIndicesRepository repository) {
+            SolarIndicesRepository repository,
+            LoadingCache<String, SolarIndices> solarIndicesCache) {
 
         return Tasks.recurring(TASK_NAME, FixedDelay.of(REFRESH_INTERVAL))
                 .execute((taskInstance, executionContext) ->
-                        executeRefresh(noaaClient, repository));
+                        executeRefresh(noaaClient, repository, solarIndicesCache));
     }
 
     /**
      * Executes the NOAA data refresh.
      *
+     * <p>Fetches data from API, saves to database, then triggers async cache refresh.
+     * The cache refresh is non-blocking - old cached value is served during refresh.
+     *
      * <p>This method is package-private to allow testing.
      *
-     * @param noaaClient the NOAA API client
-     * @param repository the solar indices repository
+     * @param noaaClient       the NOAA API client
+     * @param repository       the solar indices repository
+     * @param solarIndicesCache the cache to refresh
      */
     @Transactional
     @SuppressWarnings("PMD.AvoidCatchingGenericException") // API client can throw various exceptions
-    void executeRefresh(NoaaSwpcClient noaaClient, SolarIndicesRepository repository) {
+    void executeRefresh(
+            NoaaSwpcClient noaaClient,
+            SolarIndicesRepository repository,
+            LoadingCache<String, SolarIndices> solarIndicesCache) {
+
         LOG.debug("Executing NOAA refresh task");
 
         try {
@@ -71,7 +84,10 @@ public class NoaaRefreshTask {
             SolarIndicesEntity entity = SolarIndicesEntity.fromDomain(indices);
             repository.save(entity);
 
-            LOG.info("NOAA refresh complete: SFI={}, Sunspots={}",
+            // Trigger async cache refresh (non-blocking)
+            solarIndicesCache.refresh(CacheConfig.CACHE_KEY);
+
+            LOG.info("NOAA refresh complete: SFI={}, Sunspots={}, cache refresh triggered",
                     indices.solarFluxIndex(), indices.sunspotNumber());
 
         } catch (Exception e) {

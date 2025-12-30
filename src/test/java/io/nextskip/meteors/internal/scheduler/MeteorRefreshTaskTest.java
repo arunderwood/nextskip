@@ -1,8 +1,10 @@
 package io.nextskip.meteors.internal.scheduler;
 
+import com.github.benmanes.caffeine.cache.LoadingCache;
 import com.github.kagkarlsson.scheduler.task.ExecutionContext;
 import com.github.kagkarlsson.scheduler.task.TaskInstance;
 import com.github.kagkarlsson.scheduler.task.helper.RecurringTask;
+import io.nextskip.common.config.CacheConfig;
 import io.nextskip.meteors.internal.MeteorShowerDataLoader;
 import io.nextskip.meteors.model.MeteorShower;
 import io.nextskip.meteors.persistence.entity.MeteorShowerEntity;
@@ -39,6 +41,9 @@ class MeteorRefreshTaskTest {
     @Mock
     private MeteorShowerRepository repository;
 
+    @Mock
+    private LoadingCache<String, List<MeteorShower>> meteorShowersCache;
+
     private MeteorRefreshTask task;
 
     @BeforeEach
@@ -48,7 +53,7 @@ class MeteorRefreshTaskTest {
 
     @Test
     void testMeteorRefreshTask_ReturnsValidRecurringTask() {
-        RecurringTask<Void> recurringTask = task.meteorRecurringTask(dataLoader, repository);
+        RecurringTask<Void> recurringTask = task.meteorRecurringTask(dataLoader, repository, meteorShowersCache);
 
         assertThat(recurringTask).isNotNull();
         assertThat(recurringTask.getName()).isEqualTo("meteor-refresh");
@@ -60,7 +65,7 @@ class MeteorRefreshTaskTest {
         List<MeteorShower> showers = createTestShowers();
         when(dataLoader.getShowers(anyInt())).thenReturn(showers);
 
-        RecurringTask<Void> recurringTask = task.meteorRecurringTask(dataLoader, repository);
+        RecurringTask<Void> recurringTask = task.meteorRecurringTask(dataLoader, repository, meteorShowersCache);
         TaskInstance<Void> taskInstance = (TaskInstance<Void>) org.mockito.Mockito.mock(TaskInstance.class);
         ExecutionContext executionContext = org.mockito.Mockito.mock(ExecutionContext.class);
 
@@ -74,7 +79,7 @@ class MeteorRefreshTaskTest {
         List<MeteorShower> showers = createTestShowers();
         when(dataLoader.getShowers(anyInt())).thenReturn(showers);
 
-        task.executeRefresh(dataLoader, repository);
+        task.executeRefresh(dataLoader, repository, meteorShowersCache);
 
         verify(dataLoader).getShowers(30);
     }
@@ -84,7 +89,7 @@ class MeteorRefreshTaskTest {
         List<MeteorShower> showers = createTestShowers();
         when(dataLoader.getShowers(anyInt())).thenReturn(showers);
 
-        task.executeRefresh(dataLoader, repository);
+        task.executeRefresh(dataLoader, repository, meteorShowersCache);
 
         verify(repository).deleteAll();
     }
@@ -94,7 +99,7 @@ class MeteorRefreshTaskTest {
         List<MeteorShower> showers = createTestShowers();
         when(dataLoader.getShowers(anyInt())).thenReturn(showers);
 
-        task.executeRefresh(dataLoader, repository);
+        task.executeRefresh(dataLoader, repository, meteorShowersCache);
 
         @SuppressWarnings("unchecked")
         ArgumentCaptor<List<MeteorShowerEntity>> captor = ArgumentCaptor.forClass(List.class);
@@ -106,10 +111,20 @@ class MeteorRefreshTaskTest {
     }
 
     @Test
+    void testExecuteRefresh_TriggersCacheRefresh() {
+        List<MeteorShower> showers = createTestShowers();
+        when(dataLoader.getShowers(anyInt())).thenReturn(showers);
+
+        task.executeRefresh(dataLoader, repository, meteorShowersCache);
+
+        verify(meteorShowersCache).refresh(CacheConfig.CACHE_KEY);
+    }
+
+    @Test
     void testExecuteRefresh_DataLoaderThrowsException_PropagatesException() {
         when(dataLoader.getShowers(anyInt())).thenThrow(new RuntimeException("Data loader error"));
 
-        assertThatThrownBy(() -> task.executeRefresh(dataLoader, repository))
+        assertThatThrownBy(() -> task.executeRefresh(dataLoader, repository, meteorShowersCache))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("Meteor refresh failed");
 
@@ -121,7 +136,7 @@ class MeteorRefreshTaskTest {
     void testExecuteRefresh_EmptyList_DeletesAllAndSavesNothing() {
         when(dataLoader.getShowers(anyInt())).thenReturn(Collections.emptyList());
 
-        task.executeRefresh(dataLoader, repository);
+        task.executeRefresh(dataLoader, repository, meteorShowersCache);
 
         verify(repository).deleteAll();
 

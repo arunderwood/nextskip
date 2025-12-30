@@ -1,8 +1,10 @@
 package io.nextskip.contests.internal.scheduler;
 
+import com.github.benmanes.caffeine.cache.LoadingCache;
 import com.github.kagkarlsson.scheduler.task.helper.RecurringTask;
 import com.github.kagkarlsson.scheduler.task.helper.Tasks;
 import com.github.kagkarlsson.scheduler.task.schedule.FixedDelay;
+import io.nextskip.common.config.CacheConfig;
 import io.nextskip.common.scheduler.DataRefreshException;
 import io.nextskip.contests.internal.ContestCalendarClient;
 import io.nextskip.contests.internal.dto.ContestICalDto;
@@ -24,7 +26,7 @@ import java.util.Set;
  * Recurring task for refreshing contest calendar data.
  *
  * <p>Fetches upcoming amateur radio contests from the WA7BNM Contest Calendar
- * iCal feed and persists them to the database.
+ * iCal feed, persists them to the database, and triggers async cache refresh.
  *
  * <p>Task runs every 6 hours (contest schedules change infrequently).
  */
@@ -40,29 +42,39 @@ public class ContestRefreshTask {
      *
      * @param contestClient the contest calendar API client
      * @param repository    the contest repository for persistence
+     * @param contestsCache the LoadingCache to refresh after DB write
      * @return the configured recurring task
      */
     @Bean
     public RecurringTask<Void> contestRecurringTask(
             ContestCalendarClient contestClient,
-            ContestRepository repository) {
+            ContestRepository repository,
+            LoadingCache<String, List<Contest>> contestsCache) {
 
         return Tasks.recurring(TASK_NAME, FixedDelay.of(REFRESH_INTERVAL))
                 .execute((taskInstance, executionContext) ->
-                        executeRefresh(contestClient, repository));
+                        executeRefresh(contestClient, repository, contestsCache));
     }
 
     /**
      * Executes the contest data refresh.
      *
+     * <p>Fetches data from API, saves to database, then triggers async cache refresh.
+     * The cache refresh is non-blocking - old cached value is served during refresh.
+     *
      * <p>This method is package-private to allow testing.
      *
      * @param contestClient the contest calendar API client
      * @param repository    the contest repository
+     * @param contestsCache the cache to refresh
      */
     @Transactional
     @SuppressWarnings("PMD.AvoidCatchingGenericException") // API client can throw various exceptions
-    void executeRefresh(ContestCalendarClient contestClient, ContestRepository repository) {
+    void executeRefresh(
+            ContestCalendarClient contestClient,
+            ContestRepository repository,
+            LoadingCache<String, List<Contest>> contestsCache) {
+
         LOG.debug("Executing contest refresh task");
 
         try {
@@ -79,7 +91,11 @@ public class ContestRefreshTask {
             repository.deleteAll();
             repository.saveAll(entities);
 
-            LOG.info("Contest refresh complete: {} contests saved", entities.size());
+            // Trigger async cache refresh (non-blocking)
+            contestsCache.refresh(CacheConfig.CACHE_KEY);
+
+            LOG.info("Contest refresh complete: {} contests saved, cache refresh triggered",
+                    entities.size());
 
         } catch (Exception e) {
             LOG.error("Contest refresh failed: {}", e.getMessage(), e);

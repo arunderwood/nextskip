@@ -1,8 +1,10 @@
 package io.nextskip.propagation.internal.scheduler;
 
+import com.github.benmanes.caffeine.cache.LoadingCache;
 import com.github.kagkarlsson.scheduler.task.helper.RecurringTask;
 import com.github.kagkarlsson.scheduler.task.helper.Tasks;
 import com.github.kagkarlsson.scheduler.task.schedule.FixedDelay;
+import io.nextskip.common.config.CacheConfig;
 import io.nextskip.common.scheduler.DataRefreshException;
 import io.nextskip.propagation.internal.HamQslBandClient;
 import io.nextskip.propagation.model.BandCondition;
@@ -21,8 +23,9 @@ import java.util.List;
 /**
  * Recurring task for refreshing HamQSL band condition data.
  *
- * <p>Fetches HF band conditions from HamQSL and persists them to the database.
- * This provides band-by-band propagation ratings (Good/Fair/Poor).
+ * <p>Fetches HF band conditions from HamQSL, persists them to the database,
+ * and triggers an async cache refresh. Provides band-by-band propagation
+ * ratings (Good/Fair/Poor).
  *
  * <p>Task runs every 15 minutes (slightly more frequent than solar data
  * since band conditions can change more quickly).
@@ -37,31 +40,41 @@ public class HamQslBandRefreshTask {
     /**
      * Creates the recurring task bean for HamQSL band condition refresh.
      *
-     * @param hamQslBandClient the HamQSL band API client
-     * @param repository       the band condition repository for persistence
+     * @param hamQslBandClient    the HamQSL band API client
+     * @param repository          the band condition repository for persistence
+     * @param bandConditionsCache the LoadingCache to refresh after DB write
      * @return the configured recurring task
      */
     @Bean
     public RecurringTask<Void> hamQslBandRecurringTask(
             HamQslBandClient hamQslBandClient,
-            BandConditionRepository repository) {
+            BandConditionRepository repository,
+            LoadingCache<String, List<BandCondition>> bandConditionsCache) {
 
         return Tasks.recurring(TASK_NAME, FixedDelay.of(REFRESH_INTERVAL))
                 .execute((taskInstance, executionContext) ->
-                        executeRefresh(hamQslBandClient, repository));
+                        executeRefresh(hamQslBandClient, repository, bandConditionsCache));
     }
 
     /**
      * Executes the HamQSL band condition refresh.
      *
+     * <p>Fetches data from API, saves to database, then triggers async cache refresh.
+     * The cache refresh is non-blocking - old cached value is served during refresh.
+     *
      * <p>This method is package-private to allow testing.
      *
-     * @param hamQslBandClient the HamQSL band API client
-     * @param repository       the band condition repository
+     * @param hamQslBandClient    the HamQSL band API client
+     * @param repository          the band condition repository
+     * @param bandConditionsCache the cache to refresh
      */
     @Transactional
     @SuppressWarnings("PMD.AvoidCatchingGenericException") // API client can throw various exceptions
-    void executeRefresh(HamQslBandClient hamQslBandClient, BandConditionRepository repository) {
+    void executeRefresh(
+            HamQslBandClient hamQslBandClient,
+            BandConditionRepository repository,
+            LoadingCache<String, List<BandCondition>> bandConditionsCache) {
+
         LOG.debug("Executing HamQSL band refresh task");
 
         try {
@@ -76,7 +89,10 @@ public class HamQslBandRefreshTask {
 
             repository.saveAll(entities);
 
-            LOG.info("HamQSL band refresh complete: {} band conditions saved",
+            // Trigger async cache refresh (non-blocking)
+            bandConditionsCache.refresh(CacheConfig.CACHE_KEY);
+
+            LOG.info("HamQSL band refresh complete: {} band conditions saved, cache refresh triggered",
                     entities.size());
 
         } catch (Exception e) {
