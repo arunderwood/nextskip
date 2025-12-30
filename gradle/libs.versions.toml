@@ -16,7 +16,7 @@ pitest = "1.19.0-rc.2"
 
 # Dependencies (not managed by Spring Boot BOM)
 resilience4j = "2.3.0"
-ical4j = "4.2.2"
+ical4j = "4.2.3"
 jsoup = "1.21.2"
 wiremock = "3.13.2"
 
