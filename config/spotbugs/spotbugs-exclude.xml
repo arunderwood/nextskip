@@ -47,4 +47,13 @@
         <Source name="~.*Test\.java"/>
         <Bug pattern="BC_VACUOUS_INSTANCEOF"/>
     </Match>
+
+    <!--
+        MS_EXPOSE_REP: TestPostgresContainer singleton intentionally shares mutable container.
+        This follows Testcontainers' recommended singleton pattern for test performance.
+    -->
+    <Match>
+        <Class name="io.nextskip.test.TestPostgresContainer"/>
+        <Bug pattern="MS_EXPOSE_REP"/>
+    </Match>
 </FindBugsFilter>

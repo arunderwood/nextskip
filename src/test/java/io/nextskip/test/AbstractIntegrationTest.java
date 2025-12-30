@@ -20,6 +20,10 @@ import org.springframework.test.context.DynamicPropertySource;
  * }</pre>
  */
 @ActiveProfiles("test")
+@SuppressWarnings({
+        "PMD.AbstractClassWithoutAbstractMethod", // Abstract for inheritance-based config propagation
+        "PMD.CloseResource" // Singleton container intentionally stays open for all tests
+})
 public abstract class AbstractIntegrationTest {
 
     @DynamicPropertySource

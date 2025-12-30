@@ -14,6 +14,7 @@ import org.testcontainers.postgresql.PostgreSQLContainer;
  * @see <a href="https://java.testcontainers.org/test_framework_integration/manual_lifecycle_control/#singleton-containers">
  *     Testcontainers Singleton Pattern</a>
  */
+@SuppressWarnings("PMD.TestClassWithoutTestCases") // Test infrastructure, not a test class
 public final class TestPostgresContainer {
 
     private static final PostgreSQLContainer INSTANCE;
