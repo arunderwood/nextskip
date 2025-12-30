@@ -31,7 +31,7 @@ byte-buddy = "1.18.3"
 testcontainers = "2.0.3"
 
 # Scheduling
-db-scheduler = "15.6.0"
+db-scheduler = "16.6.0"
 
 [plugins]
 spring-boot = { id = "org.springframework.boot", version.ref = "spring-boot" }
