@@ -20,6 +20,16 @@ function SolarIndicesHelpContent() {
       <p>
         <strong>Hot when:</strong> High SFI (120+) with low K-index (0-2) indicates excellent propagation.
       </p>
+      <p className="data-source">
+        Data sources:{' '}
+        <a href="https://www.swpc.noaa.gov/" target="_blank" rel="noopener noreferrer">
+          NOAA Space Weather Prediction Center
+        </a>
+        ,{' '}
+        <a href="https://www.hamqsl.com/" target="_blank" rel="noopener noreferrer">
+          HamQSL
+        </a>
+      </p>
     </div>
   );
 }
@@ -52,6 +62,12 @@ function BandConditionsHelpContent() {
       <p>
         <strong>Hot when:</strong> Band shows Good conditions, indicating strong ionospheric support for long-distance
         contacts.
+      </p>
+      <p className="data-source">
+        Data source:{' '}
+        <a href="https://www.hamqsl.com/" target="_blank" rel="noopener noreferrer">
+          HamQSL
+        </a>
       </p>
     </div>
   );

@@ -123,6 +123,13 @@ function ContestsContent({ contests, activeCount, upcomingCount }: Props) {
       )}
 
       {contests.length > 6 && <div className="more-contests">+{contests.length - 6} more contests</div>}
+
+      <div className="data-attribution">
+        Data from{' '}
+        <a href="https://www.contestcalendar.com/" target="_blank" rel="noopener noreferrer">
+          WA7BNM Contest Calendar
+        </a>
+      </div>
     </div>
   );
 }

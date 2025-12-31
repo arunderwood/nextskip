@@ -21,6 +21,12 @@ function MeteorShowersHelpContent() {
         <strong>Hot when:</strong> Active showers near peak dates, especially major showers (Perseids, Geminids) with
         high ZHR.
       </p>
+      <p className="data-source">
+        Data source:{' '}
+        <a href="https://www.imo.net/" target="_blank" rel="noopener noreferrer">
+          International Meteor Organization
+        </a>
+      </p>
     </div>
   );
 }

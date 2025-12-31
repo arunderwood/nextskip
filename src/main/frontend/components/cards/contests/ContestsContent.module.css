@@ -174,6 +174,25 @@
   }
 }
 
+.data-attribution {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  text-align: center;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border-color);
+  margin-top: 0.5rem;
+}
+
+.data-attribution a {
+  color: var(--primary);
+  text-decoration: none;
+}
+
+.data-attribution a:hover {
+  color: var(--primary-hover);
+  text-decoration: underline;
+}
+
 /* Dark mode adjustments */
 @media (prefers-color-scheme: dark) {
   .contests-summary {

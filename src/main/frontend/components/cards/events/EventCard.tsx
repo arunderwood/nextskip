@@ -20,6 +20,19 @@ import { formatTimeRemaining } from 'Frontend/utils/formatTime';
 import { ActivityCard } from '../../activity';
 import './EventCard.module.css';
 
+// Style constants extracted for react-perf/jsx-no-new-object-as-prop compliance
+const attributionContainerStyle = {
+  fontSize: '0.65rem',
+  color: 'var(--color-text-secondary)',
+  marginTop: '4px',
+  textAlign: 'right' as const,
+};
+
+const attributionLinkStyle = {
+  color: 'inherit',
+  textDecoration: 'none',
+};
+
 /**
  * Event interface matching the backend Event abstraction.
  * Used for type safety until Hilla generates the Event interface.
@@ -164,6 +177,21 @@ export function EventCard({ event, eventType, config, children }: EventCardProps
             </a>
           </div>
         ) : null}
+
+        {/* Data attribution for contests */}
+        {eventType === 'contest' && (
+          <div style={attributionContainerStyle}>
+            via{' '}
+            <a
+              href="https://www.contestcalendar.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={attributionLinkStyle}
+            >
+              WA7BNM
+            </a>
+          </div>
+        )}
       </div>
     </ActivityCard>
   );
