@@ -1,18 +1,13 @@
 package io.nextskip.propagation.internal.scheduler;
 
-import com.github.benmanes.caffeine.cache.LoadingCache;
 import com.github.kagkarlsson.scheduler.task.ExecutionContext;
 import com.github.kagkarlsson.scheduler.task.TaskInstance;
 import com.github.kagkarlsson.scheduler.task.helper.RecurringTask;
-import io.nextskip.common.config.CacheConfig;
-import io.nextskip.propagation.internal.NoaaSwpcClient;
-import io.nextskip.propagation.model.SolarIndices;
 import io.nextskip.propagation.persistence.entity.SolarIndicesEntity;
 import io.nextskip.propagation.persistence.repository.SolarIndicesRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -21,26 +16,24 @@ import java.util.Collections;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
  * Unit tests for NoaaRefreshTask.
+ *
+ * <p>Tests the task configuration and initial load detection.
+ * Business logic tests are in {@link NoaaRefreshServiceTest}.
  */
 @ExtendWith(MockitoExtension.class)
 class NoaaRefreshTaskTest {
 
     @Mock
-    private NoaaSwpcClient noaaClient;
+    private NoaaRefreshService refreshService;
 
     @Mock
     private SolarIndicesRepository repository;
-
-    @Mock
-    private LoadingCache<String, SolarIndices> solarIndicesCache;
 
     private NoaaRefreshTask task;
 
@@ -51,7 +44,7 @@ class NoaaRefreshTaskTest {
 
     @Test
     void testNoaaRefreshTask_ReturnsValidRecurringTask() {
-        RecurringTask<Void> recurringTask = task.noaaRecurringTask(noaaClient, repository, solarIndicesCache);
+        RecurringTask<Void> recurringTask = task.noaaRecurringTask(refreshService);
 
         assertThat(recurringTask).isNotNull();
         assertThat(recurringTask.getName()).isEqualTo("noaa-refresh");
@@ -59,63 +52,14 @@ class NoaaRefreshTaskTest {
 
     @Test
     @SuppressWarnings("unchecked")
-    void testNoaaRecurringTask_ExecuteHandler_InvokesRefresh() {
-        SolarIndices indices = createTestSolarIndices();
-        when(noaaClient.fetch()).thenReturn(indices);
-
-        RecurringTask<Void> recurringTask = task.noaaRecurringTask(noaaClient, repository, solarIndicesCache);
+    void testNoaaRecurringTask_ExecuteHandler_DelegatesToService() {
+        RecurringTask<Void> recurringTask = task.noaaRecurringTask(refreshService);
         TaskInstance<Void> taskInstance = (TaskInstance<Void>) org.mockito.Mockito.mock(TaskInstance.class);
         ExecutionContext executionContext = org.mockito.Mockito.mock(ExecutionContext.class);
 
         recurringTask.execute(taskInstance, executionContext);
 
-        verify(noaaClient).fetch();
-    }
-
-    @Test
-    void testExecuteRefresh_CallsClientFetch() {
-        SolarIndices indices = createTestSolarIndices();
-        when(noaaClient.fetch()).thenReturn(indices);
-
-        task.executeRefresh(noaaClient, repository, solarIndicesCache);
-
-        verify(noaaClient).fetch();
-    }
-
-    @Test
-    void testExecuteRefresh_CallsRepositorySave() {
-        SolarIndices indices = createTestSolarIndices();
-        when(noaaClient.fetch()).thenReturn(indices);
-
-        task.executeRefresh(noaaClient, repository, solarIndicesCache);
-
-        ArgumentCaptor<SolarIndicesEntity> captor = ArgumentCaptor.forClass(SolarIndicesEntity.class);
-        verify(repository).save(captor.capture());
-
-        SolarIndicesEntity saved = captor.getValue();
-        assertThat(saved.getSolarFluxIndex()).isEqualTo(150.0);
-        assertThat(saved.getSunspotNumber()).isEqualTo(100);
-    }
-
-    @Test
-    void testExecuteRefresh_TriggersCacheRefresh() {
-        SolarIndices indices = createTestSolarIndices();
-        when(noaaClient.fetch()).thenReturn(indices);
-
-        task.executeRefresh(noaaClient, repository, solarIndicesCache);
-
-        verify(solarIndicesCache).refresh(CacheConfig.CACHE_KEY);
-    }
-
-    @Test
-    void testExecuteRefresh_ClientThrowsException_PropagatesException() {
-        when(noaaClient.fetch()).thenThrow(new RuntimeException("NOAA API error"));
-
-        assertThatThrownBy(() -> task.executeRefresh(noaaClient, repository, solarIndicesCache))
-                .isInstanceOf(RuntimeException.class)
-                .hasMessageContaining("NOAA refresh failed");
-
-        verify(repository, never()).save(any());
+        verify(refreshService).executeRefresh();
     }
 
     @Test
@@ -148,17 +92,6 @@ class NoaaRefreshTaskTest {
         boolean result = task.needsInitialLoad(repository);
 
         assertThat(result).isTrue();
-    }
-
-    private SolarIndices createTestSolarIndices() {
-        return new SolarIndices(
-                150.0,
-                10,
-                3,
-                100,
-                Instant.now(),
-                "NOAA SWPC"
-        );
     }
 
     private SolarIndicesEntity createTestEntity(String source) {
