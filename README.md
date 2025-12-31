@@ -1,21 +1,50 @@
 # NextSkip
 
-## Overview
+[![CI](https://github.com/arunderwood/nextskip/actions/workflows/ci.yml/badge.svg)](https://github.com/arunderwood/nextskip/actions/workflows/ci.yml)
+![Java 25](https://img.shields.io/badge/Java-25-orange)
+![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5-brightgreen)
+![Vaadin Hilla](https://img.shields.io/badge/Vaadin%20Hilla-25.0-blue)
 
-**NextSkip helps you find your next skip.**
+<p align="center">
+  <img src="src/main/resources/META-INF/resources/og-image.svg" alt="NextSkip" width="400">
+</p>
 
-🌐 **[Visit the live site at nextskip.io](https://nextskip.io)**
+<h3 align="center">Find your next skip</h3>
+
+<p align="center">
+  <strong><a href="https://nextskip.io">Try NextSkip</a></strong>
+</p>
+
+---
 
 Amateur radio has many activities—DX chasing, POTA/SOTA activations, contesting, satellite work, meteor scatter, and more. Each has conditions that make it an optimal time to engage. NextSkip aggregates real-time data, scores current conditions, and surfaces the best opportunities so you know where to spend your time on the air.
 
-### How It Works
+## Table of Contents
+
+- [How It Works](#how-it-works)
+- [Activity Coverage](#activity-coverage)
+- [Features](#features)
+- [Tech Stack](#tech-stack)
+- [Quick Start](#quick-start)
+- [Testing](#testing)
+- [Architecture](#architecture)
+- [Configuration](#configuration)
+- [API Endpoints](#api-endpoints)
+- [Troubleshooting](#troubleshooting)
+- [Future Enhancements](#future-enhancements)
+- [Data Attribution](#data-attribution)
+
+---
+
+## How It Works
 
 1. **Data Aggregation**: Backend modules poll feeds for each activity (NOAA for propagation, POTA API for park activations, contest calendars, etc.)
 2. **Condition Scoring**: Each module calculates a score (0-100) based on current conditions
 3. **Score Ranking**: Cards are arranged in an activity grid with highest-scored activities in the top-left position
 4. **Hotness Indicators**: Cards display "hot," "warm," "neutral," or "cool" styling based on their scores
 
-### Glossary
+<details>
+<summary><strong>Glossary</strong></summary>
 
 | Term           | Definition                                                                                |
 | -------------- | ----------------------------------------------------------------------------------------- |
@@ -27,22 +56,22 @@ Amateur radio has many activities—DX chasing, POTA/SOTA activations, contestin
 | **Module**     | A backend package that fetches and scores one activity's data                             |
 | **Feed**       | An external data source that provides activity information                                |
 
-### Activity Coverage
+</details>
+
+## Activity Coverage
 
 NextSkip focuses on activities with **machine-readable, computable, or predictable conditions**:
 
-| Activity       | Data Sources            |
-| -------------- | ----------------------- |
-| HF Propagation | NOAA SWPC, HamQSL       |
-| POTA/SOTA      | POTA API, SOTA API      |
-| Contests       | Contest calendars       |
-| Meteor Showers | Astronomical data       |
-| Satellites     | Orbital prediction APIs |
-| Band Activity  | PSKReporter, RBN        |
+| Activity       | Data Sources            | Status      |
+| -------------- | ----------------------- | ----------- |
+| HF Propagation | NOAA SWPC, HamQSL       | Live        |
+| POTA/SOTA      | POTA API, SOTA API      | Live        |
+| Contests       | Contest calendars       | Live        |
+| Meteor Showers | Astronomical data       | Live        |
+| Satellites     | Orbital prediction APIs | Coming soon |
+| Band Activity  | PSKReporter, RBN        | Coming soon |
 
 The platform is actively expanding to cover more activities and data sources.
-
-Built with Spring Boot, Vaadin Hilla, and React.
 
 ## Features
 
@@ -58,33 +87,41 @@ Built with Spring Boot, Vaadin Hilla, and React.
 
 ### Backend
 
-- Java
-- Spring Boot
-- Vaadin Hilla (React integration)
+- Java 25
+- Spring Boot 3.5
+- Vaadin Hilla 25.0 (React integration)
 - Resilience4j (circuit breakers, retry)
 - Caffeine (caching)
+- PostgreSQL (persistence)
 
 ### Frontend
 
-- React
+- React 19
 - TypeScript
 - Vaadin Hilla (type-safe RPC)
 - Vite
 - Vitest + React Testing Library
 
-### Build
+### Observability
+
+- OpenTelemetry (distributed tracing)
+- Pyroscope (continuous profiling)
+- PostHog (product analytics)
+- Spring Boot Actuator (health & metrics)
+
+### Build & Quality
 
 - Gradle
-- Java Toolchain
-
-## Prerequisites
-
-- Java (see `.tool-versions` for specific version)
-- Node.js (see `.tool-versions` for specific version)
-- Docker (for local database, see [docs/DATABASE.md](docs/DATABASE.md))
-- Internet connection (for fetching propagation data)
+- Checkstyle, PMD, SpotBugs
+- JaCoCo (75% instruction, 65% branch coverage)
 
 ## Quick Start
+
+### Prerequisites
+
+- Java (see `.tool-versions` for exact version)
+- Node.js (see `.tool-versions` for exact version)
+- Docker (for local PostgreSQL, see [docs/DATABASE.md](docs/DATABASE.md))
 
 ### Build and Run
 
@@ -111,9 +148,12 @@ Vaadin's development mode is enabled by default and provides:
 
 ## Testing
 
+<details>
+<summary><strong>View testing details</strong></summary>
+
 ### Backend Tests
 
-60 JUnit tests covering utilities, external API clients, and services.
+Comprehensive JUnit test suite covering utilities, external API clients, services, and integration tests.
 
 ```bash
 ./gradlew test
@@ -123,7 +163,7 @@ Vaadin's development mode is enabled by default and provides:
 
 ### Frontend Tests
 
-90 Vitest tests covering components, accessibility, and user interactions.
+Comprehensive Vitest test suite covering components, accessibility (WCAG 2.1 AA), and user interactions.
 
 ```bash
 # Watch mode
@@ -157,6 +197,8 @@ npm run e2e:headed
 
 **Configuration**: See `playwright.config.ts`
 
+</details>
+
 ## Architecture
 
 NextSkip uses a modular monolith structure with clean module boundaries:
@@ -166,18 +208,6 @@ NextSkip uses a modular monolith structure with clean module boundaries:
   - `api`: Public endpoints (@BrowserCallable)
   - `model`: Domain models
   - `internal`: Service implementations and external clients
-
-### Data Sources
-
-**NOAA Space Weather Prediction Center**
-
-- Solar Flux Index, K-Index, A-Index, Sunspot Number
-- Cache TTL: 5 minutes
-
-**HamQSL.com Solar XML Feed**
-
-- Comprehensive solar data and band-by-band conditions
-- Cache TTL: 30 minutes
 
 ### Resilience Patterns
 
@@ -218,6 +248,9 @@ java -jar build/libs/nextskip-0.0.1-SNAPSHOT.jar
 
 ## Troubleshooting
 
+<details>
+<summary><strong>View troubleshooting tips</strong></summary>
+
 **Port 8080 Already in Use**
 
 ```bash
@@ -231,30 +264,38 @@ lsof -ti :8080 | xargs kill -9
 ```
 
 **Test Failures**
+
 Ensure you have the correct Java version:
 
 ```bash
 java -version  # Should match version in .tool-versions
 ```
 
+</details>
+
 ## API Endpoints
 
 ### Hilla TypeScript Endpoints
 
-Hilla auto-generates type-safe TypeScript clients from Java @BrowserCallable endpoints.
+Hilla auto-generates type-safe TypeScript clients from Java `@BrowserCallable` endpoints.
 
-Generated at: `src/main/frontend/generated/PropagationEndpoint.ts`
+**Available Endpoints**:
 
-Methods:
+| Endpoint               | Purpose                            |
+| ---------------------- | ---------------------------------- |
+| `PropagationEndpoint`  | Solar indices and band conditions  |
+| `ActivationsEndpoint`  | POTA/SOTA activations              |
+| `ContestEndpoint`      | Contest calendar                   |
+| `MeteorEndpoint`       | Meteor shower predictions          |
 
-- `getPropagationData()`: Complete propagation snapshot
-- `getSolarIndices()`: Solar indices only
-- `getBandConditions()`: Band conditions only
+Generated clients: `src/main/frontend/generated/`
 
 ### Actuator Endpoints
 
-- `http://localhost:8080/actuator/health`: Health check
-- `http://localhost:8080/actuator/info`: Application info
+| Endpoint                              | Purpose          |
+| ------------------------------------- | ---------------- |
+| `http://localhost:8080/actuator/health` | Health check     |
+| `http://localhost:8080/actuator/info`   | Application info |
 
 ## Future Enhancements
 
@@ -267,5 +308,11 @@ See `nextskip-project-plan.md` for detailed roadmap.
 
 ## Data Attribution
 
-- NOAA Space Weather Prediction Center: https://www.swpc.noaa.gov/
-- HamQSL.com Solar Data: http://www.hamqsl.com/solar.html
+| Source | Data Provided | Link |
+| ------ | ------------- | ---- |
+| NOAA SWPC | Solar indices (SFI, K-Index, A-Index, Sunspot Number) | [swpc.noaa.gov](https://www.swpc.noaa.gov/) |
+| HamQSL | Band conditions and solar data | [hamqsl.com](http://www.hamqsl.com/solar.html) |
+| POTA API | Parks on the Air activations | [pota.app](https://pota.app/) |
+| SOTA API | Summits on the Air activations | [sota.org.uk](https://www.sota.org.uk/) |
+| WA7BNM | Contest calendar | [contestcalendar.com](https://www.contestcalendar.com/) |
+| IMO | Meteor shower data | [imo.net](https://www.imo.net/) |
