@@ -10,6 +10,7 @@ plugins {
     id 'pmd'
     alias(libs.plugins.spotbugs)
     id 'jacoco'
+    alias(libs.plugins.delta.coverage)
     alias(libs.plugins.pitest)
 }
 
@@ -37,6 +38,14 @@ dependencyLocking {
 // Disable plain JAR generation - we only need the Spring Boot executable JAR
 tasks.named('jar') {
     enabled = false
+}
+
+// Workaround: Delta coverage plugin + Vaadin causes bootJar to look for 'generate' task
+// which doesn't exist. Create an alias to hillaGenerate to fix the conflict.
+// See: https://github.com/gw-kit/delta-coverage-plugin/issues/172
+tasks.register('generate') {
+    dependsOn 'hillaGenerate'
+    description = 'Alias for hillaGenerate (workaround for delta-coverage plugin compatibility)'
 }
 
 // Ensure Vaadin production resources are included in bootJar
@@ -262,6 +271,29 @@ jacocoTestCoverageVerification {
     }
 }
 
+// Delta coverage: enforce coverage on changed code (PR patch coverage)
+// Matches codecov.yml patch target of 65%
+deltaCoverageReport {
+    // Compare against main branch to measure coverage on changed code
+    diffSource.git.compareWith 'refs/remotes/origin/main'
+
+    // Coverage thresholds matching codecov.yml patch target (65%)
+    reportViews.test.violationRules {
+        // Simple threshold - applies to all coverage entities (instruction, branch, line)
+        failIfCoverageLessThan(0.65d)
+
+        // Fail the build on violations
+        failOnViolation.set(true)
+    }
+
+    // Report generation
+    reports {
+        html.set(true)
+        xml.set(true)
+        markdown.set(true)
+    }
+}
+
 pitest {
     targetClasses = ['io.nextskip.*']
     targetTests = ['io.nextskip.*']
@@ -272,9 +304,10 @@ pitest {
 }
 
 // Enable coverage verification in check task for local feedback
-// Skip locally if needed: ./gradlew check -x jacocoTestCoverageVerification
+// Skip locally if needed: ./gradlew check -x jacocoTestCoverageVerification -x deltaCoverage
 tasks.named('check') {
     dependsOn jacocoTestCoverageVerification
+    dependsOn deltaCoverage
 }
 
 // Vaadin's vaadinPrepareFrontend runs npm install but doesn't declare

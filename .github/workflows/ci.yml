@@ -32,6 +32,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
+        with:
+          fetch-depth: 0  # Full history required for delta coverage git diff
 
       - name: Setup Java (Temurin 25)
         uses: actions/setup-java@v5
@@ -69,6 +71,7 @@ jobs:
             build/test-results/test/*.xml
             build/reports/tests/test/
             build/reports/jacoco/test/
+            build/reports/coverage-reports/delta-coverage/
             build/reports/checkstyle/
             build/reports/pmd/
             build/reports/spotbugs/
