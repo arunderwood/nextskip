@@ -40,6 +40,14 @@ tasks.named('jar') {
     enabled = false
 }
 
+// Workaround: Delta coverage plugin + Vaadin causes bootJar to look for 'generate' task
+// which doesn't exist. Create an alias to hillaGenerate to fix the conflict.
+// See: https://github.com/gw-kit/delta-coverage-plugin/issues/172
+tasks.register('generate') {
+    dependsOn 'hillaGenerate'
+    description = 'Alias for hillaGenerate (workaround for delta-coverage plugin compatibility)'
+}
+
 // Ensure Vaadin production resources are included in bootJar
 // The vaadinBuildFrontend task writes to build/resources/main/ AFTER processResources,
 // so we need to explicitly include these files in the bootJar
