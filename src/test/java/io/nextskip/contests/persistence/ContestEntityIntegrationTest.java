@@ -198,19 +198,24 @@ class ContestEntityIntegrationTest extends AbstractIntegrationTest {
         var now = Instant.now();
 
         // Past contest (already started)
-        repository.save(createContestEntity("Past", now.minus(2, ChronoUnit.DAYS)));
+        repository.save(createContestEntity("TEST_Past", now.minus(2, ChronoUnit.DAYS)));
 
         // Upcoming contests
-        var upcoming1 = repository.save(createContestEntity("Upcoming1", now.plus(1, ChronoUnit.DAYS)));
-        var upcoming2 = repository.save(createContestEntity("Upcoming2", now.plus(5, ChronoUnit.DAYS)));
+        var upcoming1 = repository.save(createContestEntity("TEST_Upcoming1", now.plus(1, ChronoUnit.DAYS)));
+        var upcoming2 = repository.save(createContestEntity("TEST_Upcoming2", now.plus(5, ChronoUnit.DAYS)));
 
         // When: Find contests starting after now
         var result = repository.findByStartTimeAfterOrderByStartTimeAsc(now);
 
-        // Then: Should return only upcoming contests, ordered by start time
-        assertEquals(2, result.size());
-        assertEquals(upcoming1.getId(), result.get(0).getId());
-        assertEquals(upcoming2.getId(), result.get(1).getId());
+        // Then: Filter by test names to avoid interference from scheduler data
+        var testResults = result.stream()
+                .filter(e -> e.getName().startsWith("TEST_"))
+                .toList();
+
+        // Should return only upcoming contests from our test, ordered by start time
+        assertEquals(2, testResults.size());
+        assertEquals(upcoming1.getId(), testResults.get(0).getId());
+        assertEquals(upcoming2.getId(), testResults.get(1).getId());
     }
 
     @Test

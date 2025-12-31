@@ -17,7 +17,7 @@ import io.nextskip.propagation.persistence.repository.SolarIndicesRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
@@ -36,9 +36,14 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
  * <p>This ensures the application has fresh data available immediately
  * after a cold start (e.g., new deployment, database migration), while
  * avoiding redundant API calls when data is already present (e.g., restart).
+ *
+ * <p>Note: Uses @ConditionalOnProperty instead of @ConditionalOnBean(Scheduler.class)
+ * because @ConditionalOnBean has timing issues with manual Scheduler configuration
+ * (Spring Boot 4 workaround). The property check is semantically equivalent since
+ * the Scheduler bean only exists when db-scheduler is enabled.
  */
 @Component
-@ConditionalOnBean(Scheduler.class)
+@ConditionalOnProperty(value = "db-scheduler.enabled", havingValue = "true")
 @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Spring-managed beans are intentionally shared")
 public class DataRefreshStartupHandler {
 
