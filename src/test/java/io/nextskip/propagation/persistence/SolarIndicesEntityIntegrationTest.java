@@ -33,8 +33,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @Transactional
 class SolarIndicesEntityIntegrationTest extends AbstractIntegrationTest {
 
-    private static final String SOURCE_NOAA = "NOAA SWPC";
-    private static final String SOURCE_HAMQSL = "HamQSL";
+    // Use unique test source names to avoid conflicts with scheduler data
+    private static final String SOURCE_NOAA = "TEST_NOAA";
+    private static final String SOURCE_HAMQSL = "TEST_HAMQSL";
 
     @Autowired
     private SolarIndicesRepository repository;
