@@ -2,6 +2,8 @@
 
 NextSkip uses PostgreSQL 18 for persistent data storage.
 
+> **Adding a new data source?** See [PERSISTENCE_REFERENCE.md](PERSISTENCE_REFERENCE.md) for reference examples.
+
 ## Local Development
 
 ### Docker Compose (Recommended)
