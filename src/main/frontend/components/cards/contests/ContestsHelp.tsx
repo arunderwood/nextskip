@@ -21,6 +21,12 @@ function ContestsHelpContent() {
         <strong>Hot when:</strong> Major contests are active, especially international events that pack the bands with
         stations.
       </p>
+      <p className="data-source">
+        Data source:{' '}
+        <a href="https://www.contestcalendar.com/" target="_blank" rel="noopener noreferrer">
+          WA7BNM Contest Calendar
+        </a>
+      </p>
     </div>
   );
 }

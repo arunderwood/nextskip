@@ -102,6 +102,24 @@
   padding: calc(var(--spacing-unit) * 2);
 }
 
+/* Data source attribution - subtle but accessible */
+.help-section__content .data-source {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  margin-top: calc(var(--spacing-unit) * 1.5);
+}
+
+.help-section__content .data-source a {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-underline-offset: 2px;
+}
+
+.help-section__content .data-source a:hover {
+  text-decoration-style: solid;
+}
+
 /* Dark mode */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']) .help-content__definitions {

@@ -20,6 +20,12 @@ function PotaActivationsHelpContent() {
       <p>
         <strong>Hot when:</strong> Many activations on bands with good propagation and fresh spots.
       </p>
+      <p className="data-source">
+        Data source:{' '}
+        <a href="https://pota.app/" target="_blank" rel="noopener noreferrer">
+          Parks on the Air
+        </a>
+      </p>
     </div>
   );
 }
@@ -48,6 +54,12 @@ function SotaActivationsHelpContent() {
       <p>
         <strong>Hot when:</strong> Active summits on bands with good propagation. Recent spots rank higher since SOTA
         activations are typically brief.
+      </p>
+      <p className="data-source">
+        Data source:{' '}
+        <a href="https://www.sota.org.uk/" target="_blank" rel="noopener noreferrer">
+          Summits on the Air
+        </a>
       </p>
     </div>
   );

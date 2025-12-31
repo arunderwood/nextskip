@@ -164,6 +164,21 @@ export function EventCard({ event, eventType, config, children }: EventCardProps
             </a>
           </div>
         ) : null}
+
+        {/* Data attribution for contests */}
+        {eventType === 'contest' && (
+          <div style={{ fontSize: '0.65rem', color: 'var(--color-text-secondary)', marginTop: '4px', textAlign: 'right' }}>
+            via{' '}
+            <a
+              href="https://www.contestcalendar.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ color: 'inherit', textDecoration: 'none' }}
+            >
+              WA7BNM
+            </a>
+          </div>
+        )}
       </div>
     </ActivityCard>
   );
