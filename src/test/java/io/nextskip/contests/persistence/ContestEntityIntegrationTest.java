@@ -221,14 +221,15 @@ class ContestEntityIntegrationTest extends AbstractIntegrationTest {
     @Test
     void testFindActiveContests_ReturnsCurrentlyActive() {
         // Given: Multiple contests at different times
+        // Note: Using TEST_ prefix to filter from scheduler/other test data
         var now = Instant.now();
 
         // Past contest
-        repository.save(createContestEntity("Past", now.minus(10, ChronoUnit.DAYS)));
+        repository.save(createContestEntity("TEST_Past", now.minus(10, ChronoUnit.DAYS)));
 
         // Currently active contest
         var active = repository.save(new ContestEntity(
-                ACTIVE_CONTEST_NAME,
+                "TEST_Active",
                 now.minus(1, ChronoUnit.HOURS),
                 now.plus(1, ChronoUnit.HOURS),
                 Set.of(), Set.of(),
@@ -236,14 +237,19 @@ class ContestEntityIntegrationTest extends AbstractIntegrationTest {
         ));
 
         // Future contest
-        repository.save(createContestEntity("Future", now.plus(10, ChronoUnit.DAYS)));
+        repository.save(createContestEntity("TEST_Future", now.plus(10, ChronoUnit.DAYS)));
 
         // When: Find active contests (now between start and end)
         var result = repository.findByStartTimeBeforeAndEndTimeAfterOrderByEndTimeAsc(now, now);
 
-        // Then: Should return only the active contest
-        assertEquals(1, result.size());
-        assertEquals(active.getId(), result.get(0).getId());
+        // Then: Filter by test names to avoid interference from scheduler data
+        var testResults = result.stream()
+                .filter(e -> e.getName().startsWith("TEST_"))
+                .toList();
+
+        // Should return only the active contest
+        assertEquals(1, testResults.size());
+        assertEquals(active.getId(), testResults.get(0).getId());
     }
 
     @Test

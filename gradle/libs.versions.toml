@@ -4,6 +4,9 @@ vaadin = "25.0.2"
 spring-boot = "4.0.1"
 spring-dependency-management = "1.1.7"
 
+# Delta coverage for PR patch coverage analysis
+delta-coverage = "3.5.1"
+
 # Observability
 grafana-otel-agent = "2.22.0"
 pyroscope-agent = "2.1.2"
@@ -40,6 +43,7 @@ vaadin = { id = "com.vaadin", version.ref = "vaadin" }
 spotbugs = { id = "com.github.spotbugs", version.ref = "spotbugs-plugin" }
 pitest = { id = "info.solidsoft.pitest", version.ref = "pitest" }
 download = { id = "de.undercouch.download", version.ref = "download-plugin" }
+delta-coverage = { id = "io.github.gw-kit.delta-coverage", version.ref = "delta-coverage" }
 
 [libraries]
 # Vaadin with Hilla
