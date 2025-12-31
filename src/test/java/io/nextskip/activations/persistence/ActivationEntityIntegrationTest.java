@@ -270,20 +270,25 @@ class ActivationEntityIntegrationTest extends AbstractIntegrationTest {
         var now = Instant.now();
 
         // Old activation
-        repository.save(createActivationEntity("old-spot", now.minus(2, ChronoUnit.HOURS)));
+        repository.save(createActivationEntity("TEST_old-spot", now.minus(2, ChronoUnit.HOURS)));
 
         // Recent activations
-        var recent1 = repository.save(createActivationEntity("recent-1", now.minus(5, ChronoUnit.MINUTES)));
-        var recent2 = repository.save(createActivationEntity("recent-2", now.minus(2, ChronoUnit.MINUTES)));
+        var recent1 = repository.save(createActivationEntity("TEST_recent-1", now.minus(5, ChronoUnit.MINUTES)));
+        var recent2 = repository.save(createActivationEntity("TEST_recent-2", now.minus(2, ChronoUnit.MINUTES)));
 
         // When: Find activations spotted after cutoff
         var cutoff = now.minus(30, ChronoUnit.MINUTES);
         var result = repository.findBySpottedAtAfterOrderBySpottedAtDesc(cutoff);
 
-        // Then: Should return only recent activations, most recent first
-        assertEquals(2, result.size());
-        assertEquals(recent2.getId(), result.get(0).getId());
-        assertEquals(recent1.getId(), result.get(1).getId());
+        // Then: Filter by test spot IDs to avoid interference from scheduler data
+        var testResults = result.stream()
+                .filter(e -> e.getSpotId().startsWith("TEST_"))
+                .toList();
+
+        // Should return only recent activations from our test, most recent first
+        assertEquals(2, testResults.size());
+        assertEquals(recent2.getId(), testResults.get(0).getId());
+        assertEquals(recent1.getId(), testResults.get(1).getId());
     }
 
     @Test
@@ -300,10 +305,15 @@ class ActivationEntityIntegrationTest extends AbstractIntegrationTest {
         var result = repository.findByTypeAndSpottedAtAfterOrderBySpottedAtDesc(
                 ActivationType.POTA, cutoff);
 
-        // Then: Should return only POTA activations
-        assertEquals(2, result.size());
-        assertEquals(pota2.getId(), result.get(0).getId());
-        assertEquals(pota1.getId(), result.get(1).getId());
+        // Then: Filter by test spot IDs to avoid interference from scheduler data
+        var testResults = result.stream()
+                .filter(e -> e.getSpotId().startsWith(POTA_SPOT_ID))
+                .toList();
+
+        // Should return only POTA activations from our test
+        assertEquals(2, testResults.size());
+        assertEquals(pota2.getId(), testResults.get(0).getId());
+        assertEquals(pota1.getId(), testResults.get(1).getId());
     }
 
     @Test
