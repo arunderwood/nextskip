@@ -1,0 +1,10 @@
+databaseChangeLog:
+  - changeSet:
+      id: expand-location-region-code
+      author: arunderwood
+      comment: Expand location_region_code column to support multi-state POTA activations (e.g., US-CA,US-CO,US-KS,US-MO)
+      changes:
+        - modifyDataType:
+            tableName: activations
+            columnName: location_region_code
+            newDataType: varchar(100)

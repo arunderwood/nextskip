@@ -17,18 +17,35 @@ import { formatBandName } from 'Frontend/utils/bandConditions';
 import SolarIndicesContent from './SolarIndicesContent';
 import { BandRatingDisplay } from './BandRatingDisplay';
 
+/** Style for loading state message */
+const loadingStyle: React.CSSProperties = {
+  padding: '1rem',
+  textAlign: 'center',
+  color: 'var(--color-text-secondary)',
+};
+
 /**
  * Solar Indices Card Definition
+ *
+ * Always shows this card, displaying a loading state when data is not yet available.
+ * This ensures users see the card is expected and data is being fetched.
  */
 const solarIndicesCard: CardDefinition = {
-  canRender: (data: DashboardData) => {
-    return !!data.propagation?.solarIndices;
-  },
+  canRender: () => true, // Always show this card
 
   createConfig: (data: DashboardData) => {
-    if (!data.propagation?.solarIndices) return null;
+    const solarIndices = data.propagation?.solarIndices;
 
-    const solarIndices = data.propagation.solarIndices;
+    // When no data, return config with low priority (card still shows with loading state)
+    if (!solarIndices) {
+      return {
+        id: 'solar-indices',
+        type: 'solar-indices',
+        size: 'standard',
+        priority: 0,
+        hotness: 'neutral',
+      };
+    }
 
     // Calculate priority from solar indices
     const priority = calculatePriority({
@@ -57,7 +74,17 @@ const solarIndicesCard: CardDefinition = {
 
   render: (data: DashboardData, config: ActivityCardConfig) => {
     const solarIndices = data.propagation?.solarIndices;
-    if (!solarIndices) return null;
+
+    // Show loading state when data is not yet available
+    if (!solarIndices) {
+      return (
+        <ActivityCard config={config} title="Solar Indices" icon={<Sun size={20} />} subtitle="Loading...">
+          <div className="loading-state" style={loadingStyle}>
+            Fetching solar data...
+          </div>
+        </ActivityCard>
+      );
+    }
 
     return (
       <ActivityCard

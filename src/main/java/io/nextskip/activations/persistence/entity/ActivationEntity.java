@@ -80,7 +80,7 @@ public class ActivationEntity {
     @Column(name = "location_name", nullable = false, length = 200)
     private String locationName;
 
-    @Column(name = "location_region_code", length = 10)
+    @Column(name = "location_region_code", length = 100)
     private String locationRegionCode;
 
     // Park-specific fields (null for SOTA activations)
