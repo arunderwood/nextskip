@@ -50,14 +50,17 @@ const createMockPropagationResponse = (overrides: Partial<PropagationResponse> =
 
 describe('useDashboardCards', () => {
   describe('with undefined data', () => {
-    it('should return empty array', () => {
+    it('should return solar-indices card with loading state', () => {
       const { result } = renderHook(() => useDashboardCards({} as DashboardData));
-      expect(result.current).toEqual([]);
+      // Solar indices card always shows (with loading state when no data)
+      expect(result.current).toHaveLength(1);
+      expect(result.current[0].id).toBe('solar-indices');
+      expect(result.current[0].priority).toBe(0); // Low priority when no data
     });
   });
 
   describe('solarInput calculation', () => {
-    it('should return UNKNOWN rating when solarIndices undefined', () => {
+    it('should return solar-indices with loading state when solarIndices undefined', () => {
       const dashboardData: DashboardData = {
         propagation: createMockPropagationResponse({
           solarIndices: undefined,
@@ -66,8 +69,11 @@ describe('useDashboardCards', () => {
       };
       const { result } = renderHook(() => useDashboardCards(dashboardData));
 
-      // Should return empty array when no solar indices
-      expect(result.current).toEqual([]);
+      // Solar indices card always shows (with loading state when no data)
+      expect(result.current).toHaveLength(1);
+      expect(result.current[0].id).toBe('solar-indices');
+      expect(result.current[0].priority).toBe(0);
+      expect(result.current[0].hotness).toBe('neutral');
     });
 
     it('should return GOOD rating when solarFluxIndex >= 150', () => {
@@ -155,7 +161,7 @@ describe('useDashboardCards', () => {
   });
 
   describe('bandInput calculation', () => {
-    it('should return UNKNOWN when bandConditions empty', () => {
+    it('should return solar-indices with loading state when bandConditions empty', () => {
       const dashboardData: DashboardData = {
         propagation: createMockPropagationResponse({
           solarIndices: undefined,
@@ -164,10 +170,12 @@ describe('useDashboardCards', () => {
       };
       const { result } = renderHook(() => useDashboardCards(dashboardData));
 
-      expect(result.current).toEqual([]);
+      // Solar indices card always shows (with loading state when no data)
+      expect(result.current).toHaveLength(1);
+      expect(result.current[0].id).toBe('solar-indices');
     });
 
-    it('should create individual card for each band condition', () => {
+    it('should create individual card for each band condition plus solar loading', () => {
       const dashboardData: DashboardData = {
         propagation: createMockPropagationResponse({
           solarIndices: undefined,
@@ -180,8 +188,9 @@ describe('useDashboardCards', () => {
       };
       const { result } = renderHook(() => useDashboardCards(dashboardData));
 
-      // Should create 3 individual cards (one per band)
-      expect(result.current).toHaveLength(3);
+      // Should create 4 cards: 1 solar (loading) + 3 individual band cards
+      expect(result.current).toHaveLength(4);
+      expect(result.current.map((c) => c.id)).toContain('solar-indices');
       expect(result.current.map((c) => c.id)).toContain('band-BAND_20M');
       expect(result.current.map((c) => c.id)).toContain('band-BAND_40M');
       expect(result.current.map((c) => c.id)).toContain('band-BAND_10M');
@@ -238,11 +247,13 @@ describe('useDashboardCards', () => {
       };
       const { result } = renderHook(() => useDashboardCards(dashboardData));
 
-      expect(result.current).toHaveLength(1);
-      expect(result.current[0].priority).toBe(0);
+      // 1 solar (loading) + 1 band card
+      expect(result.current).toHaveLength(2);
+      const bandCard = result.current.find((c) => c.id === 'band-BAND_20M');
+      expect(bandCard?.priority).toBe(0);
     });
 
-    it('should use band-condition type for all individual cards', () => {
+    it('should use band-condition type for all individual band cards', () => {
       const dashboardData: DashboardData = {
         propagation: createMockPropagationResponse({
           solarIndices: undefined,
@@ -254,7 +265,8 @@ describe('useDashboardCards', () => {
       };
       const { result } = renderHook(() => useDashboardCards(dashboardData));
 
-      expect(result.current.every((c) => c.type === 'band-condition')).toBe(true);
+      const bandCards = result.current.filter((c) => c.id.startsWith('band-'));
+      expect(bandCards.every((c) => c.type === 'band-condition')).toBe(true);
     });
 
     it('should use standard size for individual band cards', () => {
@@ -271,7 +283,7 @@ describe('useDashboardCards', () => {
   });
 
   describe('solarIndicesConfig', () => {
-    it('should return null config when no solarIndices', () => {
+    it('should return solar-indices with loading state when no solarIndices data', () => {
       const dashboardData: DashboardData = {
         propagation: createMockPropagationResponse({
           solarIndices: undefined,
@@ -280,9 +292,10 @@ describe('useDashboardCards', () => {
       };
       const { result } = renderHook(() => useDashboardCards(dashboardData));
 
-      // Only individual band cards should be present (no solar-indices)
-      expect(result.current).toHaveLength(1);
-      expect(result.current[0].id).toBe('band-BAND_20M');
+      // Solar indices always shows + band card
+      expect(result.current).toHaveLength(2);
+      expect(result.current.find((c) => c.id === 'solar-indices')).toBeDefined();
+      expect(result.current.find((c) => c.id === 'band-BAND_20M')).toBeDefined();
     });
 
     it('should have correct id, type, size', () => {
@@ -348,7 +361,7 @@ describe('useDashboardCards', () => {
   });
 
   describe('bandConditionsConfig', () => {
-    it('should return null config when no bandConditions', () => {
+    it('should return only solar-indices when no bandConditions', () => {
       const dashboardData: DashboardData = {
         propagation: createMockPropagationResponse({
           solarIndices: createMockSolarIndices(),
@@ -371,8 +384,10 @@ describe('useDashboardCards', () => {
       };
       const { result } = renderHook(() => useDashboardCards(dashboardData));
 
-      expect(result.current).toHaveLength(1);
-      expect(result.current[0]).toMatchObject({
+      // 1 solar (loading) + 1 band card
+      expect(result.current).toHaveLength(2);
+      const bandCard = result.current.find((c) => c.id === 'band-BAND_20M');
+      expect(bandCard).toMatchObject({
         id: 'band-BAND_20M',
         type: 'band-condition',
         size: 'standard',
@@ -391,7 +406,8 @@ describe('useDashboardCards', () => {
       };
       const { result } = renderHook(() => useDashboardCards(dashboardData));
 
-      expect(result.current).toHaveLength(2);
+      // 1 solar (loading) + 2 band cards
+      expect(result.current).toHaveLength(3);
       // Each card uses its individual band's score as priority
       const band20m = result.current.find((c) => c.id === 'band-BAND_20M');
       const band40m = result.current.find((c) => c.id === 'band-BAND_40M');
@@ -447,7 +463,7 @@ describe('useDashboardCards', () => {
       expect(result.current[0].id).toBe('solar-indices');
     });
 
-    it('should return only individual band cards when solar missing', () => {
+    it('should return solar loading plus band cards when solar data missing', () => {
       const dashboardData: DashboardData = {
         propagation: createMockPropagationResponse({
           solarIndices: undefined,
@@ -455,15 +471,15 @@ describe('useDashboardCards', () => {
       };
       const { result } = renderHook(() => useDashboardCards(dashboardData));
 
-      // 3 individual band cards from default mock
-      expect(result.current).toHaveLength(3);
-      expect(result.current.every((c) => c.id.startsWith('band-BAND_'))).toBe(true);
+      // 1 solar (loading) + 3 individual band cards from default mock
+      expect(result.current).toHaveLength(4);
+      expect(result.current.find((c) => c.id === 'solar-indices')).toBeDefined();
       expect(result.current.find((c) => c.id === 'band-BAND_80M')).toBeDefined();
       expect(result.current.find((c) => c.id === 'band-BAND_40M')).toBeDefined();
       expect(result.current.find((c) => c.id === 'band-BAND_20M')).toBeDefined();
     });
 
-    it('should filter null configs correctly', () => {
+    it('should return solar loading card when all data missing', () => {
       const dashboardData: DashboardData = {
         propagation: createMockPropagationResponse({
           solarIndices: undefined,
@@ -472,7 +488,10 @@ describe('useDashboardCards', () => {
       };
       const { result } = renderHook(() => useDashboardCards(dashboardData));
 
-      expect(result.current).toEqual([]);
+      // Solar indices always shows with loading state
+      expect(result.current).toHaveLength(1);
+      expect(result.current[0].id).toBe('solar-indices');
+      expect(result.current[0].priority).toBe(0);
       expect(Array.isArray(result.current)).toBe(true);
     });
   });
