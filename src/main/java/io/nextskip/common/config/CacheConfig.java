@@ -127,8 +127,8 @@ public class CacheConfig {
      * Package-private for testing.
      */
     SolarIndices loadAndMergeSolarIndices(SolarIndicesRepository repository) {
-        Optional<SolarIndicesEntity> noaaOpt = repository.findTopBySourceOrderByTimestampDesc("noaa");
-        Optional<SolarIndicesEntity> hamqslOpt = repository.findTopBySourceOrderByTimestampDesc("hamqsl");
+        Optional<SolarIndicesEntity> noaaOpt = repository.findTopBySourceOrderByTimestampDesc("NOAA SWPC");
+        Optional<SolarIndicesEntity> hamqslOpt = repository.findTopBySourceOrderByTimestampDesc("HamQSL");
 
         SolarIndices noaaData = noaaOpt.map(SolarIndicesEntity::toDomain).orElse(null);
         SolarIndices hamqslData = hamqslOpt.map(SolarIndicesEntity::toDomain).orElse(null);

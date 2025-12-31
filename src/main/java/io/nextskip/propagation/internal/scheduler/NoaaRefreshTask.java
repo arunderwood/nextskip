@@ -34,7 +34,7 @@ public class NoaaRefreshTask {
     private static final Logger LOG = LoggerFactory.getLogger(NoaaRefreshTask.class);
     private static final String TASK_NAME = "noaa-refresh";
     private static final Duration REFRESH_INTERVAL = Duration.ofMinutes(5);
-    private static final String NOAA_SOURCE = "NOAA";
+    private static final String NOAA_SOURCE = "NOAA SWPC";
 
     /**
      * Creates the recurring task bean for NOAA data refresh.

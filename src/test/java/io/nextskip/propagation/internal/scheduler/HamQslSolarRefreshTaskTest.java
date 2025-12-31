@@ -152,7 +152,7 @@ class HamQslSolarRefreshTaskTest {
 
     @Test
     void testNeedsInitialLoad_OnlyNoaaData_ReturnsTrue() {
-        SolarIndicesEntity entity = createTestEntity("NOAA");
+        SolarIndicesEntity entity = createTestEntity("NOAA SWPC");
         when(repository.findByTimestampAfterOrderByTimestampDesc(any(Instant.class)))
                 .thenReturn(List.of(entity));
 
