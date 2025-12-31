@@ -81,10 +81,13 @@ public class PotaRefreshTask {
             // Fetch fresh data from API
             List<Activation> activations = potaClient.fetch();
 
-            // Convert to entities and save
+            // Convert to entities
             List<ActivationEntity> entities = activations.stream()
                     .map(ActivationEntity::fromDomain)
                     .toList();
+
+            // Prepare for upsert (sets IDs for existing entities to enable UPDATE)
+            ActivationUpsertHelper.prepareForUpsert(entities, "POTA API", repository);
 
             repository.saveAll(entities);
 

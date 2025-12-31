@@ -174,21 +174,22 @@ class BandConditionEntityIntegrationTest extends AbstractIntegrationTest {
     @Test
     void testFindByBandAndRecordedAtAfterOrderByRecordedAtDesc_ReturnsRecentForBand() {
         // Given: Multiple entries for same band at different times
+        // Use BAND_6M which is not used by any other test to avoid test isolation issues
         var now = Instant.now();
         var twoHoursAgo = now.minus(2, ChronoUnit.HOURS);
         var oneHourAgo = now.minus(1, ChronoUnit.HOURS);
 
         repository.save(new BandConditionEntity(
-                FrequencyBand.BAND_20M, BandConditionRating.POOR, 0.3, null, twoHoursAgo));
+                FrequencyBand.BAND_6M, BandConditionRating.POOR, 0.3, null, twoHoursAgo));
         repository.save(new BandConditionEntity(
-                FrequencyBand.BAND_20M, BandConditionRating.FAIR, 0.6, null, oneHourAgo));
+                FrequencyBand.BAND_6M, BandConditionRating.FAIR, 0.6, null, oneHourAgo));
         repository.save(new BandConditionEntity(
-                FrequencyBand.BAND_20M, BandConditionRating.GOOD, 0.9, null, now));
+                FrequencyBand.BAND_6M, BandConditionRating.GOOD, 0.9, null, now));
 
         // When: Find entries after 90 minutes ago
         var cutoff = now.minus(90, ChronoUnit.MINUTES);
         var result = repository.findByBandAndRecordedAtAfterOrderByRecordedAtDesc(
-                FrequencyBand.BAND_20M, cutoff);
+                FrequencyBand.BAND_6M, cutoff);
 
         // Then: Should return only recent entries, ordered by timestamp desc
         assertEquals(2, result.size());
