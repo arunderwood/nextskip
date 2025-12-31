@@ -26,11 +26,26 @@ import org.springframework.test.context.DynamicPropertySource;
 })
 public abstract class AbstractIntegrationTest {
 
+    /** Standard prefix for test data identifiers to distinguish from production data. */
+    public static final String TEST_PREFIX = "TEST_";
+
     @DynamicPropertySource
     static void configureDatabase(DynamicPropertyRegistry registry) {
         var postgres = TestPostgresContainer.getInstance();
         registry.add("spring.datasource.url", postgres::getJdbcUrl);
         registry.add("spring.datasource.username", postgres::getUsername);
         registry.add("spring.datasource.password", postgres::getPassword);
+    }
+
+    /**
+     * Creates a test identifier with the standard TEST_ prefix.
+     *
+     * <p>Use this when creating test data to ensure consistency and easy identification.
+     *
+     * @param baseName the base identifier name
+     * @return the prefixed test identifier (e.g., "TEST_myId")
+     */
+    protected static String testId(String baseName) {
+        return TEST_PREFIX + baseName;
     }
 }

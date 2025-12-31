@@ -207,15 +207,11 @@ class ContestEntityIntegrationTest extends AbstractIntegrationTest {
         // When: Find contests starting after now
         var result = repository.findByStartTimeAfterOrderByStartTimeAsc(now);
 
-        // Then: Filter by test names to avoid interference from scheduler data
-        var testResults = result.stream()
-                .filter(e -> e.getName().startsWith("TEST_"))
-                .toList();
-
-        // Should return only upcoming contests from our test, ordered by start time
-        assertEquals(2, testResults.size());
-        assertEquals(upcoming1.getId(), testResults.get(0).getId());
-        assertEquals(upcoming2.getId(), testResults.get(1).getId());
+        // Then: Should return only upcoming contests, ordered by start time
+        // (db-scheduler is disabled in test profile, so no interference)
+        assertEquals(2, result.size());
+        assertEquals(upcoming1.getId(), result.get(0).getId());
+        assertEquals(upcoming2.getId(), result.get(1).getId());
     }
 
     @Test

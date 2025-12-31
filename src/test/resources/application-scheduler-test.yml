@@ -1,0 +1,30 @@
+# Scheduler integration test profile
+# Used by tests that specifically need the scheduler running (e.g., DbSchedulerIntegrationTest)
+# Most tests use application-test.yml which disables the scheduler for isolation
+
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: none
+    show-sql: true
+
+  liquibase:
+    enabled: true
+    change-log: classpath:db/changelog/db.changelog-master.yaml
+
+# Disable eager cache loading (faster startup)
+nextskip:
+  refresh:
+    eager-load: false
+
+# db-scheduler enabled for this profile
+db-scheduler:
+  enabled: true
+  immediate-execution-enabled: false
+  polling-interval: 1h  # Long interval to prevent actual task execution during tests
+
+# Reduce logging noise
+logging:
+  level:
+    org.testcontainers: WARN
+    com.github.dockerjava: WARN

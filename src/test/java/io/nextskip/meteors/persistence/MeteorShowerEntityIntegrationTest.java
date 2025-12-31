@@ -163,15 +163,11 @@ class MeteorShowerEntityIntegrationTest extends AbstractIntegrationTest {
         // When: Find showers starting after now
         var result = repository.findByVisibilityStartAfterOrderByVisibilityStartAsc(now);
 
-        // Then: Filter by test codes to avoid interference from scheduler data
-        var testResults = result.stream()
-                .filter(e -> e.getCode().startsWith("TEST_"))
-                .toList();
-
-        // Should return only upcoming showers from our test data, ordered by visibility start
-        assertEquals(2, testResults.size());
-        assertEquals(upcoming1.getId(), testResults.get(0).getId());
-        assertEquals(upcoming2.getId(), testResults.get(1).getId());
+        // Then: Should return only upcoming showers, ordered by visibility start
+        // (db-scheduler is disabled in test profile, so no interference)
+        assertEquals(2, result.size());
+        assertEquals(upcoming1.getId(), result.get(0).getId());
+        assertEquals(upcoming2.getId(), result.get(1).getId());
     }
 
     @Test
@@ -195,14 +191,10 @@ class MeteorShowerEntityIntegrationTest extends AbstractIntegrationTest {
         // When: Find active showers (visibility contains now)
         var result = repository.findByVisibilityStartBeforeAndVisibilityEndAfterOrderByPeakStartAsc(now, now);
 
-        // Then: Filter by test codes to avoid interference from scheduler data
-        var testResults = result.stream()
-                .filter(e -> e.getCode().startsWith("TEST_"))
-                .toList();
-
-        // Should return only the active shower from our test data
-        assertEquals(1, testResults.size());
-        assertEquals(active.getId(), testResults.get(0).getId());
+        // Then: Should return only the active shower
+        // (db-scheduler is disabled in test profile, so no interference)
+        assertEquals(1, result.size());
+        assertEquals(active.getId(), result.get(0).getId());
     }
 
     @Test
