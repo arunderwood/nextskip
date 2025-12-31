@@ -154,19 +154,24 @@ class MeteorShowerEntityIntegrationTest extends AbstractIntegrationTest {
         var now = Instant.now();
 
         // Past shower (already started)
-        repository.save(createShowerEntity("Past", "PST", now.minus(10, ChronoUnit.DAYS)));
+        repository.save(createShowerEntity("Past", "TEST_PST", now.minus(10, ChronoUnit.DAYS)));
 
         // Upcoming showers
-        var upcoming1 = repository.save(createShowerEntity("Upcoming1", "UP1", now.plus(5, ChronoUnit.DAYS)));
-        var upcoming2 = repository.save(createShowerEntity("Upcoming2", "UP2", now.plus(10, ChronoUnit.DAYS)));
+        var upcoming1 = repository.save(createShowerEntity("Upcoming1", "TEST_UP1", now.plus(5, ChronoUnit.DAYS)));
+        var upcoming2 = repository.save(createShowerEntity("Upcoming2", "TEST_UP2", now.plus(10, ChronoUnit.DAYS)));
 
         // When: Find showers starting after now
         var result = repository.findByVisibilityStartAfterOrderByVisibilityStartAsc(now);
 
-        // Then: Should return only upcoming showers, ordered by visibility start
-        assertEquals(2, result.size());
-        assertEquals(upcoming1.getId(), result.get(0).getId());
-        assertEquals(upcoming2.getId(), result.get(1).getId());
+        // Then: Filter by test codes to avoid interference from scheduler data
+        var testResults = result.stream()
+                .filter(e -> e.getCode().startsWith("TEST_"))
+                .toList();
+
+        // Should return only upcoming showers from our test data, ordered by visibility start
+        assertEquals(2, testResults.size());
+        assertEquals(upcoming1.getId(), testResults.get(0).getId());
+        assertEquals(upcoming2.getId(), testResults.get(1).getId());
     }
 
     @Test
@@ -175,24 +180,29 @@ class MeteorShowerEntityIntegrationTest extends AbstractIntegrationTest {
         var now = Instant.now();
 
         // Past shower
-        repository.save(createShowerEntity("Past", "PST", now.minus(30, ChronoUnit.DAYS)));
+        repository.save(createShowerEntity("Past", "TEST_PST", now.minus(30, ChronoUnit.DAYS)));
 
         // Currently active shower
         var active = repository.save(new MeteorShowerEntity(
-                "Active Shower", "ACT",
+                "Active Shower", "TEST_ACT",
                 now.minus(1, ChronoUnit.HOURS), now.plus(1, ChronoUnit.HOURS),
                 now.minus(2, ChronoUnit.DAYS), now.plus(2, ChronoUnit.DAYS),
                 50, null, null));
 
         // Future shower
-        repository.save(createShowerEntity("Future", "FUT", now.plus(30, ChronoUnit.DAYS)));
+        repository.save(createShowerEntity("Future", "TEST_FUT", now.plus(30, ChronoUnit.DAYS)));
 
         // When: Find active showers (visibility contains now)
         var result = repository.findByVisibilityStartBeforeAndVisibilityEndAfterOrderByPeakStartAsc(now, now);
 
-        // Then: Should return only the active shower
-        assertEquals(1, result.size());
-        assertEquals(active.getId(), result.get(0).getId());
+        // Then: Filter by test codes to avoid interference from scheduler data
+        var testResults = result.stream()
+                .filter(e -> e.getCode().startsWith("TEST_"))
+                .toList();
+
+        // Should return only the active shower from our test data
+        assertEquals(1, testResults.size());
+        assertEquals(active.getId(), testResults.get(0).getId());
     }
 
     @Test
