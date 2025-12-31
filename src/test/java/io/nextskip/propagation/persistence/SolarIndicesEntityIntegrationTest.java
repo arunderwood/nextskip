@@ -154,15 +154,11 @@ class SolarIndicesEntityIntegrationTest extends AbstractIntegrationTest {
         var cutoff = now.minus(90, ChronoUnit.MINUTES);
         var result = repository.findByTimestampAfterOrderByTimestampDesc(cutoff);
 
-        // Then: Filter by our test source to avoid interference from scheduler data
-        var testResults = result.stream()
-                .filter(e -> SOURCE_NOAA.equals(e.getSource()))
-                .toList();
-
-        // Should return only recent entries from our test, ordered by timestamp desc
-        assertEquals(2, testResults.size());
-        assertEquals(150.0, testResults.get(0).getSolarFluxIndex()); // Most recent first
-        assertEquals(120.0, testResults.get(1).getSolarFluxIndex());
+        // Then: Should return only recent entries, ordered by timestamp desc
+        // (db-scheduler is disabled in test profile, so no interference)
+        assertEquals(2, result.size());
+        assertEquals(150.0, result.get(0).getSolarFluxIndex()); // Most recent first
+        assertEquals(120.0, result.get(1).getSolarFluxIndex());
     }
 
     @Test

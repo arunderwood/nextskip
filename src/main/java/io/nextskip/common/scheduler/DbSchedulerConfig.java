@@ -93,8 +93,11 @@ public class DbSchedulerConfig {
 
     /**
      * Manages the Scheduler lifecycle - starts on context refresh, stops on shutdown.
+     *
+     * <p>Only created when db-scheduler is enabled.
      */
     @Component
+    @ConditionalOnProperty(value = "db-scheduler.enabled", havingValue = "true")
     static class SchedulerLifecycle implements AutoCloseable {
 
         private static final Logger LOG = LoggerFactory.getLogger(SchedulerLifecycle.class);

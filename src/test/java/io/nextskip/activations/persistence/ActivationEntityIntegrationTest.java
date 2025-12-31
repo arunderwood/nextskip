@@ -280,15 +280,11 @@ class ActivationEntityIntegrationTest extends AbstractIntegrationTest {
         var cutoff = now.minus(30, ChronoUnit.MINUTES);
         var result = repository.findBySpottedAtAfterOrderBySpottedAtDesc(cutoff);
 
-        // Then: Filter by test spot IDs to avoid interference from scheduler data
-        var testResults = result.stream()
-                .filter(e -> e.getSpotId().startsWith("TEST_"))
-                .toList();
-
-        // Should return only recent activations from our test, most recent first
-        assertEquals(2, testResults.size());
-        assertEquals(recent2.getId(), testResults.get(0).getId());
-        assertEquals(recent1.getId(), testResults.get(1).getId());
+        // Then: Should return only recent activations, most recent first
+        // (db-scheduler is disabled in test profile, so no interference)
+        assertEquals(2, result.size());
+        assertEquals(recent2.getId(), result.get(0).getId());
+        assertEquals(recent1.getId(), result.get(1).getId());
     }
 
     @Test
@@ -305,15 +301,11 @@ class ActivationEntityIntegrationTest extends AbstractIntegrationTest {
         var result = repository.findByTypeAndSpottedAtAfterOrderBySpottedAtDesc(
                 ActivationType.POTA, cutoff);
 
-        // Then: Filter by test spot IDs to avoid interference from scheduler data
-        var testResults = result.stream()
-                .filter(e -> e.getSpotId().startsWith(POTA_SPOT_ID))
-                .toList();
-
-        // Should return only POTA activations from our test
-        assertEquals(2, testResults.size());
-        assertEquals(pota2.getId(), testResults.get(0).getId());
-        assertEquals(pota1.getId(), testResults.get(1).getId());
+        // Then: Should return only POTA activations
+        // (db-scheduler is disabled in test profile, so no interference)
+        assertEquals(2, result.size());
+        assertEquals(pota2.getId(), result.get(0).getId());
+        assertEquals(pota1.getId(), result.get(1).getId());
     }
 
     @Test

@@ -17,11 +17,10 @@ nextskip:
   refresh:
     eager-load: false
 
-# db-scheduler test configuration
+# db-scheduler disabled for test isolation
+# Scheduler tests use application-scheduler-test.yml profile instead
 db-scheduler:
-  enabled: true
-  immediate-execution-enabled: false
-  polling-interval: 1h  # Very long interval to prevent execution during tests
+  enabled: false
 
 # Reduce logging noise in tests
 logging:
