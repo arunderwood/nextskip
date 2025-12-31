@@ -4,6 +4,7 @@ import io.nextskip.propagation.model.SolarIndices;
 import io.nextskip.propagation.persistence.entity.SolarIndicesEntity;
 import io.nextskip.propagation.persistence.repository.SolarIndicesRepository;
 import io.nextskip.test.AbstractIntegrationTest;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -39,6 +40,12 @@ class SolarIndicesEntityIntegrationTest extends AbstractIntegrationTest {
 
     @Autowired
     private SolarIndicesRepository repository;
+
+    @BeforeEach
+    void cleanUp() {
+        // Clean slate for tests using unfiltered queries (e.g., findByTimestampAfter)
+        repository.deleteAll();
+    }
 
     @Test
     void testFromDomain_PreservesAllFields() {
@@ -155,7 +162,6 @@ class SolarIndicesEntityIntegrationTest extends AbstractIntegrationTest {
         var result = repository.findByTimestampAfterOrderByTimestampDesc(cutoff);
 
         // Then: Should return only recent entries, ordered by timestamp desc
-        // (db-scheduler is disabled in test profile, so no interference)
         assertEquals(2, result.size());
         assertEquals(150.0, result.get(0).getSolarFluxIndex()); // Most recent first
         assertEquals(120.0, result.get(1).getSolarFluxIndex());
