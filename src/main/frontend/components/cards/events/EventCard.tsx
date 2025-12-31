@@ -167,7 +167,9 @@ export function EventCard({ event, eventType, config, children }: EventCardProps
 
         {/* Data attribution for contests */}
         {eventType === 'contest' && (
-          <div style={{ fontSize: '0.65rem', color: 'var(--color-text-secondary)', marginTop: '4px', textAlign: 'right' }}>
+          <div
+            style={{ fontSize: '0.65rem', color: 'var(--color-text-secondary)', marginTop: '4px', textAlign: 'right' }}
+          >
             via{' '}
             <a
               href="https://www.contestcalendar.com/"
