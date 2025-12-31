@@ -130,7 +130,7 @@ class NoaaRefreshTaskTest {
 
     @Test
     void testNeedsInitialLoad_HasNoaaData_ReturnsFalse() {
-        SolarIndicesEntity entity = createTestEntity("NOAA");
+        SolarIndicesEntity entity = createTestEntity("NOAA SWPC");
         when(repository.findByTimestampAfterOrderByTimestampDesc(any(Instant.class)))
                 .thenReturn(List.of(entity));
 

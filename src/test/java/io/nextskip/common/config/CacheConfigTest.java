@@ -49,8 +49,8 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class CacheConfigTest {
 
-    private static final String SOURCE_NOAA = "noaa";
-    private static final String SOURCE_HAMQSL = "hamqsl";
+    private static final String SOURCE_NOAA = "NOAA SWPC";
+    private static final String SOURCE_HAMQSL = "HamQSL";
 
     @Mock
     private ActivationRepository activationRepository;
