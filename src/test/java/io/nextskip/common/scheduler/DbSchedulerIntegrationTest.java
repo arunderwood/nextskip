@@ -1,5 +1,6 @@
 package io.nextskip.common.scheduler;
 
+import com.github.kagkarlsson.scheduler.Scheduler;
 import io.nextskip.activations.internal.scheduler.PotaRefreshTask;
 import io.nextskip.activations.internal.scheduler.SotaRefreshTask;
 import io.nextskip.contests.internal.scheduler.ContestRefreshTask;
@@ -21,17 +22,20 @@ import static org.assertj.core.api.Assertions.assertThat;
  * <p>These tests verify that the db-scheduler components are properly configured
  * and that the application context starts successfully with the scheduling infrastructure.
  *
- * <p>Note: The Scheduler bean is created by db-scheduler auto-configuration
- * which requires a datasource. In tests using Testcontainers, the datasource
- * may not be available early enough for auto-configuration to detect it.
- * Therefore, we test that the application starts successfully and task
- * configuration classes are loaded rather than directly autowiring the Scheduler.
+ * <p>With the manual DbSchedulerConfig (Spring Boot 4 workaround), the Scheduler bean
+ * should now be created successfully in all environments including tests.
  */
 @SpringBootTest
 class DbSchedulerIntegrationTest extends AbstractIntegrationTest {
 
     @Autowired
     private ApplicationContext applicationContext;
+
+    @Autowired
+    private Scheduler scheduler;
+
+    @Autowired
+    private DataRefreshStartupHandler startupHandler;
 
     @Autowired
     private PotaRefreshTask potaRefreshTask;
@@ -60,12 +64,20 @@ class DbSchedulerIntegrationTest extends AbstractIntegrationTest {
     }
 
     @Test
-    void testDataRefreshStartupHandler_ConditionallyLoaded() {
-        // DataRefreshStartupHandler is @ConditionalOnBean(Scheduler.class)
-        // In tests where Scheduler isn't available, it should not be loaded
-        // Just verify the context started - the handler may or may not be present
-        // depending on whether Scheduler bean was created
-        assertThat(applicationContext.getStartupDate()).isPositive();
+    void testScheduler_BeanIsCreated() {
+        assertThat(scheduler).isNotNull();
+    }
+
+    @Test
+    void testScheduler_IsStartedAfterContextRefresh() {
+        assertThat(scheduler.getSchedulerState().isStarted()).isTrue();
+    }
+
+    @Test
+    void testDataRefreshStartupHandler_IsCreated() {
+        // Now that Scheduler bean exists via DbSchedulerConfig,
+        // the handler should be created (@ConditionalOnBean(Scheduler.class))
+        assertThat(startupHandler).isNotNull();
     }
 
     @Test
