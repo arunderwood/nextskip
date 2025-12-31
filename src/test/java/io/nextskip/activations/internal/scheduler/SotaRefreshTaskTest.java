@@ -25,6 +25,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -33,7 +35,10 @@ import static org.mockito.Mockito.when;
  * Unit tests for SotaRefreshTask.
  */
 @ExtendWith(MockitoExtension.class)
+@SuppressWarnings("PMD.AvoidDuplicateLiterals") // Suppress warnings annotations are intentionally repeated
 class SotaRefreshTaskTest {
+
+    private static final String SOURCE_SOTA_API = "SOTA API";
 
     @Mock
     private SotaClient sotaClient;
@@ -64,6 +69,8 @@ class SotaRefreshTaskTest {
     void testSotaRecurringTask_ExecuteHandler_InvokesRefresh() {
         Activation activation = createTestActivation();
         when(sotaClient.fetch()).thenReturn(List.of(activation));
+        when(repository.findBySourceAndSpotIdIn(eq(SOURCE_SOTA_API), anyList()))
+                .thenReturn(Collections.emptyList());
         when(repository.deleteBySpottedAtBefore(any())).thenReturn(0);
 
         RecurringTask<Void> recurringTask = task.sotaRecurringTask(sotaClient, repository, activationsCache);
@@ -79,6 +86,8 @@ class SotaRefreshTaskTest {
     void testExecuteRefresh_CallsClientFetch() {
         Activation activation = createTestActivation();
         when(sotaClient.fetch()).thenReturn(List.of(activation));
+        when(repository.findBySourceAndSpotIdIn(eq(SOURCE_SOTA_API), anyList()))
+                .thenReturn(Collections.emptyList());
         when(repository.deleteBySpottedAtBefore(any())).thenReturn(0);
 
         task.executeRefresh(sotaClient, repository, activationsCache);
@@ -90,6 +99,8 @@ class SotaRefreshTaskTest {
     void testExecuteRefresh_CallsRepositorySaveAll() {
         Activation activation = createTestActivation();
         when(sotaClient.fetch()).thenReturn(List.of(activation));
+        when(repository.findBySourceAndSpotIdIn(eq(SOURCE_SOTA_API), anyList()))
+                .thenReturn(Collections.emptyList());
         when(repository.deleteBySpottedAtBefore(any())).thenReturn(0);
 
         task.executeRefresh(sotaClient, repository, activationsCache);
@@ -106,6 +117,8 @@ class SotaRefreshTaskTest {
     void testExecuteRefresh_CallsRepositoryDeleteOld() {
         Activation activation = createTestActivation();
         when(sotaClient.fetch()).thenReturn(List.of(activation));
+        when(repository.findBySourceAndSpotIdIn(eq(SOURCE_SOTA_API), anyList()))
+                .thenReturn(Collections.emptyList());
         when(repository.deleteBySpottedAtBefore(any())).thenReturn(3);
 
         task.executeRefresh(sotaClient, repository, activationsCache);
@@ -117,6 +130,8 @@ class SotaRefreshTaskTest {
     void testExecuteRefresh_TriggersCacheRefresh() {
         Activation activation = createTestActivation();
         when(sotaClient.fetch()).thenReturn(List.of(activation));
+        when(repository.findBySourceAndSpotIdIn(eq(SOURCE_SOTA_API), anyList()))
+                .thenReturn(Collections.emptyList());
         when(repository.deleteBySpottedAtBefore(any())).thenReturn(0);
 
         task.executeRefresh(sotaClient, repository, activationsCache);
@@ -138,6 +153,7 @@ class SotaRefreshTaskTest {
     @Test
     void testExecuteRefresh_EmptyList_SavesNothing() {
         when(sotaClient.fetch()).thenReturn(Collections.emptyList());
+        // Note: findBySourceAndSpotIdIn is not called for empty list (early return in helper)
         when(repository.deleteBySpottedAtBefore(any())).thenReturn(0);
 
         task.executeRefresh(sotaClient, repository, activationsCache);
@@ -147,6 +163,31 @@ class SotaRefreshTaskTest {
         verify(repository).saveAll(captor.capture());
 
         assertThat(captor.getValue()).isEmpty();
+    }
+
+    @Test
+    void testExecuteRefresh_ExistingActivation_SetsIdForUpdate() {
+        // Given: An activation that already exists in the database
+        Activation activation = createTestActivation();
+        ActivationEntity existingEntity = createTestEntity();
+        existingEntity.setId(99L);
+
+        when(sotaClient.fetch()).thenReturn(List.of(activation));
+        when(repository.findBySourceAndSpotIdIn(eq(SOURCE_SOTA_API), anyList()))
+                .thenReturn(List.of(existingEntity));
+        when(repository.deleteBySpottedAtBefore(any())).thenReturn(0);
+
+        // When: Executing the refresh
+        task.executeRefresh(sotaClient, repository, activationsCache);
+
+        // Then: The saved entity should have the existing ID (for UPDATE)
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<List<ActivationEntity>> captor = ArgumentCaptor.forClass(List.class);
+        verify(repository).saveAll(captor.capture());
+
+        List<ActivationEntity> saved = captor.getValue();
+        assertThat(saved).hasSize(1);
+        assertThat(saved.get(0).getId()).isEqualTo(99L);
     }
 
     @Test

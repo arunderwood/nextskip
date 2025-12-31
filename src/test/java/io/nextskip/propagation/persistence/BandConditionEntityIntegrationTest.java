@@ -174,19 +174,20 @@ class BandConditionEntityIntegrationTest extends AbstractIntegrationTest {
     @Test
     void testFindByBandAndRecordedAtAfterOrderByRecordedAtDesc_ReturnsRecentForBand() {
         // Given: Multiple entries for same band at different times
-        var now = Instant.now();
-        var twoHoursAgo = now.minus(2, ChronoUnit.HOURS);
-        var oneHourAgo = now.minus(1, ChronoUnit.HOURS);
+        // Use a unique base time to avoid test isolation issues with other tests
+        var baseTime = Instant.parse("2020-01-01T12:00:00Z");
+        var twoHoursAgo = baseTime.minus(2, ChronoUnit.HOURS);
+        var oneHourAgo = baseTime.minus(1, ChronoUnit.HOURS);
 
         repository.save(new BandConditionEntity(
                 FrequencyBand.BAND_20M, BandConditionRating.POOR, 0.3, null, twoHoursAgo));
         repository.save(new BandConditionEntity(
                 FrequencyBand.BAND_20M, BandConditionRating.FAIR, 0.6, null, oneHourAgo));
         repository.save(new BandConditionEntity(
-                FrequencyBand.BAND_20M, BandConditionRating.GOOD, 0.9, null, now));
+                FrequencyBand.BAND_20M, BandConditionRating.GOOD, 0.9, null, baseTime));
 
-        // When: Find entries after 90 minutes ago
-        var cutoff = now.minus(90, ChronoUnit.MINUTES);
+        // When: Find entries after 90 minutes before base time
+        var cutoff = baseTime.minus(90, ChronoUnit.MINUTES);
         var result = repository.findByBandAndRecordedAtAfterOrderByRecordedAtDesc(
                 FrequencyBand.BAND_20M, cutoff);
 

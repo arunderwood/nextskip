@@ -67,6 +67,18 @@ public interface ActivationRepository extends JpaRepository<ActivationEntity, Lo
     List<ActivationEntity> findBySourceOrderBySpottedAtDesc(String source);
 
     /**
+     * Find activations from a specific source with spot IDs in the given list.
+     *
+     * <p>Used by refresh tasks for selective upsert - fetches only entities
+     * that match incoming data, avoiding loading all historical records.
+     *
+     * @param source the data source identifier (e.g., "POTA API", "SOTA API")
+     * @param spotIds list of spot IDs to look up
+     * @return list of matching activations
+     */
+    List<ActivationEntity> findBySourceAndSpotIdIn(String source, List<String> spotIds);
+
+    /**
      * Delete activations older than a given timestamp.
      *
      * @param spottedAt the cutoff timestamp

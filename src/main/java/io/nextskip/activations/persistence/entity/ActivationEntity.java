@@ -389,4 +389,16 @@ public class ActivationEntity {
     public void setSummitAssociationCode(String summitAssociationCode) {
         this.summitAssociationCode = summitAssociationCode;
     }
+
+    /**
+     * Sets the entity ID.
+     *
+     * <p>Used by refresh tasks to enable JPA merge behavior for existing entities.
+     * When ID is set, JPA's save() performs UPDATE instead of INSERT.
+     *
+     * @param id the entity ID
+     */
+    public void setId(Long id) {
+        this.id = id;
+    }
 }

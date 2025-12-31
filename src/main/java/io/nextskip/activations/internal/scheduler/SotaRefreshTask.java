@@ -81,10 +81,13 @@ public class SotaRefreshTask {
             // Fetch fresh data from API
             List<Activation> activations = sotaClient.fetch();
 
-            // Convert to entities and save
+            // Convert to entities
             List<ActivationEntity> entities = activations.stream()
                     .map(ActivationEntity::fromDomain)
                     .toList();
+
+            // Prepare for upsert (sets IDs for existing entities to enable UPDATE)
+            ActivationUpsertHelper.prepareForUpsert(entities, "SOTA API", repository);
 
             repository.saveAll(entities);
 
