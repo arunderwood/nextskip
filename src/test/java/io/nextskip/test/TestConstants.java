@@ -6,6 +6,7 @@ package io.nextskip.test;
  * <p>Centralizes commonly used test values to reduce duplication and magic numbers.
  * All values should be realistic examples that match production data formats.
  */
+@SuppressWarnings("PMD.TestClassWithoutTestCases") // Constants class, not a test class
 public final class TestConstants {
 
     // ==========================================================================

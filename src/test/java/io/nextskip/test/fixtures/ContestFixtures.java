@@ -143,6 +143,7 @@ public final class ContestFixtures {
     /**
      * Builder for creating customized Contest instances.
      */
+    @SuppressWarnings("PMD.AvoidFieldNameMatchingMethodName") // Fluent builder pattern
     public static class ContestBuilder {
         private String name = TestConstants.DEFAULT_CONTEST_NAME;
         private Instant startTime = Instant.now();
