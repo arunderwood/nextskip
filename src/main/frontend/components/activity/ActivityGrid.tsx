@@ -12,10 +12,10 @@ import './ActivityGrid.css';
 
 // Map card size to Frame aspect ratio
 const SIZE_TO_ASPECT: Record<ActivityCardSize, { width: number; height: number }> = {
-  standard: { width: 1, height: 1 },
-  wide: { width: 2, height: 1 },
-  tall: { width: 1, height: 2 },
-  hero: { width: 2, height: 2 },
+  '1x1': { width: 1, height: 1 },
+  '2x1': { width: 2, height: 1 },
+  '1x2': { width: 1, height: 2 },
+  '2x2': { width: 2, height: 2 },
 };
 
 // Style override to prevent glow clipping at grid edges

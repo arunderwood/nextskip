@@ -290,15 +290,15 @@
 }
 
 /* Size-specific adjustments */
-.activity-card--tall .activity-card__content {
+.activity-card--1x2 .activity-card__content {
   padding: calc(var(--spacing-unit) * 2.5);
 }
 
-.activity-card--hero .activity-card__header {
+.activity-card--2x2 .activity-card__header {
   padding: calc(var(--spacing-unit) * 2.5);
 }
 
-.activity-card--hero .activity-card__title {
+.activity-card--2x2 .activity-card__title {
   font-size: 1.375rem;
 }
 
@@ -318,7 +318,7 @@
     font-size: 1rem;
   }
 
-  .activity-card--hero .activity-card__title {
+  .activity-card--2x2 .activity-card__title {
     font-size: 1.125rem;
   }
 }

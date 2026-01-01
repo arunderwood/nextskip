@@ -41,7 +41,7 @@ const solarIndicesCard: CardDefinition = {
       return {
         id: 'solar-indices',
         type: 'solar-indices',
-        size: 'standard',
+        size: '1x1',
         priority: 0,
         hotness: 'neutral',
       };
@@ -66,7 +66,7 @@ const solarIndicesCard: CardDefinition = {
     return {
       id: 'solar-indices',
       type: 'solar-indices',
-      size: 'standard',
+      size: '1x1',
       priority,
       hotness,
     };
@@ -146,7 +146,7 @@ const bandConditionCards: CardDefinition = {
         return {
           id: `band-${condition.band}`,
           type: 'band-condition',
-          size: 'standard' as const,
+          size: '1x1' as const,
           priority: score,
           hotness: priorityToHotness(score),
         };

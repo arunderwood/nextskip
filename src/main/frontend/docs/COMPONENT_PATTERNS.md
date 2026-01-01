@@ -471,7 +471,7 @@ const { priority, hotness } = usePriorityCalculation({
 const config: ActivityCardConfig = {
   id: 'unique-id',
   type: 'activity-type',
-  size: 'standard', // or 'wide', 'tall', 'hero'
+  size: '1x1', // or '2x1', '1x2', '2x2'
   priority,
   hotness,
 };
@@ -490,12 +490,12 @@ const config: ActivityCardConfig = {
 
 ### Card Size Selection Guide
 
-Choose card size based on content needs:
+Choose card size based on content needs. Sizes use "{columns}x{rows}" format:
 
-- **standard (1x1)**: Simple metrics (single number, status indicator)
-- **wide (2x1)**: Tables, charts, horizontal lists
-- **tall (1x2)**: Vertical lists, activity feeds
-- **hero (2x2)**: Rich dashboards, featured metrics with charts
+- **1x1** (single cell): Simple metrics (single number, status indicator)
+- **2x1** (wide): Tables, charts, horizontal lists
+- **1x2** (tall): Vertical lists, activity feeds
+- **2x2** (hero): Rich dashboards, featured metrics with charts
 
 ### Content Component Pattern
 
@@ -546,7 +546,7 @@ export function useDashboardCards(data: DashboardData | null): ActivityCardConfi
     return {
       id: 'activity',
       type: 'activity-type',
-      size: 'standard',
+      size: '1x1',
       priority,
       hotness,
     };

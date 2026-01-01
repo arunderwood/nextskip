@@ -233,14 +233,14 @@ Responsive column counts are handled by `useResponsiveFrameWidth()` hook:
 
 ### Card Sizes
 
-Cards use Frame aspect ratios (handled by `@masonry-grid/react`):
+Cards use Frame aspect ratios (handled by `@masonry-grid/react`). Sizes use "{columns}x{rows}" format:
 
-| Size               | Aspect Ratio        | Use Case                       |
-| ------------------ | ------------------- | ------------------------------ |
-| **standard** (1x1) | width: 1, height: 1 | Single metrics, utilities      |
-| **wide** (2x1)     | width: 2, height: 1 | Charts, tables                 |
-| **tall** (1x2)     | width: 1, height: 2 | Lists, activity feeds          |
-| **hero** (2x2)     | width: 2, height: 2 | Primary KPIs, featured metrics |
+| Size    | Aspect Ratio        | Use Case                       |
+| ------- | ------------------- | ------------------------------ |
+| **1x1** | width: 1, height: 1 | Single metrics, utilities      |
+| **2x1** | width: 2, height: 1 | Charts, tables                 |
+| **1x2** | width: 1, height: 2 | Lists, activity feeds          |
+| **2x2** | width: 2, height: 2 | Primary KPIs, featured metrics |
 
 ### Hotness Levels
 
@@ -296,7 +296,7 @@ import { ActivityGrid, ActivityCard } from '../components/activity';
 <ActivityGrid
   cards={[
     {
-      config: { id: 'solar', type: 'solar-indices', size: 'standard', priority: 85, hotness: 'hot' },
+      config: { id: 'solar', type: 'solar-indices', size: '1x1', priority: 85, hotness: 'hot' },
       component: (
         <ActivityCard config={config} title="Solar Indices" icon="☀️">
           <SolarIndicesContent data={solarData} />

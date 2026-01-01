@@ -54,7 +54,7 @@ const contestsCard: CardDefinition = {
       return {
         id: uniqueId,
         type: 'contests',
-        size: 'standard' as const,
+        size: '1x1' as const,
         priority,
         hotness: priorityToHotness(priority),
       };
