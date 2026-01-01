@@ -151,6 +151,9 @@ dependencies {
     // Java 25 compatibility - override Mockito and ByteBuddy
     testImplementation libs.mockito.core
     testImplementation libs.byte.buddy
+
+    // Property-based testing
+    testImplementation libs.jqwik
 }
 
 // OpenTelemetry agent configuration

@@ -30,6 +30,9 @@ wiremock = "3.13.2"
 mockito = "5.21.0"
 byte-buddy = "1.18.3"
 
+# Property-based testing
+jqwik = "1.9.3"
+
 # Database testing
 testcontainers = "2.0.3"
 
@@ -99,6 +102,9 @@ wiremock-standalone = { module = "org.wiremock:wiremock-standalone", version.ref
 # Java 25 compatibility overrides
 mockito-core = { module = "org.mockito:mockito-core", version.ref = "mockito" }
 byte-buddy = { module = "net.bytebuddy:byte-buddy", version.ref = "byte-buddy" }
+
+# Property-based testing
+jqwik = { module = "net.jqwik:jqwik", version.ref = "jqwik" }
 
 [bundles]
 resilience4j = ["resilience4j-spring-boot3", "resilience4j-circuitbreaker", "resilience4j-retry"]

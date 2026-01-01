@@ -44,6 +44,8 @@
 
     <!-- Error Prone: Critical bug detection -->
     <rule ref="category/java/errorprone.xml">
+        <!-- Exclude from bulk import; we define a custom version below for Builder classes -->
+        <exclude name="AvoidFieldNameMatchingMethodName"/>
         <!-- Allow null assignments for cleanup (e.g., releasing resources) -->
         <exclude name="NullAssignment"/>
 
@@ -55,6 +57,14 @@
 
         <!-- DTOs and nested static records instantiated by Jackson don't need static factory methods -->
         <exclude name="MissingStaticMethodInNonInstantiatableClass"/>
+    </rule>
+
+    <!-- Fluent builders intentionally use field names matching setter methods (e.g., name() sets name) -->
+    <rule ref="category/java/errorprone.xml/AvoidFieldNameMatchingMethodName">
+        <properties>
+            <property name="violationSuppressXPath"
+                      value="//ClassDeclaration[ends-with(@SimpleName, 'Builder')]"/>
+        </properties>
     </rule>
 
     <!-- Performance: Efficiency patterns -->
