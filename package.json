@@ -82,6 +82,7 @@
     "@vitest/ui": "^4.0.15",
     "eslint": "^9.17.0",
     "eslint-config-vaadin": "^1.0.0-beta.5",
+    "fast-check": "^4.5.3",
     "glob": "^13.0.0",
     "jest-axe": "^10.0.0",
     "jsdom": "^27.3.0",
