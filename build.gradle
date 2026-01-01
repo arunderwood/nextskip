@@ -272,17 +272,11 @@ jacocoTestCoverageVerification {
 }
 
 // Delta coverage: enforce coverage on changed code (PR patch coverage)
-// Matches codecov.yml patch target of 65%
 deltaCoverageReport {
-    // Compare against main branch to measure coverage on changed code
     diffSource.git.compareWith 'refs/remotes/origin/main'
 
-    // Coverage thresholds matching codecov.yml patch target (65%)
     reportViews.test.violationRules {
-        // Simple threshold - applies to all coverage entities (instruction, branch, line)
-        failIfCoverageLessThan(0.65d)
-
-        // Fail the build on violations
+        failIfCoverageLessThan(0.80d)
         failOnViolation.set(true)
     }
 
