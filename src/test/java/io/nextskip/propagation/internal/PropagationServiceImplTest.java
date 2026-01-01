@@ -13,7 +13,9 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import reactor.test.StepVerifier;
 
+import java.time.Clock;
 import java.time.Instant;
+import java.time.ZoneOffset;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -33,6 +35,8 @@ import static org.mockito.Mockito.when;
 class PropagationServiceImplTest {
 
     private static final String MERGED_SOURCE = "NOAA SWPC + HamQSL";
+    private static final Instant FIXED_TIME = Instant.parse("2025-01-15T12:00:00Z");
+    private static final Clock FIXED_CLOCK = Clock.fixed(FIXED_TIME, ZoneOffset.UTC);
 
     @Mock
     private LoadingCache<String, SolarIndices> solarIndicesCache;
@@ -47,7 +51,7 @@ class PropagationServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        service = new PropagationServiceImpl(solarIndicesCache, bandConditionsCache);
+        service = new PropagationServiceImpl(solarIndicesCache, bandConditionsCache, FIXED_CLOCK);
 
         // Setup test data - merged solar indices (as would be produced by cache loader)
         mergedSolarIndices = new SolarIndices(
@@ -55,7 +59,7 @@ class PropagationServiceImplTest {
                 8,      // A-index from HamQSL
                 3,      // K-index from HamQSL
                 120,    // Sunspots from NOAA
-                Instant.now(),
+                FIXED_TIME,
                 MERGED_SOURCE
         );
 

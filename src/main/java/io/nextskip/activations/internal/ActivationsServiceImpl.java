@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.Clock;
 import java.time.Instant;
 import java.util.List;
 
@@ -28,10 +29,12 @@ public class ActivationsServiceImpl implements ActivationsService {
     private static final Logger LOG = LoggerFactory.getLogger(ActivationsServiceImpl.class);
 
     private final LoadingCache<String, List<Activation>> activationsCache;
+    private final Clock clock;
 
     @Autowired
-    public ActivationsServiceImpl(LoadingCache<String, List<Activation>> activationsCache) {
+    public ActivationsServiceImpl(LoadingCache<String, List<Activation>> activationsCache, Clock clock) {
         this.activationsCache = activationsCache;
+        this.clock = clock;
     }
 
     @Override
@@ -58,7 +61,7 @@ public class ActivationsServiceImpl implements ActivationsService {
                 allActivations,
                 potaCount,
                 sotaCount,
-                Instant.now()
+                Instant.now(clock)
         );
     }
 

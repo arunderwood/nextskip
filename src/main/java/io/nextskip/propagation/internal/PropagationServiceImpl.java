@@ -12,6 +12,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
+import java.time.Clock;
+import java.time.Instant;
 import java.util.List;
 
 /**
@@ -32,12 +34,15 @@ public class PropagationServiceImpl implements PropagationService {
 
     private final LoadingCache<String, SolarIndices> solarIndicesCache;
     private final LoadingCache<String, List<BandCondition>> bandConditionsCache;
+    private final Clock clock;
 
     public PropagationServiceImpl(
             LoadingCache<String, SolarIndices> solarIndicesCache,
-            LoadingCache<String, List<BandCondition>> bandConditionsCache) {
+            LoadingCache<String, List<BandCondition>> bandConditionsCache,
+            Clock clock) {
         this.solarIndicesCache = solarIndicesCache;
         this.bandConditionsCache = bandConditionsCache;
+        this.clock = clock;
     }
 
     /**
@@ -102,7 +107,7 @@ public class PropagationServiceImpl implements PropagationService {
         SolarIndices solarIndices = getCurrentSolarIndices();
         List<BandCondition> bandConditions = getBandConditions();
 
-        PropagationResponse response = new PropagationResponse(solarIndices, bandConditions);
+        PropagationResponse response = new PropagationResponse(solarIndices, bandConditions, Instant.now(clock));
 
         LOG.debug("Returning propagation response: {} band conditions",
                 bandConditions.size());

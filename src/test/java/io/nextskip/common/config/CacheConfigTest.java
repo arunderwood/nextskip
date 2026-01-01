@@ -26,7 +26,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.Clock;
 import java.time.Instant;
+import java.time.ZoneOffset;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -51,6 +53,8 @@ class CacheConfigTest {
 
     private static final String SOURCE_NOAA = "NOAA SWPC";
     private static final String SOURCE_HAMQSL = "HamQSL";
+    private static final Instant FIXED_TIME = Instant.parse("2025-01-15T12:00:00Z");
+    private static final Clock FIXED_CLOCK = Clock.fixed(FIXED_TIME, ZoneOffset.UTC);
 
     @Mock
     private ActivationRepository activationRepository;
@@ -71,7 +75,7 @@ class CacheConfigTest {
 
     @BeforeEach
     void setUp() {
-        config = new CacheConfig();
+        config = new CacheConfig(FIXED_CLOCK);
     }
 
     @Test

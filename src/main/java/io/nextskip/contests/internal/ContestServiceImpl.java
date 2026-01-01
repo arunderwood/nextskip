@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
@@ -28,10 +29,12 @@ public class ContestServiceImpl implements ContestService {
     private static final Logger LOG = LoggerFactory.getLogger(ContestServiceImpl.class);
 
     private final LoadingCache<String, List<Contest>> contestsCache;
+    private final Clock clock;
 
     @Autowired
-    public ContestServiceImpl(LoadingCache<String, List<Contest>> contestsCache) {
+    public ContestServiceImpl(LoadingCache<String, List<Contest>> contestsCache, Clock clock) {
         this.contestsCache = contestsCache;
+        this.clock = clock;
     }
 
     @Override
@@ -70,7 +73,7 @@ public class ContestServiceImpl implements ContestService {
                 activeCount,
                 upcomingCount,
                 totalCount,
-                Instant.now()
+                Instant.now(clock)
         );
 
         LOG.debug("Returning contests response: {} active, {} upcoming soon, {} total",
