@@ -11,7 +11,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.Clock;
 import java.time.Instant;
+import java.time.ZoneOffset;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -27,6 +29,8 @@ class ActivationsServiceImplTest {
 
     private static final String TEST_CALLSIGN_POTA = "W1ABC";
     private static final String TEST_CALLSIGN_SOTA = "W3XYZ/P";
+    private static final Instant FIXED_TIME = Instant.parse("2025-01-15T12:00:00Z");
+    private static final Clock FIXED_CLOCK = Clock.fixed(FIXED_TIME, ZoneOffset.UTC);
 
     @Mock
     private LoadingCache<String, List<Activation>> activationsCache;
@@ -35,7 +39,7 @@ class ActivationsServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        service = new ActivationsServiceImpl(activationsCache);
+        service = new ActivationsServiceImpl(activationsCache, FIXED_CLOCK);
     }
 
     @Test
@@ -97,24 +101,14 @@ class ActivationsServiceImplTest {
 
     @Test
     void shouldSet_RecentLastUpdatedTimestamp() {
-        // Given
-        Instant before = Instant.now();
+        // Given: Fixed clock is injected
         when(activationsCache.get(CacheConfig.CACHE_KEY)).thenReturn(List.of());
 
         // When
         ActivationsSummary summary = service.getActivationsSummary();
-        Instant after = Instant.now();
 
-        // Then: Timestamp should be between before and after
-        assertNotNull(summary.lastUpdated());
-        assertTrue(
-                summary.lastUpdated().equals(before) || summary.lastUpdated().isAfter(before),
-                "Timestamp should be at or after start time"
-        );
-        assertTrue(
-                summary.lastUpdated().equals(after) || summary.lastUpdated().isBefore(after),
-                "Timestamp should be at or before end time"
-        );
+        // Then: Timestamp should match the fixed clock time exactly
+        assertEquals(FIXED_TIME, summary.lastUpdated(), "Timestamp should match fixed clock time");
     }
 
     // ========== getActivationsResponse() tests ==========
@@ -172,24 +166,14 @@ class ActivationsServiceImplTest {
 
     @Test
     void testGetActivationsResponse_IncludesLastUpdated() {
-        // Given
-        Instant before = Instant.now();
+        // Given: Fixed clock is injected
         when(activationsCache.get(CacheConfig.CACHE_KEY)).thenReturn(List.of());
 
         // When
         io.nextskip.activations.api.ActivationsResponse response = service.getActivationsResponse();
-        Instant after = Instant.now();
 
-        // Then
-        assertNotNull(response.lastUpdated(), "Response should include lastUpdated timestamp");
-        assertTrue(
-                !response.lastUpdated().isBefore(before),
-                "lastUpdated should be at or after test start"
-        );
-        assertTrue(
-                !response.lastUpdated().isAfter(after),
-                "lastUpdated should be at or before test end"
-        );
+        // Then: Timestamp should match the fixed clock time exactly
+        assertEquals(FIXED_TIME, response.lastUpdated(), "lastUpdated should match fixed clock time");
     }
 
     /**

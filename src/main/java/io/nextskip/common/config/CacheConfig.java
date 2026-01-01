@@ -22,6 +22,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
@@ -49,6 +50,12 @@ import java.util.Optional;
 public class CacheConfig {
 
     private static final Logger LOG = LoggerFactory.getLogger(CacheConfig.class);
+
+    private final Clock clock;
+
+    public CacheConfig(Clock clock) {
+        this.clock = clock;
+    }
 
     /**
      * Single cache key used for all caches.
@@ -91,7 +98,7 @@ public class CacheConfig {
      */
     List<Activation> loadActivations(ActivationRepository repository) {
         LOG.debug("Loading activations from database");
-        Instant cutoff = Instant.now().minus(ACTIVATIONS_RETENTION);
+        Instant cutoff = Instant.now(clock).minus(ACTIVATIONS_RETENTION);
         List<Activation> activations = repository
                 .findBySpottedAtAfterOrderBySpottedAtDesc(cutoff)
                 .stream()
@@ -140,7 +147,7 @@ public class CacheConfig {
                     hamqslData.aIndex(),
                     hamqslData.kIndex(),
                     noaaData.sunspotNumber(),
-                    Instant.now(),
+                    Instant.now(clock),
                     "NOAA SWPC + HamQSL"
             );
             LOG.info("Merged solar indices from NOAA and HamQSL");
@@ -180,7 +187,7 @@ public class CacheConfig {
      */
     List<BandCondition> loadBandConditions(BandConditionRepository repository) {
         LOG.debug("Loading band conditions from database");
-        Instant cutoff = Instant.now().minus(BAND_CONDITIONS_RETENTION);
+        Instant cutoff = Instant.now(clock).minus(BAND_CONDITIONS_RETENTION);
         List<BandCondition> conditions = repository
                 .findLatestPerBandSince(cutoff)
                 .stream()
@@ -215,7 +222,7 @@ public class CacheConfig {
         LOG.debug("Loading contests from database");
         // Load contests ending after now (active + upcoming)
         List<Contest> contests = repository
-                .findByEndTimeAfterOrderByStartTimeAsc(Instant.now())
+                .findByEndTimeAfterOrderByStartTimeAsc(Instant.now(clock))
                 .stream()
                 .map(ContestEntity::toDomain)
                 .toList();
@@ -246,7 +253,7 @@ public class CacheConfig {
      */
     List<MeteorShower> loadMeteorShowers(MeteorShowerRepository repository) {
         LOG.debug("Loading meteor showers from database");
-        Instant now = Instant.now();
+        Instant now = Instant.now(clock);
         // Load showers where visibility window hasn't ended
         List<MeteorShower> showers = repository
                 .findByVisibilityStartBeforeAndVisibilityEndAfterOrderByPeakStartAsc(now, now)

@@ -9,7 +9,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.Clock;
 import java.time.Instant;
+import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Set;
@@ -28,6 +30,9 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class ContestServiceImplTest {
 
+    private static final Instant FIXED_TIME = Instant.parse("2025-01-15T12:00:00Z");
+    private static final Clock FIXED_CLOCK = Clock.fixed(FIXED_TIME, ZoneOffset.UTC);
+
     @Mock
     private LoadingCache<String, List<Contest>> contestsCache;
 
@@ -35,7 +40,7 @@ class ContestServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        service = new ContestServiceImpl(contestsCache);
+        service = new ContestServiceImpl(contestsCache, FIXED_CLOCK);
     }
 
     @Test
@@ -197,19 +202,15 @@ class ContestServiceImplTest {
 
     @Test
     void testGetContestsResponse_SetsTimestamp() {
-        Instant before = Instant.now();
-
+        // Given: Fixed clock is injected
         when(contestsCache.get(CacheConfig.CACHE_KEY)).thenReturn(List.of());
 
+        // When
         io.nextskip.contests.api.ContestsResponse response = service.getContestsResponse();
-        Instant after = Instant.now();
 
+        // Then: Timestamp should match the fixed clock time exactly
         assertNotNull(response);
-        assertNotNull(response.lastUpdated(), "Response should have lastUpdated timestamp");
-        assertTrue(!response.lastUpdated().isBefore(before),
-                "Timestamp should be at or after test start");
-        assertTrue(!response.lastUpdated().isAfter(after),
-                "Timestamp should be at or before test end");
+        assertEquals(FIXED_TIME, response.lastUpdated(), "lastUpdated should match fixed clock time");
     }
 
     /**
