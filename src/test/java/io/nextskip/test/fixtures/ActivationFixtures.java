@@ -128,7 +128,6 @@ public final class ActivationFixtures {
     /**
      * Builder for creating customized Park instances.
      */
-    @SuppressWarnings("PMD.AvoidFieldNameMatchingMethodName") // Fluent builder pattern
     public static class ParkBuilder {
         private String reference = TestConstants.DEFAULT_PARK_REF;
         private String name = TestConstants.DEFAULT_PARK_NAME;
@@ -185,7 +184,6 @@ public final class ActivationFixtures {
     /**
      * Builder for creating customized Summit instances.
      */
-    @SuppressWarnings("PMD.AvoidFieldNameMatchingMethodName") // Fluent builder pattern
     public static class SummitBuilder {
         private String reference = TestConstants.DEFAULT_SUMMIT_REF;
         private String name = TestConstants.DEFAULT_SUMMIT_NAME;
@@ -224,7 +222,6 @@ public final class ActivationFixtures {
     /**
      * Builder for creating customized Activation instances.
      */
-    @SuppressWarnings("PMD.AvoidFieldNameMatchingMethodName") // Fluent builder pattern
     public static class ActivationBuilder {
         private String spotId = "test-spot-1";
         private String activatorCallsign = TestConstants.DEFAULT_CALLSIGN;

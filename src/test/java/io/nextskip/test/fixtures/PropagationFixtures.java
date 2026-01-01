@@ -146,7 +146,6 @@ public final class PropagationFixtures {
     /**
      * Builder for creating customized SolarIndices instances.
      */
-    @SuppressWarnings("PMD.AvoidFieldNameMatchingMethodName") // Fluent builder pattern
     public static class SolarIndicesBuilder {
         private double solarFluxIndex = TestConstants.DEFAULT_SFI;
         private int aIndex = TestConstants.DEFAULT_A_INDEX;
@@ -197,7 +196,6 @@ public final class PropagationFixtures {
     /**
      * Builder for creating customized BandCondition instances.
      */
-    @SuppressWarnings("PMD.AvoidFieldNameMatchingMethodName") // Fluent builder pattern
     public static class BandConditionBuilder {
         private FrequencyBand band = FrequencyBand.BAND_20M;
         private BandConditionRating rating = BandConditionRating.GOOD;

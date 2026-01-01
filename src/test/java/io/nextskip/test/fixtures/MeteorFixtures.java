@@ -165,7 +165,6 @@ public final class MeteorFixtures {
     /**
      * Builder for creating customized MeteorShower instances.
      */
-    @SuppressWarnings("PMD.AvoidFieldNameMatchingMethodName") // Fluent builder pattern
     public static class MeteorShowerBuilder {
         private String name = TestConstants.DEFAULT_SHOWER_NAME;
         private String code = TestConstants.DEFAULT_SHOWER_CODE;
