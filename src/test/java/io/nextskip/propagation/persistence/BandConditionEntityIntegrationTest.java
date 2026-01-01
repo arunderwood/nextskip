@@ -5,15 +5,16 @@ import io.nextskip.propagation.model.BandCondition;
 import io.nextskip.propagation.model.BandConditionRating;
 import io.nextskip.propagation.persistence.entity.BandConditionEntity;
 import io.nextskip.propagation.persistence.repository.BandConditionRepository;
-import io.nextskip.test.AbstractIntegrationTest;
+import io.nextskip.test.AbstractPersistenceTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.Collection;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -33,12 +34,15 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  *   <li>Constraint enforcement</li>
  * </ul>
  */
-@SpringBootTest
-@Transactional
-class BandConditionEntityIntegrationTest extends AbstractIntegrationTest {
+class BandConditionEntityIntegrationTest extends AbstractPersistenceTest {
 
     @Autowired
     private BandConditionRepository repository;
+
+    @Override
+    protected Collection<JpaRepository<?, ?>> getRepositoriesToClean() {
+        return List.of(repository);
+    }
 
     @Test
     void testFromDomain_PreservesAllFields() {
@@ -174,7 +178,6 @@ class BandConditionEntityIntegrationTest extends AbstractIntegrationTest {
     @Test
     void testFindByBandAndRecordedAtAfterOrderByRecordedAtDesc_ReturnsRecentForBand() {
         // Given: Multiple entries for same band at different times
-        // Use BAND_6M which is not used by any other test to avoid test isolation issues
         var now = Instant.now();
         var twoHoursAgo = now.minus(2, ChronoUnit.HOURS);
         var oneHourAgo = now.minus(1, ChronoUnit.HOURS);

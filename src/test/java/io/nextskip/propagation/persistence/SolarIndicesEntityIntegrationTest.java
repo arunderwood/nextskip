@@ -3,16 +3,16 @@ package io.nextskip.propagation.persistence;
 import io.nextskip.propagation.model.SolarIndices;
 import io.nextskip.propagation.persistence.entity.SolarIndicesEntity;
 import io.nextskip.propagation.persistence.repository.SolarIndicesRepository;
-import io.nextskip.test.AbstractIntegrationTest;
-import org.junit.jupiter.api.BeforeEach;
+import io.nextskip.test.AbstractPersistenceTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.Collection;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -30,21 +30,17 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  *   <li>Constraint enforcement</li>
  * </ul>
  */
-@SpringBootTest
-@Transactional
-class SolarIndicesEntityIntegrationTest extends AbstractIntegrationTest {
+class SolarIndicesEntityIntegrationTest extends AbstractPersistenceTest {
 
-    // Use unique test source names to avoid conflicts with scheduler data
-    private static final String SOURCE_NOAA = "TEST_NOAA";
-    private static final String SOURCE_HAMQSL = "TEST_HAMQSL";
+    private static final String SOURCE_NOAA = "NOAA";
+    private static final String SOURCE_HAMQSL = "HAMQSL";
 
     @Autowired
     private SolarIndicesRepository repository;
 
-    @BeforeEach
-    void cleanUp() {
-        // Clean slate for tests using unfiltered queries (e.g., findByTimestampAfter)
-        repository.deleteAll();
+    @Override
+    protected Collection<JpaRepository<?, ?>> getRepositoriesToClean() {
+        return List.of(repository);
     }
 
     @Test
