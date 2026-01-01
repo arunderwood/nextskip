@@ -44,8 +44,9 @@
 
     <!-- Error Prone: Critical bug detection -->
     <rule ref="category/java/errorprone.xml">
-        <!-- Exclude from bulk import; we define a custom version below for Builder classes -->
+        <!-- Exclude from bulk import; we define custom versions below -->
         <exclude name="AvoidFieldNameMatchingMethodName"/>
+        <exclude name="TestClassWithoutTestCases"/>
         <!-- Allow null assignments for cleanup (e.g., releasing resources) -->
         <exclude name="NullAssignment"/>
 
@@ -57,6 +58,14 @@
 
         <!-- DTOs and nested static records instantiated by Jackson don't need static factory methods -->
         <exclude name="MissingStaticMethodInNonInstantiatableClass"/>
+    </rule>
+
+    <!-- Recognize jqwik @Property methods as valid test methods (not just JUnit @Test) -->
+    <rule ref="category/java/errorprone.xml/TestClassWithoutTestCases">
+        <properties>
+            <property name="violationSuppressXPath"
+                      value="//ClassDeclaration[.//MethodDeclaration/ModifierList/Annotation[pmd-java:typeIs('net.jqwik.api.Property')]]"/>
+        </properties>
     </rule>
 
     <!-- Fluent builders intentionally use field names matching setter methods (e.g., name() sets name) -->
@@ -85,6 +94,9 @@
             <!-- Enforce BDD-style test naming: testMethod_Scenario or testMethod_Scenario_Expected -->
             <!-- Pattern requires at least one underscore after the initial camelCase portion -->
             <property name="junit5TestPattern" value="[a-z][a-zA-Z0-9]+_[a-zA-Z0-9_]+" />
+            <!-- Allow jqwik @Property methods to use the same BDD-style naming with underscores -->
+            <property name="violationSuppressXPath"
+                      value="//MethodDeclaration[ModifierList/Annotation[pmd-java:typeIs('net.jqwik.api.Property')]]"/>
         </properties>
     </rule>
     <rule ref="category/java/codestyle.xml/ClassNamingConventions"/>

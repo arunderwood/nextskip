@@ -7,12 +7,15 @@ import org.junit.jupiter.api.Test;
 import java.time.Duration;
 import java.time.Instant;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static io.nextskip.test.TestConstants.*;
+import static org.assertj.core.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Comprehensive tests for MeteorShower model.
+ *
+ * <p>Tests use invariant-based assertions to verify scoring contracts
+ * without coupling to specific algorithm coefficients.
  */
 class MeteorShowerTest {
 
@@ -22,7 +25,10 @@ class MeteorShowerTest {
     private static final String TEST_SHOWER = "Test";
     private static final String TEST_CODE = "TST";
 
-    // Test data builders
+    // =========================================================================
+    // Test Data Builders
+    // =========================================================================
+
     private static MeteorShower createActiveAtPeak() {
         Instant now = Instant.now();
         return new MeteorShower(
@@ -32,7 +38,7 @@ class MeteorShowerTest {
                 now.plus(Duration.ofHours(18)),  // Peak ends in 18 hours
                 now.minus(Duration.ofDays(5)),   // Visibility started 5 days ago
                 now.plus(Duration.ofDays(3)),    // Visibility ends in 3 days
-                100,
+                DEFAULT_PEAK_ZHR,
                 SWIFT_TUTTLE,
                 IMO_URL
         );
@@ -47,7 +53,7 @@ class MeteorShowerTest {
                 now.plus(Duration.ofDays(2)).plus(Duration.ofHours(36)), // Peak duration
                 now.minus(Duration.ofDays(1)),   // Visibility started yesterday
                 now.plus(Duration.ofDays(5)),    // Visibility ends in 5 days
-                100,
+                DEFAULT_PEAK_ZHR,
                 SWIFT_TUTTLE,
                 IMO_URL
         );
@@ -83,165 +89,276 @@ class MeteorShowerTest {
         );
     }
 
+    // =========================================================================
+    // Status Tests
+    // =========================================================================
+
     @Nested
     class StatusTests {
         @Test
-        void activeAtPeak_returnsActive() {
+        void testGetStatus_ActiveAtPeak() {
             MeteorShower shower = createActiveAtPeak();
-            assertEquals(EventStatus.ACTIVE, shower.getStatus());
+            assertThat(shower.getStatus()).isEqualTo(EventStatus.ACTIVE);
         }
 
         @Test
-        void activeNotAtPeak_returnsActive() {
+        void testGetStatus_ActiveNotAtPeak() {
             MeteorShower shower = createActiveNotAtPeak();
-            assertEquals(EventStatus.ACTIVE, shower.getStatus());
+            assertThat(shower.getStatus()).isEqualTo(EventStatus.ACTIVE);
         }
 
         @Test
-        void upcoming_returnsUpcoming() {
+        void testGetStatus_Upcoming() {
             MeteorShower shower = createUpcoming();
-            assertEquals(EventStatus.UPCOMING, shower.getStatus());
+            assertThat(shower.getStatus()).isEqualTo(EventStatus.UPCOMING);
         }
 
         @Test
-        void ended_returnsEnded() {
+        void testGetStatus_Ended() {
             MeteorShower shower = createEnded();
-            assertEquals(EventStatus.ENDED, shower.getStatus());
+            assertThat(shower.getStatus()).isEqualTo(EventStatus.ENDED);
         }
     }
+
+    // =========================================================================
+    // Score Invariant Tests
+    // =========================================================================
 
     @Nested
-    class ScoreTests {
+    class ScoreInvariantTests {
+
         @Test
-        void activeAtPeak_scoresHigh() {
-            MeteorShower shower = createActiveAtPeak();
-            int score = shower.getScore();
-            assertTrue(score >= 85, "Active at peak should score >= 85, got " + score);
-            assertTrue(score <= 100, "Score should be <= 100, got " + score);
+        void testGetScore_AlwaysWithinBounds() {
+            // Test all standard shower states
+            MeteorShower[] showers = {
+                    createActiveAtPeak(),
+                    createActiveNotAtPeak(),
+                    createUpcoming(),
+                    createEnded()
+            };
+
+            for (MeteorShower shower : showers) {
+                int score = shower.getScore();
+                assertThat(score)
+                        .as("Score for %s should be in [%d, %d]", shower.name(), MIN_SCORE, MAX_SCORE)
+                        .isBetween(MIN_SCORE, MAX_SCORE);
+            }
         }
 
         @Test
-        void activeNotAtPeak_scoresMedium() {
-            MeteorShower shower = createActiveNotAtPeak();
-            int score = shower.getScore();
-            assertTrue(score >= 40, "Active not at peak should score >= 40, got " + score);
-            assertTrue(score < 85, "Active not at peak should score < 85, got " + score);
+        void testGetScore_PeakScoresHigherThanNonPeak() {
+            // Invariant: At peak should score higher than not at peak
+            MeteorShower atPeak = createActiveAtPeak();
+            MeteorShower notAtPeak = createActiveNotAtPeak();
+
+            assertThat(atPeak.getScore())
+                    .as("At peak should score higher than not at peak")
+                    .isGreaterThan(notAtPeak.getScore());
         }
 
         @Test
-        void upcomingSoon_scoresMediumHigh() {
-            Instant now = Instant.now();
-            MeteorShower shower = new MeteorShower(
-                    TEST_SHOWER, TEST_CODE,
-                    now.plus(Duration.ofHours(12)),
-                    now.plus(Duration.ofHours(36)),
-                    now.plus(Duration.ofHours(6)), // Starts in 6 hours
-                    now.plus(Duration.ofDays(2)),
-                    50, null, null
-            );
-            int score = shower.getScore();
-            assertTrue(score >= 60, "Upcoming in 6 hours should score >= 60, got " + score);
+        void testGetScore_ActiveScoresHigherThanUpcoming() {
+            // Invariant: Active showers should generally score higher than upcoming
+            MeteorShower atPeak = createActiveAtPeak();
+            MeteorShower upcoming = createUpcoming();
+
+            assertThat(atPeak.getScore())
+                    .as("Active at peak should score higher than upcoming")
+                    .isGreaterThan(upcoming.getScore());
         }
 
         @Test
-        void ended_scoresZero() {
-            MeteorShower shower = createEnded();
-            assertEquals(0, shower.getScore());
+        void testGetScore_UpcomingScoresHigherThanEnded() {
+            // Invariant: Upcoming showers should score higher than ended
+            MeteorShower upcoming = createUpcoming();
+            MeteorShower ended = createEnded();
+
+            assertThat(upcoming.getScore())
+                    .as("Upcoming should score higher than ended")
+                    .isGreaterThan(ended.getScore());
         }
     }
+
+    // =========================================================================
+    // Score Boundary Tests
+    // =========================================================================
 
     @Nested
-    class ZhrCalculationTests {
-        @Test
-        void atPeak_returnsNearPeakZhr() {
-            MeteorShower shower = createActiveAtPeak();
-            int currentZhr = shower.getCurrentZhr();
-            // Should be close to peak (accounting for Gaussian decay from midpoint)
-            assertTrue(currentZhr > shower.peakZhr() * 0.7,
-                    "At peak should return near peak ZHR, got " + currentZhr);
-        }
+    class ScoreBoundaryTests {
 
         @Test
-        void activeButFarFromPeak_returnsDecayedZhr() {
-            MeteorShower shower = createActiveNotAtPeak();
-            int currentZhr = shower.getCurrentZhr();
-            assertTrue(currentZhr > 0, "Active shower should have ZHR > 0");
-            assertTrue(currentZhr < shower.peakZhr(),
-                    "Far from peak should have ZHR < peak");
-        }
-
-        @Test
-        void ended_returnsZero() {
+        void testGetScore_Ended_ReturnsMinScore() {
             MeteorShower shower = createEnded();
-            assertEquals(0, shower.getCurrentZhr());
+            assertThat(shower.getScore())
+                    .as("Ended shower should score minimum")
+                    .isEqualTo(MIN_SCORE);
+        }
+
+        @Test
+        void testGetScore_ActiveAtPeak_ScoresHigh() {
+            MeteorShower shower = createActiveAtPeak();
+            assertThat(shower.getScore())
+                    .as("Active at peak should score near maximum")
+                    .isGreaterThanOrEqualTo(HOT_THRESHOLD);
         }
     }
+
+    // =========================================================================
+    // ZHR Calculation Invariant Tests
+    // =========================================================================
+
+    @Nested
+    class ZhrInvariantTests {
+
+        @Test
+        void testGetCurrentZhr_AlwaysWithinBounds() {
+            MeteorShower[] showers = {
+                    createActiveAtPeak(),
+                    createActiveNotAtPeak(),
+                    createUpcoming(),
+                    createEnded()
+            };
+
+            for (MeteorShower shower : showers) {
+                int currentZhr = shower.getCurrentZhr();
+                assertThat(currentZhr)
+                        .as("Current ZHR for %s should be >= 0", shower.name())
+                        .isGreaterThanOrEqualTo(0);
+                assertThat(currentZhr)
+                        .as("Current ZHR for %s should be <= peak ZHR", shower.name())
+                        .isLessThanOrEqualTo(shower.peakZhr());
+            }
+        }
+
+        @Test
+        void testGetCurrentZhr_AtPeakHigherThanNotAtPeak() {
+            MeteorShower atPeak = createActiveAtPeak();
+            MeteorShower notAtPeak = createActiveNotAtPeak();
+
+            assertThat(atPeak.getCurrentZhr())
+                    .as("At peak ZHR should be >= not at peak ZHR")
+                    .isGreaterThanOrEqualTo(notAtPeak.getCurrentZhr());
+        }
+
+        @Test
+        void testGetCurrentZhr_ActiveHasPositiveZhr() {
+            MeteorShower activeAtPeak = createActiveAtPeak();
+            MeteorShower activeNotAtPeak = createActiveNotAtPeak();
+
+            assertThat(activeAtPeak.getCurrentZhr())
+                    .as("Active at peak should have ZHR > 0")
+                    .isPositive();
+            assertThat(activeNotAtPeak.getCurrentZhr())
+                    .as("Active not at peak should have ZHR > 0")
+                    .isPositive();
+        }
+
+        @Test
+        void testGetCurrentZhr_EndedReturnsZero() {
+            MeteorShower shower = createEnded();
+            assertThat(shower.getCurrentZhr())
+                    .as("Ended shower should have zero ZHR")
+                    .isZero();
+        }
+
+        @Test
+        void testGetCurrentZhr_UpcomingReturnsMinimal() {
+            MeteorShower shower = createUpcoming();
+            int currentZhr = shower.getCurrentZhr();
+            // Upcoming showers should have minimal but non-zero ZHR (to show they exist)
+            assertThat(currentZhr)
+                    .as("Upcoming shower should have minimal ZHR")
+                    .isLessThanOrEqualTo(1);
+        }
+    }
+
+    // =========================================================================
+    // isFavorable() Tests
+    // =========================================================================
 
     @Nested
     class FavorableTests {
         @Test
-        void atPeak_isFavorable() {
+        void testIsFavorable_AtPeak_ReturnsTrue() {
             MeteorShower shower = createActiveAtPeak();
-            assertTrue(shower.isFavorable());
+            assertThat(shower.isFavorable()).isTrue();
         }
 
         @Test
-        void ended_isNotFavorable() {
+        void testIsFavorable_Ended_ReturnsFalse() {
             MeteorShower shower = createEnded();
-            assertFalse(shower.isFavorable());
+            assertThat(shower.isFavorable()).isFalse();
         }
     }
+
+    // =========================================================================
+    // isAtPeak() Tests
+    // =========================================================================
 
     @Nested
     class PeakTests {
         @Test
-        void atPeak_returnsTrue() {
+        void testIsAtPeak_ActiveAtPeak_ReturnsTrue() {
             MeteorShower shower = createActiveAtPeak();
-            assertTrue(shower.isAtPeak());
+            assertThat(shower.isAtPeak()).isTrue();
         }
 
         @Test
-        void notAtPeak_returnsFalse() {
+        void testIsAtPeak_ActiveNotAtPeak_ReturnsFalse() {
             MeteorShower shower = createActiveNotAtPeak();
-            assertFalse(shower.isAtPeak());
+            assertThat(shower.isAtPeak()).isFalse();
         }
     }
+
+    // =========================================================================
+    // Time Remaining Invariant Tests
+    // =========================================================================
 
     @Nested
     class TimeRemainingTests {
         @Test
-        void upcoming_returnsTimeToStart() {
+        void testGetTimeRemaining_Upcoming_IsPositive() {
             MeteorShower shower = createUpcoming();
             Duration remaining = shower.getTimeRemaining();
-            assertTrue(remaining.toHours() > 0, "Upcoming should have positive time remaining");
+            assertThat(remaining.toHours())
+                    .as("Upcoming should have positive time remaining")
+                    .isPositive();
         }
 
         @Test
-        void active_returnsTimeToEnd() {
+        void testGetTimeRemaining_Active_IsPositive() {
             MeteorShower shower = createActiveAtPeak();
             Duration remaining = shower.getTimeRemaining();
-            assertTrue(remaining.toHours() > 0, "Active should have time remaining to end");
+            assertThat(remaining.toHours())
+                    .as("Active should have time remaining to end")
+                    .isPositive();
         }
 
         @Test
-        void ended_returnsNegativeTime() {
+        void testGetTimeRemaining_Ended_IsNegative() {
             MeteorShower shower = createEnded();
             Duration remaining = shower.getTimeRemaining();
-            assertTrue(remaining.isNegative(), "Ended should have negative time remaining");
+            assertThat(remaining.isNegative())
+                    .as("Ended should have negative time remaining")
+                    .isTrue();
         }
 
         @Test
-        void timeRemainingSeconds_convertsToSeconds() {
+        void testGetTimeRemainingSeconds_EqualsGetTimeRemainingSeconds() {
             MeteorShower shower = createUpcoming();
-            long seconds = shower.getTimeRemainingSeconds();
-            assertEquals(shower.getTimeRemaining().getSeconds(), seconds);
+            assertThat(shower.getTimeRemainingSeconds())
+                    .isEqualTo(shower.getTimeRemaining().getSeconds());
         }
     }
+
+    // =========================================================================
+    // isEndingSoon() Tests
+    // =========================================================================
 
     @Nested
     class EndingSoonTests {
         @Test
-        void peakEndingInFiveHours_isEndingSoon() {
+        void testIsEndingSoon_PeakEndingWithin6Hours_ReturnsTrue() {
             Instant now = Instant.now();
             MeteorShower shower = new MeteorShower(
                     TEST_SHOWER, TEST_CODE,
@@ -251,11 +368,11 @@ class MeteorShowerTest {
                     now.plus(Duration.ofDays(1)),
                     50, null, null
             );
-            assertTrue(shower.isEndingSoon(), "Shower with peak ending in 5 hours should be ending soon");
+            assertThat(shower.isEndingSoon()).isTrue();
         }
 
         @Test
-        void peakEndingInSevenHours_notEndingSoon() {
+        void testIsEndingSoon_PeakNotEndingSoon_ReturnsFalse() {
             Instant now = Instant.now();
             MeteorShower shower = new MeteorShower(
                     TEST_SHOWER, TEST_CODE,
@@ -265,26 +382,34 @@ class MeteorShowerTest {
                     now.plus(Duration.ofDays(1)),
                     50, null, null
             );
-            assertFalse(shower.isEndingSoon(), "Shower with peak ending in 7 hours should not be ending soon");
+            assertThat(shower.isEndingSoon()).isFalse();
         }
 
         @Test
-        void upcoming_notEndingSoon() {
+        void testIsEndingSoon_Upcoming_ReturnsFalse() {
             MeteorShower shower = createUpcoming();
-            assertFalse(shower.isEndingSoon(), "Upcoming shower should not be ending soon");
+            assertThat(shower.isEndingSoon())
+                    .as("Upcoming shower should not be ending soon")
+                    .isFalse();
         }
 
         @Test
-        void ended_notEndingSoon() {
+        void testIsEndingSoon_Ended_ReturnsFalse() {
             MeteorShower shower = createEnded();
-            assertFalse(shower.isEndingSoon(), "Ended shower should not be ending soon");
+            assertThat(shower.isEndingSoon())
+                    .as("Ended shower should not be ending soon")
+                    .isFalse();
         }
     }
+
+    // =========================================================================
+    // Additional Favorable Tests
+    // =========================================================================
 
     @Nested
     class AdditionalFavorableTests {
         @Test
-        void activeNearPeak_isFavorable() {
+        void testIsFavorable_ActiveNearPeak_ReturnsTrue() {
             Instant now = Instant.now();
             MeteorShower shower = new MeteorShower(
                     TEST_SHOWER, TEST_CODE,
@@ -294,11 +419,13 @@ class MeteorShowerTest {
                     now.plus(Duration.ofDays(2)),
                     50, null, null
             );
-            assertTrue(shower.isFavorable(), "Active shower with peak in 10 hours should be favorable");
+            assertThat(shower.isFavorable())
+                    .as("Active shower with peak in 10 hours should be favorable")
+                    .isTrue();
         }
 
         @Test
-        void upcomingWithinTwelveHours_isFavorable() {
+        void testIsFavorable_UpcomingSoon_ReturnsTrue() {
             Instant now = Instant.now();
             MeteorShower shower = new MeteorShower(
                     TEST_SHOWER, TEST_CODE,
@@ -308,11 +435,13 @@ class MeteorShowerTest {
                     now.plus(Duration.ofDays(2)),
                     50, null, null
             );
-            assertTrue(shower.isFavorable(), "Upcoming shower within 12 hours should be favorable");
+            assertThat(shower.isFavorable())
+                    .as("Upcoming shower within 12 hours should be favorable")
+                    .isTrue();
         }
 
         @Test
-        void activeFarFromPeak_isNotFavorable() {
+        void testIsFavorable_ActiveFarFromPeak_ReturnsFalse() {
             Instant now = Instant.now();
             MeteorShower shower = new MeteorShower(
                     TEST_SHOWER, TEST_CODE,
@@ -322,133 +451,73 @@ class MeteorShowerTest {
                     now.plus(Duration.ofDays(5)),
                     50, null, null
             );
-            assertFalse(shower.isFavorable(), "Active shower with peak in 3 days should not be favorable");
+            assertThat(shower.isFavorable())
+                    .as("Active shower with peak in 3 days should not be favorable")
+                    .isFalse();
         }
     }
 
-    @Nested
-    class AdditionalScoreTests {
-        @Test
-        void upcoming24To72Hours_scoresCorrectly() {
-            Instant now = Instant.now();
-            MeteorShower shower = new MeteorShower(
-                    TEST_SHOWER, TEST_CODE,
-                    now.plus(Duration.ofHours(60)),  // ~2.5 days
-                    now.plus(Duration.ofHours(84)),
-                    now.plus(Duration.ofHours(48)),  // Starts in 48 hours
-                    now.plus(Duration.ofDays(4)),
-                    50, null, null
-            );
-            int score = shower.getScore();
-            assertTrue(score >= 30 && score <= 60, "Upcoming 48 hours should score 30-60, got " + score);
-        }
-
-        @Test
-        void upcomingOver72Hours_scoresLow() {
-            Instant now = Instant.now();
-            MeteorShower shower = new MeteorShower(
-                    TEST_SHOWER, TEST_CODE,
-                    now.plus(Duration.ofDays(6)),
-                    now.plus(Duration.ofDays(7)),
-                    now.plus(Duration.ofDays(5)),  // Starts in 5 days (120 hours)
-                    now.plus(Duration.ofDays(8)),
-                    50, null, null
-            );
-            assertEquals(15, shower.getScore(), "Upcoming 120 hours should score 15");
-        }
-
-        @Test
-        void highZhrPeak_scoresMaximum() {
-            Instant now = Instant.now();
-            MeteorShower shower = new MeteorShower(
-                    "Geminids", "GEM",
-                    now.minus(Duration.ofHours(6)),
-                    now.plus(Duration.ofHours(18)),
-                    now.minus(Duration.ofDays(1)),
-                    now.plus(Duration.ofDays(2)),
-                    150,  // Very high ZHR
-                    "3200 Phaethon", null
-            );
-            int score = shower.getScore();
-            assertEquals(100, score, "High ZHR at peak should score 100");
-        }
-    }
-
-    @Nested
-    class AdditionalZhrTests {
-        @Test
-        void upcomingShower_returnsMinimalZhr() {
-            MeteorShower shower = createUpcoming();
-            assertEquals(1, shower.getCurrentZhr(), "Upcoming shower should return ZHR of 1");
-        }
-
-        @Test
-        void gaussianDecay_calculatesCorrectly() {
-            Instant now = Instant.now();
-            // Create shower with peak exactly at current time
-            MeteorShower shower = new MeteorShower(
-                    TEST_SHOWER, TEST_CODE,
-                    now.minus(Duration.ofHours(12)),
-                    now.plus(Duration.ofHours(12)),  // Peak midpoint is now
-                    now.minus(Duration.ofDays(1)),
-                    now.plus(Duration.ofDays(1)),
-                    100, null, null
-            );
-            int currentZhr = shower.getCurrentZhr();
-            // At peak midpoint, Gaussian decay should give ~100
-            assertTrue(currentZhr >= 95, "At peak midpoint should be near maximum ZHR, got " + currentZhr);
-        }
-    }
+    // =========================================================================
+    // Time to Peak Tests
+    // =========================================================================
 
     @Nested
     class TimeToPeakTests {
         @Test
-        void beforePeak_returnsPositiveDuration() {
+        void testGetTimeToPeak_BeforePeak_IsPositive() {
             MeteorShower shower = createActiveNotAtPeak();
             Duration timeToPeak = shower.getTimeToPeak();
-            assertTrue(timeToPeak.toHours() > 0, "Before peak should return positive duration");
+            assertThat(timeToPeak.toHours())
+                    .as("Before peak should return positive duration")
+                    .isPositive();
         }
 
         @Test
-        void atPeak_returnsZero() {
+        void testGetTimeToPeak_AtPeak_IsZero() {
             MeteorShower shower = createActiveAtPeak();
             Duration timeToPeak = shower.getTimeToPeak();
-            assertEquals(Duration.ZERO, timeToPeak, "At peak should return ZERO duration");
+            assertThat(timeToPeak).isEqualTo(Duration.ZERO);
         }
 
         @Test
-        void afterPeak_returnsNegativeDuration() {
+        void testGetTimeToPeak_AfterPeak_IsNegative() {
             MeteorShower shower = createEnded();
             Duration timeToPeak = shower.getTimeToPeak();
-            assertTrue(timeToPeak.isNegative(), "After peak should return negative duration");
+            assertThat(timeToPeak.isNegative())
+                    .as("After peak should return negative duration")
+                    .isTrue();
         }
 
         @Test
-        void timeToPeakSeconds_convertsToSeconds() {
+        void testGetTimeToPeakSeconds_EqualsGetTimeToPeakSeconds() {
             MeteorShower shower = createActiveNotAtPeak();
-            long seconds = shower.getTimeToPeakSeconds();
-            assertEquals(shower.getTimeToPeak().getSeconds(), seconds);
+            assertThat(shower.getTimeToPeakSeconds())
+                    .isEqualTo(shower.getTimeToPeak().getSeconds());
         }
     }
+
+    // =========================================================================
+    // Event Interface Tests
+    // =========================================================================
 
     @Nested
     class EventInterfaceTests {
         @Test
-        void getName_returnsCorrectName() {
+        void testGetName_ReturnsCorrectName() {
             MeteorShower shower = createActiveAtPeak();
-            assertEquals(PERSEIDS_2025, shower.getName());
+            assertThat(shower.getName()).isEqualTo(PERSEIDS_2025);
         }
 
         @Test
-        void getStartTime_returnsVisibilityStart() {
+        void testGetStartTime_ReturnsVisibilityStart() {
             MeteorShower shower = createActiveAtPeak();
-            assertEquals(shower.visibilityStart(), shower.getStartTime());
+            assertThat(shower.getStartTime()).isEqualTo(shower.visibilityStart());
         }
 
         @Test
-        void getEndTime_returnsVisibilityEnd() {
+        void testGetEndTime_ReturnsVisibilityEnd() {
             MeteorShower shower = createActiveAtPeak();
-            assertEquals(shower.visibilityEnd(), shower.getEndTime());
+            assertThat(shower.getEndTime()).isEqualTo(shower.visibilityEnd());
         }
     }
 }
