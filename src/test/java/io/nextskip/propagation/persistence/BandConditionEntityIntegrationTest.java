@@ -290,6 +290,80 @@ class BandConditionEntityIntegrationTest extends AbstractPersistenceTest {
         }
     }
 
+    // === Native Query Tests ===
+
+    @Test
+    void testFindLatestPerBandSince_ReturnsOnePerBand() {
+        // Given: Multiple entries per band simulating multiple refresh cycles
+        // Use BAND_12M and BAND_17M to avoid test isolation issues
+        var now = Instant.now();
+        var thirtyMinutesAgo = now.minus(30, ChronoUnit.MINUTES);
+        var fifteenMinutesAgo = now.minus(15, ChronoUnit.MINUTES);
+
+        // First refresh cycle (oldest)
+        repository.save(new BandConditionEntity(
+                FrequencyBand.BAND_12M, BandConditionRating.POOR, 0.4, null, thirtyMinutesAgo));
+        repository.save(new BandConditionEntity(
+                FrequencyBand.BAND_17M, BandConditionRating.FAIR, 0.5, null, thirtyMinutesAgo));
+
+        // Second refresh cycle
+        repository.save(new BandConditionEntity(
+                FrequencyBand.BAND_12M, BandConditionRating.FAIR, 0.6, null, fifteenMinutesAgo));
+        repository.save(new BandConditionEntity(
+                FrequencyBand.BAND_17M, BandConditionRating.GOOD, 0.7, null, fifteenMinutesAgo));
+
+        // Third refresh cycle (newest)
+        var latest12m = repository.save(new BandConditionEntity(
+                FrequencyBand.BAND_12M, BandConditionRating.GOOD, 0.9, null, now));
+        var latest17m = repository.save(new BandConditionEntity(
+                FrequencyBand.BAND_17M, BandConditionRating.GOOD, 0.95, null, now));
+
+        // When: Query for latest per band (6 records inserted, should get 2 back)
+        var cutoff = now.minus(1, ChronoUnit.HOURS);
+        var result = repository.findLatestPerBandSince(cutoff);
+
+        // Then: Should return exactly one record per unique band
+        var band12mResults = result.stream()
+                .filter(e -> e.getBand() == FrequencyBand.BAND_12M)
+                .toList();
+        var band17mResults = result.stream()
+                .filter(e -> e.getBand() == FrequencyBand.BAND_17M)
+                .toList();
+
+        assertEquals(1, band12mResults.size(), "Should have exactly one 12m record");
+        assertEquals(1, band17mResults.size(), "Should have exactly one 17m record");
+
+        // And: Each should be the most recent record for that band
+        assertEquals(latest12m.getId(), band12mResults.get(0).getId());
+        assertEquals(latest17m.getId(), band17mResults.get(0).getId());
+        assertEquals(BandConditionRating.GOOD, band12mResults.get(0).getRating());
+        assertEquals(BandConditionRating.GOOD, band17mResults.get(0).getRating());
+    }
+
+    @Test
+    void testFindLatestPerBandSince_ExcludesRecordsBeforeCutoff() {
+        // Given: Records both before and after cutoff for BAND_30M
+        var now = Instant.now();
+        var twoHoursAgo = now.minus(2, ChronoUnit.HOURS);
+
+        repository.save(new BandConditionEntity(
+                FrequencyBand.BAND_30M, BandConditionRating.GOOD, 0.9, null, twoHoursAgo));
+        var recent = repository.save(new BandConditionEntity(
+                FrequencyBand.BAND_30M, BandConditionRating.FAIR, 0.6, null, now));
+
+        // When: Query with 1 hour cutoff
+        var cutoff = now.minus(1, ChronoUnit.HOURS);
+        var result = repository.findLatestPerBandSince(cutoff);
+
+        // Then: Should only return the recent record
+        var band30mResults = result.stream()
+                .filter(e -> e.getBand() == FrequencyBand.BAND_30M)
+                .toList();
+
+        assertEquals(1, band30mResults.size());
+        assertEquals(recent.getId(), band30mResults.get(0).getId());
+    }
+
     // === Setter Coverage Tests ===
 
     @Test
