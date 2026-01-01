@@ -18,7 +18,7 @@ const createCard = (
   id: string,
   priority: number,
   hotness: 'hot' | 'warm' | 'neutral' | 'cool',
-  size: 'standard' | 'wide' | 'tall' | 'hero' = 'standard',
+  size: '1x1' | '2x1' | '1x2' | '2x2' = '1x1',
 ): ActivityCardConfig => ({
   id,
   type: 'solar-indices',

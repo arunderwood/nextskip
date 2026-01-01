@@ -21,7 +21,7 @@ describe('CardRegistry', () => {
       createConfig: () => ({
         id: 'test-card',
         type: 'propagation',
-        size: 'standard',
+        size: '1x1',
         priority: 50,
         hotness: 'neutral',
       }),
@@ -41,7 +41,7 @@ describe('CardRegistry', () => {
       createConfig: () => ({
         id: 'card-1',
         type: 'solar-indices',
-        size: 'standard',
+        size: '1x1',
         priority: 100,
         hotness: 'hot',
       }),
@@ -53,7 +53,7 @@ describe('CardRegistry', () => {
       createConfig: () => ({
         id: 'card-2',
         type: 'band-conditions',
-        size: 'wide',
+        size: '2x1',
         priority: 50,
         hotness: 'warm',
       }),

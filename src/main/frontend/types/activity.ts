@@ -8,13 +8,14 @@
 import type { ReactNode } from 'react';
 
 /**
- * Card size variants for activity grid layout
- * - standard: 1x1 (single cell) - Single metrics, utilities
- * - wide: 2x1 (spans 2 columns) - Charts, tables
- * - tall: 1x2 (spans 2 rows) - Lists, activity feeds
- * - hero: 2x2 (spans 2 columns and 2 rows) - Primary KPIs, featured metrics
+ * Card size variants for activity grid layout.
+ * Format: "{columns}x{rows}" representing grid cell spans.
+ * - '1x1': Single cell (1 column, 1 row) - Single metrics, utilities
+ * - '2x1': Wide (2 columns, 1 row) - Charts, tables
+ * - '1x2': Tall (1 column, 2 rows) - Lists, activity feeds
+ * - '2x2': Hero (2 columns, 2 rows) - Primary KPIs, featured metrics
  */
-export type ActivityCardSize = 'standard' | 'wide' | 'tall' | 'hero';
+export type ActivityCardSize = '1x1' | '2x1' | '1x2' | '2x2';
 
 /**
  * Hotness level determines visual emphasis and border glow intensity

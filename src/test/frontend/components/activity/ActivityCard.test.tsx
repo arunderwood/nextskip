@@ -16,7 +16,7 @@ expect.extend(toHaveNoViolations);
 const mockConfig: ActivityCardConfig = {
   id: 'test-card',
   type: 'solar-indices',
-  size: 'standard',
+  size: '1x1',
   priority: 75,
   hotness: 'hot',
 };
@@ -78,10 +78,10 @@ describe('ActivityCard', () => {
 
   describe('card sizes', () => {
     it.each([
-      ['standard', 'activity-card--standard'],
-      ['wide', 'activity-card--wide'],
-      ['tall', 'activity-card--tall'],
-      ['hero', 'activity-card--hero'],
+      ['1x1', 'activity-card--1x1'],
+      ['2x1', 'activity-card--2x1'],
+      ['1x2', 'activity-card--1x2'],
+      ['2x2', 'activity-card--2x2'],
     ] as const)('should apply %s size class', (size, expectedClass) => {
       const config = { ...mockConfig, size };
       const { container } = render(

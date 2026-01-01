@@ -19,7 +19,7 @@ const createTestCard = (id: string, priority: number, title: string, interactive
   const config: ActivityCardConfig = {
     id,
     type: 'solar-indices',
-    size: 'standard',
+    size: '1x1',
     priority,
     hotness: priority >= 70 ? 'hot' : priority >= 45 ? 'warm' : 'neutral',
   };
@@ -147,7 +147,7 @@ describe('Activity System Accessibility', () => {
       const config: ActivityCardConfig = {
         id: 'test',
         type: 'solar-indices',
-        size: 'standard',
+        size: '1x1',
         priority: 75,
         hotness: 'hot',
       };
@@ -174,7 +174,7 @@ describe('Activity System Accessibility', () => {
       const config: ActivityCardConfig = {
         id: 'test',
         type: 'solar-indices',
-        size: 'standard',
+        size: '1x1',
         priority: 75,
         hotness: 'hot',
       };
@@ -233,28 +233,28 @@ describe('Activity System Accessibility', () => {
       const config1: ActivityCardConfig = {
         id: 'hot',
         type: 'solar-indices',
-        size: 'standard',
+        size: '1x1',
         priority: 85,
         hotness: 'hot',
       };
       const config2: ActivityCardConfig = {
         id: 'warm',
         type: 'solar-indices',
-        size: 'standard',
+        size: '1x1',
         priority: 55,
         hotness: 'warm',
       };
       const config3: ActivityCardConfig = {
         id: 'neutral',
         type: 'solar-indices',
-        size: 'standard',
+        size: '1x1',
         priority: 35,
         hotness: 'neutral',
       };
       const config4: ActivityCardConfig = {
         id: 'cool',
         type: 'solar-indices',
-        size: 'standard',
+        size: '1x1',
         priority: 15,
         hotness: 'cool',
       };
@@ -387,7 +387,7 @@ describe('Activity System Accessibility', () => {
       const config: ActivityCardConfig = {
         id: 'test',
         type: 'solar-indices',
-        size: 'standard',
+        size: '1x1',
         priority: 75,
         hotness: 'hot',
       };
@@ -408,28 +408,28 @@ describe('Activity System Accessibility', () => {
       const config1: ActivityCardConfig = {
         id: 'hot',
         type: 'solar-indices',
-        size: 'standard',
+        size: '1x1',
         priority: 85,
         hotness: 'hot',
       };
       const config2: ActivityCardConfig = {
         id: 'warm',
         type: 'solar-indices',
-        size: 'standard',
+        size: '1x1',
         priority: 55,
         hotness: 'warm',
       };
       const config3: ActivityCardConfig = {
         id: 'neutral',
         type: 'solar-indices',
-        size: 'standard',
+        size: '1x1',
         priority: 35,
         hotness: 'neutral',
       };
       const config4: ActivityCardConfig = {
         id: 'cool',
         type: 'solar-indices',
-        size: 'standard',
+        size: '1x1',
         priority: 15,
         hotness: 'cool',
       };

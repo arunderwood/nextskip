@@ -49,7 +49,7 @@ const potaActivationsCard: CardDefinition = {
     return {
       id: 'pota-activations',
       type: 'pota-activations',
-      size: 'tall',
+      size: '1x2',
       priority,
       hotness,
     };
@@ -115,7 +115,7 @@ const sotaActivationsCard: CardDefinition = {
     return {
       id: 'sota-activations',
       type: 'sota-activations',
-      size: 'tall',
+      size: '1x2',
       priority,
       hotness,
     };

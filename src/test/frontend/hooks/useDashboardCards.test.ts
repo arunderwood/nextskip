@@ -278,7 +278,7 @@ describe('useDashboardCards', () => {
       };
       const { result } = renderHook(() => useDashboardCards(dashboardData));
 
-      expect(result.current[0].size).toBe('standard');
+      expect(result.current[0].size).toBe('1x1');
     });
   });
 
@@ -311,7 +311,7 @@ describe('useDashboardCards', () => {
       expect(result.current[0]).toMatchObject({
         id: 'solar-indices',
         type: 'solar-indices',
-        size: 'standard',
+        size: '1x1',
       });
     });
 
@@ -390,7 +390,7 @@ describe('useDashboardCards', () => {
       expect(bandCard).toMatchObject({
         id: 'band-BAND_20M',
         type: 'band-condition',
-        size: 'standard',
+        size: '1x1',
       });
     });
 
