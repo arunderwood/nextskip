@@ -5,20 +5,13 @@ import { axe, toHaveNoViolations } from 'jest-axe';
 import { BandRatingDisplay } from 'Frontend/components/cards/propagation/BandRatingDisplay';
 import type BandCondition from 'Frontend/generated/io/nextskip/propagation/model/BandCondition';
 import BandConditionRating from 'Frontend/generated/io/nextskip/propagation/model/BandConditionRating';
-import FrequencyBand from 'Frontend/generated/io/nextskip/common/model/FrequencyBand';
+import { createMockBandCondition } from '../../../fixtures/mockFactories';
 
 expect.extend(toHaveNoViolations);
 
 describe('BandRatingDisplay', () => {
-  const createCondition = (overrides?: Partial<BandCondition>): BandCondition => ({
-    band: FrequencyBand.BAND_20M,
-    rating: BandConditionRating.GOOD,
-    confidence: 1.0,
-    notes: undefined,
-    favorable: true,
-    score: 100,
-    ...overrides,
-  });
+  // Use shared factory - alias for backward compatibility
+  const createCondition = createMockBandCondition;
 
   describe('rendering', () => {
     it('should render the rating badge', () => {
@@ -31,36 +24,17 @@ describe('BandRatingDisplay', () => {
   });
 
   describe('rating badges', () => {
-    it('should render GOOD rating with correct class', () => {
-      const condition = createCondition({ rating: BandConditionRating.GOOD });
+    it.each([
+      [BandConditionRating.GOOD, 'GOOD', '.rating-good'],
+      [BandConditionRating.FAIR, 'FAIR', '.rating-fair'],
+      [BandConditionRating.POOR, 'POOR', '.rating-poor'],
+      [BandConditionRating.UNKNOWN, 'UNKNOWN', '.rating-unknown'],
+    ])('should render %s rating with correct class', (rating, expectedText, expectedClass) => {
+      const condition = createCondition({ rating });
       const { container } = render(<BandRatingDisplay condition={condition} />);
 
-      expect(screen.getByText('GOOD')).toBeInTheDocument();
-      expect(container.querySelector('.rating-good')).toBeInTheDocument();
-    });
-
-    it('should render FAIR rating with correct class', () => {
-      const condition = createCondition({ rating: BandConditionRating.FAIR, score: 60 });
-      const { container } = render(<BandRatingDisplay condition={condition} />);
-
-      expect(screen.getByText('FAIR')).toBeInTheDocument();
-      expect(container.querySelector('.rating-fair')).toBeInTheDocument();
-    });
-
-    it('should render POOR rating with correct class', () => {
-      const condition = createCondition({ rating: BandConditionRating.POOR, score: 20 });
-      const { container } = render(<BandRatingDisplay condition={condition} />);
-
-      expect(screen.getByText('POOR')).toBeInTheDocument();
-      expect(container.querySelector('.rating-poor')).toBeInTheDocument();
-    });
-
-    it('should render UNKNOWN rating with correct class', () => {
-      const condition = createCondition({ rating: BandConditionRating.UNKNOWN, score: 0 });
-      const { container } = render(<BandRatingDisplay condition={condition} />);
-
-      expect(screen.getByText('UNKNOWN')).toBeInTheDocument();
-      expect(container.querySelector('.rating-unknown')).toBeInTheDocument();
+      expect(screen.getByText(expectedText)).toBeInTheDocument();
+      expect(container.querySelector(expectedClass)).toBeInTheDocument();
     });
 
     it('should handle undefined rating gracefully', () => {
@@ -73,25 +47,12 @@ describe('BandRatingDisplay', () => {
   });
 
   describe('rating icons', () => {
-    it('should render Check icon for GOOD rating', () => {
-      const condition = createCondition({ rating: BandConditionRating.GOOD });
-      const { container } = render(<BandRatingDisplay condition={condition} />);
-
-      // lucide-react renders SVG with data-lucide attribute
-      const icon = container.querySelector('.rating-icon svg');
-      expect(icon).toBeInTheDocument();
-    });
-
-    it('should render Minus icon for FAIR rating', () => {
-      const condition = createCondition({ rating: BandConditionRating.FAIR });
-      const { container } = render(<BandRatingDisplay condition={condition} />);
-
-      const icon = container.querySelector('.rating-icon svg');
-      expect(icon).toBeInTheDocument();
-    });
-
-    it('should render X icon for POOR rating', () => {
-      const condition = createCondition({ rating: BandConditionRating.POOR });
+    it.each([
+      [BandConditionRating.GOOD, 'Check'],
+      [BandConditionRating.FAIR, 'Minus'],
+      [BandConditionRating.POOR, 'X'],
+    ])('should render SVG icon for %s rating', (rating) => {
+      const condition = createCondition({ rating });
       const { container } = render(<BandRatingDisplay condition={condition} />);
 
       const icon = container.querySelector('.rating-icon svg');

@@ -11,21 +11,17 @@ import { axe, toHaveNoViolations } from 'jest-axe';
 import ActivityGrid from 'Frontend/components/activity/ActivityGrid';
 import ActivityCard from 'Frontend/components/activity/ActivityCard';
 import type { ActivityCardConfig } from 'Frontend/components/activity';
+import { createMockActivityCardConfig } from '../../fixtures/mockFactories';
 
 expect.extend(toHaveNoViolations);
 
+// Wrapper to maintain existing test API while using shared factory
 const createCard = (
   id: string,
   priority: number,
   hotness: 'hot' | 'warm' | 'neutral' | 'cool',
   size: '1x1' | '2x1' | '1x2' | '2x2' = '1x1',
-): ActivityCardConfig => ({
-  id,
-  type: 'solar-indices',
-  size,
-  priority,
-  hotness,
-});
+): ActivityCardConfig => createMockActivityCardConfig({ id, priority, hotness, size });
 
 describe('ActivityGrid', () => {
   describe('rendering', () => {

@@ -1,11 +1,11 @@
 package io.nextskip.activations.model;
 
-import org.junit.jupiter.api.Test;
+import static io.nextskip.test.fixtures.ActivationFixtures.pota;
+import static org.junit.jupiter.api.Assertions.*;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-
-import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.Test;
 
 /**
  * Unit tests for Activation model scoring logic.
@@ -184,26 +184,6 @@ class ActivationTest {
      * Helper method to create a test Activation.
      */
     private Activation createActivation(Instant spottedAt) {
-        io.nextskip.activations.model.Park park = new io.nextskip.activations.model.Park(
-                "US-0001",
-                "Test Park",
-                "CO",
-                "US",
-                "FN42",
-                42.5,
-                -71.3
-        );
-
-        return new Activation(
-                "12345",
-                "W1ABC",
-                ActivationType.POTA,
-                14250.0,
-                "SSB",
-                spottedAt,
-                10,
-                "Test Source",
-                park
-        );
+        return pota().spottedAt(spottedAt).build();
     }
 }

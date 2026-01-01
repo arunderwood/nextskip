@@ -1,23 +1,24 @@
 package io.nextskip.activations.internal;
 
+import static io.nextskip.test.fixtures.ActivationFixtures.pota;
+import static io.nextskip.test.fixtures.ActivationFixtures.sota;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
+
 import com.github.benmanes.caffeine.cache.LoadingCache;
 import io.nextskip.activations.model.Activation;
 import io.nextskip.activations.model.ActivationsSummary;
 import io.nextskip.activations.model.ActivationType;
 import io.nextskip.common.config.CacheConfig;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
-import java.time.Clock;
-import java.time.Instant;
-import java.time.ZoneOffset;
-import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
 /**
  * Unit tests for ActivationsServiceImpl.
@@ -180,50 +181,13 @@ class ActivationsServiceImplTest {
      * Helper method to create a test POTA activation.
      */
     private Activation createPotaActivation(String id, String callsign) {
-        io.nextskip.activations.model.Park park = new io.nextskip.activations.model.Park(
-                "US-0001",
-                "Test Park",
-                "CO",
-                "US",
-                "FN42",
-                42.5,
-                -71.3
-        );
-
-        return new Activation(
-                id,
-                callsign,
-                ActivationType.POTA,
-                14250.0,
-                "SSB",
-                Instant.now(),
-                10,
-                "POTA API",
-                park
-        );
+        return pota().spotId(id).activatorCallsign(callsign).build();
     }
 
     /**
      * Helper method to create a test SOTA activation.
      */
     private Activation createSotaActivation(String id, String callsign) {
-        io.nextskip.activations.model.Summit summit = new io.nextskip.activations.model.Summit(
-                "W7W/LC-001",
-                "Test Summit",
-                "WA",
-                "W7W"
-        );
-
-        return new Activation(
-                id,
-                callsign,
-                ActivationType.SOTA,
-                7200.0,
-                "CW",
-                Instant.now(),
-                null,
-                "SOTA API",
-                summit
-        );
+        return sota().spotId(id).activatorCallsign(callsign).build();
     }
 }

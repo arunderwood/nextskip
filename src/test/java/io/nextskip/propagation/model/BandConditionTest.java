@@ -1,13 +1,18 @@
 package io.nextskip.propagation.model;
 
-import io.nextskip.common.model.FrequencyBand;
-import org.junit.jupiter.api.Test;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import io.nextskip.common.model.FrequencyBand;
+import java.util.stream.Stream;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.MethodSource;
 
 /**
  * Comprehensive test suite for BandCondition record.
@@ -90,112 +95,71 @@ class BandConditionTest {
     // Category 3: isFavorable() - Rating and Confidence Combinations
     // ==========================================================================
 
-    @Test
-    void testIsFavorable_GoodWithHighConfidence() {
-        // GOOD rating with confidence > 0.5 should be favorable
-        var condition = new BandCondition(FrequencyBand.BAND_20M, BandConditionRating.GOOD, 0.6);
-        assertTrue(condition.isFavorable());
-
-        var condition2 = new BandCondition(FrequencyBand.BAND_20M, BandConditionRating.GOOD, 1.0);
-        assertTrue(condition2.isFavorable());
+    static Stream<Arguments> isFavorableProvider() {
+        return Stream.of(
+                // GOOD rating with confidence > 0.5 should be favorable
+                Arguments.of(BandConditionRating.GOOD, 0.6, true),
+                Arguments.of(BandConditionRating.GOOD, 1.0, true),
+                // GOOD rating with confidence <= 0.5 should NOT be favorable
+                Arguments.of(BandConditionRating.GOOD, 0.5, false),
+                Arguments.of(BandConditionRating.GOOD, 0.3, false),
+                // FAIR rating should never be favorable
+                Arguments.of(BandConditionRating.FAIR, 1.0, false),
+                Arguments.of(BandConditionRating.FAIR, 0.7, false),
+                // POOR rating should never be favorable
+                Arguments.of(BandConditionRating.POOR, 1.0, false),
+                Arguments.of(BandConditionRating.POOR, 0.1, false),
+                // UNKNOWN rating should never be favorable
+                Arguments.of(BandConditionRating.UNKNOWN, 1.0, false)
+        );
     }
 
-    @Test
-    void testIsFavorable_GoodWithLowConfidence() {
-        // GOOD rating with confidence <= 0.5 should NOT be favorable
-        var condition05 = new BandCondition(FrequencyBand.BAND_20M, BandConditionRating.GOOD, 0.5);
-        assertFalse(condition05.isFavorable()); // 0.5 is NOT > 0.5
+    @ParameterizedTest(name = "{0} with confidence {1} -> favorable={2}")
+    @MethodSource("isFavorableProvider")
+    void testIsFavorable_RatingWithConfidence(
+            BandConditionRating rating, double confidence, boolean expectedFavorable) {
+        var condition = new BandCondition(FrequencyBand.BAND_20M, rating, confidence);
 
-        var condition03 = new BandCondition(FrequencyBand.BAND_20M, BandConditionRating.GOOD, 0.3);
-        assertFalse(condition03.isFavorable());
-    }
-
-    @Test
-    void testIsFavorable_FairRating() {
-        // FAIR rating should never be favorable, regardless of confidence
-        var condition = new BandCondition(FrequencyBand.BAND_40M, BandConditionRating.FAIR, 1.0);
-        assertFalse(condition.isFavorable());
-
-        var condition2 = new BandCondition(FrequencyBand.BAND_40M, BandConditionRating.FAIR, 0.7);
-        assertFalse(condition2.isFavorable());
-    }
-
-    @Test
-    void testIsFavorable_PoorRating() {
-        // POOR rating should never be favorable, regardless of confidence
-        var condition = new BandCondition(FrequencyBand.BAND_80M, BandConditionRating.POOR, 1.0);
-        assertFalse(condition.isFavorable());
-
-        var condition2 = new BandCondition(FrequencyBand.BAND_80M, BandConditionRating.POOR, 0.1);
-        assertFalse(condition2.isFavorable());
+        if (expectedFavorable) {
+            assertTrue(condition.isFavorable(),
+                    () -> rating + " with confidence " + confidence + " should be favorable");
+        } else {
+            assertFalse(condition.isFavorable(),
+                    () -> rating + " with confidence " + confidence + " should NOT be favorable");
+        }
     }
 
     // ==========================================================================
     // Category 4: getScore() - All Ratings with Confidence Variations
     // ==========================================================================
 
-    @Test
-    void testGetScore_GoodRating() {
-        // GOOD rating: score = 100 * confidence
-        var condition1 = new BandCondition(FrequencyBand.BAND_20M, BandConditionRating.GOOD, 1.0);
-        assertEquals(100, condition1.getScore()); // 100 * 1.0 = 100
+    @ParameterizedTest(name = "{0} with confidence {1} -> score {2}")
+    @CsvSource({
+            // GOOD rating: score = 100 * confidence
+            "GOOD, 1.0, 100",
+            "GOOD, 0.7, 70",
+            "GOOD, 0.5, 50",
+            "GOOD, 0.75, 75",
+            // FAIR rating: score = 60 * confidence
+            "FAIR, 1.0, 60",
+            "FAIR, 0.5, 30",
+            "FAIR, 0.8, 48",
+            "FAIR, 0.33, 19",
+            // POOR rating: score = 20 * confidence
+            "POOR, 1.0, 20",
+            "POOR, 0.5, 10",
+            "POOR, 0.2, 4",
+            "POOR, 0.9, 18",
+            // UNKNOWN rating: score always 0
+            "UNKNOWN, 1.0, 0",
+            "UNKNOWN, 0.0, 0",
+            "UNKNOWN, 0.5, 0"
+    })
+    void testGetScore_RatingWithConfidence(
+            BandConditionRating rating, double confidence, int expectedScore) {
+        var condition = new BandCondition(FrequencyBand.BAND_20M, rating, confidence);
 
-        var condition07 = new BandCondition(FrequencyBand.BAND_20M, BandConditionRating.GOOD, 0.7);
-        assertEquals(70, condition07.getScore()); // 100 * 0.7 = 70
-
-        var condition05 = new BandCondition(FrequencyBand.BAND_20M, BandConditionRating.GOOD, 0.5);
-        assertEquals(50, condition05.getScore()); // 100 * 0.5 = 50
-    }
-
-    @Test
-    void testGetScore_FairRating() {
-        // FAIR rating: score = 60 * confidence
-        var condition1 = new BandCondition(FrequencyBand.BAND_40M, BandConditionRating.FAIR, 1.0);
-        assertEquals(60, condition1.getScore()); // 60 * 1.0 = 60
-
-        var condition05 = new BandCondition(FrequencyBand.BAND_40M, BandConditionRating.FAIR, 0.5);
-        assertEquals(30, condition05.getScore()); // 60 * 0.5 = 30
-
-        var condition08 = new BandCondition(FrequencyBand.BAND_40M, BandConditionRating.FAIR, 0.8);
-        assertEquals(48, condition08.getScore()); // 60 * 0.8 = 48
-    }
-
-    @Test
-    void testGetScore_PoorRating() {
-        // POOR rating: score = 20 * confidence
-        var condition1 = new BandCondition(FrequencyBand.BAND_80M, BandConditionRating.POOR, 1.0);
-        assertEquals(20, condition1.getScore()); // 20 * 1.0 = 20
-
-        var condition05 = new BandCondition(FrequencyBand.BAND_80M, BandConditionRating.POOR, 0.5);
-        assertEquals(10, condition05.getScore()); // 20 * 0.5 = 10
-
-        var condition02 = new BandCondition(FrequencyBand.BAND_80M, BandConditionRating.POOR, 0.2);
-        assertEquals(4, condition02.getScore()); // 20 * 0.2 = 4
-    }
-
-    @Test
-    void testGetScore_UnknownRating() {
-        // UNKNOWN rating: score always 0, regardless of confidence
-        var condition1 = new BandCondition(FrequencyBand.BAND_160M, BandConditionRating.UNKNOWN, 1.0);
-        assertEquals(0, condition1.getScore());
-
-        var condition0 = new BandCondition(FrequencyBand.BAND_160M, BandConditionRating.UNKNOWN, 0.0);
-        assertEquals(0, condition0.getScore());
-
-        var condition05 = new BandCondition(FrequencyBand.BAND_160M, BandConditionRating.UNKNOWN, 0.5);
-        assertEquals(0, condition05.getScore());
-    }
-
-    @Test
-    void testGetScore_PartialConfidence() {
-        // Verify score calculation with various partial confidence values
-        var goodPartial = new BandCondition(FrequencyBand.BAND_20M, BandConditionRating.GOOD, 0.75);
-        assertEquals(75, goodPartial.getScore()); // 100 * 0.75 = 75
-
-        var fairPartial = new BandCondition(FrequencyBand.BAND_40M, BandConditionRating.FAIR, 0.33);
-        assertEquals(19, fairPartial.getScore()); // 60 * 0.33 = 19.8 → 19 (int cast)
-
-        var poorPartial = new BandCondition(FrequencyBand.BAND_80M, BandConditionRating.POOR, 0.9);
-        assertEquals(18, poorPartial.getScore()); // 20 * 0.9 = 18
+        assertEquals(expectedScore, condition.getScore(),
+                () -> rating + " with confidence " + confidence + " should have score " + expectedScore);
     }
 }

@@ -1,24 +1,6 @@
 package io.nextskip.activations.internal.scheduler;
 
-import com.github.benmanes.caffeine.cache.LoadingCache;
-import io.nextskip.activations.internal.SotaClient;
-import io.nextskip.activations.model.Activation;
-import io.nextskip.activations.model.ActivationType;
-import io.nextskip.activations.model.Summit;
-import io.nextskip.activations.persistence.entity.ActivationEntity;
-import io.nextskip.activations.persistence.repository.ActivationRepository;
-import io.nextskip.common.config.CacheConfig;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-
-import java.time.Instant;
-import java.util.Collections;
-import java.util.List;
-
+import static io.nextskip.test.fixtures.ActivationFixtures.sota;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
@@ -27,6 +9,23 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+
+import com.github.benmanes.caffeine.cache.LoadingCache;
+import io.nextskip.activations.internal.SotaClient;
+import io.nextskip.activations.model.Activation;
+import io.nextskip.activations.model.ActivationType;
+import io.nextskip.activations.persistence.entity.ActivationEntity;
+import io.nextskip.activations.persistence.repository.ActivationRepository;
+import io.nextskip.common.config.CacheConfig;
+import java.time.Instant;
+import java.util.Collections;
+import java.util.List;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 /**
  * Unit tests for SotaRefreshService.
@@ -159,23 +158,7 @@ class SotaRefreshServiceTest {
     }
 
     private Activation createTestActivation() {
-        Summit summit = new Summit(
-                "W4C/WM-001",
-                "Test Summit",
-                "NC",
-                "W4C"
-        );
-        return new Activation(
-                "spot-5678",
-                "W4ABC",
-                ActivationType.SOTA,
-                14285.0,
-                "SSB",
-                Instant.now(),
-                10,
-                "SOTA",
-                summit
-        );
+        return sota().spotId("spot-5678").activatorCallsign("W4ABC").build();
     }
 
     private ActivationEntity createTestEntity() {

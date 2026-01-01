@@ -283,7 +283,34 @@ export function createPoorBandCondition(band: FrequencyBand): BandCondition {
 }
 
 // =============================================================================
-// Card Factory (for dashboard card testing)
+// ActivityCardConfig Factory (for grid and card component testing)
+// =============================================================================
+
+// Import the actual type from main frontend code
+import type { ActivityCardConfig } from 'Frontend/types/activity';
+
+/**
+ * Creates a mock ActivityCardConfig with sensible defaults.
+ *
+ * @param overrides - Optional partial ActivityCardConfig to override defaults
+ * @returns A complete ActivityCardConfig object
+ */
+export function createMockActivityCardConfig(overrides?: Partial<ActivityCardConfig>): ActivityCardConfig {
+  return {
+    id: 'test-card',
+    type: 'solar-indices',
+    size: '1x1',
+    priority: 50,
+    hotness: 'neutral',
+    ...overrides,
+  };
+}
+
+// Re-export the type for convenience
+export type { ActivityCardConfig };
+
+// =============================================================================
+// Card Factory (for priority calculation testing)
 // =============================================================================
 
 /**
