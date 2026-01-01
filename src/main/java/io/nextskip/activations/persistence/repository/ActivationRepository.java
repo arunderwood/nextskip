@@ -85,4 +85,16 @@ public interface ActivationRepository extends JpaRepository<ActivationEntity, Lo
      * @return number of deleted records
      */
     int deleteBySpottedAtBefore(Instant spottedAt);
+
+    /**
+     * Delete activations from a specific source older than a given timestamp.
+     *
+     * <p>Use this method instead of {@link #deleteBySpottedAtBefore(Instant)} when
+     * multiple refresh tasks run concurrently to avoid race conditions.
+     *
+     * @param source the data source identifier (e.g., "POTA API", "SOTA API")
+     * @param spottedAt the cutoff timestamp
+     * @return number of deleted records
+     */
+    int deleteBySourceAndSpottedAtBefore(String source, Instant spottedAt);
 }

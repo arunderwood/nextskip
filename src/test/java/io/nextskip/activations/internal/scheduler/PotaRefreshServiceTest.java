@@ -58,7 +58,7 @@ class PotaRefreshServiceTest {
         when(potaClient.fetch()).thenReturn(List.of(activation));
         when(repository.findBySourceAndSpotIdIn(eq(SOURCE_POTA_API), anyList()))
                 .thenReturn(Collections.emptyList());
-        when(repository.deleteBySpottedAtBefore(any())).thenReturn(0);
+        when(repository.deleteBySourceAndSpottedAtBefore(eq(SOURCE_POTA_API), any())).thenReturn(0);
 
         service.executeRefresh();
 
@@ -71,7 +71,7 @@ class PotaRefreshServiceTest {
         when(potaClient.fetch()).thenReturn(List.of(activation));
         when(repository.findBySourceAndSpotIdIn(eq(SOURCE_POTA_API), anyList()))
                 .thenReturn(Collections.emptyList());
-        when(repository.deleteBySpottedAtBefore(any())).thenReturn(0);
+        when(repository.deleteBySourceAndSpottedAtBefore(eq(SOURCE_POTA_API), any())).thenReturn(0);
 
         service.executeRefresh();
 
@@ -89,11 +89,11 @@ class PotaRefreshServiceTest {
         when(potaClient.fetch()).thenReturn(List.of(activation));
         when(repository.findBySourceAndSpotIdIn(eq(SOURCE_POTA_API), anyList()))
                 .thenReturn(Collections.emptyList());
-        when(repository.deleteBySpottedAtBefore(any())).thenReturn(5);
+        when(repository.deleteBySourceAndSpottedAtBefore(eq(SOURCE_POTA_API), any())).thenReturn(5);
 
         service.executeRefresh();
 
-        verify(repository).deleteBySpottedAtBefore(any());
+        verify(repository).deleteBySourceAndSpottedAtBefore(eq(SOURCE_POTA_API), any());
     }
 
     @Test
@@ -102,7 +102,7 @@ class PotaRefreshServiceTest {
         when(potaClient.fetch()).thenReturn(List.of(activation));
         when(repository.findBySourceAndSpotIdIn(eq(SOURCE_POTA_API), anyList()))
                 .thenReturn(Collections.emptyList());
-        when(repository.deleteBySpottedAtBefore(any())).thenReturn(0);
+        when(repository.deleteBySourceAndSpottedAtBefore(eq(SOURCE_POTA_API), any())).thenReturn(0);
 
         service.executeRefresh();
 
@@ -122,7 +122,7 @@ class PotaRefreshServiceTest {
     @Test
     void testExecuteRefresh_EmptyList_SavesNothing() {
         when(potaClient.fetch()).thenReturn(Collections.emptyList());
-        when(repository.deleteBySpottedAtBefore(any())).thenReturn(0);
+        when(repository.deleteBySourceAndSpottedAtBefore(eq(SOURCE_POTA_API), any())).thenReturn(0);
 
         service.executeRefresh();
 
@@ -143,7 +143,7 @@ class PotaRefreshServiceTest {
         when(potaClient.fetch()).thenReturn(List.of(activation));
         when(repository.findBySourceAndSpotIdIn(eq(SOURCE_POTA_API), anyList()))
                 .thenReturn(List.of(existingEntity));
-        when(repository.deleteBySpottedAtBefore(any())).thenReturn(0);
+        when(repository.deleteBySourceAndSpottedAtBefore(eq(SOURCE_POTA_API), any())).thenReturn(0);
 
         // When: Executing the refresh
         service.executeRefresh();
