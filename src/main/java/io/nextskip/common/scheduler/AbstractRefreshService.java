@@ -1,6 +1,7 @@
 package io.nextskip.common.scheduler;
 
 import org.slf4j.Logger;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
@@ -15,11 +16,17 @@ import org.springframework.transaction.annotation.Transactional;
  * By extracting the transactional logic to a separate {@code @Service} bean,
  * the proxy is properly invoked.
  *
+ * <p>Cache refresh is handled via Spring's event system. After {@link #doRefresh()}
+ * completes, a {@link CacheRefreshEvent} is published. The {@link CacheRefreshEventListener}
+ * uses {@code @TransactionalEventListener(phase = AFTER_COMMIT)} to execute the cache
+ * refresh only after the transaction commits. This prevents the race condition where
+ * async cache refresh could query the database before data was visible.
+ *
  * <p>Subclasses implement:
  * <ul>
  *   <li>{@link #getServiceName()} - identifier for logging</li>
  *   <li>{@link #doRefresh()} - domain-specific fetch, convert, save, cleanup logic</li>
- *   <li>{@link #refreshCache()} - trigger cache refresh after DB write</li>
+ *   <li>{@link #createCacheRefreshEvent()} - event with cache refresh action</li>
  *   <li>{@link #getSuccessMessage()} - formatted success log message</li>
  *   <li>{@link #getLog()} - logger instance for the subclass</li>
  * </ul>
@@ -27,6 +34,7 @@ import org.springframework.transaction.annotation.Transactional;
  * <p>The base class provides:
  * <ul>
  *   <li>Transaction management via {@code @Transactional}</li>
+ *   <li>Post-commit cache refresh via event publishing</li>
  *   <li>Consistent logging pattern</li>
  * </ul>
  *
@@ -34,6 +42,17 @@ import org.springframework.transaction.annotation.Transactional;
  * exceptions and wrap them in {@link DataRefreshException} as appropriate.
  */
 public abstract class AbstractRefreshService {
+
+    private final ApplicationEventPublisher eventPublisher;
+
+    /**
+     * Creates a new refresh service with the given event publisher.
+     *
+     * @param eventPublisher Spring's event publisher for cache refresh events
+     */
+    protected AbstractRefreshService(ApplicationEventPublisher eventPublisher) {
+        this.eventPublisher = eventPublisher;
+    }
 
     /**
      * Executes the data refresh operation within a transaction.
@@ -45,7 +64,7 @@ public abstract class AbstractRefreshService {
      * <ol>
      *   <li>Logs the start of the refresh</li>
      *   <li>Calls {@link #doRefresh()} for domain-specific logic</li>
-     *   <li>Calls {@link #refreshCache()} to update the application cache</li>
+     *   <li>Publishes {@link CacheRefreshEvent} (executed after commit)</li>
      *   <li>Logs success via {@link #getSuccessMessage()}</li>
      * </ol>
      *
@@ -54,6 +73,7 @@ public abstract class AbstractRefreshService {
      *   <li>All database operations in {@link #doRefresh()} are atomic</li>
      *   <li>Any {@link RuntimeException} causes automatic rollback</li>
      *   <li>Subclasses should throw {@link DataRefreshException} for domain errors</li>
+     *   <li>Cache refresh is deferred until after transaction commits</li>
      * </ul>
      *
      * @throws DataRefreshException if the refresh operation fails
@@ -63,7 +83,7 @@ public abstract class AbstractRefreshService {
         getLog().debug("Executing {} refresh", getServiceName());
 
         doRefresh();
-        refreshCache();
+        eventPublisher.publishEvent(createCacheRefreshEvent());
 
         getLog().info(getSuccessMessage());
     }
@@ -97,12 +117,24 @@ public abstract class AbstractRefreshService {
     protected abstract void doRefresh();
 
     /**
-     * Triggers an async cache refresh after the database write.
+     * Creates the cache refresh event with service-specific refresh action.
      *
-     * <p>Typically calls {@code cache.refresh(key)} on the application's
-     * {@link com.github.benmanes.caffeine.cache.LoadingCache}.
+     * <p>The event encapsulates the cache refresh logic as a {@link Runnable}.
+     * This follows the functional strategy pattern - each service knows its own
+     * cache and defines how to refresh it.
+     *
+     * <p>Example implementation:
+     * <pre>{@code
+     * @Override
+     * protected CacheRefreshEvent createCacheRefreshEvent() {
+     *     return new CacheRefreshEvent("activations",
+     *         () -> activationsCache.refresh(CacheConfig.CACHE_KEY));
+     * }
+     * }</pre>
+     *
+     * @return the cache refresh event to publish
      */
-    protected abstract void refreshCache();
+    protected abstract CacheRefreshEvent createCacheRefreshEvent();
 
     /**
      * Returns the success message to log after a successful refresh.

@@ -3,6 +3,7 @@ package io.nextskip.propagation.internal.scheduler;
 import com.github.benmanes.caffeine.cache.LoadingCache;
 import io.nextskip.common.config.CacheConfig;
 import io.nextskip.common.model.FrequencyBand;
+import io.nextskip.common.scheduler.CacheRefreshEvent;
 import io.nextskip.propagation.internal.HamQslBandClient;
 import io.nextskip.propagation.model.BandCondition;
 import io.nextskip.propagation.model.BandConditionRating;
@@ -14,6 +15,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.util.Collections;
 import java.util.List;
@@ -32,6 +34,9 @@ import static org.mockito.Mockito.when;
 class HamQslBandRefreshServiceTest {
 
     @Mock
+    private ApplicationEventPublisher eventPublisher;
+
+    @Mock
     private HamQslBandClient hamQslBandClient;
 
     @Mock
@@ -44,7 +49,7 @@ class HamQslBandRefreshServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new HamQslBandRefreshService(hamQslBandClient, repository, bandConditionsCache);
+        service = new HamQslBandRefreshService(eventPublisher, hamQslBandClient, repository, bandConditionsCache);
     }
 
     @Test
@@ -73,12 +78,21 @@ class HamQslBandRefreshServiceTest {
     }
 
     @Test
-    void testExecuteRefresh_TriggersCacheRefresh() {
+    void testExecuteRefresh_PublishesCacheRefreshEvent() {
         List<BandCondition> conditions = createTestConditions();
         when(hamQslBandClient.fetch()).thenReturn(conditions);
 
         service.executeRefresh();
 
+        // Verify event is published
+        ArgumentCaptor<CacheRefreshEvent> captor = ArgumentCaptor.forClass(CacheRefreshEvent.class);
+        verify(eventPublisher).publishEvent(captor.capture());
+
+        CacheRefreshEvent event = captor.getValue();
+        assertThat(event.cacheName()).isEqualTo("bandConditions");
+
+        // Verify the refresh action calls the cache
+        event.refreshAction().run();
         verify(bandConditionsCache).refresh(CacheConfig.CACHE_KEY);
     }
 

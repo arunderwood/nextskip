@@ -3,6 +3,7 @@ package io.nextskip.propagation.internal.scheduler;
 import com.github.benmanes.caffeine.cache.LoadingCache;
 import io.nextskip.common.config.CacheConfig;
 import io.nextskip.common.scheduler.AbstractRefreshService;
+import io.nextskip.common.scheduler.CacheRefreshEvent;
 import io.nextskip.common.scheduler.DataRefreshException;
 import io.nextskip.propagation.internal.HamQslBandClient;
 import io.nextskip.propagation.model.BandCondition;
@@ -10,6 +11,7 @@ import io.nextskip.propagation.persistence.entity.BandConditionEntity;
 import io.nextskip.propagation.persistence.repository.BandConditionRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
 
@@ -40,9 +42,11 @@ public class HamQslBandRefreshService extends AbstractRefreshService {
     private int savedCount;
 
     public HamQslBandRefreshService(
+            ApplicationEventPublisher eventPublisher,
             HamQslBandClient hamQslBandClient,
             BandConditionRepository repository,
             LoadingCache<String, List<BandCondition>> bandConditionsCache) {
+        super(eventPublisher);
         this.hamQslBandClient = hamQslBandClient;
         this.repository = repository;
         this.bandConditionsCache = bandConditionsCache;
@@ -74,8 +78,9 @@ public class HamQslBandRefreshService extends AbstractRefreshService {
     }
 
     @Override
-    protected void refreshCache() {
-        bandConditionsCache.refresh(CacheConfig.CACHE_KEY);
+    protected CacheRefreshEvent createCacheRefreshEvent() {
+        return new CacheRefreshEvent("bandConditions",
+                () -> bandConditionsCache.refresh(CacheConfig.CACHE_KEY));
     }
 
     @Override

@@ -2,6 +2,7 @@ package io.nextskip.contests.internal.scheduler;
 
 import com.github.benmanes.caffeine.cache.LoadingCache;
 import io.nextskip.common.config.CacheConfig;
+import io.nextskip.common.scheduler.CacheRefreshEvent;
 import io.nextskip.contests.internal.ContestCalendarClient;
 import io.nextskip.contests.internal.dto.ContestICalDto;
 import io.nextskip.contests.model.Contest;
@@ -13,6 +14,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -33,6 +35,9 @@ import static org.mockito.Mockito.when;
 class ContestRefreshServiceTest {
 
     @Mock
+    private ApplicationEventPublisher eventPublisher;
+
+    @Mock
     private ContestCalendarClient contestClient;
 
     @Mock
@@ -45,7 +50,7 @@ class ContestRefreshServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new ContestRefreshService(contestClient, repository, contestsCache);
+        service = new ContestRefreshService(eventPublisher, contestClient, repository, contestsCache);
     }
 
     @Test
@@ -85,12 +90,21 @@ class ContestRefreshServiceTest {
     }
 
     @Test
-    void testExecuteRefresh_TriggersCacheRefresh() {
+    void testExecuteRefresh_PublishesCacheRefreshEvent() {
         List<ContestICalDto> dtos = createTestDtos();
         when(contestClient.fetch()).thenReturn(dtos);
 
         service.executeRefresh();
 
+        // Verify event is published
+        ArgumentCaptor<CacheRefreshEvent> captor = ArgumentCaptor.forClass(CacheRefreshEvent.class);
+        verify(eventPublisher).publishEvent(captor.capture());
+
+        CacheRefreshEvent event = captor.getValue();
+        assertThat(event.cacheName()).isEqualTo("contests");
+
+        // Verify the refresh action calls the cache
+        event.refreshAction().run();
         verify(contestsCache).refresh(CacheConfig.CACHE_KEY);
     }
 

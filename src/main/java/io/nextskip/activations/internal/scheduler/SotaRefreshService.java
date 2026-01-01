@@ -8,9 +8,11 @@ import io.nextskip.activations.persistence.entity.ActivationEntity;
 import io.nextskip.activations.persistence.repository.ActivationRepository;
 import io.nextskip.common.config.CacheConfig;
 import io.nextskip.common.scheduler.AbstractRefreshService;
+import io.nextskip.common.scheduler.CacheRefreshEvent;
 import io.nextskip.common.scheduler.DataRefreshException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
 
@@ -44,9 +46,11 @@ public class SotaRefreshService extends AbstractRefreshService {
     private int deletedCount;
 
     public SotaRefreshService(
+            ApplicationEventPublisher eventPublisher,
             SotaClient sotaClient,
             ActivationRepository repository,
             LoadingCache<String, List<Activation>> activationsCache) {
+        super(eventPublisher);
         this.sotaClient = sotaClient;
         this.repository = repository;
         this.activationsCache = activationsCache;
@@ -84,8 +88,9 @@ public class SotaRefreshService extends AbstractRefreshService {
     }
 
     @Override
-    protected void refreshCache() {
-        activationsCache.refresh(CacheConfig.CACHE_KEY);
+    protected CacheRefreshEvent createCacheRefreshEvent() {
+        return new CacheRefreshEvent("activations",
+                () -> activationsCache.refresh(CacheConfig.CACHE_KEY));
     }
 
     @Override

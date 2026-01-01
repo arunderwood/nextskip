@@ -3,6 +3,7 @@ package io.nextskip.contests.internal.scheduler;
 import com.github.benmanes.caffeine.cache.LoadingCache;
 import io.nextskip.common.config.CacheConfig;
 import io.nextskip.common.scheduler.AbstractRefreshService;
+import io.nextskip.common.scheduler.CacheRefreshEvent;
 import io.nextskip.common.scheduler.DataRefreshException;
 import io.nextskip.contests.internal.ContestCalendarClient;
 import io.nextskip.contests.internal.dto.ContestICalDto;
@@ -11,6 +12,7 @@ import io.nextskip.contests.persistence.entity.ContestEntity;
 import io.nextskip.contests.persistence.repository.ContestRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
 
@@ -41,9 +43,11 @@ public class ContestRefreshService extends AbstractRefreshService {
     private int savedCount;
 
     public ContestRefreshService(
+            ApplicationEventPublisher eventPublisher,
             ContestCalendarClient contestClient,
             ContestRepository repository,
             LoadingCache<String, List<Contest>> contestsCache) {
+        super(eventPublisher);
         this.contestClient = contestClient;
         this.repository = repository;
         this.contestsCache = contestsCache;
@@ -77,8 +81,9 @@ public class ContestRefreshService extends AbstractRefreshService {
     }
 
     @Override
-    protected void refreshCache() {
-        contestsCache.refresh(CacheConfig.CACHE_KEY);
+    protected CacheRefreshEvent createCacheRefreshEvent() {
+        return new CacheRefreshEvent("contests",
+                () -> contestsCache.refresh(CacheConfig.CACHE_KEY));
     }
 
     @Override

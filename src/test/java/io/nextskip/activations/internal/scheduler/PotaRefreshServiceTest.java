@@ -17,6 +17,7 @@ import io.nextskip.activations.model.ActivationType;
 import io.nextskip.activations.persistence.entity.ActivationEntity;
 import io.nextskip.activations.persistence.repository.ActivationRepository;
 import io.nextskip.common.config.CacheConfig;
+import io.nextskip.common.scheduler.CacheRefreshEvent;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
@@ -26,6 +27,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 
 /**
  * Unit tests for PotaRefreshService.
@@ -34,6 +36,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class PotaRefreshServiceTest {
 
     private static final String SOURCE_POTA_API = "POTA API";
+
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
 
     @Mock
     private PotaClient potaClient;
@@ -48,7 +53,7 @@ class PotaRefreshServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new PotaRefreshService(potaClient, repository, activationsCache);
+        service = new PotaRefreshService(eventPublisher, potaClient, repository, activationsCache);
     }
 
     @Test
@@ -96,7 +101,7 @@ class PotaRefreshServiceTest {
     }
 
     @Test
-    void testExecuteRefresh_TriggersCacheRefresh() {
+    void testExecuteRefresh_PublishesCacheRefreshEvent() {
         Activation activation = createTestActivation();
         when(potaClient.fetch()).thenReturn(List.of(activation));
         when(repository.findBySourceAndSpotIdIn(eq(SOURCE_POTA_API), anyList()))
@@ -105,6 +110,15 @@ class PotaRefreshServiceTest {
 
         service.executeRefresh();
 
+        // Verify event is published
+        ArgumentCaptor<CacheRefreshEvent> captor = ArgumentCaptor.forClass(CacheRefreshEvent.class);
+        verify(eventPublisher).publishEvent(captor.capture());
+
+        CacheRefreshEvent event = captor.getValue();
+        assertThat(event.cacheName()).isEqualTo("activations");
+
+        // Verify the refresh action calls the cache
+        event.refreshAction().run();
         verify(activationsCache).refresh(CacheConfig.CACHE_KEY);
     }
 

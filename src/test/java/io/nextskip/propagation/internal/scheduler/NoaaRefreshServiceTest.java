@@ -2,6 +2,7 @@ package io.nextskip.propagation.internal.scheduler;
 
 import com.github.benmanes.caffeine.cache.LoadingCache;
 import io.nextskip.common.config.CacheConfig;
+import io.nextskip.common.scheduler.CacheRefreshEvent;
 import io.nextskip.propagation.internal.NoaaSwpcClient;
 import io.nextskip.propagation.model.SolarIndices;
 import io.nextskip.propagation.persistence.entity.SolarIndicesEntity;
@@ -12,6 +13,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.time.Instant;
 
@@ -29,6 +31,9 @@ import static org.mockito.Mockito.when;
 class NoaaRefreshServiceTest {
 
     @Mock
+    private ApplicationEventPublisher eventPublisher;
+
+    @Mock
     private NoaaSwpcClient noaaClient;
 
     @Mock
@@ -41,7 +46,7 @@ class NoaaRefreshServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new NoaaRefreshService(noaaClient, repository, solarIndicesCache);
+        service = new NoaaRefreshService(eventPublisher, noaaClient, repository, solarIndicesCache);
     }
 
     @Test
@@ -70,12 +75,21 @@ class NoaaRefreshServiceTest {
     }
 
     @Test
-    void testExecuteRefresh_TriggersCacheRefresh() {
+    void testExecuteRefresh_PublishesCacheRefreshEvent() {
         SolarIndices indices = createTestSolarIndices();
         when(noaaClient.fetch()).thenReturn(indices);
 
         service.executeRefresh();
 
+        // Verify event is published
+        ArgumentCaptor<CacheRefreshEvent> captor = ArgumentCaptor.forClass(CacheRefreshEvent.class);
+        verify(eventPublisher).publishEvent(captor.capture());
+
+        CacheRefreshEvent event = captor.getValue();
+        assertThat(event.cacheName()).isEqualTo("solarIndices");
+
+        // Verify the refresh action calls the cache
+        event.refreshAction().run();
         verify(solarIndicesCache).refresh(CacheConfig.CACHE_KEY);
     }
 

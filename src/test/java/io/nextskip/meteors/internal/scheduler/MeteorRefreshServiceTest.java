@@ -2,6 +2,7 @@ package io.nextskip.meteors.internal.scheduler;
 
 import com.github.benmanes.caffeine.cache.LoadingCache;
 import io.nextskip.common.config.CacheConfig;
+import io.nextskip.common.scheduler.CacheRefreshEvent;
 import io.nextskip.meteors.internal.MeteorShowerDataLoader;
 import io.nextskip.meteors.model.MeteorShower;
 import io.nextskip.meteors.persistence.entity.MeteorShowerEntity;
@@ -12,6 +13,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -33,6 +35,9 @@ import static org.mockito.Mockito.when;
 class MeteorRefreshServiceTest {
 
     @Mock
+    private ApplicationEventPublisher eventPublisher;
+
+    @Mock
     private MeteorShowerDataLoader dataLoader;
 
     @Mock
@@ -45,7 +50,7 @@ class MeteorRefreshServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new MeteorRefreshService(dataLoader, repository, meteorShowersCache);
+        service = new MeteorRefreshService(eventPublisher, dataLoader, repository, meteorShowersCache);
     }
 
     @Test
@@ -85,12 +90,21 @@ class MeteorRefreshServiceTest {
     }
 
     @Test
-    void testExecuteRefresh_TriggersCacheRefresh() {
+    void testExecuteRefresh_PublishesCacheRefreshEvent() {
         List<MeteorShower> showers = createTestShowers();
         when(dataLoader.getShowers(anyInt())).thenReturn(showers);
 
         service.executeRefresh();
 
+        // Verify event is published
+        ArgumentCaptor<CacheRefreshEvent> captor = ArgumentCaptor.forClass(CacheRefreshEvent.class);
+        verify(eventPublisher).publishEvent(captor.capture());
+
+        CacheRefreshEvent event = captor.getValue();
+        assertThat(event.cacheName()).isEqualTo("meteorShowers");
+
+        // Verify the refresh action calls the cache
+        event.refreshAction().run();
         verify(meteorShowersCache).refresh(CacheConfig.CACHE_KEY);
     }
 

@@ -3,6 +3,7 @@ package io.nextskip.meteors.internal.scheduler;
 import com.github.benmanes.caffeine.cache.LoadingCache;
 import io.nextskip.common.config.CacheConfig;
 import io.nextskip.common.scheduler.AbstractRefreshService;
+import io.nextskip.common.scheduler.CacheRefreshEvent;
 import io.nextskip.common.scheduler.DataRefreshException;
 import io.nextskip.meteors.internal.MeteorShowerDataLoader;
 import io.nextskip.meteors.model.MeteorShower;
@@ -10,6 +11,7 @@ import io.nextskip.meteors.persistence.entity.MeteorShowerEntity;
 import io.nextskip.meteors.persistence.repository.MeteorShowerRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
 
@@ -40,9 +42,11 @@ public class MeteorRefreshService extends AbstractRefreshService {
     private int savedCount;
 
     public MeteorRefreshService(
+            ApplicationEventPublisher eventPublisher,
             MeteorShowerDataLoader dataLoader,
             MeteorShowerRepository repository,
             LoadingCache<String, List<MeteorShower>> meteorShowersCache) {
+        super(eventPublisher);
         this.dataLoader = dataLoader;
         this.repository = repository;
         this.meteorShowersCache = meteorShowersCache;
@@ -75,8 +79,9 @@ public class MeteorRefreshService extends AbstractRefreshService {
     }
 
     @Override
-    protected void refreshCache() {
-        meteorShowersCache.refresh(CacheConfig.CACHE_KEY);
+    protected CacheRefreshEvent createCacheRefreshEvent() {
+        return new CacheRefreshEvent("meteorShowers",
+                () -> meteorShowersCache.refresh(CacheConfig.CACHE_KEY));
     }
 
     @Override
