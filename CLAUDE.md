@@ -324,6 +324,39 @@ src/test/frontend/         # Frontend tests (parallel to src/main)
 - Use **Mockito** for dependency mocking
 - Recent Java versions require ByteBuddy experimental mode (configured in build.gradle)
 
+### Persistence Test Base Classes
+
+Choose the appropriate base class for database integration tests:
+
+| Base Class | Use Case | Features |
+|------------|----------|----------|
+| `AbstractIntegrationTest` | General integration tests | Database connection, test profile |
+| `AbstractPersistenceTest` | Entity/repository tests | + `@BeforeEach` cleanup, `clearPersistenceContext()` |
+| `AbstractSchedulerTest` | Scheduler tests | + `scheduled_tasks` cleanup, scheduler-test profile |
+
+**Example persistence test**:
+```java
+class MyEntityIntegrationTest extends AbstractPersistenceTest {
+    @Autowired
+    private MyRepository repository;
+
+    @Override
+    protected Collection<JpaRepository<?, ?>> getRepositoriesToClean() {
+        return List.of(repository);
+    }
+
+    @Test
+    void testSomething() {
+        // Repository is cleaned before this runs
+    }
+}
+```
+
+**Why cleanup matters**: `@Transactional` rollback alone isn't enough because:
+- `saveAndFlush()` commits immediately (required for constraint testing)
+- Singleton TestContainers means data can persist between test classes
+- EntityManager cache can mask actual database state
+
 ### Frontend Tests (Vitest + React Testing Library)
 
 - Tests in `src/test/frontend/` directory (parallel to `src/main/frontend/`)

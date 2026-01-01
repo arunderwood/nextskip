@@ -4,15 +4,16 @@ import io.nextskip.common.model.EventStatus;
 import io.nextskip.meteors.model.MeteorShower;
 import io.nextskip.meteors.persistence.entity.MeteorShowerEntity;
 import io.nextskip.meteors.persistence.repository.MeteorShowerRepository;
-import io.nextskip.test.AbstractIntegrationTest;
+import io.nextskip.test.AbstractPersistenceTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.Collection;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -31,9 +32,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  *   <li>Constraint enforcement (time window ordering)</li>
  * </ul>
  */
-@SpringBootTest
-@Transactional
-class MeteorShowerEntityIntegrationTest extends AbstractIntegrationTest {
+class MeteorShowerEntityIntegrationTest extends AbstractPersistenceTest {
 
     private static final String PERSEIDS_CODE = "PER";
     private static final String PERSEIDS_NAME = "Perseids 2025";
@@ -44,6 +43,11 @@ class MeteorShowerEntityIntegrationTest extends AbstractIntegrationTest {
 
     @Autowired
     private MeteorShowerRepository repository;
+
+    @Override
+    protected Collection<JpaRepository<?, ?>> getRepositoriesToClean() {
+        return List.of(repository);
+    }
 
     @Test
     void testFromDomain_PreservesAllFields() {
@@ -154,17 +158,16 @@ class MeteorShowerEntityIntegrationTest extends AbstractIntegrationTest {
         var now = Instant.now();
 
         // Past shower (already started)
-        repository.save(createShowerEntity("Past", "TEST_PST", now.minus(10, ChronoUnit.DAYS)));
+        repository.save(createShowerEntity("Past Shower", "PST", now.minus(10, ChronoUnit.DAYS)));
 
         // Upcoming showers
-        var upcoming1 = repository.save(createShowerEntity("Upcoming1", "TEST_UP1", now.plus(5, ChronoUnit.DAYS)));
-        var upcoming2 = repository.save(createShowerEntity("Upcoming2", "TEST_UP2", now.plus(10, ChronoUnit.DAYS)));
+        var upcoming1 = repository.save(createShowerEntity("Upcoming 1", "UP1", now.plus(5, ChronoUnit.DAYS)));
+        var upcoming2 = repository.save(createShowerEntity("Upcoming 2", "UP2", now.plus(10, ChronoUnit.DAYS)));
 
         // When: Find showers starting after now
         var result = repository.findByVisibilityStartAfterOrderByVisibilityStartAsc(now);
 
         // Then: Should return only upcoming showers, ordered by visibility start
-        // (db-scheduler is disabled in test profile, so no interference)
         assertEquals(2, result.size());
         assertEquals(upcoming1.getId(), result.get(0).getId());
         assertEquals(upcoming2.getId(), result.get(1).getId());
@@ -176,23 +179,22 @@ class MeteorShowerEntityIntegrationTest extends AbstractIntegrationTest {
         var now = Instant.now();
 
         // Past shower
-        repository.save(createShowerEntity("Past", "TEST_PST", now.minus(30, ChronoUnit.DAYS)));
+        repository.save(createShowerEntity("Past Shower", "PST", now.minus(30, ChronoUnit.DAYS)));
 
         // Currently active shower
         var active = repository.save(new MeteorShowerEntity(
-                "Active Shower", "TEST_ACT",
+                "Active Shower", "ACT",
                 now.minus(1, ChronoUnit.HOURS), now.plus(1, ChronoUnit.HOURS),
                 now.minus(2, ChronoUnit.DAYS), now.plus(2, ChronoUnit.DAYS),
                 50, null, null));
 
         // Future shower
-        repository.save(createShowerEntity("Future", "TEST_FUT", now.plus(30, ChronoUnit.DAYS)));
+        repository.save(createShowerEntity("Future Shower", "FUT", now.plus(30, ChronoUnit.DAYS)));
 
         // When: Find active showers (visibility contains now)
         var result = repository.findByVisibilityStartBeforeAndVisibilityEndAfterOrderByPeakStartAsc(now, now);
 
         // Then: Should return only the active shower
-        // (db-scheduler is disabled in test profile, so no interference)
         assertEquals(1, result.size());
         assertEquals(active.getId(), result.get(0).getId());
     }

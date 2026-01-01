@@ -8,12 +8,10 @@ import io.nextskip.meteors.internal.scheduler.MeteorRefreshTask;
 import io.nextskip.propagation.internal.scheduler.HamQslBandRefreshTask;
 import io.nextskip.propagation.internal.scheduler.HamQslSolarRefreshTask;
 import io.nextskip.propagation.internal.scheduler.NoaaRefreshTask;
-import io.nextskip.test.AbstractIntegrationTest;
+import io.nextskip.test.AbstractSchedulerTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ApplicationContext;
-import org.springframework.test.context.ActiveProfiles;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -26,12 +24,10 @@ import static org.assertj.core.api.Assertions.assertThat;
  * <p>With the manual DbSchedulerConfig (Spring Boot 4 workaround), the Scheduler bean
  * should now be created successfully in all environments including tests.
  *
- * <p>Uses the scheduler-test profile which enables db-scheduler (most tests use the
- * default test profile which disables scheduler for isolation).
+ * <p>Extends AbstractSchedulerTest which provides scheduled_tasks table cleanup
+ * and uses the scheduler-test profile.
  */
-@SpringBootTest
-@ActiveProfiles("scheduler-test")
-class DbSchedulerIntegrationTest extends AbstractIntegrationTest {
+class DbSchedulerIntegrationTest extends AbstractSchedulerTest {
 
     @Autowired
     private ApplicationContext applicationContext;

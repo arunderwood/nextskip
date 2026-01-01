@@ -6,16 +6,16 @@ import io.nextskip.activations.model.Park;
 import io.nextskip.activations.model.Summit;
 import io.nextskip.activations.persistence.entity.ActivationEntity;
 import io.nextskip.activations.persistence.repository.ActivationRepository;
-import io.nextskip.test.AbstractIntegrationTest;
-import jakarta.persistence.EntityManager;
+import io.nextskip.test.AbstractPersistenceTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.Collection;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -35,10 +35,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  *   <li>Repository query methods</li>
  * </ul>
  */
-@SpringBootTest
-@Transactional
 @SuppressWarnings("PMD.TooManyMethods") // Comprehensive test suite
-class ActivationEntityIntegrationTest extends AbstractIntegrationTest {
+class ActivationEntityIntegrationTest extends AbstractPersistenceTest {
 
     private static final String POTA_SPOT_ID = "pota-spot-12345";
     private static final String SOTA_SPOT_ID = "sota-spot-67890";
@@ -78,8 +76,10 @@ class ActivationEntityIntegrationTest extends AbstractIntegrationTest {
     @Autowired
     private ActivationRepository repository;
 
-    @Autowired
-    private EntityManager entityManager;
+    @Override
+    protected Collection<JpaRepository<?, ?>> getRepositoriesToClean() {
+        return List.of(repository);
+    }
 
     // === POTA (Park) Conversion Tests ===
 
@@ -270,18 +270,17 @@ class ActivationEntityIntegrationTest extends AbstractIntegrationTest {
         var now = Instant.now();
 
         // Old activation
-        repository.save(createActivationEntity("TEST_old-spot", now.minus(2, ChronoUnit.HOURS)));
+        repository.save(createActivationEntity("old-spot", now.minus(2, ChronoUnit.HOURS)));
 
         // Recent activations
-        var recent1 = repository.save(createActivationEntity("TEST_recent-1", now.minus(5, ChronoUnit.MINUTES)));
-        var recent2 = repository.save(createActivationEntity("TEST_recent-2", now.minus(2, ChronoUnit.MINUTES)));
+        var recent1 = repository.save(createActivationEntity("recent-1", now.minus(5, ChronoUnit.MINUTES)));
+        var recent2 = repository.save(createActivationEntity("recent-2", now.minus(2, ChronoUnit.MINUTES)));
 
         // When: Find activations spotted after cutoff
         var cutoff = now.minus(30, ChronoUnit.MINUTES);
         var result = repository.findBySpottedAtAfterOrderBySpottedAtDesc(cutoff);
 
         // Then: Should return only recent activations, most recent first
-        // (db-scheduler is disabled in test profile, so no interference)
         assertEquals(2, result.size());
         assertEquals(recent2.getId(), result.get(0).getId());
         assertEquals(recent1.getId(), result.get(1).getId());
@@ -302,7 +301,6 @@ class ActivationEntityIntegrationTest extends AbstractIntegrationTest {
                 ActivationType.POTA, cutoff);
 
         // Then: Should return only POTA activations
-        // (db-scheduler is disabled in test profile, so no interference)
         assertEquals(2, result.size());
         assertEquals(pota2.getId(), result.get(0).getId());
         assertEquals(pota1.getId(), result.get(1).getId());

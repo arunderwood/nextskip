@@ -5,16 +5,16 @@ import io.nextskip.common.model.FrequencyBand;
 import io.nextskip.contests.model.Contest;
 import io.nextskip.contests.persistence.entity.ContestEntity;
 import io.nextskip.contests.persistence.repository.ContestRepository;
-import io.nextskip.test.AbstractIntegrationTest;
-import jakarta.persistence.EntityManager;
+import io.nextskip.test.AbstractPersistenceTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.Collection;
+import java.util.List;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -34,9 +34,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  *   <li>Defensive copying of collections</li>
  * </ul>
  */
-@SpringBootTest
-@Transactional
-class ContestEntityIntegrationTest extends AbstractIntegrationTest {
+class ContestEntityIntegrationTest extends AbstractPersistenceTest {
 
     private static final String ARRL_10M_NAME = "ARRL 10-Meter Contest";
     private static final String CQ_WW_NAME = "CQ WW DX Contest";
@@ -56,8 +54,10 @@ class ContestEntityIntegrationTest extends AbstractIntegrationTest {
     @Autowired
     private ContestRepository repository;
 
-    @Autowired
-    private EntityManager entityManager;
+    @Override
+    protected Collection<JpaRepository<?, ?>> getRepositoriesToClean() {
+        return List.of(repository);
+    }
 
     @Test
     void testFromDomain_PreservesAllFields() {
@@ -198,17 +198,16 @@ class ContestEntityIntegrationTest extends AbstractIntegrationTest {
         var now = Instant.now();
 
         // Past contest (already started)
-        repository.save(createContestEntity("TEST_Past", now.minus(2, ChronoUnit.DAYS)));
+        repository.save(createContestEntity("Past Contest", now.minus(2, ChronoUnit.DAYS)));
 
         // Upcoming contests
-        var upcoming1 = repository.save(createContestEntity("TEST_Upcoming1", now.plus(1, ChronoUnit.DAYS)));
-        var upcoming2 = repository.save(createContestEntity("TEST_Upcoming2", now.plus(5, ChronoUnit.DAYS)));
+        var upcoming1 = repository.save(createContestEntity("Upcoming Contest 1", now.plus(1, ChronoUnit.DAYS)));
+        var upcoming2 = repository.save(createContestEntity("Upcoming Contest 2", now.plus(5, ChronoUnit.DAYS)));
 
         // When: Find contests starting after now
         var result = repository.findByStartTimeAfterOrderByStartTimeAsc(now);
 
         // Then: Should return only upcoming contests, ordered by start time
-        // (db-scheduler is disabled in test profile, so no interference)
         assertEquals(2, result.size());
         assertEquals(upcoming1.getId(), result.get(0).getId());
         assertEquals(upcoming2.getId(), result.get(1).getId());
@@ -217,15 +216,14 @@ class ContestEntityIntegrationTest extends AbstractIntegrationTest {
     @Test
     void testFindActiveContests_ReturnsCurrentlyActive() {
         // Given: Multiple contests at different times
-        // Note: Using TEST_ prefix to filter from scheduler/other test data
         var now = Instant.now();
 
         // Past contest
-        repository.save(createContestEntity("TEST_Past", now.minus(10, ChronoUnit.DAYS)));
+        repository.save(createContestEntity("Past Contest", now.minus(10, ChronoUnit.DAYS)));
 
         // Currently active contest
         var active = repository.save(new ContestEntity(
-                "TEST_Active",
+                "Active Contest",
                 now.minus(1, ChronoUnit.HOURS),
                 now.plus(1, ChronoUnit.HOURS),
                 Set.of(), Set.of(),
@@ -233,19 +231,14 @@ class ContestEntityIntegrationTest extends AbstractIntegrationTest {
         ));
 
         // Future contest
-        repository.save(createContestEntity("TEST_Future", now.plus(10, ChronoUnit.DAYS)));
+        repository.save(createContestEntity("Future Contest", now.plus(10, ChronoUnit.DAYS)));
 
         // When: Find active contests (now between start and end)
         var result = repository.findByStartTimeBeforeAndEndTimeAfterOrderByEndTimeAsc(now, now);
 
-        // Then: Filter by test names to avoid interference from scheduler data
-        var testResults = result.stream()
-                .filter(e -> e.getName().startsWith("TEST_"))
-                .toList();
-
-        // Should return only the active contest
-        assertEquals(1, testResults.size());
-        assertEquals(active.getId(), testResults.get(0).getId());
+        // Then: Should return only the active contest
+        assertEquals(1, result.size());
+        assertEquals(active.getId(), result.get(0).getId());
     }
 
     @Test
