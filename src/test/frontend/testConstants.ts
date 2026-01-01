@@ -132,6 +132,35 @@ export const TEST_CONSTANTS = {
 
   /** Duration in ms for "stale" activations (24 hours) */
   STALE_MS: 24 * 60 * 60 * 1000,
+
+  // ==========================================================================
+  // Invariant Testing - Score Bounds
+  // ==========================================================================
+
+  /** Universal score bounds for all Scoreable implementations */
+  SCORE_BOUNDS: {
+    /** Minimum possible score */
+    MIN: 0,
+    /** Maximum possible score */
+    MAX: 100,
+  },
+
+  // ==========================================================================
+  // Invariant Testing - Rating Order
+  // ==========================================================================
+
+  /** Rating order from best to worst (for ordering invariant tests) */
+  RATING_ORDER: ['GOOD', 'FAIR', 'POOR', 'UNKNOWN'] as const,
+
+  /** Corresponding base scores for each rating (must maintain ordering) */
+  RATING_SCORES_ORDERED: [100, 60, 20, 0] as const,
+
+  // ==========================================================================
+  // Invariant Testing - Recency Decay
+  // ==========================================================================
+
+  /** Duration in minutes for recency decay to reach zero */
+  RECENCY_DECAY_MINUTES: 60,
 } as const;
 
 /**

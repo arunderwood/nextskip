@@ -157,6 +157,64 @@ public final class TestConstants {
     /** Default info URL. */
     public static final String DEFAULT_INFO_URL = "https://imo.net";
 
+    // ==========================================================================
+    // Invariant Testing - Activation Age Decay Thresholds (minutes)
+    // ==========================================================================
+
+    /** Age threshold for very fresh activations (0-5 minutes = max score). */
+    public static final long ACTIVATION_VERY_FRESH_THRESHOLD = 5;
+
+    /** Age threshold for fresh activations (5-15 minutes = decaying). */
+    public static final long ACTIVATION_FRESH_THRESHOLD = 15;
+
+    /** Age threshold for aging activations (15-30 minutes = faster decay). */
+    public static final long ACTIVATION_AGING_THRESHOLD = 30;
+
+    /** Age threshold for stale activations (30-60 minutes = approaching zero). */
+    public static final long ACTIVATION_STALE_THRESHOLD = 60;
+
+    // ==========================================================================
+    // Invariant Testing - Band Condition Rating Bases
+    // ==========================================================================
+
+    /** Base score multiplier for GOOD rating (100%). */
+    public static final int RATING_GOOD_BASE = 100;
+
+    /** Base score multiplier for FAIR rating (60%). */
+    public static final int RATING_FAIR_BASE = 60;
+
+    /** Base score multiplier for POOR rating (20%). */
+    public static final int RATING_POOR_BASE = 20;
+
+    /** Base score multiplier for UNKNOWN rating (0%). */
+    public static final int RATING_UNKNOWN_BASE = 0;
+
+    // ==========================================================================
+    // Invariant Testing - Solar Indices Thresholds
+    // ==========================================================================
+
+    /** K-index threshold for favorable conditions (must be < this value). */
+    public static final int K_INDEX_FAVORABLE_THRESHOLD = 4;
+
+    /** SFI threshold for favorable conditions (must be > this value). */
+    public static final double SFI_FAVORABLE_THRESHOLD = 100.0;
+
+    /** A-index threshold for favorable conditions (must be < this value). */
+    public static final int A_INDEX_FAVORABLE_THRESHOLD = 20;
+
+    // ==========================================================================
+    // Invariant Testing - Contest Time Windows (hours)
+    // ==========================================================================
+
+    /** Contest is imminent when starting within this many hours. */
+    public static final long CONTEST_IMMINENT_HOURS = 6;
+
+    /** Contest is soon when starting within this many hours. */
+    public static final long CONTEST_SOON_HOURS = 24;
+
+    /** Contest is upcoming when starting within this many hours. */
+    public static final long CONTEST_UPCOMING_HOURS = 72;
+
     private TestConstants() {
         // Prevent instantiation
     }
