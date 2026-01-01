@@ -3,6 +3,7 @@ package io.nextskip.propagation.internal.scheduler;
 import com.github.benmanes.caffeine.cache.LoadingCache;
 import io.nextskip.common.config.CacheConfig;
 import io.nextskip.common.scheduler.AbstractRefreshService;
+import io.nextskip.common.scheduler.CacheRefreshEvent;
 import io.nextskip.common.scheduler.DataRefreshException;
 import io.nextskip.propagation.internal.NoaaSwpcClient;
 import io.nextskip.propagation.model.SolarIndices;
@@ -10,6 +11,7 @@ import io.nextskip.propagation.persistence.entity.SolarIndicesEntity;
 import io.nextskip.propagation.persistence.repository.SolarIndicesRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
 
@@ -38,9 +40,11 @@ public class NoaaRefreshService extends AbstractRefreshService {
     private int sunspotNumber;
 
     public NoaaRefreshService(
+            ApplicationEventPublisher eventPublisher,
             NoaaSwpcClient noaaClient,
             SolarIndicesRepository repository,
             LoadingCache<String, SolarIndices> solarIndicesCache) {
+        super(eventPublisher);
         this.noaaClient = noaaClient;
         this.repository = repository;
         this.solarIndicesCache = solarIndicesCache;
@@ -71,8 +75,9 @@ public class NoaaRefreshService extends AbstractRefreshService {
     }
 
     @Override
-    protected void refreshCache() {
-        solarIndicesCache.refresh(CacheConfig.CACHE_KEY);
+    protected CacheRefreshEvent createCacheRefreshEvent() {
+        return new CacheRefreshEvent("solarIndices",
+                () -> solarIndicesCache.refresh(CacheConfig.CACHE_KEY));
     }
 
     @Override

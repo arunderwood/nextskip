@@ -247,7 +247,7 @@
       "vite-plugin-checker": "0.12.0",
       "workbox-build": "7.4.0"
     },
-    "hash": "80690df6ee27b029d1b7f3f11e610951704adf8f3e9011261309f1706986c03c"
+    "hash": "44ef3b9810d3a008700b31ed58fef78c2c0e0c61892b6060107e0551536cb7f9"
   },
   "@atakama/cover-diff": {
     "lines": 80,
