@@ -1,24 +1,6 @@
 package io.nextskip.activations.internal.scheduler;
 
-import com.github.benmanes.caffeine.cache.LoadingCache;
-import io.nextskip.activations.internal.PotaClient;
-import io.nextskip.activations.model.Activation;
-import io.nextskip.activations.model.ActivationType;
-import io.nextskip.activations.model.Park;
-import io.nextskip.activations.persistence.entity.ActivationEntity;
-import io.nextskip.activations.persistence.repository.ActivationRepository;
-import io.nextskip.common.config.CacheConfig;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-
-import java.time.Instant;
-import java.util.Collections;
-import java.util.List;
-
+import static io.nextskip.test.fixtures.ActivationFixtures.pota;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
@@ -27,6 +9,23 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+
+import com.github.benmanes.caffeine.cache.LoadingCache;
+import io.nextskip.activations.internal.PotaClient;
+import io.nextskip.activations.model.Activation;
+import io.nextskip.activations.model.ActivationType;
+import io.nextskip.activations.persistence.entity.ActivationEntity;
+import io.nextskip.activations.persistence.repository.ActivationRepository;
+import io.nextskip.common.config.CacheConfig;
+import java.time.Instant;
+import java.util.Collections;
+import java.util.List;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 /**
  * Unit tests for PotaRefreshService.
@@ -159,26 +158,7 @@ class PotaRefreshServiceTest {
     }
 
     private Activation createTestActivation() {
-        Park park = new Park(
-                "K-1234",
-                "Test Park",
-                "CO",
-                "US",
-                "DM79",
-                40.0,
-                -105.0
-        );
-        return new Activation(
-                "spot-1234",
-                "W1ABC",
-                ActivationType.POTA,
-                14074.0,
-                "FT8",
-                Instant.now(),
-                5,
-                "POTA",
-                park
-        );
+        return pota().spotId("spot-1234").build();
     }
 
     private ActivationEntity createTestEntity() {

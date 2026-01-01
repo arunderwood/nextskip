@@ -3,37 +3,50 @@ import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import ActivationsContent from 'Frontend/components/cards/activations/ActivationsContent';
 import type Activation from 'Frontend/generated/io/nextskip/activations/model/Activation';
+import { createMockActivation } from '../../../fixtures/mockFactories';
 
 describe('ActivationsContent', () => {
-  /* eslint-disable @typescript-eslint/max-params */
-  const createActivation = (
-    id: number,
-    callsign: string,
-    reference: string,
-    frequency: number,
-    mode: string,
-    name?: string,
-    regionCode?: string,
-  ): Activation => ({
-    spotId: String(id),
-    activatorCallsign: callsign,
-    location: {
-      reference,
-      name,
-      regionCode,
-    },
-    frequency,
-    mode,
-    spottedAt: new Date().toISOString(),
-    favorable: true,
-    score: 75,
-  });
+  // Helper to create activation with specific test values
+  interface ActivationParams {
+    id: number;
+    callsign: string;
+    reference: string;
+    frequency: number;
+    mode: string;
+    name?: string;
+    regionCode?: string;
+  }
+
+  const createActivation = (params: ActivationParams): Activation =>
+    createMockActivation({
+      spotId: String(params.id),
+      activatorCallsign: params.callsign,
+      frequency: params.frequency,
+      mode: params.mode,
+      location: { reference: params.reference, name: params.name, regionCode: params.regionCode },
+    });
 
   describe('POTA type', () => {
     it('should render activation count', () => {
       const activations = [
-        createActivation(1, 'K1ABC', 'K-1234', 14250, 'SSB', 'Test Park', 'US-MA'),
-        createActivation(2, 'W2XYZ', 'K-5678', 7074, 'FT8', 'Another Park', 'US-NY'),
+        createActivation({
+          id: 1,
+          callsign: 'K1ABC',
+          reference: 'K-1234',
+          frequency: 14250,
+          mode: 'SSB',
+          name: 'Test Park',
+          regionCode: 'US-MA',
+        }),
+        createActivation({
+          id: 2,
+          callsign: 'W2XYZ',
+          reference: 'K-5678',
+          frequency: 7074,
+          mode: 'FT8',
+          name: 'Another Park',
+          regionCode: 'US-NY',
+        }),
       ];
 
       render(<ActivationsContent activations={activations} type="pota" emptyMessage="No activations" />);
@@ -43,7 +56,17 @@ describe('ActivationsContent', () => {
     });
 
     it('should render activation list', () => {
-      const activations = [createActivation(1, 'K1ABC', 'K-1234', 14250, 'SSB', 'Test Park', 'US-MA')];
+      const activations = [
+        createActivation({
+          id: 1,
+          callsign: 'K1ABC',
+          reference: 'K-1234',
+          frequency: 14250,
+          mode: 'SSB',
+          name: 'Test Park',
+          regionCode: 'US-MA',
+        }),
+      ];
 
       render(<ActivationsContent activations={activations} type="pota" emptyMessage="No activations" />);
 
@@ -55,7 +78,9 @@ describe('ActivationsContent', () => {
     });
 
     it('should use pota-content class', () => {
-      const activations = [createActivation(1, 'K1ABC', 'K-1234', 14250, 'SSB')];
+      const activations = [
+        createActivation({ id: 1, callsign: 'K1ABC', reference: 'K-1234', frequency: 14250, mode: 'SSB' }),
+      ];
 
       const { container } = render(
         <ActivationsContent activations={activations} type="pota" emptyMessage="No activations" />,
@@ -65,7 +90,16 @@ describe('ActivationsContent', () => {
     });
 
     it('should use park-name class for location', () => {
-      const activations = [createActivation(1, 'K1ABC', 'K-1234', 14250, 'SSB', 'Test Park')];
+      const activations = [
+        createActivation({
+          id: 1,
+          callsign: 'K1ABC',
+          reference: 'K-1234',
+          frequency: 14250,
+          mode: 'SSB',
+          name: 'Test Park',
+        }),
+      ];
 
       const { container } = render(
         <ActivationsContent activations={activations} type="pota" emptyMessage="No activations" />,
@@ -78,8 +112,24 @@ describe('ActivationsContent', () => {
   describe('SOTA type', () => {
     it('should render activation count', () => {
       const activations = [
-        createActivation(1, 'G4ABC', 'W7W/SE-001', 14250, 'CW', 'Mount Rainier', 'US-WA'),
-        createActivation(2, 'K5XYZ', 'W7W/SE-002', 7074, 'FT8', 'Mount Adams', 'US-WA'),
+        createActivation({
+          id: 1,
+          callsign: 'G4ABC',
+          reference: 'W7W/SE-001',
+          frequency: 14250,
+          mode: 'CW',
+          name: 'Mount Rainier',
+          regionCode: 'US-WA',
+        }),
+        createActivation({
+          id: 2,
+          callsign: 'K5XYZ',
+          reference: 'W7W/SE-002',
+          frequency: 7074,
+          mode: 'FT8',
+          name: 'Mount Adams',
+          regionCode: 'US-WA',
+        }),
       ];
 
       render(<ActivationsContent activations={activations} type="sota" emptyMessage="No activations" />);
@@ -89,7 +139,9 @@ describe('ActivationsContent', () => {
     });
 
     it('should use sota-content class', () => {
-      const activations = [createActivation(1, 'G4ABC', 'W7W/SE-001', 14250, 'CW')];
+      const activations = [
+        createActivation({ id: 1, callsign: 'G4ABC', reference: 'W7W/SE-001', frequency: 14250, mode: 'CW' }),
+      ];
 
       const { container } = render(
         <ActivationsContent activations={activations} type="sota" emptyMessage="No activations" />,
@@ -99,7 +151,16 @@ describe('ActivationsContent', () => {
     });
 
     it('should use summit-name class for location', () => {
-      const activations = [createActivation(1, 'G4ABC', 'W7W/SE-001', 14250, 'CW', 'Mount Rainier')];
+      const activations = [
+        createActivation({
+          id: 1,
+          callsign: 'G4ABC',
+          reference: 'W7W/SE-001',
+          frequency: 14250,
+          mode: 'CW',
+          name: 'Mount Rainier',
+        }),
+      ];
 
       const { container } = render(
         <ActivationsContent activations={activations} type="sota" emptyMessage="No activations" />,
@@ -125,7 +186,9 @@ describe('ActivationsContent', () => {
 
   describe('activation display', () => {
     it('should show callsign link to QRZ', () => {
-      const activations = [createActivation(1, 'K1ABC', 'K-1234', 14250, 'SSB')];
+      const activations = [
+        createActivation({ id: 1, callsign: 'K1ABC', reference: 'K-1234', frequency: 14250, mode: 'SSB' }),
+      ];
 
       render(<ActivationsContent activations={activations} type="pota" emptyMessage="No activations" />);
 
@@ -136,8 +199,20 @@ describe('ActivationsContent', () => {
     });
 
     it('should show mode or Unknown', () => {
-      const withMode = createActivation(1, 'K1ABC', 'K-1234', 14250, 'SSB');
-      const withoutMode = createActivation(2, 'W2XYZ', 'K-5678', 7074, '');
+      const withMode = createActivation({
+        id: 1,
+        callsign: 'K1ABC',
+        reference: 'K-1234',
+        frequency: 14250,
+        mode: 'SSB',
+      });
+      const withoutMode = createActivation({
+        id: 2,
+        callsign: 'W2XYZ',
+        reference: 'K-5678',
+        frequency: 7074,
+        mode: '',
+      });
 
       const { rerender } = render(
         <ActivationsContent activations={[withMode]} type="pota" emptyMessage="No activations" />,
@@ -151,7 +226,17 @@ describe('ActivationsContent', () => {
     });
 
     it('should render location with region code', () => {
-      const activations = [createActivation(1, 'K1ABC', 'K-1234', 14250, 'SSB', 'Test Park', 'US-MA')];
+      const activations = [
+        createActivation({
+          id: 1,
+          callsign: 'K1ABC',
+          reference: 'K-1234',
+          frequency: 14250,
+          mode: 'SSB',
+          name: 'Test Park',
+          regionCode: 'US-MA',
+        }),
+      ];
 
       render(<ActivationsContent activations={activations} type="pota" emptyMessage="No activations" />);
 
@@ -159,7 +244,16 @@ describe('ActivationsContent', () => {
     });
 
     it('should render location without region code', () => {
-      const activations = [createActivation(1, 'K1ABC', 'K-1234', 14250, 'SSB', 'Test Park')];
+      const activations = [
+        createActivation({
+          id: 1,
+          callsign: 'K1ABC',
+          reference: 'K-1234',
+          frequency: 14250,
+          mode: 'SSB',
+          name: 'Test Park',
+        }),
+      ];
 
       render(<ActivationsContent activations={activations} type="pota" emptyMessage="No activations" />);
 
@@ -167,7 +261,9 @@ describe('ActivationsContent', () => {
     });
 
     it('should not render location if name is missing', () => {
-      const activations = [createActivation(1, 'K1ABC', 'K-1234', 14250, 'SSB')];
+      const activations = [
+        createActivation({ id: 1, callsign: 'K1ABC', reference: 'K-1234', frequency: 14250, mode: 'SSB' }),
+      ];
 
       const { container } = render(
         <ActivationsContent activations={activations} type="pota" emptyMessage="No activations" />,
@@ -180,7 +276,9 @@ describe('ActivationsContent', () => {
 
   describe('pagination', () => {
     it('should show max 8 activations', () => {
-      const activations = Array.from({ length: 10 }, (_, i) => createActivation(i, `K${i}ABC`, `K-${i}`, 14250, 'SSB'));
+      const activations = Array.from({ length: 10 }, (_, i) =>
+        createActivation({ id: i, callsign: `K${i}ABC`, reference: `K-${i}`, frequency: 14250, mode: 'SSB' }),
+      );
 
       render(<ActivationsContent activations={activations} type="pota" emptyMessage="No activations" />);
 
@@ -195,7 +293,9 @@ describe('ActivationsContent', () => {
     });
 
     it('should show "more activations" message when > 8', () => {
-      const activations = Array.from({ length: 12 }, (_, i) => createActivation(i, `K${i}ABC`, `K-${i}`, 14250, 'SSB'));
+      const activations = Array.from({ length: 12 }, (_, i) =>
+        createActivation({ id: i, callsign: `K${i}ABC`, reference: `K-${i}`, frequency: 14250, mode: 'SSB' }),
+      );
 
       render(<ActivationsContent activations={activations} type="pota" emptyMessage="No activations" />);
 
@@ -203,7 +303,9 @@ describe('ActivationsContent', () => {
     });
 
     it('should not show "more activations" when <= 8', () => {
-      const activations = Array.from({ length: 8 }, (_, i) => createActivation(i, `K${i}ABC`, `K-${i}`, 14250, 'SSB'));
+      const activations = Array.from({ length: 8 }, (_, i) =>
+        createActivation({ id: i, callsign: `K${i}ABC`, reference: `K-${i}`, frequency: 14250, mode: 'SSB' }),
+      );
 
       render(<ActivationsContent activations={activations} type="pota" emptyMessage="No activations" />);
 
@@ -213,7 +315,9 @@ describe('ActivationsContent', () => {
 
   describe('memoization', () => {
     it('should memoize displayActivations', () => {
-      const activations = Array.from({ length: 10 }, (_, i) => createActivation(i, `K${i}ABC`, `K-${i}`, 14250, 'SSB'));
+      const activations = Array.from({ length: 10 }, (_, i) =>
+        createActivation({ id: i, callsign: `K${i}ABC`, reference: `K-${i}`, frequency: 14250, mode: 'SSB' }),
+      );
 
       const { rerender } = render(
         <ActivationsContent activations={activations} type="pota" emptyMessage="No activations" />,

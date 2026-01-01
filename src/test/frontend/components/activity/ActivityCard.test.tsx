@@ -10,16 +10,15 @@ import userEvent from '@testing-library/user-event';
 import { axe, toHaveNoViolations } from 'jest-axe';
 import ActivityCard from 'Frontend/components/activity/ActivityCard';
 import type { ActivityCardConfig } from 'Frontend/components/activity';
+import { createMockActivityCardConfig } from '../../fixtures/mockFactories';
 
 expect.extend(toHaveNoViolations);
 
-const mockConfig: ActivityCardConfig = {
-  id: 'test-card',
-  type: 'solar-indices',
-  size: '1x1',
+// Use shared factory with test-specific defaults
+const mockConfig: ActivityCardConfig = createMockActivityCardConfig({
   priority: 75,
   hotness: 'hot',
-};
+});
 
 describe('ActivityCard', () => {
   describe('rendering', () => {

@@ -12,17 +12,14 @@ import { axe, toHaveNoViolations } from 'jest-axe';
 import ActivityGrid from 'Frontend/components/activity/ActivityGrid';
 import ActivityCard from 'Frontend/components/activity/ActivityCard';
 import type { ActivityCardConfig } from 'Frontend/components/activity';
+import { createMockActivityCardConfig } from '../../fixtures/mockFactories';
 
 expect.extend(toHaveNoViolations);
 
+// Helper using shared factory with computed hotness
 const createTestCard = (id: string, priority: number, title: string, interactive = false) => {
-  const config: ActivityCardConfig = {
-    id,
-    type: 'solar-indices',
-    size: '1x1',
-    priority,
-    hotness: priority >= 70 ? 'hot' : priority >= 45 ? 'warm' : 'neutral',
-  };
+  const hotness = priority >= 70 ? 'hot' : priority >= 45 ? 'warm' : 'neutral';
+  const config = createMockActivityCardConfig({ id, priority, hotness });
 
   return {
     config,

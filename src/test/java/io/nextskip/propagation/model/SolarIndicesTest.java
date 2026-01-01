@@ -1,12 +1,13 @@
 package io.nextskip.propagation.model;
 
-import org.junit.jupiter.api.Test;
-
-import java.time.Instant;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.time.Instant;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 
 /**
  * Comprehensive test suite for SolarIndices record.
@@ -29,120 +30,62 @@ class SolarIndicesTest {
     // Category 1: getGeomagneticActivity() - K-index to Activity Level Mapping
     // ==========================================================================
 
-    @Test
-    void testGetGeomagneticActivity_Quiet() {
-        // K-index 0-2 should return "Quiet"
-        var indices0 = new SolarIndices(100.0, 10, 0, 50, Instant.now(), TEST_SOURCE);
-        assertEquals("Quiet", indices0.getGeomagneticActivity());
+    @ParameterizedTest(name = "K-index {0} -> {1}")
+    @CsvSource({
+            // K-index 0-2 should return "Quiet"
+            "0, Quiet",
+            "1, Quiet",
+            "2, Quiet",
+            // K-index 3-4 should return "Unsettled"
+            "3, Unsettled",
+            "4, Unsettled",
+            // K-index 5-6 should return "Active"
+            "5, Active",
+            "6, Active",
+            // K-index 7-8 should return "Storm"
+            "7, Storm",
+            "8, Storm",
+            // K-index 9+ should return "Severe Storm"
+            "9, Severe Storm"
+    })
+    void testGetGeomagneticActivity_KIndexMapping(int kIndex, String expectedActivity) {
+        var indices = new SolarIndices(100.0, 10, kIndex, 50, Instant.now(), TEST_SOURCE);
 
-        var indices1 = new SolarIndices(100.0, 10, 1, 50, Instant.now(), TEST_SOURCE);
-        assertEquals("Quiet", indices1.getGeomagneticActivity());
-
-        var indices2 = new SolarIndices(100.0, 10, 2, 50, Instant.now(), TEST_SOURCE);
-        assertEquals("Quiet", indices2.getGeomagneticActivity());
-    }
-
-    @Test
-    void testGetGeomagneticActivity_Unsettled() {
-        // K-index 3-4 should return "Unsettled"
-        var indices3 = new SolarIndices(100.0, 10, 3, 50, Instant.now(), TEST_SOURCE);
-        assertEquals("Unsettled", indices3.getGeomagneticActivity());
-
-        var indices4 = new SolarIndices(100.0, 10, 4, 50, Instant.now(), TEST_SOURCE);
-        assertEquals("Unsettled", indices4.getGeomagneticActivity());
-    }
-
-    @Test
-    void testGetGeomagneticActivity_Active() {
-        // K-index 5-6 should return "Active"
-        var indices5 = new SolarIndices(100.0, 10, 5, 50, Instant.now(), TEST_SOURCE);
-        assertEquals("Active", indices5.getGeomagneticActivity());
-
-        var indices6 = new SolarIndices(100.0, 10, 6, 50, Instant.now(), TEST_SOURCE);
-        assertEquals("Active", indices6.getGeomagneticActivity());
-    }
-
-    @Test
-    void testGetGeomagneticActivity_Storm() {
-        // K-index 7-8 should return "Storm"
-        var indices7 = new SolarIndices(100.0, 10, 7, 50, Instant.now(), TEST_SOURCE);
-        assertEquals("Storm", indices7.getGeomagneticActivity());
-
-        var indices8 = new SolarIndices(100.0, 10, 8, 50, Instant.now(), TEST_SOURCE);
-        assertEquals("Storm", indices8.getGeomagneticActivity());
-    }
-
-    @Test
-    void testGetGeomagneticActivity_SevereStorm() {
-        // K-index 9+ should return "Severe Storm"
-        var indices9 = new SolarIndices(100.0, 10, 9, 50, Instant.now(), TEST_SOURCE);
-        assertEquals("Severe Storm", indices9.getGeomagneticActivity());
+        assertEquals(expectedActivity, indices.getGeomagneticActivity(),
+                () -> "K-index " + kIndex + " should map to " + expectedActivity);
     }
 
     // ==========================================================================
     // Category 2: getSolarFluxLevel() - SFI to Flux Level Mapping
     // ==========================================================================
 
-    @Test
-    void testGetSolarFluxLevel_VeryLow() {
-        // SFI < 70 should return "Very Low"
-        var indices50 = new SolarIndices(50.0, 10, 2, 50, Instant.now(), TEST_SOURCE);
-        assertEquals("Very Low", indices50.getSolarFluxLevel());
+    @ParameterizedTest(name = "SFI {0} -> {1}")
+    @CsvSource({
+            // SFI < 70 should return "Very Low"
+            "50.0, Very Low",
+            "69.0, Very Low",
+            // SFI 70-99 should return "Low"
+            "70.0, Low",
+            "85.0, Low",
+            "99.0, Low",
+            // SFI 100-149 should return "Moderate"
+            "100.0, Moderate",
+            "125.0, Moderate",
+            "149.0, Moderate",
+            // SFI 150-199 should return "High"
+            "150.0, High",
+            "175.0, High",
+            "199.0, High",
+            // SFI >= 200 should return "Very High"
+            "200.0, Very High",
+            "250.0, Very High",
+            "300.0, Very High"
+    })
+    void testGetSolarFluxLevel_SfiMapping(double sfi, String expectedLevel) {
+        var indices = new SolarIndices(sfi, 10, 2, 50, Instant.now(), TEST_SOURCE);
 
-        var indices69 = new SolarIndices(69.0, 10, 2, 50, Instant.now(), TEST_SOURCE);
-        assertEquals("Very Low", indices69.getSolarFluxLevel());
-    }
-
-    @Test
-    void testGetSolarFluxLevel_Low() {
-        // SFI 70-99 should return "Low"
-        var indices70 = new SolarIndices(70.0, 10, 2, 50, Instant.now(), TEST_SOURCE);
-        assertEquals("Low", indices70.getSolarFluxLevel());
-
-        var indices85 = new SolarIndices(85.0, 10, 2, 50, Instant.now(), TEST_SOURCE);
-        assertEquals("Low", indices85.getSolarFluxLevel());
-
-        var indices99 = new SolarIndices(99.0, 10, 2, 50, Instant.now(), TEST_SOURCE);
-        assertEquals("Low", indices99.getSolarFluxLevel());
-    }
-
-    @Test
-    void testGetSolarFluxLevel_Moderate() {
-        // SFI 100-149 should return "Moderate"
-        var indices100 = new SolarIndices(100.0, 10, 2, 50, Instant.now(), TEST_SOURCE);
-        assertEquals("Moderate", indices100.getSolarFluxLevel());
-
-        var indices125 = new SolarIndices(125.0, 10, 2, 50, Instant.now(), TEST_SOURCE);
-        assertEquals("Moderate", indices125.getSolarFluxLevel());
-
-        var indices149 = new SolarIndices(149.0, 10, 2, 50, Instant.now(), TEST_SOURCE);
-        assertEquals("Moderate", indices149.getSolarFluxLevel());
-    }
-
-    @Test
-    void testGetSolarFluxLevel_High() {
-        // SFI 150-199 should return "High"
-        var indices150 = new SolarIndices(150.0, 10, 2, 50, Instant.now(), TEST_SOURCE);
-        assertEquals("High", indices150.getSolarFluxLevel());
-
-        var indices175 = new SolarIndices(175.0, 10, 2, 50, Instant.now(), TEST_SOURCE);
-        assertEquals("High", indices175.getSolarFluxLevel());
-
-        var indices199 = new SolarIndices(199.0, 10, 2, 50, Instant.now(), TEST_SOURCE);
-        assertEquals("High", indices199.getSolarFluxLevel());
-    }
-
-    @Test
-    void testGetSolarFluxLevel_VeryHigh() {
-        // SFI >= 200 should return "Very High"
-        var indices200 = new SolarIndices(200.0, 10, 2, 50, Instant.now(), TEST_SOURCE);
-        assertEquals("Very High", indices200.getSolarFluxLevel());
-
-        var indices250 = new SolarIndices(250.0, 10, 2, 50, Instant.now(), TEST_SOURCE);
-        assertEquals("Very High", indices250.getSolarFluxLevel());
-
-        var indices300 = new SolarIndices(300.0, 10, 2, 50, Instant.now(), TEST_SOURCE);
-        assertEquals("Very High", indices300.getSolarFluxLevel());
+        assertEquals(expectedLevel, indices.getSolarFluxLevel(),
+                () -> "SFI " + sfi + " should map to " + expectedLevel);
     }
 
     // ==========================================================================
