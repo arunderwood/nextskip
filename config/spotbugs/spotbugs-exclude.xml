@@ -56,4 +56,13 @@
         <Class name="io.nextskip.test.TestPostgresContainer"/>
         <Bug pattern="MS_EXPOSE_REP"/>
     </Match>
+
+    <!--
+        EI_EXPOSE_REP2: Test fixtures intentionally store mutable objects for builder pattern.
+        Security concerns about mutable object exposure don't apply to test code.
+    -->
+    <Match>
+        <Package name="io.nextskip.test.fixtures"/>
+        <Bug pattern="EI_EXPOSE_REP,EI_EXPOSE_REP2"/>
+    </Match>
 </FindBugsFilter>
