@@ -119,6 +119,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
 
       - name: Setup Node.js
         uses: actions/setup-node@v6
@@ -131,6 +133,15 @@ jobs:
 
       - name: Run frontend CI test suites (format, lint, tests, coverage)
         run: npm run test:ci
+
+      - name: Check delta coverage on changed files
+        run: |
+          DIFF=$(git diff origin/main -- 'src/main/frontend/**' 'src/test/frontend/**')
+          if [ -z "$DIFF" ]; then
+            echo "No frontend changes to check"
+          else
+            echo "$DIFF" | npx cover-diff
+          fi
 
       - name: Upload ESLint SARIF to GitHub Security
         uses: github/codeql-action/upload-sarif@v4

@@ -76,7 +76,7 @@ open build/reports/checkstyle/main.html
 open build/reports/pmd/main.html
 ```
 
-**Coverage Requirements**: 75% instruction, 65% branch (enforced by JaCoCo)
+**Coverage Requirements**: 75% instruction, 65% branch (overall); 80% on changed code (delta coverage)
 
 **Fix violations, don't suppress them.** Rule exclusions lower the quality bar. Suppressions require documented justification (e.g., `@SuppressWarnings("PMD.TooManyMethods") // Comprehensive test suite`).
 
@@ -181,9 +181,20 @@ npm run format
 #### Pre-Commit Validation
 
 ```bash
-npm run validate       # Quick: format, lint, unit tests (~3s)
-npm run validate:full  # Full: includes E2E tests (~20s)
+npm run validate       # format, lint, delta coverage
+npm run validate:quick # format, lint, unit tests (no delta coverage)
+npm run validate:full  # includes E2E tests
 ```
+
+#### Delta Coverage
+
+Enforces 80% line / 70% branch coverage on changed files:
+
+```bash
+npm run test:delta     # Run tests + check delta coverage
+```
+
+Uses `@atakama/cover-diff` to compare coverage against `origin/main`.
 
 ## Architecture Guidelines
 
