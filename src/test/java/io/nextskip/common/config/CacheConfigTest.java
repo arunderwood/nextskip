@@ -114,7 +114,7 @@ class CacheConfigTest {
     @Test
     void testBandConditionsCache_LoadsFromRepository() {
         // Given: Repository returns empty list
-        when(bandConditionRepository.findByRecordedAtAfterOrderByRecordedAtDesc(any()))
+        when(bandConditionRepository.findLatestPerBandSince(any()))
                 .thenReturn(Collections.emptyList());
 
         // When: Create cache and get data
@@ -276,7 +276,7 @@ class CacheConfigTest {
         BandConditionEntity entity = new BandConditionEntity(
                 FrequencyBand.BAND_20M, BandConditionRating.GOOD, 0.9, "Excellent", Instant.now()
         );
-        when(bandConditionRepository.findByRecordedAtAfterOrderByRecordedAtDesc(any()))
+        when(bandConditionRepository.findLatestPerBandSince(any()))
                 .thenReturn(List.of(entity));
 
         // When: Call loader method directly
@@ -292,7 +292,7 @@ class CacheConfigTest {
     @Test
     void testLoadBandConditions_ReturnsEmptyList() {
         // Given: Repository returns empty list
-        when(bandConditionRepository.findByRecordedAtAfterOrderByRecordedAtDesc(any()))
+        when(bandConditionRepository.findLatestPerBandSince(any()))
                 .thenReturn(Collections.emptyList());
 
         // When: Call loader method directly

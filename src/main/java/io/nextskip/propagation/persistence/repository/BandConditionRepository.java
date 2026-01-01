@@ -3,6 +3,8 @@ package io.nextskip.propagation.persistence.repository;
 import io.nextskip.common.model.FrequencyBand;
 import io.nextskip.propagation.persistence.entity.BandConditionEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.Instant;
@@ -34,12 +36,33 @@ public interface BandConditionRepository extends JpaRepository<BandConditionEnti
             FrequencyBand band, Instant since);
 
     /**
-     * Find the most recent conditions for all bands.
+     * Find the most recent condition for each band (deduplicated).
      *
-     * <p>Returns one condition per band, the most recent for each.
+     * <p>Uses PostgreSQL's DISTINCT ON to return exactly one record per band,
+     * selecting the most recently recorded condition for each.
      *
      * @param since only consider conditions after this timestamp
-     * @return list of most recent conditions per band
+     * @return list with one condition per band, the most recent for each
+     */
+    @Query(
+            value =
+                    """
+            SELECT DISTINCT ON (band) *
+            FROM band_conditions
+            WHERE recorded_at > :since
+            ORDER BY band, recorded_at DESC
+            """,
+            nativeQuery = true)
+    List<BandConditionEntity> findLatestPerBandSince(@Param("since") Instant since);
+
+    /**
+     * Find all conditions recorded after a given timestamp.
+     *
+     * <p>Note: This returns ALL records, not deduplicated by band.
+     * For deduplicated results, use {@link #findLatestPerBandSince(Instant)}.
+     *
+     * @param since the timestamp to filter from
+     * @return list of all conditions ordered by most recent first
      */
     List<BandConditionEntity> findByRecordedAtAfterOrderByRecordedAtDesc(Instant since);
 

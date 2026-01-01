@@ -182,7 +182,7 @@ public class CacheConfig {
         LOG.debug("Loading band conditions from database");
         Instant cutoff = Instant.now().minus(BAND_CONDITIONS_RETENTION);
         List<BandCondition> conditions = repository
-                .findByRecordedAtAfterOrderByRecordedAtDesc(cutoff)
+                .findLatestPerBandSince(cutoff)
                 .stream()
                 .map(BandConditionEntity::toDomain)
                 .toList();
