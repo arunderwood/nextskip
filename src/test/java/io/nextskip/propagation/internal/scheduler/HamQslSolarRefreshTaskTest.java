@@ -39,7 +39,7 @@ class HamQslSolarRefreshTaskTest {
 
     @BeforeEach
     void setUp() {
-        task = new HamQslSolarRefreshTask();
+        task = new HamQslSolarRefreshTask(repository);
     }
 
     @Test
@@ -67,7 +67,7 @@ class HamQslSolarRefreshTaskTest {
         when(repository.findByTimestampAfterOrderByTimestampDesc(any(Instant.class)))
                 .thenReturn(Collections.emptyList());
 
-        boolean result = task.needsInitialLoad(repository);
+        boolean result = task.needsInitialLoad();
 
         assertThat(result).isTrue();
     }
@@ -78,7 +78,7 @@ class HamQslSolarRefreshTaskTest {
         when(repository.findByTimestampAfterOrderByTimestampDesc(any(Instant.class)))
                 .thenReturn(List.of(entity));
 
-        boolean result = task.needsInitialLoad(repository);
+        boolean result = task.needsInitialLoad();
 
         assertThat(result).isFalse();
     }
@@ -89,9 +89,22 @@ class HamQslSolarRefreshTaskTest {
         when(repository.findByTimestampAfterOrderByTimestampDesc(any(Instant.class)))
                 .thenReturn(List.of(entity));
 
-        boolean result = task.needsInitialLoad(repository);
+        boolean result = task.needsInitialLoad();
 
         assertThat(result).isTrue();
+    }
+
+    @Test
+    void testGetTaskName_ReturnsHamQslSolar() {
+        assertThat(task.getTaskName()).isEqualTo("HamQSL Solar");
+    }
+
+    @Test
+    void testGetRecurringTask_AfterSetterCalled_ReturnsTask() {
+        RecurringTask<Void> recurringTask = task.hamQslSolarRecurringTask(refreshService);
+        task.setRecurringTask(recurringTask);
+
+        assertThat(task.getRecurringTask()).isSameAs(recurringTask);
     }
 
     private SolarIndicesEntity createTestEntity(String source) {

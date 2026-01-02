@@ -41,7 +41,7 @@ class ContestRefreshTaskTest {
 
     @BeforeEach
     void setUp() {
-        task = new ContestRefreshTask();
+        task = new ContestRefreshTask(repository);
     }
 
     @Test
@@ -69,7 +69,7 @@ class ContestRefreshTaskTest {
         when(repository.findByEndTimeAfterOrderByStartTimeAsc(any(Instant.class)))
                 .thenReturn(Collections.emptyList());
 
-        boolean result = task.needsInitialLoad(repository);
+        boolean result = task.needsInitialLoad();
 
         assertThat(result).isTrue();
     }
@@ -80,9 +80,22 @@ class ContestRefreshTaskTest {
         when(repository.findByEndTimeAfterOrderByStartTimeAsc(any(Instant.class)))
                 .thenReturn(List.of(entity));
 
-        boolean result = task.needsInitialLoad(repository);
+        boolean result = task.needsInitialLoad();
 
         assertThat(result).isFalse();
+    }
+
+    @Test
+    void testGetTaskName_ReturnsContest() {
+        assertThat(task.getTaskName()).isEqualTo("Contest");
+    }
+
+    @Test
+    void testGetRecurringTask_AfterSetterCalled_ReturnsTask() {
+        RecurringTask<Void> recurringTask = task.contestRecurringTask(refreshService);
+        task.setRecurringTask(recurringTask);
+
+        assertThat(task.getRecurringTask()).isSameAs(recurringTask);
     }
 
     private ContestEntity createTestEntity() {

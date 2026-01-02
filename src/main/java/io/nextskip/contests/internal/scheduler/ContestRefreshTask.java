@@ -3,9 +3,12 @@ package io.nextskip.contests.internal.scheduler;
 import com.github.kagkarlsson.scheduler.task.helper.RecurringTask;
 import com.github.kagkarlsson.scheduler.task.helper.Tasks;
 import com.github.kagkarlsson.scheduler.task.schedule.FixedDelay;
+import io.nextskip.common.scheduler.RefreshTaskCoordinator;
 import io.nextskip.contests.persistence.repository.ContestRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -17,12 +20,38 @@ import java.time.Instant;
  * {@link ContestRefreshService} for the actual refresh logic.
  *
  * <p>Task runs every 6 hours (contest schedules change infrequently).
+ *
+ * <p>Implements {@link RefreshTaskCoordinator} to enable automatic discovery
+ * by {@link io.nextskip.common.scheduler.DataRefreshStartupHandler}.
  */
 @Configuration
-public class ContestRefreshTask {
+public class ContestRefreshTask implements RefreshTaskCoordinator {
 
     private static final String TASK_NAME = "contest-refresh";
+    private static final String DISPLAY_NAME = "Contest";
     private static final Duration REFRESH_INTERVAL = Duration.ofHours(6);
+
+    private final ContestRepository repository;
+    private RecurringTask<Void> recurringTask;
+
+    /**
+     * Creates a new contest refresh task coordinator.
+     *
+     * @param repository the contest repository
+     */
+    public ContestRefreshTask(ContestRepository repository) {
+        this.repository = repository;
+    }
+
+    /**
+     * Injects the recurring task bean after creation.
+     *
+     * @param recurringTask the created recurring task bean
+     */
+    @Autowired
+    public void setRecurringTask(@Lazy RecurringTask<Void> contestRecurringTask) {
+        this.recurringTask = contestRecurringTask;
+    }
 
     /**
      * Creates the recurring task bean for contest data refresh.
@@ -36,14 +65,32 @@ public class ContestRefreshTask {
                 .execute((taskInstance, executionContext) -> refreshService.executeRefresh());
     }
 
+    @Override
+    public RecurringTask<Void> getRecurringTask() {
+        return recurringTask;
+    }
+
+    @Override
+    public boolean needsInitialLoad() {
+        // Check if we have any contests ending after now
+        Instant now = Instant.now();
+        return repository.findByEndTimeAfterOrderByStartTimeAsc(now).isEmpty();
+    }
+
+    @Override
+    public String getTaskName() {
+        return DISPLAY_NAME;
+    }
+
     /**
      * Checks if initial data load is needed.
      *
      * @param repository the contest repository
      * @return true if no recent contest data exists
+     * @deprecated Use {@link #needsInitialLoad()} instead.
      */
+    @Deprecated(forRemoval = true)
     public boolean needsInitialLoad(ContestRepository repository) {
-        // Check if we have any contests ending after now
         Instant now = Instant.now();
         return repository.findByEndTimeAfterOrderByStartTimeAsc(now).isEmpty();
     }

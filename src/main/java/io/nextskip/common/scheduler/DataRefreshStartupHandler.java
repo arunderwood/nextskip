@@ -2,18 +2,6 @@ package io.nextskip.common.scheduler;
 
 import com.github.kagkarlsson.scheduler.Scheduler;
 import com.github.kagkarlsson.scheduler.task.helper.RecurringTask;
-import io.nextskip.activations.internal.scheduler.PotaRefreshTask;
-import io.nextskip.activations.internal.scheduler.SotaRefreshTask;
-import io.nextskip.activations.persistence.repository.ActivationRepository;
-import io.nextskip.contests.internal.scheduler.ContestRefreshTask;
-import io.nextskip.contests.persistence.repository.ContestRepository;
-import io.nextskip.meteors.internal.scheduler.MeteorRefreshTask;
-import io.nextskip.meteors.persistence.repository.MeteorShowerRepository;
-import io.nextskip.propagation.internal.scheduler.HamQslBandRefreshTask;
-import io.nextskip.propagation.internal.scheduler.HamQslSolarRefreshTask;
-import io.nextskip.propagation.internal.scheduler.NoaaRefreshTask;
-import io.nextskip.propagation.persistence.repository.BandConditionRepository;
-import io.nextskip.propagation.persistence.repository.SolarIndicesRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -23,8 +11,7 @@ import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
-
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import java.util.List;
 
 /**
  * Handles conditional startup execution of data refresh tasks.
@@ -37,6 +24,10 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
  * after a cold start (e.g., new deployment, database migration), while
  * avoiding redundant API calls when data is already present (e.g., restart).
  *
+ * <p>Uses the {@link RefreshTaskCoordinator} interface to automatically discover
+ * and coordinate all refresh tasks. New tasks are automatically included without
+ * modifying this class (Open-Closed Principle).
+ *
  * <p>Note: Uses @ConditionalOnProperty instead of @ConditionalOnBean(Scheduler.class)
  * because @ConditionalOnBean has timing issues with manual Scheduler configuration
  * (Spring Boot 4 workaround). The property check is semantically equivalent since
@@ -44,167 +35,61 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
  */
 @Component
 @ConditionalOnProperty(value = "db-scheduler.enabled", havingValue = "true")
-@SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Spring-managed beans are intentionally shared")
 public class DataRefreshStartupHandler {
 
     private static final Logger LOG = LoggerFactory.getLogger(DataRefreshStartupHandler.class);
 
     private final Scheduler scheduler;
     private final boolean eagerLoadEnabled;
-
-    // Task classes for initial load checks
-    private final PotaRefreshTask potaRefreshTask;
-    private final SotaRefreshTask sotaRefreshTask;
-    private final NoaaRefreshTask noaaRefreshTask;
-    private final HamQslSolarRefreshTask hamQslSolarRefreshTask;
-    private final HamQslBandRefreshTask hamQslBandRefreshTask;
-    private final ContestRefreshTask contestRefreshTask;
-    private final MeteorRefreshTask meteorRefreshTask;
-
-    // Repositories for checking data presence
-    private final ActivationRepository activationRepository;
-    private final SolarIndicesRepository solarIndicesRepository;
-    private final BandConditionRepository bandConditionRepository;
-    private final ContestRepository contestRepository;
-    private final MeteorShowerRepository meteorShowerRepository;
-
-    // Task beans for rescheduling
-    private final RecurringTask<Void> potaTask;
-    private final RecurringTask<Void> sotaTask;
-    private final RecurringTask<Void> noaaTask;
-    private final RecurringTask<Void> hamQslSolarTask;
-    private final RecurringTask<Void> hamQslBandTask;
-    private final RecurringTask<Void> contestTask;
-    private final RecurringTask<Void> meteorTask;
+    private final List<RefreshTaskCoordinator> coordinators;
 
     /**
      * Creates a new startup handler.
      *
-     * @param scheduler                the db-scheduler Scheduler
-     * @param eagerLoadEnabled         whether eager loading is enabled
-     * @param potaRefreshTask          POTA task class
-     * @param sotaRefreshTask          SOTA task class
-     * @param noaaRefreshTask          NOAA task class
-     * @param hamQslSolarRefreshTask   HamQSL solar task class
-     * @param hamQslBandRefreshTask    HamQSL band task class
-     * @param contestRefreshTask       Contest task class
-     * @param meteorRefreshTask        Meteor task class
-     * @param activationRepository     Activation repository
-     * @param solarIndicesRepository   Solar indices repository
-     * @param bandConditionRepository  Band condition repository
-     * @param contestRepository        Contest repository
-     * @param meteorShowerRepository   Meteor shower repository
-     * @param potaRecurringTask        POTA recurring task bean
-     * @param sotaRecurringTask        SOTA recurring task bean
-     * @param noaaRecurringTask        NOAA recurring task bean
-     * @param hamQslSolarRecurringTask HamQSL solar recurring task bean
-     * @param hamQslBandRecurringTask  HamQSL band recurring task bean
-     * @param contestRecurringTask     Contest recurring task bean
-     * @param meteorRecurringTask      Meteor recurring task bean
+     * <p>Coordinators are automatically discovered via Spring's component scanning.
+     * Each coordinator encapsulates its task, repository check, and task name.
+     *
+     * @param scheduler        the db-scheduler Scheduler
+     * @param eagerLoadEnabled whether eager loading is enabled
+     * @param coordinators     all registered refresh task coordinators
      */
-    @SuppressWarnings("java:S107") // Required for Spring DI - many tasks to coordinate
     public DataRefreshStartupHandler(
             Scheduler scheduler,
             @Value("${nextskip.refresh.eager-load:true}") boolean eagerLoadEnabled,
-            PotaRefreshTask potaRefreshTask,
-            SotaRefreshTask sotaRefreshTask,
-            NoaaRefreshTask noaaRefreshTask,
-            HamQslSolarRefreshTask hamQslSolarRefreshTask,
-            HamQslBandRefreshTask hamQslBandRefreshTask,
-            ContestRefreshTask contestRefreshTask,
-            MeteorRefreshTask meteorRefreshTask,
-            ActivationRepository activationRepository,
-            SolarIndicesRepository solarIndicesRepository,
-            BandConditionRepository bandConditionRepository,
-            ContestRepository contestRepository,
-            MeteorShowerRepository meteorShowerRepository,
-            RecurringTask<Void> potaRecurringTask,
-            RecurringTask<Void> sotaRecurringTask,
-            RecurringTask<Void> noaaRecurringTask,
-            RecurringTask<Void> hamQslSolarRecurringTask,
-            RecurringTask<Void> hamQslBandRecurringTask,
-            RecurringTask<Void> contestRecurringTask,
-            RecurringTask<Void> meteorRecurringTask) {
+            List<RefreshTaskCoordinator> coordinators) {
 
         this.scheduler = scheduler;
         this.eagerLoadEnabled = eagerLoadEnabled;
-        this.potaRefreshTask = potaRefreshTask;
-        this.sotaRefreshTask = sotaRefreshTask;
-        this.noaaRefreshTask = noaaRefreshTask;
-        this.hamQslSolarRefreshTask = hamQslSolarRefreshTask;
-        this.hamQslBandRefreshTask = hamQslBandRefreshTask;
-        this.contestRefreshTask = contestRefreshTask;
-        this.meteorRefreshTask = meteorRefreshTask;
-        this.activationRepository = activationRepository;
-        this.solarIndicesRepository = solarIndicesRepository;
-        this.bandConditionRepository = bandConditionRepository;
-        this.contestRepository = contestRepository;
-        this.meteorShowerRepository = meteorShowerRepository;
-        this.potaTask = potaRecurringTask;
-        this.sotaTask = sotaRecurringTask;
-        this.noaaTask = noaaRecurringTask;
-        this.hamQslSolarTask = hamQslSolarRecurringTask;
-        this.hamQslBandTask = hamQslBandRecurringTask;
-        this.contestTask = contestRecurringTask;
-        this.meteorTask = meteorRecurringTask;
+        this.coordinators = coordinators;
     }
 
     /**
      * Handles the ApplicationReadyEvent to check for empty repositories.
      *
-     * <p>For each data type, checks if recent data exists. If not, reschedules
-     * the corresponding task for immediate execution.
+     * <p>For each coordinator, checks if initial data load is needed.
+     * If so, reschedules the corresponding task for immediate execution.
      *
      * @param event the application ready event
      */
     @EventListener
-    @SuppressWarnings("PMD.NPathComplexity") // Sequential checks for each data source - intentionally explicit
     public void onApplicationReady(ApplicationReadyEvent event) {
         if (!eagerLoadEnabled) {
             LOG.info("Eager loading disabled - skipping startup data refresh checks");
             return;
         }
 
-        LOG.info("Checking for required startup data refreshes...");
+        LOG.info("Checking for required startup data refreshes ({} coordinators)...",
+                coordinators.size());
 
         int tasksScheduled = 0;
 
-        // Check activations
-        if (potaRefreshTask.needsInitialLoad(activationRepository)) {
-            rescheduleForImmediateExecution(potaTask, "POTA");
-            tasksScheduled++;
-        }
-        if (sotaRefreshTask.needsInitialLoad(activationRepository)) {
-            rescheduleForImmediateExecution(sotaTask, "SOTA");
-            tasksScheduled++;
-        }
-
-        // Check solar indices
-        if (noaaRefreshTask.needsInitialLoad(solarIndicesRepository)) {
-            rescheduleForImmediateExecution(noaaTask, "NOAA");
-            tasksScheduled++;
-        }
-        if (hamQslSolarRefreshTask.needsInitialLoad(solarIndicesRepository)) {
-            rescheduleForImmediateExecution(hamQslSolarTask, "HamQSL Solar");
-            tasksScheduled++;
-        }
-
-        // Check band conditions
-        if (hamQslBandRefreshTask.needsInitialLoad(bandConditionRepository)) {
-            rescheduleForImmediateExecution(hamQslBandTask, "HamQSL Band");
-            tasksScheduled++;
-        }
-
-        // Check contests
-        if (contestRefreshTask.needsInitialLoad(contestRepository)) {
-            rescheduleForImmediateExecution(contestTask, "Contest");
-            tasksScheduled++;
-        }
-
-        // Check meteor showers
-        if (meteorRefreshTask.needsInitialLoad(meteorShowerRepository)) {
-            rescheduleForImmediateExecution(meteorTask, "Meteor");
-            tasksScheduled++;
+        for (RefreshTaskCoordinator coordinator : coordinators) {
+            if (coordinator.needsInitialLoad()) {
+                rescheduleForImmediateExecution(
+                        coordinator.getRecurringTask(),
+                        coordinator.getTaskName());
+                tasksScheduled++;
+            }
         }
 
         if (tasksScheduled > 0) {

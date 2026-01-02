@@ -5,8 +5,11 @@ import com.github.kagkarlsson.scheduler.task.helper.Tasks;
 import com.github.kagkarlsson.scheduler.task.schedule.FixedDelay;
 import io.nextskip.activations.model.ActivationType;
 import io.nextskip.activations.persistence.repository.ActivationRepository;
+import io.nextskip.common.scheduler.RefreshTaskCoordinator;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -18,12 +21,39 @@ import java.time.Instant;
  * {@link SotaRefreshService} for the actual refresh logic.
  *
  * <p>Task runs every 1 minute (matching the original refresh interval).
+ *
+ * <p>Implements {@link RefreshTaskCoordinator} to enable automatic discovery
+ * by {@link io.nextskip.common.scheduler.DataRefreshStartupHandler}.
  */
 @Configuration
-public class SotaRefreshTask {
+public class SotaRefreshTask implements RefreshTaskCoordinator {
 
     private static final String TASK_NAME = "sota-refresh";
+    private static final String DISPLAY_NAME = "SOTA";
     private static final Duration REFRESH_INTERVAL = Duration.ofMinutes(1);
+    private static final Duration STALE_THRESHOLD = Duration.ofMinutes(5);
+
+    private final ActivationRepository repository;
+    private RecurringTask<Void> recurringTask;
+
+    /**
+     * Creates a new SOTA refresh task coordinator.
+     *
+     * @param repository the activation repository
+     */
+    public SotaRefreshTask(ActivationRepository repository) {
+        this.repository = repository;
+    }
+
+    /**
+     * Injects the recurring task bean after creation.
+     *
+     * @param recurringTask the created recurring task bean
+     */
+    @Autowired
+    public void setRecurringTask(@Lazy RecurringTask<Void> sotaRecurringTask) {
+        this.recurringTask = sotaRecurringTask;
+    }
 
     /**
      * Creates the recurring task bean for SOTA data refresh.
@@ -37,14 +67,33 @@ public class SotaRefreshTask {
                 .execute((taskInstance, executionContext) -> refreshService.executeRefresh());
     }
 
+    @Override
+    public RecurringTask<Void> getRecurringTask() {
+        return recurringTask;
+    }
+
+    @Override
+    public boolean needsInitialLoad() {
+        Instant recent = Instant.now().minus(STALE_THRESHOLD);
+        return repository.findByTypeAndSpottedAtAfterOrderBySpottedAtDesc(
+                ActivationType.SOTA, recent).isEmpty();
+    }
+
+    @Override
+    public String getTaskName() {
+        return DISPLAY_NAME;
+    }
+
     /**
      * Checks if initial data load is needed.
      *
      * @param repository the activation repository
      * @return true if no recent SOTA data exists
+     * @deprecated Use {@link #needsInitialLoad()} instead.
      */
+    @Deprecated(forRemoval = true)
     public boolean needsInitialLoad(ActivationRepository repository) {
-        Instant recent = Instant.now().minus(Duration.ofMinutes(5));
+        Instant recent = Instant.now().minus(STALE_THRESHOLD);
         return repository.findByTypeAndSpottedAtAfterOrderBySpottedAtDesc(
                 ActivationType.SOTA, recent).isEmpty();
     }
