@@ -197,6 +197,7 @@ class ActivationsEndpointTest {
                 14250.0,
                 "SSB",
                 now,
+                now, // lastSeenAt
                 15,
                 "POTA API",
                 park
@@ -279,13 +280,15 @@ class ActivationsEndpointTest {
                 -71.3
         );
 
+        Instant now = Instant.now();
         return new Activation(
                 id,
                 "W1ABC",
                 ActivationType.POTA,
                 14250.0,
                 "SSB",
-                Instant.now(),
+                now,
+                now, // lastSeenAt
                 10,
                 "POTA API",
                 park
@@ -303,13 +306,15 @@ class ActivationsEndpointTest {
                 "W7W"
         );
 
+        Instant now = Instant.now();
         return new Activation(
                 id,
                 "K2DEF/P",
                 ActivationType.SOTA,
                 7200.0,
                 "CW",
-                Instant.now(),
+                now,
+                now, // lastSeenAt
                 null,
                 "SOTA API",
                 summit

@@ -184,6 +184,7 @@ class SotaRefreshServiceTest {
                 14285.0,
                 "SSB",
                 now,
+                now, // lastSeenAt
                 10,
                 "SOTA",
                 "W4C/WM-001",

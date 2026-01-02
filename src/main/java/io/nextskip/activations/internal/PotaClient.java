@@ -171,6 +171,7 @@ public class PotaClient extends AbstractExternalDataClient<List<Activation>> {
                     frequency,
                     dto.mode(),
                     spottedAt,
+                    Instant.now(), // lastSeenAt: when we observed this activation in the API
                     dto.qsos(),
                     getSourceName(),
                     park

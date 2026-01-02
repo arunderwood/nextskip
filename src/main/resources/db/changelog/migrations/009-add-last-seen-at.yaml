@@ -1,0 +1,29 @@
+databaseChangeLog:
+  - changeSet:
+      id: add-last-seen-at-column
+      author: arunderwood
+      comment: Add last_seen_at column to track when activation was last observed in API refresh
+      changes:
+        # Step 1: Add nullable column
+        - addColumn:
+            tableName: activations
+            columns:
+              - column:
+                  name: last_seen_at
+                  type: timestamp with time zone
+        # Step 2: Populate from spotted_at for existing rows
+        - sql:
+            sql: UPDATE activations SET last_seen_at = spotted_at WHERE last_seen_at IS NULL
+        # Step 3: Add NOT NULL constraint
+        - addNotNullConstraint:
+            tableName: activations
+            columnName: last_seen_at
+            columnDataType: timestamp with time zone
+        # Step 4: Create index
+        - createIndex:
+            indexName: idx_activations_last_seen_at
+            tableName: activations
+            columns:
+              - column:
+                  name: last_seen_at
+                  descending: true

@@ -349,7 +349,7 @@ class ActivationEntityIntegrationTest extends AbstractPersistenceTest {
         var now = Instant.now();
         var otherSourceEntity = new ActivationEntity(
                 POTA_SPOT_ID, CALLSIGN, ActivationType.POTA,
-                FREQUENCY_20M, MODE_FT8, now, 15, "OTHER_SOURCE",
+                FREQUENCY_20M, MODE_FT8, now, now, 15, "OTHER_SOURCE",
                 PARK_REFERENCE, PARK_NAME, PARK_REGION,
                 PARK_COUNTRY, PARK_GRID, PARK_LATITUDE, PARK_LONGITUDE, null
         );
@@ -365,7 +365,7 @@ class ActivationEntityIntegrationTest extends AbstractPersistenceTest {
         var now = Instant.now();
         var entity = new ActivationEntity(
                 null, CALLSIGN, ActivationType.POTA,
-                FREQUENCY_20M, MODE_FT8, now, 15, POTA_SOURCE,
+                FREQUENCY_20M, MODE_FT8, now, now, 15, POTA_SOURCE,
                 PARK_REFERENCE, PARK_NAME, PARK_REGION,
                 PARK_COUNTRY, PARK_GRID, PARK_LATITUDE, PARK_LONGITUDE, null
         );
@@ -381,7 +381,7 @@ class ActivationEntityIntegrationTest extends AbstractPersistenceTest {
         var now = Instant.now();
         var entity = new ActivationEntity(
                 POTA_SPOT_ID, CALLSIGN, ActivationType.POTA,
-                FREQUENCY_20M, MODE_FT8, now, 15, null,
+                FREQUENCY_20M, MODE_FT8, now, now, 15, null,
                 PARK_REFERENCE, PARK_NAME, PARK_REGION,
                 PARK_COUNTRY, PARK_GRID, PARK_LATITUDE, PARK_LONGITUDE, null
         );
@@ -395,11 +395,12 @@ class ActivationEntityIntegrationTest extends AbstractPersistenceTest {
 
     @Test
     void testConvertedDomainModel_CanCalculateScore() {
-        // Given: A recently spotted activation
+        // Given: A recently spotted activation (lastSeenAt 3 minutes ago)
         var now = Instant.now();
+        var lastSeen = now.minus(3, ChronoUnit.MINUTES);
         var entity = repository.save(new ActivationEntity(
                 FRESH_SPOT_ID, CALLSIGN, ActivationType.POTA,
-                FREQUENCY_20M, MODE_FT8, now.minus(3, ChronoUnit.MINUTES), 10, POTA_SOURCE,
+                FREQUENCY_20M, MODE_FT8, lastSeen, lastSeen, 10, POTA_SOURCE,
                 PARK_REFERENCE, PARK_NAME, PARK_REGION,
                 PARK_COUNTRY, PARK_GRID, TEST_LAT, TEST_LON, null
         ));
@@ -414,19 +415,21 @@ class ActivationEntityIntegrationTest extends AbstractPersistenceTest {
 
     @Test
     void testConvertedDomainModel_CanDetermineIfFavorable() {
-        // Given: A recently spotted activation (within 15 minutes)
+        // Given: A recently spotted activation (lastSeenAt within 15 minutes)
         var now = Instant.now();
+        var freshTime = now.minus(10, ChronoUnit.MINUTES);
         var freshEntity = repository.save(new ActivationEntity(
                 FRESH_SPOT_ID, CALLSIGN, ActivationType.POTA,
-                FREQUENCY_20M, MODE_FT8, now.minus(10, ChronoUnit.MINUTES), 10, POTA_SOURCE,
+                FREQUENCY_20M, MODE_FT8, freshTime, freshTime, 10, POTA_SOURCE,
                 PARK_REFERENCE, PARK_NAME, PARK_REGION,
                 PARK_COUNTRY, PARK_GRID, TEST_LAT, TEST_LON, null
         ));
 
-        // And: An old activation
+        // And: An old activation (lastSeenAt 45 minutes ago)
+        var staleTime = now.minus(45, ChronoUnit.MINUTES);
         var staleEntity = repository.save(new ActivationEntity(
                 STALE_SPOT_ID, CALLSIGN, ActivationType.POTA,
-                FREQUENCY_20M, MODE_FT8, now.minus(45, ChronoUnit.MINUTES), 10, POTA_SOURCE,
+                FREQUENCY_20M, MODE_FT8, staleTime, staleTime, 10, POTA_SOURCE,
                 ALT_PARK_REFERENCE, ALT_PARK_NAME, PARK_REGION,
                 PARK_COUNTRY, PARK_GRID, TEST_LAT, TEST_LON, null
         ));
@@ -511,7 +514,7 @@ class ActivationEntityIntegrationTest extends AbstractPersistenceTest {
                 PARK_COUNTRY, PARK_GRID, PARK_LATITUDE, PARK_LONGITUDE);
         return new Activation(
                 POTA_SPOT_ID, CALLSIGN, ActivationType.POTA,
-                FREQUENCY_20M, MODE_FT8, now, 15, POTA_SOURCE, park
+                FREQUENCY_20M, MODE_FT8, now, now, 15, POTA_SOURCE, park
         );
     }
 
@@ -520,14 +523,14 @@ class ActivationEntityIntegrationTest extends AbstractPersistenceTest {
         var summit = new Summit(SUMMIT_REFERENCE, SUMMIT_NAME, SUMMIT_REGION, SUMMIT_ASSOCIATION);
         return new Activation(
                 SOTA_SPOT_ID, CALLSIGN, ActivationType.SOTA,
-                FREQUENCY_40M, MODE_CW, now, 5, SOTA_SOURCE, summit
+                FREQUENCY_40M, MODE_CW, now, now, 5, SOTA_SOURCE, summit
         );
     }
 
     private ActivationEntity createPotaEntity(Instant spottedAt) {
         return new ActivationEntity(
                 POTA_SPOT_ID + "-" + spottedAt.toEpochMilli(), CALLSIGN, ActivationType.POTA,
-                FREQUENCY_20M, MODE_FT8, spottedAt, 15, POTA_SOURCE,
+                FREQUENCY_20M, MODE_FT8, spottedAt, spottedAt, 15, POTA_SOURCE,
                 PARK_REFERENCE, PARK_NAME, PARK_REGION,
                 PARK_COUNTRY, PARK_GRID, PARK_LATITUDE, PARK_LONGITUDE, null
         );
@@ -536,7 +539,7 @@ class ActivationEntityIntegrationTest extends AbstractPersistenceTest {
     private ActivationEntity createSotaEntity(Instant spottedAt) {
         return new ActivationEntity(
                 SOTA_SPOT_ID + "-" + spottedAt.toEpochMilli(), CALLSIGN, ActivationType.SOTA,
-                FREQUENCY_40M, MODE_CW, spottedAt, 5, SOTA_SOURCE,
+                FREQUENCY_40M, MODE_CW, spottedAt, spottedAt, 5, SOTA_SOURCE,
                 SUMMIT_REFERENCE, SUMMIT_NAME, SUMMIT_REGION,
                 null, null, null, null, SUMMIT_ASSOCIATION
         );
@@ -549,7 +552,7 @@ class ActivationEntityIntegrationTest extends AbstractPersistenceTest {
     private ActivationEntity createActivationEntity(String spotId, Instant spottedAt, String callsign) {
         return new ActivationEntity(
                 spotId, callsign, ActivationType.POTA,
-                FREQUENCY_20M, MODE_FT8, spottedAt, 10, POTA_SOURCE,
+                FREQUENCY_20M, MODE_FT8, spottedAt, spottedAt, 10, POTA_SOURCE,
                 PARK_REFERENCE, PARK_NAME, PARK_REGION,
                 PARK_COUNTRY, PARK_GRID, TEST_LAT, TEST_LON, null
         );

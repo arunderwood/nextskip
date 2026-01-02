@@ -18,6 +18,10 @@ import static org.junit.jupiter.api.Assertions.*;
  *
  * <p>Tests use invariant-based assertions to verify scoring contracts
  * without coupling to specific algorithm coefficients.
+ *
+ * <p>Scoring is based on {@code lastSeenAt} (when the activation was last
+ * observed in an API refresh), not {@code spottedAt} (original spot creation time).
+ * This enables accurate freshness display even for long-running activations.
  */
 class ActivationTest {
 
@@ -30,48 +34,82 @@ class ActivationTest {
 
         @Test
         void testIsFavorable_WithinFreshThreshold_ReturnsTrue() {
-            // Given: Activation spotted 10 minutes ago (within 15-minute fresh threshold)
+            // Given: Activation last seen 10 minutes ago (within 15-minute fresh threshold)
             Instant tenMinutesAgo = Instant.now().minus(10, ChronoUnit.MINUTES);
-            Activation activation = createActivation(tenMinutesAgo);
+            Activation activation = createActivationWithLastSeenAt(tenMinutesAgo);
 
             // When/Then
             assertThat(activation.isFavorable())
-                    .as("Should be favorable when spotted within fresh threshold")
+                    .as("Should be favorable when last seen within fresh threshold")
                     .isTrue();
         }
 
         @Test
         void testIsFavorable_ExactlyAtFreshThreshold_ReturnsTrue() {
-            // Given: Activation spotted exactly 15 minutes ago
+            // Given: Activation last seen exactly 15 minutes ago
             Instant fifteenMinutesAgo = Instant.now().minus(ACTIVATION_FRESH_THRESHOLD, ChronoUnit.MINUTES);
-            Activation activation = createActivation(fifteenMinutesAgo);
+            Activation activation = createActivationWithLastSeenAt(fifteenMinutesAgo);
 
             // When/Then
             assertThat(activation.isFavorable())
-                    .as("Should be favorable when spotted exactly at fresh threshold")
+                    .as("Should be favorable when last seen exactly at fresh threshold")
                     .isTrue();
         }
 
         @Test
         void testIsFavorable_BeyondFreshThreshold_ReturnsFalse() {
-            // Given: Activation spotted 20 minutes ago
+            // Given: Activation last seen 20 minutes ago
             Instant twentyMinutesAgo = Instant.now().minus(20, ChronoUnit.MINUTES);
-            Activation activation = createActivation(twentyMinutesAgo);
+            Activation activation = createActivationWithLastSeenAt(twentyMinutesAgo);
 
             // When/Then
             assertThat(activation.isFavorable())
-                    .as("Should not be favorable when spotted beyond fresh threshold")
+                    .as("Should not be favorable when last seen beyond fresh threshold")
                     .isFalse();
         }
 
         @Test
-        void testIsFavorable_NullSpottedAt_ReturnsFalse() {
-            // Given: Activation with null spottedAt
-            Activation activation = createActivation(null);
+        void testIsFavorable_NullLastSeenAt_ReturnsFalse() {
+            // Given: Activation with null lastSeenAt
+            Activation activation = createActivationWithLastSeenAt(null);
 
             // When/Then
             assertThat(activation.isFavorable())
-                    .as("Should not be favorable when spottedAt is null")
+                    .as("Should not be favorable when lastSeenAt is null")
+                    .isFalse();
+        }
+    }
+
+    // =========================================================================
+    // isFavorable(Instant asOf) Deterministic Tests
+    // =========================================================================
+
+    @Nested
+    class IsFavorableDeterministicTests {
+
+        @Test
+        void testIsFavorable_WithExplicitAsOf_IsDeterministic() {
+            // Given: Fixed reference time for deterministic testing
+            Instant now = Instant.parse(REFERENCE_TIME_STRING);
+            Instant lastSeen = now.minus(10, ChronoUnit.MINUTES);
+            Activation activation = createActivationWithLastSeenAt(lastSeen);
+
+            // When/Then: Using explicit asOf parameter
+            assertThat(activation.isFavorable(now))
+                    .as("Should be favorable with explicit reference time")
+                    .isTrue();
+        }
+
+        @Test
+        void testIsFavorable_BeyondThresholdWithExplicitAsOf_ReturnsFalse() {
+            // Given: Fixed reference time for deterministic testing
+            Instant now = Instant.parse(REFERENCE_TIME_STRING);
+            Instant lastSeen = now.minus(20, ChronoUnit.MINUTES);
+            Activation activation = createActivationWithLastSeenAt(lastSeen);
+
+            // When/Then
+            assertThat(activation.isFavorable(now))
+                    .as("Should not be favorable when last seen 20 minutes before reference time")
                     .isFalse();
         }
     }
@@ -90,7 +128,7 @@ class ActivationTest {
 
             for (long minutesAgo : minutesAgoValues) {
                 Instant time = Instant.now().minus(minutesAgo, ChronoUnit.MINUTES);
-                Activation activation = createActivation(time);
+                Activation activation = createActivationWithLastSeenAt(time);
                 int score = activation.getScore();
 
                 assertThat(score)
@@ -106,7 +144,7 @@ class ActivationTest {
 
             for (long minutesAgo = 0; minutesAgo <= 90; minutesAgo += 5) {
                 Instant time = Instant.now().minus(minutesAgo, ChronoUnit.MINUTES);
-                Activation activation = createActivation(time);
+                Activation activation = createActivationWithLastSeenAt(time);
                 scores.add(activation.getScore());
             }
 
@@ -126,10 +164,10 @@ class ActivationTest {
             Instant thirtyMinAgo = Instant.now().minus(30, ChronoUnit.MINUTES);
             Instant sixtyMinAgo = Instant.now().minus(60, ChronoUnit.MINUTES);
 
-            Activation fresh = createActivation(fiveMinAgo);
-            Activation aging = createActivation(fifteenMinAgo);
-            Activation older = createActivation(thirtyMinAgo);
-            Activation stale = createActivation(sixtyMinAgo);
+            Activation fresh = createActivationWithLastSeenAt(fiveMinAgo);
+            Activation aging = createActivationWithLastSeenAt(fifteenMinAgo);
+            Activation older = createActivationWithLastSeenAt(thirtyMinAgo);
+            Activation stale = createActivationWithLastSeenAt(sixtyMinAgo);
 
             assertThat(fresh.getScore())
                     .as("Fresh >= Aging")
@@ -152,9 +190,9 @@ class ActivationTest {
 
         @Test
         void testGetScore_VeryFresh_ReturnsMaxScore() {
-            // Boundary: Activations within VERY_FRESH threshold should score maximum
+            // Boundary: Activations last seen within VERY_FRESH threshold should score maximum
             Instant threeMinutesAgo = Instant.now().minus(3, ChronoUnit.MINUTES);
-            Activation activation = createActivation(threeMinutesAgo);
+            Activation activation = createActivationWithLastSeenAt(threeMinutesAgo);
 
             assertThat(activation.getScore())
                     .as("Very fresh activations should score maximum")
@@ -165,7 +203,7 @@ class ActivationTest {
         void testGetScore_ExactlyAtVeryFreshThreshold_ReturnsMaxScore() {
             // Boundary: Exactly at the very fresh threshold
             Instant atThreshold = Instant.now().minus(ACTIVATION_VERY_FRESH_THRESHOLD, ChronoUnit.MINUTES);
-            Activation activation = createActivation(atThreshold);
+            Activation activation = createActivationWithLastSeenAt(atThreshold);
 
             assertThat(activation.getScore())
                     .as("Score at very fresh threshold should be maximum")
@@ -174,9 +212,9 @@ class ActivationTest {
 
         @Test
         void testGetScore_VeryStale_ReturnsMinScore() {
-            // Boundary: Activations beyond stale threshold should score minimum
+            // Boundary: Activations last seen beyond stale threshold should score minimum
             Instant ninetyMinutesAgo = Instant.now().minus(90, ChronoUnit.MINUTES);
-            Activation activation = createActivation(ninetyMinutesAgo);
+            Activation activation = createActivationWithLastSeenAt(ninetyMinutesAgo);
 
             assertThat(activation.getScore())
                     .as("Very stale activations should score minimum")
@@ -184,12 +222,12 @@ class ActivationTest {
         }
 
         @Test
-        void testGetScore_NullSpottedAt_ReturnsMinScore() {
-            // Edge case: null timestamp
-            Activation activation = createActivation(null);
+        void testGetScore_NullLastSeenAt_ReturnsMinScore() {
+            // Edge case: null lastSeenAt
+            Activation activation = createActivationWithLastSeenAt(null);
 
             assertThat(activation.getScore())
-                    .as("Null spottedAt should score minimum")
+                    .as("Null lastSeenAt should score minimum")
                     .isEqualTo(MIN_SCORE);
         }
 
@@ -197,11 +235,108 @@ class ActivationTest {
         void testGetScore_FutureTimestamp_ReturnsMaxScore() {
             // Edge case: future timestamps treated as fresh
             Instant futureTime = Instant.now().plus(10, ChronoUnit.MINUTES);
-            Activation activation = createActivation(futureTime);
+            Activation activation = createActivationWithLastSeenAt(futureTime);
 
             assertThat(activation.getScore())
                     .as("Future timestamps should score maximum")
                     .isEqualTo(MAX_SCORE);
+        }
+    }
+
+    // =========================================================================
+    // getScore(Instant asOf) Deterministic Tests
+    // =========================================================================
+
+    @Nested
+    class ScoreDeterministicTests {
+
+        @Test
+        void testGetScore_WithExplicitAsOf_IsDeterministic() {
+            // Given: Fixed reference time for deterministic testing
+            Instant now = Instant.parse(REFERENCE_TIME_STRING);
+            Instant lastSeen = now.minus(3, ChronoUnit.MINUTES);
+            Activation activation = createActivationWithLastSeenAt(lastSeen);
+
+            // When/Then: Using explicit asOf parameter
+            assertThat(activation.getScore(now))
+                    .as("Very fresh activation (3 min) should score maximum")
+                    .isEqualTo(MAX_SCORE);
+        }
+
+        @Test
+        void testGetScore_MonotonicWithExplicitAsOf() {
+            // Given: Fixed reference time
+            Instant now = Instant.parse(REFERENCE_TIME_STRING);
+
+            // Create activations with different last-seen times
+            Activation fresh = createActivationWithLastSeenAt(now.minus(5, ChronoUnit.MINUTES));
+            Activation aging = createActivationWithLastSeenAt(now.minus(20, ChronoUnit.MINUTES));
+            Activation stale = createActivationWithLastSeenAt(now.minus(45, ChronoUnit.MINUTES));
+
+            // When/Then: Verify monotonic decrease using explicit asOf
+            assertThat(fresh.getScore(now))
+                    .as("Fresh >= Aging with explicit asOf")
+                    .isGreaterThanOrEqualTo(aging.getScore(now));
+            assertThat(aging.getScore(now))
+                    .as("Aging >= Stale with explicit asOf")
+                    .isGreaterThanOrEqualTo(stale.getScore(now));
+        }
+    }
+
+    // =========================================================================
+    // LastSeenAt Behavior Tests
+    // =========================================================================
+
+    @Nested
+    class LastSeenAtBehaviorTests {
+
+        @Test
+        void testGetScore_UsesLastSeenAt_NotSpottedAt() {
+            // Given: Activation with old spottedAt but recent lastSeenAt
+            Instant now = Instant.parse(REFERENCE_TIME_STRING);
+            Instant originalSpot = now.minus(2, ChronoUnit.HOURS);  // Old spot
+            Instant recentlySeen = now.minus(5, ChronoUnit.MINUTES);  // Recent observation
+
+            Activation activation = pota()
+                    .spottedAt(originalSpot)
+                    .lastSeenAt(recentlySeen)
+                    .build();
+
+            // When/Then: Score should be based on lastSeenAt (5 min), not spottedAt (2 hours)
+            assertThat(activation.getScore(now))
+                    .as("Score should be based on lastSeenAt, not spottedAt")
+                    .isEqualTo(MAX_SCORE);
+        }
+
+        @Test
+        void testIsFavorable_UsesLastSeenAt_NotSpottedAt() {
+            // Given: Activation with old spottedAt but recent lastSeenAt
+            Instant now = Instant.parse(REFERENCE_TIME_STRING);
+            Instant originalSpot = now.minus(2, ChronoUnit.HOURS);
+            Instant recentlySeen = now.minus(10, ChronoUnit.MINUTES);
+
+            Activation activation = pota()
+                    .spottedAt(originalSpot)
+                    .lastSeenAt(recentlySeen)
+                    .build();
+
+            // When/Then: Favorable should be based on lastSeenAt (10 min), not spottedAt (2 hours)
+            assertThat(activation.isFavorable(now))
+                    .as("Favorable should be based on lastSeenAt, not spottedAt")
+                    .isTrue();
+        }
+
+        @Test
+        void testGetScore_NullLastSeenAt_ReturnsZero() {
+            // Given: Activation with null lastSeenAt
+            Activation activation = pota()
+                    .lastSeenAt(null)
+                    .build();
+
+            // When/Then: Should return 0 score (defensive - shouldn't happen in production)
+            assertThat(activation.getScore())
+                    .as("Null lastSeenAt should return zero score")
+                    .isEqualTo(MIN_SCORE);
         }
     }
 
@@ -214,7 +349,7 @@ class ActivationTest {
 
         @Test
         void testActivation_ImplementsScoreableInterface() {
-            Activation activation = createActivation(Instant.now());
+            Activation activation = createActivationWithLastSeenAt(Instant.now());
 
             assertThat(activation)
                     .as("Activation should implement Scoreable interface")
@@ -227,9 +362,11 @@ class ActivationTest {
     // =========================================================================
 
     /**
-     * Helper method to create a test Activation.
+     * Helper method to create a test Activation with specified lastSeenAt.
+     *
+     * <p>Scoring is based on lastSeenAt, so this is the primary helper for score tests.
      */
-    private Activation createActivation(Instant spottedAt) {
-        return pota().spottedAt(spottedAt).build();
+    private Activation createActivationWithLastSeenAt(Instant lastSeenAt) {
+        return pota().lastSeenAt(lastSeenAt).build();
     }
 }

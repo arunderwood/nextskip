@@ -185,13 +185,15 @@ class ResponseRecordsTest {
                 -104.9903
         );
 
+        Instant now = Instant.now();
         return new Activation(
                 "spot-123",
                 "W1ABC",
                 type,
                 14074.0,
                 "FT8",
-                Instant.now(),
+                now,
+                now, // lastSeenAt
                 5,
                 type.name(),
                 park
