@@ -77,6 +77,9 @@ public class ContestEntity {
     @Column(name = "official_rules_url", length = 500)
     private String officialRulesUrl;
 
+    @Column(name = "wa7bnm_ref", length = 20)
+    private String wa7bnmRef;
+
     /**
      * Default constructor required by JPA.
      */
@@ -195,6 +198,10 @@ public class ContestEntity {
         return officialRulesUrl;
     }
 
+    public String getWa7bnmRef() {
+        return wa7bnmRef;
+    }
+
     // Setters (for JPA)
 
     public void setName(String name) {
@@ -227,5 +234,9 @@ public class ContestEntity {
 
     public void setOfficialRulesUrl(String officialRulesUrl) {
         this.officialRulesUrl = officialRulesUrl;
+    }
+
+    public void setWa7bnmRef(String wa7bnmRef) {
+        this.wa7bnmRef = wa7bnmRef;
     }
 }

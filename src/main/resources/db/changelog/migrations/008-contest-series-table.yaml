@@ -1,0 +1,139 @@
+databaseChangeLog:
+  - changeSet:
+      id: 008-create-contest-series-table
+      author: nextskip
+      comment: Contest series table for storing scraped WA7BNM contest metadata
+      changes:
+        - createTable:
+            tableName: contest_series
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: wa7bnm_ref
+                  type: varchar(20)
+                  constraints:
+                    nullable: false
+                    unique: true
+              - column:
+                  name: name
+                  type: varchar(200)
+              - column:
+                  name: sponsor
+                  type: varchar(100)
+              - column:
+                  name: official_rules_url
+                  type: varchar(500)
+              - column:
+                  name: exchange
+                  type: varchar(200)
+              - column:
+                  name: cabrillo_name
+                  type: varchar(50)
+              - column:
+                  name: revision_date
+                  type: date
+              - column:
+                  name: last_scraped_at
+                  type: timestamp with time zone
+        - createIndex:
+            indexName: idx_contest_series_wa7bnm_ref
+            tableName: contest_series
+            columns:
+              - column:
+                  name: wa7bnm_ref
+
+  - changeSet:
+      id: 008-create-contest-series-bands-table
+      author: nextskip
+      comment: Junction table for contest series frequency bands (ElementCollection)
+      changes:
+        - createTable:
+            tableName: contest_series_bands
+            columns:
+              - column:
+                  name: series_id
+                  type: bigint
+                  constraints:
+                    nullable: false
+              - column:
+                  name: band
+                  type: varchar(20)
+                  constraints:
+                    nullable: false
+        - addForeignKeyConstraint:
+            baseTableName: contest_series_bands
+            baseColumnNames: series_id
+            referencedTableName: contest_series
+            referencedColumnNames: id
+            constraintName: fk_contest_series_bands_series
+            onDelete: CASCADE
+        - createIndex:
+            indexName: idx_contest_series_bands_series_id
+            tableName: contest_series_bands
+            columns:
+              - column:
+                  name: series_id
+        - sql:
+            comment: CHECK constraint for valid FrequencyBand enum values
+            sql: >
+              ALTER TABLE contest_series_bands
+              ADD CONSTRAINT chk_contest_series_bands_band_valid
+              CHECK (band IN ('BAND_160M', 'BAND_80M', 'BAND_60M', 'BAND_40M',
+                              'BAND_30M', 'BAND_20M', 'BAND_17M', 'BAND_15M',
+                              'BAND_12M', 'BAND_10M', 'BAND_6M', 'BAND_2M'))
+
+  - changeSet:
+      id: 008-create-contest-series-modes-table
+      author: nextskip
+      comment: Junction table for contest series operating modes (ElementCollection)
+      changes:
+        - createTable:
+            tableName: contest_series_modes
+            columns:
+              - column:
+                  name: series_id
+                  type: bigint
+                  constraints:
+                    nullable: false
+              - column:
+                  name: mode
+                  type: varchar(20)
+                  constraints:
+                    nullable: false
+        - addForeignKeyConstraint:
+            baseTableName: contest_series_modes
+            baseColumnNames: series_id
+            referencedTableName: contest_series
+            referencedColumnNames: id
+            constraintName: fk_contest_series_modes_series
+            onDelete: CASCADE
+        - createIndex:
+            indexName: idx_contest_series_modes_series_id
+            tableName: contest_series_modes
+            columns:
+              - column:
+                  name: series_id
+
+  - changeSet:
+      id: 008-add-wa7bnm-ref-to-contests
+      author: nextskip
+      comment: Add WA7BNM reference to contests table for linking to series
+      changes:
+        - addColumn:
+            tableName: contests
+            columns:
+              - column:
+                  name: wa7bnm_ref
+                  type: varchar(20)
+        - createIndex:
+            indexName: idx_contests_wa7bnm_ref
+            tableName: contests
+            columns:
+              - column:
+                  name: wa7bnm_ref

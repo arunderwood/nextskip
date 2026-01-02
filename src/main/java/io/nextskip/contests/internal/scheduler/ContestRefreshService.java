@@ -18,6 +18,8 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Service for refreshing contest calendar data.
@@ -34,6 +36,9 @@ public class ContestRefreshService extends AbstractRefreshService {
 
     private static final Logger LOG = LoggerFactory.getLogger(ContestRefreshService.class);
     private static final String SERVICE_NAME = "Contest";
+
+    // Pattern to extract ref parameter from contest details URL
+    private static final Pattern WA7BNM_REF_PATTERN = Pattern.compile("[?&]ref=(\\d+)");
 
     private final ContestCalendarClient contestClient;
     private final ContestRepository repository;
@@ -63,10 +68,9 @@ public class ContestRefreshService extends AbstractRefreshService {
         // Fetch fresh data from API (returns ContestICalDto list)
         List<ContestICalDto> dtos = contestClient.fetch();
 
-        // Convert DTOs to domain model, then to entities
+        // Convert DTOs to entities with wa7bnmRef
         List<ContestEntity> entities = dtos.stream()
-                .map(this::convertToContest)
-                .map(ContestEntity::fromDomain)
+                .map(this::convertToEntity)
                 .toList();
 
         try {
@@ -97,16 +101,17 @@ public class ContestRefreshService extends AbstractRefreshService {
     }
 
     /**
-     * Converts a ContestICalDto to a Contest domain model.
+     * Converts a ContestICalDto to a ContestEntity with wa7bnmRef.
      *
      * <p>Since the iCal feed doesn't include band/mode information,
      * these are set to empty sets. The calendar source URL is preserved.
+     * The WA7BNM reference is extracted from the details URL.
      *
      * @param dto the iCal DTO to convert
-     * @return the contest domain model
+     * @return the contest entity
      */
-    private Contest convertToContest(ContestICalDto dto) {
-        return new Contest(
+    private ContestEntity convertToEntity(ContestICalDto dto) {
+        Contest contest = new Contest(
                 dto.summary(),
                 dto.startTime(),
                 dto.endTime(),
@@ -116,5 +121,29 @@ public class ContestRefreshService extends AbstractRefreshService {
                 dto.detailsUrl(),   // calendarSourceUrl
                 null                // officialRulesUrl not available from iCal
         );
+
+        ContestEntity entity = ContestEntity.fromDomain(contest);
+        entity.setWa7bnmRef(extractWa7bnmRef(dto.detailsUrl()));
+        return entity;
+    }
+
+    /**
+     * Extracts the WA7BNM reference from a contest details URL.
+     *
+     * <p>Parses URLs like {@code https://contestcalendar.com/contestdetails.php?ref=8}
+     * and returns the ref parameter value ("8").
+     *
+     * @param url the contest details URL
+     * @return the ref parameter value, or null if not found
+     */
+    String extractWa7bnmRef(String url) {
+        if (url == null || url.isBlank()) {
+            return null;
+        }
+        Matcher matcher = WA7BNM_REF_PATTERN.matcher(url);
+        if (matcher.find()) {
+            return matcher.group(1);
+        }
+        return null;
     }
 }
