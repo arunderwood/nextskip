@@ -78,9 +78,9 @@ public class SotaRefreshService extends AbstractRefreshService {
             repository.saveAll(entities);
             this.savedCount = entities.size();
 
-            // Cleanup old SOTA data (source-filtered to avoid race condition with POTA refresh)
+            // Cleanup SOTA data not seen in API for 2+ hours (source-filtered to avoid race condition)
             Instant cutoff = Instant.now().minus(DATA_RETENTION);
-            this.deletedCount = repository.deleteBySourceAndSpottedAtBefore("SOTA API", cutoff);
+            this.deletedCount = repository.deleteBySourceAndLastSeenAtBefore("SOTA API", cutoff);
 
         } catch (DataAccessException e) {
             throw new DataRefreshException("Database error during SOTA refresh", e);

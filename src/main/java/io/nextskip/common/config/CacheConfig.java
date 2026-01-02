@@ -100,7 +100,7 @@ public class CacheConfig {
         LOG.debug("Loading activations from database");
         Instant cutoff = Instant.now(clock).minus(ACTIVATIONS_RETENTION);
         List<Activation> activations = repository
-                .findBySpottedAtAfterOrderBySpottedAtDesc(cutoff)
+                .findByLastSeenAtAfterOrderByLastSeenAtDesc(cutoff)
                 .stream()
                 .map(ActivationEntity::toDomain)
                 .toList();

@@ -33,6 +33,18 @@ public interface ActivationRepository extends JpaRepository<ActivationEntity, Lo
     List<ActivationEntity> findBySpottedAtAfterOrderBySpottedAtDesc(Instant spottedAt);
 
     /**
+     * Find all activations last seen after a given timestamp.
+     *
+     * <p>Use this method instead of {@link #findBySpottedAtAfterOrderBySpottedAtDesc(Instant)}
+     * when you need activations that are still appearing in API responses, regardless of
+     * their original spot time.
+     *
+     * @param lastSeenAt the timestamp to filter from
+     * @return list of recently observed activations ordered by last seen time descending
+     */
+    List<ActivationEntity> findByLastSeenAtAfterOrderByLastSeenAtDesc(Instant lastSeenAt);
+
+    /**
      * Find all activations of a specific type spotted after a given timestamp.
      *
      * @param type the activation type (POTA or SOTA)
@@ -97,4 +109,16 @@ public interface ActivationRepository extends JpaRepository<ActivationEntity, Lo
      * @return number of deleted records
      */
     int deleteBySourceAndSpottedAtBefore(String source, Instant spottedAt);
+
+    /**
+     * Delete activations from a specific source not seen since a given timestamp.
+     *
+     * <p>Use this method to clean up activations that are no longer appearing in
+     * API responses, regardless of their original spot time.
+     *
+     * @param source the data source identifier (e.g., "POTA API", "SOTA API")
+     * @param lastSeenAt the cutoff timestamp
+     * @return number of deleted records
+     */
+    int deleteBySourceAndLastSeenAtBefore(String source, Instant lastSeenAt);
 }
