@@ -37,6 +37,8 @@ class ContestSeriesClientTest {
     private static final String CONTENT_TYPE_HTML = "text/html";
     private static final String TEST_CONTEST_NAME = "Test Contest";
     private static final String TD_CLOSE = "</td></tr>\n";
+    private static final String TEST_NAME_SHORT = "Test";
+    private static final String BAND_40M = "40m";
 
     private WireMockServer wireMockServer;
     private ContestSeriesClient client;
@@ -166,7 +168,7 @@ class ContestSeriesClientTest {
 
     @Test
     void testFetchSeriesDetails_ModesParsing_Any() {
-        String html = createContestDetailPage(TEST_CONTEST_NAME, "40m", "Any", null, null, null, null, null);
+        String html = createContestDetailPage(TEST_CONTEST_NAME, BAND_40M, "Any", null, null, null, null, null);
 
         wireMockServer.stubFor(get(urlEqualTo("/contestdetails.php?ref=4"))
                 .willReturn(aResponse()
@@ -183,7 +185,7 @@ class ContestSeriesClientTest {
 
     @Test
     void testFetchSeriesDetails_ModesParsing_Phone() {
-        String html = createContestDetailPage(TEST_CONTEST_NAME, "40m", "Phone", null, null, null, null, null);
+        String html = createContestDetailPage(TEST_CONTEST_NAME, BAND_40M, "Phone", null, null, null, null, null);
 
         wireMockServer.stubFor(get(urlEqualTo("/contestdetails.php?ref=5"))
                 .willReturn(aResponse()
@@ -198,7 +200,7 @@ class ContestSeriesClientTest {
 
     @Test
     void testFetchSeriesDetails_ModesParsing_Digital() {
-        String html = createContestDetailPage(TEST_CONTEST_NAME, "40m", "RTTY, FT8", null, null, null, null, null);
+        String html = createContestDetailPage(TEST_CONTEST_NAME, BAND_40M, "RTTY, FT8", null, null, null, null, null);
 
         wireMockServer.stubFor(get(urlEqualTo("/contestdetails.php?ref=6"))
                 .willReturn(aResponse()
@@ -369,7 +371,7 @@ class ContestSeriesClientTest {
 
     @Test
     void testParseBands_AllFormat() {
-        String html = createContestDetailPage("Test", "All HF bands", "CW", null, null, null, null, null);
+        String html = createContestDetailPage(TEST_NAME_SHORT, "All HF bands", "CW", null, null, null, null, null);
 
         wireMockServer.stubFor(get(urlEqualTo("/contestdetails.php?ref=20"))
                 .willReturn(aResponse()
@@ -381,6 +383,494 @@ class ContestSeriesClientTest {
 
         // "All" should include all HF bands
         assertTrue(result.bands().size() >= 10);
+    }
+
+    @Test
+    void testParseBands_EmptyBandsField_ReturnsEmptySet() {
+        String html = createContestDetailPage(TEST_NAME_SHORT, "   ", "CW", null, null, null, null, null);
+
+        wireMockServer.stubFor(get(urlEqualTo("/contestdetails.php?ref=21"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader(HEADER_CONTENT_TYPE, CONTENT_TYPE_HTML)
+                        .withBody(html)));
+
+        ContestSeriesDto result = client.fetchSeriesDetails("21");
+
+        assertTrue(result.bands().isEmpty());
+    }
+
+    @Test
+    void testParseModes_EmptyModeField_ReturnsEmptySet() {
+        String html = createContestDetailPage(TEST_NAME_SHORT, BAND_40M, "   ", null, null, null, null, null);
+
+        wireMockServer.stubFor(get(urlEqualTo("/contestdetails.php?ref=22"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader(HEADER_CONTENT_TYPE, CONTENT_TYPE_HTML)
+                        .withBody(html)));
+
+        ContestSeriesDto result = client.fetchSeriesDetails("22");
+
+        assertTrue(result.modes().isEmpty());
+    }
+
+    @Test
+    void testParseModes_FmMode_ParsesFm() {
+        String html = createContestDetailPage(TEST_NAME_SHORT, "2m", "FM", null, null, null, null, null);
+
+        wireMockServer.stubFor(get(urlEqualTo("/contestdetails.php?ref=23"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader(HEADER_CONTENT_TYPE, CONTENT_TYPE_HTML)
+                        .withBody(html)));
+
+        ContestSeriesDto result = client.fetchSeriesDetails("23");
+
+        assertTrue(result.modes().contains("FM"));
+    }
+
+    @Test
+    void testParseModes_AmMode_ParsesAm() {
+        String html = createContestDetailPage(TEST_NAME_SHORT, BAND_40M, "AM", null, null, null, null, null);
+
+        wireMockServer.stubFor(get(urlEqualTo("/contestdetails.php?ref=24"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader(HEADER_CONTENT_TYPE, CONTENT_TYPE_HTML)
+                        .withBody(html)));
+
+        ContestSeriesDto result = client.fetchSeriesDetails("24");
+
+        assertTrue(result.modes().contains("AM"));
+    }
+
+    // ========== parseContestName fallback tests ==========
+
+    @Test
+    void testParseContestName_NoH1WithTitleAndDash_ParsesTitleBeforeDash() {
+        // No h1 element, only title with " - " in it
+        String html = "<html><head><title>Test Contest - Contest Calendar</title></head>"
+                + "<body><p>Some content</p></body></html>";
+
+        wireMockServer.stubFor(get(urlEqualTo("/contestdetails.php?ref=30"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader(HEADER_CONTENT_TYPE, CONTENT_TYPE_HTML)
+                        .withBody(html)));
+
+        ContestSeriesDto result = client.fetchSeriesDetails("30");
+
+        assertEquals("Test Contest", result.name());
+    }
+
+    @Test
+    void testParseContestName_NoH1WithTitleNoDash_ParsesFullTitle() {
+        // No h1 element, title without " - "
+        String html = "<html><head><title>Simple Contest Name</title></head>"
+                + "<body><p>Some content</p></body></html>";
+
+        wireMockServer.stubFor(get(urlEqualTo("/contestdetails.php?ref=31"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader(HEADER_CONTENT_TYPE, CONTENT_TYPE_HTML)
+                        .withBody(html)));
+
+        ContestSeriesDto result = client.fetchSeriesDetails("31");
+
+        assertEquals("Simple Contest Name", result.name());
+    }
+
+    @Test
+    void testParseContestName_NoH1NoTitle_ReturnsNull() {
+        // No h1 element, no title
+        String html = "<html><head></head><body><p>Some content</p></body></html>";
+
+        wireMockServer.stubFor(get(urlEqualTo("/contestdetails.php?ref=32"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader(HEADER_CONTENT_TYPE, CONTENT_TYPE_HTML)
+                        .withBody(html)));
+
+        ContestSeriesDto result = client.fetchSeriesDetails("32");
+
+        assertNull(result.name());
+    }
+
+    @Test
+    void testParseContestName_EmptyH1_FallsBackToTitle() {
+        // Empty h1 element, should fall back to title
+        String html = "<html><head><title>Fallback Title</title></head>"
+                + "<body><h1>   </h1><p>Content</p></body></html>";
+
+        wireMockServer.stubFor(get(urlEqualTo("/contestdetails.php?ref=33"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader(HEADER_CONTENT_TYPE, CONTENT_TYPE_HTML)
+                        .withBody(html)));
+
+        ContestSeriesDto result = client.fetchSeriesDetails("33");
+
+        assertEquals("Fallback Title", result.name());
+    }
+
+    // ========== Definition list parsing tests ==========
+
+    @Test
+    void testParseFields_DefinitionListFormat_ParsesValues() {
+        // HTML using <dl><dt><dd> format instead of table
+        String html = """
+                <html>
+                <head><title>DL Contest</title></head>
+                <body>
+                <h1>Definition List Contest</h1>
+                <dl>
+                <dt>Bands:</dt><dd>40, 20m</dd>
+                <dt>Mode:</dt><dd>CW, SSB</dd>
+                <dt>Sponsor:</dt><dd>DL Club</dd>
+                <dt>Exchange:</dt><dd>RST + Serial</dd>
+                <dt>Cabrillo name:</dt><dd>DL-CONTEST</dd>
+                </dl>
+                </body>
+                </html>
+                """;
+
+        wireMockServer.stubFor(get(urlEqualTo("/contestdetails.php?ref=40"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader(HEADER_CONTENT_TYPE, CONTENT_TYPE_HTML)
+                        .withBody(html)));
+
+        ContestSeriesDto result = client.fetchSeriesDetails("40");
+
+        assertEquals("Definition List Contest", result.name());
+        assertTrue(result.bands().contains(FrequencyBand.BAND_40M));
+        assertTrue(result.bands().contains(FrequencyBand.BAND_20M));
+        assertTrue(result.modes().contains("CW"));
+        assertTrue(result.modes().contains("SSB"));
+        assertEquals("DL Club", result.sponsor());
+        assertEquals("RST + Serial", result.exchange());
+        assertEquals("DL-CONTEST", result.cabrilloName());
+    }
+
+    @Test
+    void testParseFields_DefinitionListWithEmptyDd_SkipsField() {
+        // DT with empty DD should return null
+        String html = """
+                <html>
+                <head><title>Empty DD Test</title></head>
+                <body>
+                <h1>Empty DD Contest</h1>
+                <dl>
+                <dt>Sponsor:</dt><dd>   </dd>
+                <dt>Exchange:</dt><dd>Valid Exchange</dd>
+                </dl>
+                </body>
+                </html>
+                """;
+
+        wireMockServer.stubFor(get(urlEqualTo("/contestdetails.php?ref=41"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader(HEADER_CONTENT_TYPE, CONTENT_TYPE_HTML)
+                        .withBody(html)));
+
+        ContestSeriesDto result = client.fetchSeriesDetails("41");
+
+        assertNull(result.sponsor());
+        assertEquals("Valid Exchange", result.exchange());
+    }
+
+    @Test
+    void testParseFields_DefinitionListWithNonDdSibling_SkipsField() {
+        // DT followed by non-DD element should skip
+        String html = """
+                <html>
+                <head><title>Non DD Test</title></head>
+                <body>
+                <h1>Non DD Contest</h1>
+                <dl>
+                <dt>Sponsor:</dt><span>Not a DD</span>
+                <dt>Exchange:</dt><dd>Valid Value</dd>
+                </dl>
+                </body>
+                </html>
+                """;
+
+        wireMockServer.stubFor(get(urlEqualTo("/contestdetails.php?ref=42"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader(HEADER_CONTENT_TYPE, CONTENT_TYPE_HTML)
+                        .withBody(html)));
+
+        ContestSeriesDto result = client.fetchSeriesDetails("42");
+
+        assertNull(result.sponsor());
+        assertEquals("Valid Value", result.exchange());
+    }
+
+    // ========== Bold text parsing tests ==========
+
+    @Test
+    void testParseFields_BoldTextFormat_ParsesValues() {
+        // HTML using <b>Label:</b> Value format
+        String html = """
+                <html>
+                <head><title>Bold Contest</title></head>
+                <body>
+                <h1>Bold Text Contest</h1>
+                <p><b>Bands:</b> 80, 40, 20m</p>
+                <p><b>Mode:</b> CW only</p>
+                <p><b>Sponsor:</b> Bold Club</p>
+                <p><b>Exchange:</b> RST + Name</p>
+                <p><b>Cabrillo name:</b> BOLD-TEST</p>
+                </body>
+                </html>
+                """;
+
+        wireMockServer.stubFor(get(urlEqualTo("/contestdetails.php?ref=50"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader(HEADER_CONTENT_TYPE, CONTENT_TYPE_HTML)
+                        .withBody(html)));
+
+        ContestSeriesDto result = client.fetchSeriesDetails("50");
+
+        assertEquals("Bold Text Contest", result.name());
+        assertTrue(result.bands().contains(FrequencyBand.BAND_80M));
+        assertTrue(result.bands().contains(FrequencyBand.BAND_40M));
+        assertTrue(result.bands().contains(FrequencyBand.BAND_20M));
+        assertTrue(result.modes().contains("CW"));
+        assertEquals("Bold Club", result.sponsor());
+        assertEquals("RST + Name", result.exchange());
+        assertEquals("BOLD-TEST", result.cabrilloName());
+    }
+
+    @Test
+    void testParseFields_StrongTextFormat_ParsesValues() {
+        // HTML using <strong>Label:</strong> Value format
+        String html = """
+                <html>
+                <head><title>Strong Contest</title></head>
+                <body>
+                <h1>Strong Text Contest</h1>
+                <p><strong>Sponsor:</strong> Strong Club</p>
+                <p><strong>Exchange:</strong> RST + Grid</p>
+                </body>
+                </html>
+                """;
+
+        wireMockServer.stubFor(get(urlEqualTo("/contestdetails.php?ref=51"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader(HEADER_CONTENT_TYPE, CONTENT_TYPE_HTML)
+                        .withBody(html)));
+
+        ContestSeriesDto result = client.fetchSeriesDetails("51");
+
+        assertEquals("Strong Club", result.sponsor());
+        assertEquals("RST + Grid", result.exchange());
+    }
+
+    @Test
+    void testParseFields_BoldTextNoColon_ReturnsNull() {
+        // Bold text without colon should not match
+        String html = """
+                <html>
+                <head><title>No Colon Test</title></head>
+                <body>
+                <h1>No Colon Contest</h1>
+                <p><b>Sponsor</b> No colon here</p>
+                </body>
+                </html>
+                """;
+
+        wireMockServer.stubFor(get(urlEqualTo("/contestdetails.php?ref=52"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader(HEADER_CONTENT_TYPE, CONTENT_TYPE_HTML)
+                        .withBody(html)));
+
+        ContestSeriesDto result = client.fetchSeriesDetails("52");
+
+        assertNull(result.sponsor());
+    }
+
+    @Test
+    void testParseFields_BoldTextColonAtEnd_ReturnsNull() {
+        // Bold text with colon at end, no value
+        String html = """
+                <html>
+                <head><title>Colon End Test</title></head>
+                <body>
+                <h1>Colon End Contest</h1>
+                <p><b>Sponsor:</b></p>
+                </body>
+                </html>
+                """;
+
+        wireMockServer.stubFor(get(urlEqualTo("/contestdetails.php?ref=53"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader(HEADER_CONTENT_TYPE, CONTENT_TYPE_HTML)
+                        .withBody(html)));
+
+        ContestSeriesDto result = client.fetchSeriesDetails("53");
+
+        assertNull(result.sponsor());
+    }
+
+    @Test
+    void testParseFields_BoldWithNoParent_ReturnsNull() {
+        // Bold element is root (no parent) - edge case
+        // This tests the null parent check in extractValueAfterColon
+        String html = """
+                <html>
+                <head><title>Orphan Bold</title></head>
+                <body>
+                <h1>Orphan Bold Contest</h1>
+                </body>
+                </html>
+                """;
+
+        wireMockServer.stubFor(get(urlEqualTo("/contestdetails.php?ref=54"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader(HEADER_CONTENT_TYPE, CONTENT_TYPE_HTML)
+                        .withBody(html)));
+
+        ContestSeriesDto result = client.fetchSeriesDetails("54");
+
+        // Should handle gracefully, returning null for fields not found
+        assertNull(result.sponsor());
+    }
+
+    // ========== Rules URL fallback tests ==========
+
+    @Test
+    void testParseRulesUrl_NonTableLinkWithFindRulesAt_ParsesHref() {
+        // Rules link not in table, but in paragraph with "find rules at"
+        String html = """
+                <html>
+                <head><title>Rules Test</title></head>
+                <body>
+                <h1>Rules Link Contest</h1>
+                <p>Find rules at: <a href="https://example.com/rules.pdf">Contest Rules</a></p>
+                </body>
+                </html>
+                """;
+
+        wireMockServer.stubFor(get(urlEqualTo("/contestdetails.php?ref=60"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader(HEADER_CONTENT_TYPE, CONTENT_TYPE_HTML)
+                        .withBody(html)));
+
+        ContestSeriesDto result = client.fetchSeriesDetails("60");
+
+        assertEquals("https://example.com/rules.pdf", result.officialRulesUrl());
+    }
+
+    @Test
+    void testParseRulesUrl_NonTableLinkWithOfficialRules_ParsesHref() {
+        // Rules link with "official rules" text
+        String html = """
+                <html>
+                <head><title>Official Rules Test</title></head>
+                <body>
+                <h1>Official Rules Contest</h1>
+                <p>See the official rules at <a href="https://example.com/official.pdf">here</a></p>
+                </body>
+                </html>
+                """;
+
+        wireMockServer.stubFor(get(urlEqualTo("/contestdetails.php?ref=61"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader(HEADER_CONTENT_TYPE, CONTENT_TYPE_HTML)
+                        .withBody(html)));
+
+        ContestSeriesDto result = client.fetchSeriesDetails("61");
+
+        assertEquals("https://example.com/official.pdf", result.officialRulesUrl());
+    }
+
+    @Test
+    void testParseRulesUrl_LinkWithoutRulesContext_ReturnsNull() {
+        // Link without "find rules at" or "official rules" context
+        String html = """
+                <html>
+                <head><title>No Rules Context</title></head>
+                <body>
+                <h1>No Rules Context Contest</h1>
+                <p>Visit <a href="https://example.com/page">our website</a></p>
+                </body>
+                </html>
+                """;
+
+        wireMockServer.stubFor(get(urlEqualTo("/contestdetails.php?ref=62"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader(HEADER_CONTENT_TYPE, CONTENT_TYPE_HTML)
+                        .withBody(html)));
+
+        ContestSeriesDto result = client.fetchSeriesDetails("62");
+
+        assertNull(result.officialRulesUrl());
+    }
+
+    @Test
+    void testParseRulesUrl_LinkWithEmptyHref_ReturnsNull() {
+        // Link with empty href attribute
+        String html = """
+                <html>
+                <head><title>Empty Href Test</title></head>
+                <body>
+                <h1>Empty Href Contest</h1>
+                <p>Find rules at: <a href="">Empty Link</a></p>
+                </body>
+                </html>
+                """;
+
+        wireMockServer.stubFor(get(urlEqualTo("/contestdetails.php?ref=63"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader(HEADER_CONTENT_TYPE, CONTENT_TYPE_HTML)
+                        .withBody(html)));
+
+        ContestSeriesDto result = client.fetchSeriesDetails("63");
+
+        assertNull(result.officialRulesUrl());
+    }
+
+    // ========== Table cell parsing edge cases ==========
+
+    @Test
+    void testParseFields_TableWithEmptyValueCell_ReturnsNull() {
+        // Table row with empty value cell
+        String html = """
+                <html>
+                <head><title>Empty Cell Test</title></head>
+                <body>
+                <h1>Empty Cell Contest</h1>
+                <table>
+                <tr><td>Sponsor:</td><td>   </td></tr>
+                <tr><td>Exchange:</td><td>Valid</td></tr>
+                </table>
+                </body>
+                </html>
+                """;
+
+        wireMockServer.stubFor(get(urlEqualTo("/contestdetails.php?ref=70"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader(HEADER_CONTENT_TYPE, CONTENT_TYPE_HTML)
+                        .withBody(html)));
+
+        ContestSeriesDto result = client.fetchSeriesDetails("70");
+
+        assertNull(result.sponsor());
+        assertEquals("Valid", result.exchange());
     }
 
     // ========== Helper methods ==========
