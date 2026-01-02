@@ -115,6 +115,7 @@ class PotaClientTest {
         assertEquals(15, first.qsoCount());
         assertEquals(POTA_API_SOURCE, first.source());
         assertNotNull(first.spottedAt());
+        assertNotNull(first.lastSeenAt());
 
         // Verify location data (Park object)
         assertNotNull(first.location());

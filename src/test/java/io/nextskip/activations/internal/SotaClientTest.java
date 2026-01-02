@@ -119,6 +119,7 @@ class SotaClientTest {
         assertNull(activation.qsoCount(), "SOTA doesn't provide QSO count");
         assertEquals(SOTA_API_SOURCE, activation.source());
         assertNotNull(activation.spottedAt());
+        assertNotNull(activation.lastSeenAt());
 
         // Verify location data (Summit object)
         assertNotNull(activation.location());

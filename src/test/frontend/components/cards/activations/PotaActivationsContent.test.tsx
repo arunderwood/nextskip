@@ -87,7 +87,7 @@ describe('PotaActivationsContent', () => {
     vi.setSystemTime(now);
 
     const fiveMinutesAgo = new Date('2025-01-15T11:55:00Z');
-    const activations = [createMockPotaActivation({ spottedAt: fiveMinutesAgo.toISOString() })];
+    const activations = [createMockPotaActivation({ lastSeenAt: fiveMinutesAgo.toISOString() })];
 
     render(<PotaActivationsContent activations={activations} />);
 
@@ -139,7 +139,7 @@ describe('PotaActivationsContent', () => {
     vi.setSystemTime(now);
 
     const thirtySecondsAgo = new Date('2025-01-15T11:59:30Z');
-    const activations = [createMockPotaActivation({ spottedAt: thirtySecondsAgo.toISOString() })];
+    const activations = [createMockPotaActivation({ lastSeenAt: thirtySecondsAgo.toISOString() })];
 
     render(<PotaActivationsContent activations={activations} />);
 
@@ -153,7 +153,7 @@ describe('PotaActivationsContent', () => {
     vi.setSystemTime(now);
 
     const oneMinuteAgo = new Date('2025-01-15T11:59:00Z');
-    const activations = [createMockPotaActivation({ spottedAt: oneMinuteAgo.toISOString() })];
+    const activations = [createMockPotaActivation({ lastSeenAt: oneMinuteAgo.toISOString() })];
 
     render(<PotaActivationsContent activations={activations} />);
 
@@ -167,7 +167,7 @@ describe('PotaActivationsContent', () => {
     vi.setSystemTime(now);
 
     const twoHoursAgo = new Date('2025-01-15T10:00:00Z');
-    const activations = [createMockPotaActivation({ spottedAt: twoHoursAgo.toISOString() })];
+    const activations = [createMockPotaActivation({ lastSeenAt: twoHoursAgo.toISOString() })];
 
     render(<PotaActivationsContent activations={activations} />);
 
@@ -181,7 +181,7 @@ describe('PotaActivationsContent', () => {
     vi.setSystemTime(now);
 
     const oneHourAgo = new Date('2025-01-15T11:00:00Z');
-    const activations = [createMockPotaActivation({ spottedAt: oneHourAgo.toISOString() })];
+    const activations = [createMockPotaActivation({ lastSeenAt: oneHourAgo.toISOString() })];
 
     render(<PotaActivationsContent activations={activations} />);
 
@@ -191,7 +191,7 @@ describe('PotaActivationsContent', () => {
   });
 
   it('should display "Unknown" for null timestamp', () => {
-    const activations = [createMockPotaActivation({ spottedAt: undefined })];
+    const activations = [createMockPotaActivation({ lastSeenAt: undefined })];
 
     render(<PotaActivationsContent activations={activations} />);
 

@@ -12,6 +12,7 @@ interface Activation {
   frequency?: number;
   mode?: string;
   spottedAt?: string;
+  lastSeenAt?: string;
   qsoCount?: number;
   source?: string;
   location?: ActivationLocation;

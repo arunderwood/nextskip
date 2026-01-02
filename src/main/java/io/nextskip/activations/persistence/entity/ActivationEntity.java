@@ -66,6 +66,9 @@ public class ActivationEntity {
     @Column(name = "spotted_at", nullable = false)
     private Instant spottedAt;
 
+    @Column(name = "last_seen_at", nullable = false)
+    private Instant lastSeenAt;
+
     @Column(name = "qso_count")
     private Integer qsoCount;
 
@@ -118,6 +121,7 @@ public class ActivationEntity {
      * @param frequency           operating frequency in kHz
      * @param mode                operating mode
      * @param spottedAt           when spotted
+     * @param lastSeenAt          when last observed in API refresh
      * @param qsoCount            number of QSOs
      * @param source              data source identifier
      * @param locationReference   park/summit reference code
@@ -130,16 +134,18 @@ public class ActivationEntity {
      * @param summitAssociationCode association code (SOTA only)
      */
     public ActivationEntity(String spotId, String activatorCallsign, ActivationType type,
-                            Double frequency, String mode, Instant spottedAt, Integer qsoCount,
-                            String source, String locationReference, String locationName,
-                            String locationRegionCode, String parkCountryCode, String parkGrid,
-                            Double parkLatitude, Double parkLongitude, String summitAssociationCode) {
+                            Double frequency, String mode, Instant spottedAt, Instant lastSeenAt,
+                            Integer qsoCount, String source, String locationReference,
+                            String locationName, String locationRegionCode, String parkCountryCode,
+                            String parkGrid, Double parkLatitude, Double parkLongitude,
+                            String summitAssociationCode) {
         this.spotId = spotId;
         this.activatorCallsign = activatorCallsign;
         this.type = type;
         this.frequency = frequency;
         this.mode = mode;
         this.spottedAt = spottedAt;
+        this.lastSeenAt = lastSeenAt;
         this.qsoCount = qsoCount;
         this.source = source;
         this.locationReference = locationReference;
@@ -193,6 +199,7 @@ public class ActivationEntity {
                 domain.frequency(),
                 domain.mode(),
                 domain.spottedAt(),
+                domain.lastSeenAt(),
                 domain.qsoCount(),
                 domain.source(),
                 locationReference,
@@ -224,6 +231,7 @@ public class ActivationEntity {
                 frequency,
                 mode,
                 spottedAt,
+                lastSeenAt,
                 qsoCount,
                 source,
                 location
@@ -282,6 +290,10 @@ public class ActivationEntity {
 
     public Instant getSpottedAt() {
         return spottedAt;
+    }
+
+    public Instant getLastSeenAt() {
+        return lastSeenAt;
     }
 
     public Integer getQsoCount() {
@@ -348,6 +360,10 @@ public class ActivationEntity {
 
     public void setSpottedAt(Instant spottedAt) {
         this.spottedAt = spottedAt;
+    }
+
+    public void setLastSeenAt(Instant lastSeenAt) {
+        this.lastSeenAt = lastSeenAt;
     }
 
     public void setQsoCount(Integer qsoCount) {

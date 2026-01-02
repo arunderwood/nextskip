@@ -95,6 +95,7 @@ class PotaRefreshTaskTest {
                 14074.0,
                 "FT8",
                 now,
+                now, // lastSeenAt
                 5,
                 "POTA",
                 "K-1234",

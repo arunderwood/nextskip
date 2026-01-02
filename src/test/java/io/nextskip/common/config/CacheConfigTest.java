@@ -167,7 +167,7 @@ class CacheConfigTest {
         // Given: Repository returns activation entities
         Instant now = Instant.now();
         Activation activation = new Activation(
-                "spot-1", "W1ABC", ActivationType.POTA, 14250.0, "SSB", now, 5, "pota",
+                "spot-1", "W1ABC", ActivationType.POTA, 14250.0, "SSB", now, now, 5, "pota",
                 new Park("K-1234", "Test Park", "CA", "US", "CM97", 37.5, -122.1)
         );
         ActivationEntity entity = ActivationEntity.fromDomain(activation);

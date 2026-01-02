@@ -229,6 +229,7 @@ public final class ActivationFixtures {
         private Double frequency = TestConstants.DEFAULT_FREQUENCY;
         private String mode = TestConstants.DEFAULT_MODE;
         private Instant spottedAt = Instant.now();
+        private Instant lastSeenAt = Instant.now();
         private Integer qsoCount = TestConstants.DEFAULT_QSO_COUNT;
         private String source = TestConstants.DEFAULT_SOURCE;
         private ActivationLocation location = defaultPark();
@@ -278,6 +279,26 @@ public final class ActivationFixtures {
             return this;
         }
 
+        public ActivationBuilder lastSeenAt(Instant lastSeenAt) {
+            this.lastSeenAt = lastSeenAt;
+            return this;
+        }
+
+        public ActivationBuilder seenNow() {
+            this.lastSeenAt = Instant.now();
+            return this;
+        }
+
+        public ActivationBuilder seenMinutesAgo(long minutes) {
+            this.lastSeenAt = Instant.now().minusSeconds(minutes * 60);
+            return this;
+        }
+
+        public ActivationBuilder seenHoursAgo(long hours) {
+            this.lastSeenAt = Instant.now().minusSeconds(hours * 3600);
+            return this;
+        }
+
         public ActivationBuilder qsoCount(Integer qsoCount) {
             this.qsoCount = qsoCount;
             return this;
@@ -301,6 +322,7 @@ public final class ActivationFixtures {
                     frequency,
                     mode,
                     spottedAt,
+                    lastSeenAt,
                     qsoCount,
                     source,
                     location

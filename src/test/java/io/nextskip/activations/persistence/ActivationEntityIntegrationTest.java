@@ -101,6 +101,9 @@ class ActivationEntityIntegrationTest extends AbstractPersistenceTest {
         assertEquals(15, entity.getQsoCount());
         assertEquals(POTA_SOURCE, entity.getSource());
 
+        // And: lastSeenAt should be preserved
+        assertEquals(domain.lastSeenAt(), entity.getLastSeenAt());
+
         // And: Common location fields should be preserved
         assertEquals(PARK_REFERENCE, entity.getLocationReference());
         assertEquals(PARK_NAME, entity.getLocationName());
@@ -124,7 +127,10 @@ class ActivationEntityIntegrationTest extends AbstractPersistenceTest {
         // When: Convert to domain
         var domain = entity.toDomain();
 
-        // Then: Domain should have Park location
+        // Then: lastSeenAt should be preserved
+        assertEquals(entity.getLastSeenAt(), domain.lastSeenAt());
+
+        // And: Domain should have Park location
         assertTrue(domain.location() instanceof Park);
         var park = (Park) domain.location();
 
@@ -349,7 +355,7 @@ class ActivationEntityIntegrationTest extends AbstractPersistenceTest {
         var now = Instant.now();
         var otherSourceEntity = new ActivationEntity(
                 POTA_SPOT_ID, CALLSIGN, ActivationType.POTA,
-                FREQUENCY_20M, MODE_FT8, now, 15, "OTHER_SOURCE",
+                FREQUENCY_20M, MODE_FT8, now, now, 15, "OTHER_SOURCE",
                 PARK_REFERENCE, PARK_NAME, PARK_REGION,
                 PARK_COUNTRY, PARK_GRID, PARK_LATITUDE, PARK_LONGITUDE, null
         );
@@ -365,7 +371,7 @@ class ActivationEntityIntegrationTest extends AbstractPersistenceTest {
         var now = Instant.now();
         var entity = new ActivationEntity(
                 null, CALLSIGN, ActivationType.POTA,
-                FREQUENCY_20M, MODE_FT8, now, 15, POTA_SOURCE,
+                FREQUENCY_20M, MODE_FT8, now, now, 15, POTA_SOURCE,
                 PARK_REFERENCE, PARK_NAME, PARK_REGION,
                 PARK_COUNTRY, PARK_GRID, PARK_LATITUDE, PARK_LONGITUDE, null
         );
@@ -381,7 +387,7 @@ class ActivationEntityIntegrationTest extends AbstractPersistenceTest {
         var now = Instant.now();
         var entity = new ActivationEntity(
                 POTA_SPOT_ID, CALLSIGN, ActivationType.POTA,
-                FREQUENCY_20M, MODE_FT8, now, 15, null,
+                FREQUENCY_20M, MODE_FT8, now, now, 15, null,
                 PARK_REFERENCE, PARK_NAME, PARK_REGION,
                 PARK_COUNTRY, PARK_GRID, PARK_LATITUDE, PARK_LONGITUDE, null
         );
@@ -391,15 +397,59 @@ class ActivationEntityIntegrationTest extends AbstractPersistenceTest {
                 () -> repository.saveAndFlush(entity));
     }
 
+    // === LastSeenAt vs SpottedAt Tests ===
+
+    @Test
+    void testFromDomain_DifferentSpottedAtAndLastSeenAt_PreservesBoth() {
+        // Given: An activation with different spottedAt and lastSeenAt (key use case)
+        var spottedAt = Instant.parse("2025-01-15T10:00:00Z");
+        var lastSeenAt = Instant.parse("2025-01-15T11:30:00Z");
+        var park = new Park(PARK_REFERENCE, PARK_NAME, PARK_REGION,
+                PARK_COUNTRY, PARK_GRID, PARK_LATITUDE, PARK_LONGITUDE);
+        var domain = new Activation(
+                POTA_SPOT_ID, CALLSIGN, ActivationType.POTA,
+                FREQUENCY_20M, MODE_FT8, spottedAt, lastSeenAt, 15, POTA_SOURCE, park
+        );
+
+        // When: Convert to entity
+        var entity = ActivationEntity.fromDomain(domain);
+
+        // Then: Both timestamps should be preserved independently
+        assertEquals(spottedAt, entity.getSpottedAt());
+        assertEquals(lastSeenAt, entity.getLastSeenAt());
+    }
+
+    @Test
+    void testRoundTrip_DifferentSpottedAtAndLastSeenAt_PreservesBoth() {
+        // Given: An activation with different spottedAt and lastSeenAt
+        var spottedAt = Instant.parse("2025-01-15T10:00:00Z");
+        var lastSeenAt = Instant.parse("2025-01-15T11:30:00Z");
+        var park = new Park(PARK_REFERENCE, PARK_NAME, PARK_REGION,
+                PARK_COUNTRY, PARK_GRID, PARK_LATITUDE, PARK_LONGITUDE);
+        var original = new Activation(
+                POTA_SPOT_ID, CALLSIGN, ActivationType.POTA,
+                FREQUENCY_20M, MODE_FT8, spottedAt, lastSeenAt, 15, POTA_SOURCE, park
+        );
+
+        // When: Round-trip through entity
+        var roundTripped = ActivationEntity.fromDomain(original).toDomain();
+
+        // Then: Both timestamps should be preserved
+        assertEquals(spottedAt, roundTripped.spottedAt());
+        assertEquals(lastSeenAt, roundTripped.lastSeenAt());
+        assertEquals(original, roundTripped);
+    }
+
     // === Domain Model Behavior Tests ===
 
     @Test
     void testConvertedDomainModel_CanCalculateScore() {
-        // Given: A recently spotted activation
+        // Given: A recently spotted activation (lastSeenAt 3 minutes ago)
         var now = Instant.now();
+        var lastSeen = now.minus(3, ChronoUnit.MINUTES);
         var entity = repository.save(new ActivationEntity(
                 FRESH_SPOT_ID, CALLSIGN, ActivationType.POTA,
-                FREQUENCY_20M, MODE_FT8, now.minus(3, ChronoUnit.MINUTES), 10, POTA_SOURCE,
+                FREQUENCY_20M, MODE_FT8, lastSeen, lastSeen, 10, POTA_SOURCE,
                 PARK_REFERENCE, PARK_NAME, PARK_REGION,
                 PARK_COUNTRY, PARK_GRID, TEST_LAT, TEST_LON, null
         ));
@@ -414,19 +464,21 @@ class ActivationEntityIntegrationTest extends AbstractPersistenceTest {
 
     @Test
     void testConvertedDomainModel_CanDetermineIfFavorable() {
-        // Given: A recently spotted activation (within 15 minutes)
+        // Given: A recently spotted activation (lastSeenAt within 15 minutes)
         var now = Instant.now();
+        var freshTime = now.minus(10, ChronoUnit.MINUTES);
         var freshEntity = repository.save(new ActivationEntity(
                 FRESH_SPOT_ID, CALLSIGN, ActivationType.POTA,
-                FREQUENCY_20M, MODE_FT8, now.minus(10, ChronoUnit.MINUTES), 10, POTA_SOURCE,
+                FREQUENCY_20M, MODE_FT8, freshTime, freshTime, 10, POTA_SOURCE,
                 PARK_REFERENCE, PARK_NAME, PARK_REGION,
                 PARK_COUNTRY, PARK_GRID, TEST_LAT, TEST_LON, null
         ));
 
-        // And: An old activation
+        // And: An old activation (lastSeenAt 45 minutes ago)
+        var staleTime = now.minus(45, ChronoUnit.MINUTES);
         var staleEntity = repository.save(new ActivationEntity(
                 STALE_SPOT_ID, CALLSIGN, ActivationType.POTA,
-                FREQUENCY_20M, MODE_FT8, now.minus(45, ChronoUnit.MINUTES), 10, POTA_SOURCE,
+                FREQUENCY_20M, MODE_FT8, staleTime, staleTime, 10, POTA_SOURCE,
                 ALT_PARK_REFERENCE, ALT_PARK_NAME, PARK_REGION,
                 PARK_COUNTRY, PARK_GRID, TEST_LAT, TEST_LON, null
         ));
@@ -467,12 +519,14 @@ class ActivationEntityIntegrationTest extends AbstractPersistenceTest {
 
         // When: Update all fields via setters
         var newTime = Instant.now();
+        var newLastSeenAt = newTime.plusSeconds(300);
         saved.setSpotId("new-spot-id");
         saved.setActivatorCallsign("W9XYZ");
         saved.setType(ActivationType.SOTA);
         saved.setFrequency(21.0);
         saved.setMode(MODE_CW);
         saved.setSpottedAt(newTime);
+        saved.setLastSeenAt(newLastSeenAt);
         saved.setQsoCount(25);
         saved.setSource("NEW_SOURCE");
         saved.setLocationReference("NEW-REF");
@@ -491,6 +545,7 @@ class ActivationEntityIntegrationTest extends AbstractPersistenceTest {
         assertEquals(21.0, saved.getFrequency());
         assertEquals(MODE_CW, saved.getMode());
         assertEquals(newTime, saved.getSpottedAt());
+        assertEquals(newLastSeenAt, saved.getLastSeenAt());
         assertEquals(25, saved.getQsoCount());
         assertEquals("NEW_SOURCE", saved.getSource());
         assertEquals("NEW-REF", saved.getLocationReference());
@@ -511,7 +566,7 @@ class ActivationEntityIntegrationTest extends AbstractPersistenceTest {
                 PARK_COUNTRY, PARK_GRID, PARK_LATITUDE, PARK_LONGITUDE);
         return new Activation(
                 POTA_SPOT_ID, CALLSIGN, ActivationType.POTA,
-                FREQUENCY_20M, MODE_FT8, now, 15, POTA_SOURCE, park
+                FREQUENCY_20M, MODE_FT8, now, now, 15, POTA_SOURCE, park
         );
     }
 
@@ -520,14 +575,14 @@ class ActivationEntityIntegrationTest extends AbstractPersistenceTest {
         var summit = new Summit(SUMMIT_REFERENCE, SUMMIT_NAME, SUMMIT_REGION, SUMMIT_ASSOCIATION);
         return new Activation(
                 SOTA_SPOT_ID, CALLSIGN, ActivationType.SOTA,
-                FREQUENCY_40M, MODE_CW, now, 5, SOTA_SOURCE, summit
+                FREQUENCY_40M, MODE_CW, now, now, 5, SOTA_SOURCE, summit
         );
     }
 
     private ActivationEntity createPotaEntity(Instant spottedAt) {
         return new ActivationEntity(
                 POTA_SPOT_ID + "-" + spottedAt.toEpochMilli(), CALLSIGN, ActivationType.POTA,
-                FREQUENCY_20M, MODE_FT8, spottedAt, 15, POTA_SOURCE,
+                FREQUENCY_20M, MODE_FT8, spottedAt, spottedAt, 15, POTA_SOURCE,
                 PARK_REFERENCE, PARK_NAME, PARK_REGION,
                 PARK_COUNTRY, PARK_GRID, PARK_LATITUDE, PARK_LONGITUDE, null
         );
@@ -536,7 +591,7 @@ class ActivationEntityIntegrationTest extends AbstractPersistenceTest {
     private ActivationEntity createSotaEntity(Instant spottedAt) {
         return new ActivationEntity(
                 SOTA_SPOT_ID + "-" + spottedAt.toEpochMilli(), CALLSIGN, ActivationType.SOTA,
-                FREQUENCY_40M, MODE_CW, spottedAt, 5, SOTA_SOURCE,
+                FREQUENCY_40M, MODE_CW, spottedAt, spottedAt, 5, SOTA_SOURCE,
                 SUMMIT_REFERENCE, SUMMIT_NAME, SUMMIT_REGION,
                 null, null, null, null, SUMMIT_ASSOCIATION
         );
@@ -549,7 +604,7 @@ class ActivationEntityIntegrationTest extends AbstractPersistenceTest {
     private ActivationEntity createActivationEntity(String spotId, Instant spottedAt, String callsign) {
         return new ActivationEntity(
                 spotId, callsign, ActivationType.POTA,
-                FREQUENCY_20M, MODE_FT8, spottedAt, 10, POTA_SOURCE,
+                FREQUENCY_20M, MODE_FT8, spottedAt, spottedAt, 10, POTA_SOURCE,
                 PARK_REFERENCE, PARK_NAME, PARK_REGION,
                 PARK_COUNTRY, PARK_GRID, TEST_LAT, TEST_LON, null
         );

@@ -238,6 +238,7 @@ class ActivationsSummaryTest {
                 14250.0,
                 "SSB",
                 spottedAt,
+                spottedAt, // lastSeenAt
                 10,
                 "Test Source",
                 park

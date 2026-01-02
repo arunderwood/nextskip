@@ -173,6 +173,7 @@ public class SotaClient extends AbstractExternalDataClient<List<Activation>> {
                     frequency,
                     dto.mode(),
                     spottedAt,
+                    Instant.now(), // lastSeenAt: when we observed this activation in the API
                     null, // SOTA doesn't provide QSO count in spots
                     getSourceName(),
                     summit

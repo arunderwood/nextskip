@@ -126,13 +126,15 @@ class ActivationUpsertHelperTest {
     }
 
     private ActivationEntity createEntity(String spotId, Long id) {
+        Instant now = Instant.now();
         ActivationEntity entity = new ActivationEntity(
                 spotId,
                 "W1ABC",
                 ActivationType.POTA,
                 14074.0,
                 "FT8",
-                Instant.now(),
+                now,
+                now, // lastSeenAt
                 5,
                 SOURCE_POTA,
                 "K-1234",

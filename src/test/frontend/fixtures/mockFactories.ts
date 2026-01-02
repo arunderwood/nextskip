@@ -96,6 +96,7 @@ export function createMockActivation(overrides?: Partial<Activation>): Activatio
     frequency: TEST_CONSTANTS.DEFAULT_FREQUENCY,
     mode: TEST_CONSTANTS.DEFAULT_MODE,
     spottedAt: new Date().toISOString(),
+    lastSeenAt: new Date().toISOString(),
     qsoCount: TEST_CONSTANTS.DEFAULT_QSO_COUNT,
     source: 'Test Source',
     location: createMockPark(),
@@ -138,15 +139,16 @@ export function createMockSotaActivation(overrides?: Partial<Activation>): Activ
 }
 
 /**
- * Creates a stale activation (spotted 2 hours ago).
+ * Creates a stale activation (last seen 2 hours ago).
  *
  * @param overrides - Optional partial Activation to override defaults
- * @returns An Activation that was spotted 2 hours ago
+ * @returns An Activation that was last seen 2 hours ago
  */
 export function createStaleActivation(overrides?: Partial<Activation>): Activation {
   const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000);
   return createMockActivation({
     spottedAt: twoHoursAgo.toISOString(),
+    lastSeenAt: twoHoursAgo.toISOString(),
     score: 0,
     favorable: false,
     ...overrides,

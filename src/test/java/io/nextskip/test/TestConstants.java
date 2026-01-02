@@ -128,6 +128,9 @@ public final class TestConstants {
     /** Duration in hours for "stale" activations. */
     public static final int STALE_HOURS = 24;
 
+    /** Reference timestamp for deterministic time-based tests. */
+    public static final String REFERENCE_TIME_STRING = "2025-01-15T12:00:00Z";
+
     // ==========================================================================
     // Contests
     // ==========================================================================
