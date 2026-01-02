@@ -195,11 +195,15 @@ tasks.named('test') {
 
     // Required for Java 25 compatibility with Mockito/ByteBuddy
     // --add-opens: Allows reflective access to JDK internals
+    // --enable-native-access: Allows JNA native library loading
+    // -XX:+EnableDynamicAgentLoading: Allows ByteBuddy agent attachment
     // -Dnet.bytebuddy.experimental=true: Enables ByteBuddy's experimental Java 25 support
     jvmArgs = [
         '--add-opens', 'java.base/java.lang=ALL-UNNAMED',
         '--add-opens', 'java.base/java.util=ALL-UNNAMED',
         '--add-opens', 'java.base/java.io=ALL-UNNAMED',
+        '--enable-native-access=ALL-UNNAMED',
+        '-XX:+EnableDynamicAgentLoading',
         '-Dnet.bytebuddy.experimental=true'
     ]
 }
@@ -309,6 +313,8 @@ pitest {
     mutationThreshold = 75
     jvmArgs = [
         '--add-opens', 'java.base/java.lang=ALL-UNNAMED',
+        '--enable-native-access=ALL-UNNAMED',
+        '-XX:+EnableDynamicAgentLoading',
         '-Dnet.bytebuddy.experimental=true'
     ]
 }
