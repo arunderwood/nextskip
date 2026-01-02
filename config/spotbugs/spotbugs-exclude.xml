@@ -31,6 +31,16 @@
     </Match>
 
     <!--
+        *RefreshTask classes: Repository beans are Spring-managed singletons.
+        Storing Spring-injected beans directly is the standard DI pattern.
+        These are constructor-injected dependencies, not exposed to external code.
+    -->
+    <Match>
+        <Class name="~io\.nextskip\..*\.scheduler\.\w+RefreshTask"/>
+        <Bug pattern="EI_EXPOSE_REP2"/>
+    </Match>
+
+    <!--
         VA_FORMAT_STRING_USES_NEWLINE: Test JSON/XML strings use \n for readability.
         Using %n would make test data harder to read and maintain.
     -->

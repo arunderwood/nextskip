@@ -40,7 +40,7 @@ class PotaRefreshTaskTest {
 
     @BeforeEach
     void setUp() {
-        task = new PotaRefreshTask();
+        task = new PotaRefreshTask(repository);
     }
 
     @Test
@@ -69,7 +69,7 @@ class PotaRefreshTaskTest {
                 any(ActivationType.class), any(Instant.class)))
                 .thenReturn(Collections.emptyList());
 
-        boolean result = task.needsInitialLoad(repository);
+        boolean result = task.needsInitialLoad();
 
         assertThat(result).isTrue();
     }
@@ -81,9 +81,22 @@ class PotaRefreshTaskTest {
                 any(ActivationType.class), any(Instant.class)))
                 .thenReturn(List.of(entity));
 
-        boolean result = task.needsInitialLoad(repository);
+        boolean result = task.needsInitialLoad();
 
         assertThat(result).isFalse();
+    }
+
+    @Test
+    void testGetTaskName_ReturnsPota() {
+        assertThat(task.getTaskName()).isEqualTo("POTA");
+    }
+
+    @Test
+    void testGetRecurringTask_AfterSetterCalled_ReturnsTask() {
+        RecurringTask<Void> recurringTask = task.potaRecurringTask(refreshService);
+        task.setRecurringTask(recurringTask);
+
+        assertThat(task.getRecurringTask()).isSameAs(recurringTask);
     }
 
     private ActivationEntity createTestEntity() {

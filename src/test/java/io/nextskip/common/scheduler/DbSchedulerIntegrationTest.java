@@ -1,17 +1,12 @@
 package io.nextskip.common.scheduler;
 
 import com.github.kagkarlsson.scheduler.Scheduler;
-import io.nextskip.activations.internal.scheduler.PotaRefreshTask;
-import io.nextskip.activations.internal.scheduler.SotaRefreshTask;
-import io.nextskip.contests.internal.scheduler.ContestRefreshTask;
-import io.nextskip.meteors.internal.scheduler.MeteorRefreshTask;
-import io.nextskip.propagation.internal.scheduler.HamQslBandRefreshTask;
-import io.nextskip.propagation.internal.scheduler.HamQslSolarRefreshTask;
-import io.nextskip.propagation.internal.scheduler.NoaaRefreshTask;
 import io.nextskip.test.AbstractSchedulerTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
+
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -29,6 +24,8 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 class DbSchedulerIntegrationTest extends AbstractSchedulerTest {
 
+    private static final int EXPECTED_COORDINATOR_COUNT = 7;
+
     @Autowired
     private ApplicationContext applicationContext;
 
@@ -39,25 +36,7 @@ class DbSchedulerIntegrationTest extends AbstractSchedulerTest {
     private DataRefreshStartupHandler startupHandler;
 
     @Autowired
-    private PotaRefreshTask potaRefreshTask;
-
-    @Autowired
-    private SotaRefreshTask sotaRefreshTask;
-
-    @Autowired
-    private NoaaRefreshTask noaaRefreshTask;
-
-    @Autowired
-    private HamQslSolarRefreshTask hamQslSolarRefreshTask;
-
-    @Autowired
-    private HamQslBandRefreshTask hamQslBandRefreshTask;
-
-    @Autowired
-    private ContestRefreshTask contestRefreshTask;
-
-    @Autowired
-    private MeteorRefreshTask meteorRefreshTask;
+    private List<RefreshTaskCoordinator> coordinators;
 
     @Test
     void testApplicationContext_LoadsSuccessfully() {
@@ -77,20 +56,30 @@ class DbSchedulerIntegrationTest extends AbstractSchedulerTest {
     @Test
     void testDataRefreshStartupHandler_IsCreated() {
         // Now that Scheduler bean exists via DbSchedulerConfig,
-        // the handler should be created (@ConditionalOnBean(Scheduler.class))
+        // the handler should be created (@ConditionalOnProperty)
         assertThat(startupHandler).isNotNull();
     }
 
     @Test
-    void testRefreshTaskConfigurations_AllPresent() {
-        // Verify all task configuration beans are loaded
-        assertThat(potaRefreshTask).isNotNull();
-        assertThat(sotaRefreshTask).isNotNull();
-        assertThat(noaaRefreshTask).isNotNull();
-        assertThat(hamQslSolarRefreshTask).isNotNull();
-        assertThat(hamQslBandRefreshTask).isNotNull();
-        assertThat(contestRefreshTask).isNotNull();
-        assertThat(meteorRefreshTask).isNotNull();
+    void testRefreshTaskCoordinators_AllRegistered() {
+        // Verify all 7 coordinators are discovered via Spring's component scanning
+        assertThat(coordinators)
+                .hasSize(EXPECTED_COORDINATOR_COUNT)
+                .allSatisfy(coordinator -> {
+                    assertThat(coordinator.getTaskName()).isNotBlank();
+                    assertThat(coordinator.getRecurringTask()).isNotNull();
+                });
+    }
+
+    @Test
+    void testRefreshTaskCoordinators_HaveExpectedNames() {
+        // Verify we have all expected task types registered
+        List<String> taskNames = coordinators.stream()
+                .map(RefreshTaskCoordinator::getTaskName)
+                .toList();
+
+        assertThat(taskNames)
+                .contains("POTA", "SOTA", "NOAA", "HamQSL Solar", "HamQSL Band", "Contest", "Meteor");
     }
 
     @Test
