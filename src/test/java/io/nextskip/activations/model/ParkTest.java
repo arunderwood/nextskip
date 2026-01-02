@@ -58,7 +58,9 @@ class ParkTest {
 
     @Test
     void shouldImplement_ActivationLocation() {
-        Park park = new Park(REFERENCE_K_0817, NAME_ROCKY_MOUNTAIN, REGION_CODE_CO, COUNTRY_CODE_US, GRID_DM79, LATITUDE_40_3428, LONGITUDE_NEG_105_6836);
+        Park park = new Park(
+                REFERENCE_K_0817, NAME_ROCKY_MOUNTAIN, REGION_CODE_CO,
+                COUNTRY_CODE_US, GRID_DM79, LATITUDE_40_3428, LONGITUDE_NEG_105_6836);
 
         assertTrue(park instanceof ActivationLocation);
         assertEquals(REFERENCE_K_0817, park.reference());
@@ -69,7 +71,8 @@ class ParkTest {
     @Test
     void shouldThrow_ExceptionWhenReferenceIsNull() {
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
-                new Park(null, NAME_ROCKY_MOUNTAIN, REGION_CODE_CO, COUNTRY_CODE_US, GRID_DM79, LATITUDE_40_3428, LONGITUDE_NEG_105_6836)
+                new Park(null, NAME_ROCKY_MOUNTAIN, REGION_CODE_CO,
+                        COUNTRY_CODE_US, GRID_DM79, LATITUDE_40_3428, LONGITUDE_NEG_105_6836)
         );
         assertEquals("Park reference cannot be null or blank", exception.getMessage());
     }
@@ -77,7 +80,8 @@ class ParkTest {
     @Test
     void shouldThrow_ExceptionWhenReferenceIsBlank() {
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
-                new Park("  ", NAME_ROCKY_MOUNTAIN, REGION_CODE_CO, COUNTRY_CODE_US, GRID_DM79, LATITUDE_40_3428, LONGITUDE_NEG_105_6836)
+                new Park("  ", NAME_ROCKY_MOUNTAIN, REGION_CODE_CO,
+                        COUNTRY_CODE_US, GRID_DM79, LATITUDE_40_3428, LONGITUDE_NEG_105_6836)
         );
         assertEquals("Park reference cannot be null or blank", exception.getMessage());
     }
@@ -85,7 +89,8 @@ class ParkTest {
     @Test
     void shouldThrow_ExceptionWhenNameIsNull() {
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
-                new Park(REFERENCE_K_0817, null, REGION_CODE_CO, COUNTRY_CODE_US, GRID_DM79, LATITUDE_40_3428, LONGITUDE_NEG_105_6836)
+                new Park(REFERENCE_K_0817, null, REGION_CODE_CO,
+                        COUNTRY_CODE_US, GRID_DM79, LATITUDE_40_3428, LONGITUDE_NEG_105_6836)
         );
         assertEquals("Park name cannot be null or blank", exception.getMessage());
     }
@@ -93,15 +98,20 @@ class ParkTest {
     @Test
     void shouldThrow_ExceptionWhenNameIsBlank() {
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () ->
-                new Park(REFERENCE_K_0817, "", REGION_CODE_CO, COUNTRY_CODE_US, GRID_DM79, LATITUDE_40_3428, LONGITUDE_NEG_105_6836)
+                new Park(REFERENCE_K_0817, "", REGION_CODE_CO,
+                        COUNTRY_CODE_US, GRID_DM79, LATITUDE_40_3428, LONGITUDE_NEG_105_6836)
         );
         assertEquals("Park name cannot be null or blank", exception.getMessage());
     }
 
     @Test
     void shouldBeEqual_WhenAllFieldsMatch() {
-        Park park1 = new Park(REFERENCE_K_0817, NAME_ROCKY_MOUNTAIN, REGION_CODE_CO, COUNTRY_CODE_US, GRID_DM79, LATITUDE_40_3428, LONGITUDE_NEG_105_6836);
-        Park park2 = new Park(REFERENCE_K_0817, NAME_ROCKY_MOUNTAIN, REGION_CODE_CO, COUNTRY_CODE_US, GRID_DM79, LATITUDE_40_3428, LONGITUDE_NEG_105_6836);
+        Park park1 = new Park(
+                REFERENCE_K_0817, NAME_ROCKY_MOUNTAIN, REGION_CODE_CO,
+                COUNTRY_CODE_US, GRID_DM79, LATITUDE_40_3428, LONGITUDE_NEG_105_6836);
+        Park park2 = new Park(
+                REFERENCE_K_0817, NAME_ROCKY_MOUNTAIN, REGION_CODE_CO,
+                COUNTRY_CODE_US, GRID_DM79, LATITUDE_40_3428, LONGITUDE_NEG_105_6836);
 
         assertEquals(park1, park2);
         assertEquals(park1.hashCode(), park2.hashCode());
@@ -109,15 +119,21 @@ class ParkTest {
 
     @Test
     void shouldNotBeEqual_WhenReferencesDiffer() {
-        Park park1 = new Park(REFERENCE_K_0817, NAME_ROCKY_MOUNTAIN, REGION_CODE_CO, COUNTRY_CODE_US, GRID_DM79, LATITUDE_40_3428, LONGITUDE_NEG_105_6836);
-        Park park2 = new Park("K-1234", NAME_ROCKY_MOUNTAIN, REGION_CODE_CO, COUNTRY_CODE_US, GRID_DM79, LATITUDE_40_3428, LONGITUDE_NEG_105_6836);
+        Park park1 = new Park(
+                REFERENCE_K_0817, NAME_ROCKY_MOUNTAIN, REGION_CODE_CO,
+                COUNTRY_CODE_US, GRID_DM79, LATITUDE_40_3428, LONGITUDE_NEG_105_6836);
+        Park park2 = new Park(
+                "K-1234", NAME_ROCKY_MOUNTAIN, REGION_CODE_CO,
+                COUNTRY_CODE_US, GRID_DM79, LATITUDE_40_3428, LONGITUDE_NEG_105_6836);
 
         assertNotEquals(park1, park2);
     }
 
     @Test
     void shouldHandle_USStateReferences() {
-        Park park = new Park(REFERENCE_K_0817, NAME_ROCKY_MOUNTAIN, REGION_CODE_CO, COUNTRY_CODE_US, GRID_DM79, LATITUDE_40_3428, LONGITUDE_NEG_105_6836);
+        Park park = new Park(
+                REFERENCE_K_0817, NAME_ROCKY_MOUNTAIN, REGION_CODE_CO,
+                COUNTRY_CODE_US, GRID_DM79, LATITUDE_40_3428, LONGITUDE_NEG_105_6836);
 
         assertEquals(REGION_CODE_CO, park.regionCode());
         assertEquals(COUNTRY_CODE_US, park.countryCode());

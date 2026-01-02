@@ -12,7 +12,7 @@
 
 <module name="Checker">
     <property name="charset" value="UTF-8"/>
-    <property name="severity" value="warning"/>
+    <property name="severity" value="error"/>
     <property name="fileExtensions" value="java"/>
 
     <!-- Filters -->
@@ -22,6 +22,12 @@
     <module name="SuppressionSingleFilter">
         <property name="files" value=".*Test\.java"/>
         <property name="checks" value="FileLength"/>
+    </module>
+
+    <!-- JPA entities often require all-args constructors with many parameters -->
+    <module name="SuppressionSingleFilter">
+        <property name="files" value=".*Entity\.java"/>
+        <property name="checks" value="ParameterNumber"/>
     </module>
 
     <!-- Size Violations -->
@@ -74,7 +80,11 @@
         </module>
         <module name="NoClone"/>
         <module name="NoFinalizer"/>
-        <module name="IllegalCatch"/>
+        <module name="IllegalCatch">
+            <!-- Allow Exception/RuntimeException for circuit breaker resilience patterns.
+                 Only flag Error (JVM problems) and Throwable (catches Errors). -->
+            <property name="illegalClassNames" value="java.lang.Error, java.lang.Throwable"/>
+        </module>
         <module name="IllegalThrows"/>
         <module name="PackageDeclaration"/>
         <module name="DeclarationOrder"/>
@@ -88,7 +98,7 @@
         <!-- Imports -->
         <module name="AvoidStarImport">
             <!-- Allow star imports for common test utilities - improves test readability -->
-            <property name="excludes" value="org.junit.jupiter.api.Assertions,org.mockito.Mockito,com.github.tomakehurst.wiremock.client.WireMock"/>
+            <property name="excludes" value="org.junit.jupiter.api.Assertions,org.mockito.Mockito,com.github.tomakehurst.wiremock.client.WireMock,io.nextskip.test.TestConstants,org.assertj.core.api.Assertions"/>
         </module>
         <module name="IllegalImport"/>
         <module name="RedundantImport"/>

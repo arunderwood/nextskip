@@ -142,7 +142,7 @@ public class SotaClient extends AbstractExternalDataClient<List<Activation>> {
     /**
      * Convert SOTA API DTO to domain Activation model.
      */
-    @SuppressWarnings("PMD.AvoidCatchingGenericException") // Intentional: return null for invalid spots
+    @SuppressWarnings("PMD.AvoidCatchingGenericException") // Catch RuntimeException for DTO parsing failures
     private Activation toActivation(SotaSpotDto dto) {
         if (dto == null) {
             return null;

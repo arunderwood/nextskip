@@ -132,7 +132,7 @@ public class PotaClient extends AbstractExternalDataClient<List<Activation>> {
     /**
      * Convert POTA API DTO to domain Activation model.
      */
-    @SuppressWarnings("PMD.AvoidCatchingGenericException") // Intentional: return null for invalid spots
+    @SuppressWarnings("PMD.AvoidCatchingGenericException") // Catch RuntimeException for DTO parsing failures
     private Activation toActivation(PotaSpotDto dto) {
         if (dto == null) {
             return null;

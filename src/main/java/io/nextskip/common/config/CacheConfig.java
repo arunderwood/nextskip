@@ -49,19 +49,13 @@ import java.util.Optional;
 @Configuration
 public class CacheConfig {
 
-    private static final Logger LOG = LoggerFactory.getLogger(CacheConfig.class);
-
-    private final Clock clock;
-
-    public CacheConfig(Clock clock) {
-        this.clock = clock;
-    }
-
     /**
      * Single cache key used for all caches.
      * Each cache stores one list of domain objects.
      */
     public static final String CACHE_KEY = "all";
+
+    private static final Logger LOG = LoggerFactory.getLogger(CacheConfig.class);
 
     // Safety net TTLs - caches are refreshed by schedulers, not expiration
     private static final Duration ACTIVATIONS_EXPIRY = Duration.ofMinutes(10);
@@ -73,6 +67,12 @@ public class CacheConfig {
     // Data retention periods for DB queries
     private static final Duration ACTIVATIONS_RETENTION = Duration.ofHours(2);
     private static final Duration BAND_CONDITIONS_RETENTION = Duration.ofHours(1);
+
+    private final Clock clock;
+
+    public CacheConfig(Clock clock) {
+        this.clock = clock;
+    }
 
     /**
      * LoadingCache for activations (POTA and SOTA combined).

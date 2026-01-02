@@ -34,7 +34,7 @@ class CacheRefreshEventListenerTest {
     @Test
     void testOnCacheRefresh_HandlesNoOpAction_DoesNotThrow() {
         // Given: A no-op refresh action (as used when data is skipped)
-        CacheRefreshEvent event = new CacheRefreshEvent("testCache (skipped)", () -> {});
+        CacheRefreshEvent event = new CacheRefreshEvent("testCache (skipped)", () -> { });
 
         // When/Then: The event is handled without error
         assertThatCode(() -> listener.onCacheRefresh(event))
