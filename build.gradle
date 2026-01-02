@@ -311,8 +311,6 @@ pitest {
     historyOutputLocation = file("${rootDir}/.pitest-history")
     // Fail build if mutation score drops below threshold
     mutationThreshold = 75
-    // Suppress Arcmutate commercial plugin suggestion
-    features = ['-spring']
     jvmArgs = [
         '--add-opens', 'java.base/java.lang=ALL-UNNAMED',
         '--enable-native-access=ALL-UNNAMED',
