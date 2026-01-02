@@ -328,60 +328,47 @@ src/test/frontend/         # Frontend tests (parallel to src/main)
 
 ## Testing Guidelines
 
-### Backend Tests (JUnit 5)
+See [docs/TESTING.md](docs/TESTING.md) for complete testing guidelines including property-based testing, fixture patterns, and coverage requirements.
 
-- Tests covering utilities, external API clients, services, DTOs
-- Use **WireMock** for HTTP mocking (see `NoaaSwpcClientTest.java`)
-- Use **Mockito** for dependency mocking
-- Recent Java versions require ByteBuddy experimental mode (configured in build.gradle)
+> **Reviewing tests?** Use the `test-quality-expert` agent to validate quality.
 
-### Persistence Test Base Classes
+### Quick Reference
 
-Choose the appropriate base class for database integration tests:
+| Pattern | Use | Avoid |
+|---------|-----|-------|
+| Test data | Shared fixtures (`fixtures/`) | Local factory methods |
+| Constants | `TestConstants.java` / `testConstants.ts` | Magic numbers |
+| Time | Clock injection | `Instant.now()` in assertions |
+| Naming | `testMethod_Scenario_ExpectedResult` | `testMethod()` |
+| Assertions | Invariant checks | Exact value comparisons |
 
-| Base Class | Use Case | Features |
-|------------|----------|----------|
-| `AbstractIntegrationTest` | General integration tests | Database connection, test profile |
-| `AbstractPersistenceTest` | Entity/repository tests | + `@BeforeEach` cleanup, `clearPersistenceContext()` |
-| `AbstractSchedulerTest` | Scheduler tests | + `scheduled_tasks` cleanup, scheduler-test profile |
+### Test Commands
 
-**Example persistence test**:
-```java
-class MyEntityIntegrationTest extends AbstractPersistenceTest {
-    @Autowired
-    private MyRepository repository;
+```bash
+# Backend
+./gradlew test                    # Run tests
+./gradlew test jacocoTestReport   # With coverage
+./gradlew deltaCoverage           # Delta coverage
 
-    @Override
-    protected Collection<JpaRepository<?, ?>> getRepositoriesToClean() {
-        return List.of(repository);
-    }
-
-    @Test
-    void testSomething() {
-        // Repository is cleaned before this runs
-    }
-}
+# Frontend
+npm run test:run                  # Run tests
+npm run test:coverage             # With coverage
+npm run test:delta                # Delta coverage
+npm run e2e                       # E2E tests
 ```
 
-**Why cleanup matters**: `@Transactional` rollback alone isn't enough because:
-- `saveAndFlush()` commits immediately (required for constraint testing)
-- Singleton TestContainers means data can persist between test classes
-- EntityManager cache can mask actual database state
+### Base Classes
 
-### Frontend Tests (Vitest + React Testing Library)
+| Class | Use Case |
+|-------|----------|
+| `AbstractIntegrationTest` | General integration tests |
+| `AbstractPersistenceTest` | Entity/repository tests (includes cleanup) |
+| `AbstractSchedulerTest` | Scheduler tests |
 
-- Tests in `src/test/frontend/` directory (parallel to `src/main/frontend/`)
-- Use **jest-axe** for automated WCAG 2.1 AA compliance testing
-- Use **jsdom** environment (faster than browser mode)
-- Import components with `Frontend/` alias (configured in `vitest.config.ts`)
+### Coverage Thresholds
 
-**Test Patterns**: See existing test files for reference:
-
-- `src/test/frontend/components/activity/ActivityCard.test.tsx` - Component testing
-- `src/test/frontend/components/activity/usePriorityCalculation.test.ts` - Hook testing
-- `src/test/frontend/components/activity/ActivitySystem.a11y.test.tsx` - Accessibility testing
-
-**Coverage Targets**: 80%+ statements/functions/lines, 75%+ branches
+- **Overall**: 75% instruction, 65% branch
+- **Delta**: 80% line, 70% branch on changed code
 
 ## External Data Sources
 
@@ -434,8 +421,10 @@ This repository includes specialized agents and commands in `.claude/`:
 ### Agents
 
 - **`java-test-debugger`**: Debug JUnit failures (Test → Analyze → Hypothesize → Fix → Verify)
+- **`frontend-test-debugger`**: Debug Vitest/RTL/Playwright failures (act warnings, async issues, flaky E2E)
 - **`gradle-build-validator`**: Full-stack build validation (auto-kills port 8080 conflicts)
 - **`code-refactoring`**: SOLID-focused refactoring (requires clean git + passing tests)
+- **`test-quality-expert`**: Validate test quality, suggest testing strategies, enforce coverage
 
 ### Commands
 

@@ -9,6 +9,11 @@ model: inherit
 
 **Read | Grep | Glob | Bash** - ONLY these four tools. No Edit/Write during analysis phase.
 
+## Related Agents
+
+- **After fixing**: Use `test-quality-expert` to validate test quality and coverage
+- **Frontend test failures**: Use `frontend-test-debugger` for Vitest/RTL/Playwright debugging
+
 ## 5-Phase Debugging Methodology
 
 ### 1. Identify Failed Tests
