@@ -101,3 +101,6 @@ spring-boot-devtools.properties
 # Application logs
 logs/
 .jqwik-database
+
+# PIT mutation testing history (for incremental analysis)
+.pitest-history

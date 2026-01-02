@@ -295,16 +295,30 @@ pitest {
     targetClasses = ['io.nextskip.*']
     targetTests = ['io.nextskip.*']
     mutators = ['DEFAULTS']
-    threads = 4
+    // Dynamic thread allocation: use 75% of available cores, minimum 2
+    def availableCores = Runtime.runtime.availableProcessors()
+    def pitestThreads = Math.max(2, (int) (availableCores * 0.75))
+    threads = pitestThreads
     outputFormats = ['HTML', 'XML']
     timestampedReports = false
+    junit5PluginVersion = '1.2.1'
+    // Incremental analysis: reuse results for unchanged code
+    historyInputLocation = file("${rootDir}/.pitest-history")
+    historyOutputLocation = file("${rootDir}/.pitest-history")
+    // Fail build if mutation score drops below threshold
+    mutationThreshold = 75
+    jvmArgs = [
+        '--add-opens', 'java.base/java.lang=ALL-UNNAMED',
+        '-Dnet.bytebuddy.experimental=true'
+    ]
 }
 
 // Enable coverage verification in check task for local feedback
-// Skip locally if needed: ./gradlew check -x jacocoTestCoverageVerification -x deltaCoverage
+// Skip locally if needed: ./gradlew check -x jacocoTestCoverageVerification -x deltaCoverage -x pitest
 tasks.named('check') {
     dependsOn jacocoTestCoverageVerification
     dependsOn deltaCoverage
+    dependsOn tasks.named('pitest')
 }
 
 // Vaadin's vaadinPrepareFrontend runs npm install but doesn't declare

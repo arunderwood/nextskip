@@ -66,17 +66,21 @@ Icons are generated to `src/main/resources/META-INF/resources/icons/` (Vaadin's 
 Quality checks are **blocking** - violations will fail the build. Always run `./gradlew check` before committing.
 
 ```bash
-# Run all quality checks (Checkstyle, PMD, SpotBugs, JaCoCo)
+# Run all quality checks (Checkstyle, PMD, SpotBugs, JaCoCo, PIT mutation testing)
 ./gradlew check
+
+# Skip mutation testing for faster local iteration
+./gradlew check -x pitest
 
 # View reports
 open build/reports/tests/test/index.html
 open build/reports/jacoco/test/html/index.html
 open build/reports/checkstyle/main.html
 open build/reports/pmd/main.html
+open build/reports/pitest/index.html
 ```
 
-**Coverage Requirements**: 75% instruction, 65% branch (overall); 80% on changed code (delta coverage)
+**Coverage Requirements**: 75% instruction, 65% branch (overall); 80% on changed code (delta coverage); 75% mutation score
 
 **Fix violations, don't suppress them.** Rule exclusions lower the quality bar. Suppressions require documented justification (e.g., `@SuppressWarnings("PMD.TooManyMethods") // Comprehensive test suite`).
 
