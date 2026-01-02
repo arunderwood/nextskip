@@ -86,7 +86,7 @@ class CacheConfigTest {
     @Test
     void testActivationsCache_LoadsFromRepository() {
         // Given: Repository returns empty list
-        when(activationRepository.findByLastSeenAtAfterOrderByLastSeenAtDesc(any()))
+        when(activationRepository.findBySpottedAtAfterOrderBySpottedAtDesc(any()))
                 .thenReturn(Collections.emptyList());
 
         // When: Create cache and get data
@@ -171,7 +171,7 @@ class CacheConfigTest {
                 new Park("K-1234", "Test Park", "CA", "US", "CM97", 37.5, -122.1)
         );
         ActivationEntity entity = ActivationEntity.fromDomain(activation);
-        when(activationRepository.findByLastSeenAtAfterOrderByLastSeenAtDesc(any()))
+        when(activationRepository.findBySpottedAtAfterOrderBySpottedAtDesc(any()))
                 .thenReturn(List.of(entity));
 
         // When: Call loader method directly
@@ -187,7 +187,7 @@ class CacheConfigTest {
     @Test
     void testLoadActivations_ReturnsEmptyList() {
         // Given: Repository returns empty list
-        when(activationRepository.findByLastSeenAtAfterOrderByLastSeenAtDesc(any()))
+        when(activationRepository.findBySpottedAtAfterOrderBySpottedAtDesc(any()))
                 .thenReturn(Collections.emptyList());
 
         // When: Call loader method directly

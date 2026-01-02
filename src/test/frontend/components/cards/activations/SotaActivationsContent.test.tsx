@@ -94,7 +94,7 @@ describe('SotaActivationsContent', () => {
     vi.setSystemTime(now);
 
     const tenMinutesAgo = new Date('2025-01-15T11:50:00Z');
-    const activations = [createMockActivation({ lastSeenAt: tenMinutesAgo.toISOString() })];
+    const activations = [createMockActivation({ spottedAt: tenMinutesAgo.toISOString() })];
 
     render(<SotaActivationsContent activations={activations} />);
 
@@ -146,7 +146,7 @@ describe('SotaActivationsContent', () => {
     vi.setSystemTime(now);
 
     const fortyFiveSecondsAgo = new Date('2025-01-15T11:59:15Z');
-    const activations = [createMockActivation({ lastSeenAt: fortyFiveSecondsAgo.toISOString() })];
+    const activations = [createMockActivation({ spottedAt: fortyFiveSecondsAgo.toISOString() })];
 
     render(<SotaActivationsContent activations={activations} />);
 
@@ -160,7 +160,7 @@ describe('SotaActivationsContent', () => {
     vi.setSystemTime(now);
 
     const oneMinuteAgo = new Date('2025-01-15T11:59:00Z');
-    const activations = [createMockActivation({ lastSeenAt: oneMinuteAgo.toISOString() })];
+    const activations = [createMockActivation({ spottedAt: oneMinuteAgo.toISOString() })];
 
     render(<SotaActivationsContent activations={activations} />);
 
@@ -174,7 +174,7 @@ describe('SotaActivationsContent', () => {
     vi.setSystemTime(now);
 
     const threeHoursAgo = new Date('2025-01-15T09:00:00Z');
-    const activations = [createMockActivation({ lastSeenAt: threeHoursAgo.toISOString() })];
+    const activations = [createMockActivation({ spottedAt: threeHoursAgo.toISOString() })];
 
     render(<SotaActivationsContent activations={activations} />);
 
@@ -188,7 +188,7 @@ describe('SotaActivationsContent', () => {
     vi.setSystemTime(now);
 
     const oneHourAgo = new Date('2025-01-15T11:00:00Z');
-    const activations = [createMockActivation({ lastSeenAt: oneHourAgo.toISOString() })];
+    const activations = [createMockActivation({ spottedAt: oneHourAgo.toISOString() })];
 
     render(<SotaActivationsContent activations={activations} />);
 
@@ -198,7 +198,7 @@ describe('SotaActivationsContent', () => {
   });
 
   it('should display "Unknown" for null timestamp', () => {
-    const activations = [createMockActivation({ lastSeenAt: undefined })];
+    const activations = [createMockActivation({ spottedAt: undefined })];
 
     render(<SotaActivationsContent activations={activations} />);
 
