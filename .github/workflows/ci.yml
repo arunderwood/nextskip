@@ -58,6 +58,15 @@ jobs:
             build/pyroscope-agent
           key: agents-${{ hashFiles('gradle/libs.versions.toml') }}
 
+      - name: Cache PIT mutation history
+        uses: actions/cache@v5
+        with:
+          path: .pitest-history
+          key: pitest-history-${{ github.ref_name }}
+          restore-keys: |
+            pitest-history-main
+            pitest-history-
+
       - name: Run tests with quality checks
         run: ./gradlew check jacocoTestReport
 
@@ -75,6 +84,7 @@ jobs:
             build/reports/checkstyle/
             build/reports/pmd/
             build/reports/spotbugs/
+            build/reports/pitest/
 
       - name: Test Report
         uses: dorny/test-reporter@v2

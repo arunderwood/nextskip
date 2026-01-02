@@ -11,6 +11,7 @@ NextSkip uses a layered testing strategy with property-based testing for algorit
 | **Unit** | Test functions/classes in isolation | JUnit 5, Mockito | Vitest |
 | **Property** | Verify invariants across random inputs | jqwik | fast-check |
 | **Integration** | Test with real dependencies | TestContainers, WireMock | React Testing Library |
+| **Mutation** | Verify test quality by injecting bugs | PIT (pitest) | - |
 | **E2E** | Test full user flows | - | Playwright |
 
 **Target Distribution:** ~70% unit, ~20% integration, ~10% E2E
@@ -180,6 +181,86 @@ it('should always return priority in [0, 100]', () => {
 
 ---
 
+## Mutation Testing (PIT)
+
+Mutation testing verifies test quality by introducing bugs (mutations) into the code and checking if tests catch them. A mutation that survives indicates a gap in test coverage or assertion strength.
+
+### When to Use
+
+- **After writing tests** - Verify tests actually catch bugs
+- **Low confidence code** - Critical algorithms, scoring logic
+- **Code reviews** - Validate test effectiveness
+
+### Running Mutation Tests
+
+```bash
+# Run mutation testing (included in ./gradlew check)
+./gradlew pitest
+
+# View HTML report
+open build/reports/pitest/index.html
+
+# Skip pitest for faster local iteration
+./gradlew check -x pitest
+```
+
+### Understanding Results
+
+| Metric | Target | Meaning |
+|--------|--------|---------|
+| **Mutation Score** | >75% | Percentage of mutations killed by tests |
+| **Test Strength** | >80% | Kill rate when tests cover the code |
+| **No Coverage** | <5% | Mutations in untested code |
+
+### Interpreting Surviving Mutations
+
+```java
+// Original code
+public boolean isFavorable() {
+    return score >= 70;  // Mutation: changed >= to >
+}
+
+// If this mutation SURVIVES, your tests don't verify the boundary!
+// Add a test for score == 70
+```
+
+### Common Mutation Types
+
+| Mutator | What It Does | How to Kill |
+|---------|--------------|-------------|
+| `ConditionalsBoundary` | `>=` → `>`, `<` → `<=` | Test boundary values |
+| `NullReturns` | Return `null` instead of object | Assert non-null returns |
+| `VoidMethodCall` | Remove void method calls | Verify side effects |
+| `MathMutator` | `+` → `-`, `*` → `/` | Test arithmetic results |
+
+### Performance Optimization
+
+Mutation testing uses **incremental analysis** - only changed code is re-analyzed:
+
+| Scenario | Time |
+|----------|------|
+| First run (no history) | ~6 min |
+| Incremental (code change) | ~1-2 min |
+| No changes (UP-TO-DATE) | <1 sec |
+
+History is stored in `.pitest-history` and cached in CI.
+
+### Configuration
+
+Located in `build.gradle`:
+
+```gradle
+pitest {
+    targetClasses = ['io.nextskip.*']
+    threads = <dynamic based on CPU cores>
+    junit5PluginVersion = '1.2.1'
+    historyInputLocation = file("${rootDir}/.pitest-history")
+    historyOutputLocation = file("${rootDir}/.pitest-history")
+}
+```
+
+---
+
 ## Backend Testing
 
 ### Base Classes
@@ -257,10 +338,14 @@ Use mock stubs in `src/test/frontend/mocks/generated/` to avoid Gradle dependenc
 ### Commands
 
 ```bash
-# Backend
+# Backend - Line/Branch Coverage
 ./gradlew test jacocoTestReport
 ./gradlew deltaCoverage
 open build/reports/jacoco/test/html/index.html
+
+# Backend - Mutation Coverage
+./gradlew pitest
+open build/reports/pitest/index.html
 
 # Frontend
 npm run test:coverage
@@ -274,6 +359,8 @@ npm run test:delta
 | Instruction | 75% | 80% |
 | Branch | 65% | 70% |
 | Line | - | 80% |
+| Mutation Score | 75% | - |
+| Test Strength | 80% | - |
 
 ---
 
@@ -311,3 +398,5 @@ src/test/frontend/
 | Naming | `testX_Y_Z()` | `testX()` |
 | Assertions | Invariant checks | Exact value comparisons |
 | Mocking | Interfaces | Concrete classes |
+| Boundaries | Test edge cases (==, boundary values) | Only happy path |
+| Mutation | Run `./gradlew pitest` after writing tests | Ignoring surviving mutations |
