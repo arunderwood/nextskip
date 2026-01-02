@@ -26,10 +26,11 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * Integration tests for cache behavior.
  *
- * <p>Verifies that @Cacheable annotations work correctly with Spring's caching proxy:
+ * <p>Verifies cache-as-fallback behavior:
  * <ul>
- *   <li>Empty results are cached (not excluded by unless condition)</li>
- *   <li>Second fetch uses cached result (no additional API call)</li>
+ *   <li>Cache is populated after successful API calls</li>
+ *   <li>Cache is used as fallback when API fails</li>
+ *   <li>API is always called (cache is not checked first)</li>
  * </ul>
  */
 @SpringBootTest
@@ -80,7 +81,7 @@ class CacheIntegrationTest extends AbstractIntegrationTest {
     }
 
     @Test
-    void testCaching_EmptyResult_IsCached_NoSecondApiCall() {
+    void testCaching_ApiAlwaysCalled_NotCachedFirst() {
         // Given: API returns empty array
         wireMockServer.stubFor(get(urlEqualTo("/"))
                 .willReturn(aResponse()
@@ -98,13 +99,13 @@ class CacheIntegrationTest extends AbstractIntegrationTest {
         assertNotNull(secondResult);
         assertTrue(secondResult.isEmpty());
 
-        // And: API should only be called once (second call used cache)
-        wireMockServer.verify(1, getRequestedFor(urlEqualTo("/")));
+        // And: API should be called twice (cache is not checked first)
+        wireMockServer.verify(2, getRequestedFor(urlEqualTo("/")));
     }
 
     @Test
-    void testCaching_NonEmptyResult_IsCached_NoSecondApiCall() {
-        // Given: API returns data
+    void testCaching_CacheFallback_WhenApiFailsAfterSuccess() {
+        // Given: API returns data on first call
         String jsonResponse = """
             [
               {
@@ -125,17 +126,28 @@ class CacheIntegrationTest extends AbstractIntegrationTest {
                         .withHeader("Content-Type", "application/json")
                         .withBody(jsonResponse)));
 
-        // When: Fetch twice
+        // When: First fetch succeeds and populates cache
         List<Activation> firstResult = potaClient.fetch();
-        List<Activation> secondResult = potaClient.fetch();
 
-        // Then: Both results should have 1 activation
+        // Then: First result should have 1 activation
         assertEquals(1, firstResult.size());
-        assertEquals(1, secondResult.size());
-        assertEquals("W1ABC", firstResult.get(0).activatorCallsign());
+        assertEquals("W1ABC", firstResult.getFirst().activatorCallsign());
 
-        // And: API should only be called once (second call used cache)
-        wireMockServer.verify(1, getRequestedFor(urlEqualTo("/")));
+        // When: API starts returning errors
+        wireMockServer.resetAll();
+        wireMockServer.stubFor(get(urlEqualTo("/"))
+                .willReturn(aResponse()
+                        .withStatus(500)
+                        .withBody("Internal Server Error")));
+
+        // When: Second fetch fails, should get cached data as fallback
+        List<Activation> fallbackResult = potaClient.fetch();
+
+        // Then: Should return cached data
+        assertNotNull(fallbackResult);
+        assertEquals(1, fallbackResult.size());
+        assertEquals("W1ABC", fallbackResult.getFirst().activatorCallsign());
+        assertTrue(potaClient.isServingStaleData());
     }
 
     @Test

@@ -180,15 +180,8 @@ public abstract class AbstractExternalDataClient<T>
     @Override
     @SuppressWarnings("unchecked")
     public final T fetch() {
-        // Check cache first (like @Cacheable behavior)
-        Cache cache = cacheManager.getCache(getCacheName());
-        if (cache != null) {
-            Cache.ValueWrapper cached = cache.get(getCacheKey());
-            if (cached != null && cached.get() != null) {
-                log.debug("Returning cached data for {}", getSourceName());
-                return (T) cached.get();
-            }
-        }
+        // Always call the API - cache is only used as fallback on failure
+        // (see getCachedDataWithFallback in the catch block below)
 
         Supplier<T> decoratedFetch = () -> {
             try {

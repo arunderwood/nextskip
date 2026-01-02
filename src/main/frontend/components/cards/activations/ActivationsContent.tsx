@@ -57,7 +57,7 @@ function ActivationsContent({ activations, type, emptyMessage }: Props) {
               <div className="activation-details">
                 <span className="frequency">{formatFrequency(activation.frequency)}</span>
                 <span className="mode">{activation.mode || 'Unknown'}</span>
-                <span className="time-since">{formatTimeSince(activation.lastSeenAt)}</span>
+                <span className="time-since">{formatTimeSince(activation.spottedAt)}</span>
               </div>
               {(activation.location as ActivationLocationExt)?.name ? (
                 <div className={locationClass}>
