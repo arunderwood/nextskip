@@ -60,7 +60,7 @@ public class DataRefreshStartupHandler {
 
         this.scheduler = scheduler;
         this.eagerLoadEnabled = eagerLoadEnabled;
-        this.coordinators = coordinators;
+        this.coordinators = List.copyOf(coordinators);
     }
 
     /**
