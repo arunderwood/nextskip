@@ -180,12 +180,14 @@ class SolarIndicesTest {
                     .as("SFI at threshold should NOT be favorable")
                     .isFalse();
 
-            var justAbove = new SolarIndices(threshold + 0.1, 10, 2, DEFAULT_SUNSPOT_NUMBER, Instant.now(), TEST_SOURCE);
+            var justAbove = new SolarIndices(
+                    threshold + 0.1, 10, 2, DEFAULT_SUNSPOT_NUMBER, Instant.now(), TEST_SOURCE);
             assertThat(justAbove.isFavorable())
                     .as("SFI just above threshold should be favorable")
                     .isTrue();
 
-            var justBelow = new SolarIndices(threshold - 0.1, 10, 2, DEFAULT_SUNSPOT_NUMBER, Instant.now(), TEST_SOURCE);
+            var justBelow = new SolarIndices(
+                    threshold - 0.1, 10, 2, DEFAULT_SUNSPOT_NUMBER, Instant.now(), TEST_SOURCE);
             assertThat(justBelow.isFavorable())
                     .as("SFI just below threshold should NOT be favorable")
                     .isFalse();
@@ -201,12 +203,14 @@ class SolarIndicesTest {
                     .as("K-index at threshold should NOT be favorable")
                     .isFalse();
 
-            var justBelow = new SolarIndices(150.0, 10, threshold - 1, DEFAULT_SUNSPOT_NUMBER, Instant.now(), TEST_SOURCE);
+            var justBelow = new SolarIndices(
+                    150.0, 10, threshold - 1, DEFAULT_SUNSPOT_NUMBER, Instant.now(), TEST_SOURCE);
             assertThat(justBelow.isFavorable())
                     .as("K-index just below threshold should be favorable")
                     .isTrue();
 
-            var justAbove = new SolarIndices(150.0, 10, threshold + 1, DEFAULT_SUNSPOT_NUMBER, Instant.now(), TEST_SOURCE);
+            var justAbove = new SolarIndices(
+                    150.0, 10, threshold + 1, DEFAULT_SUNSPOT_NUMBER, Instant.now(), TEST_SOURCE);
             assertThat(justAbove.isFavorable())
                     .as("K-index just above threshold should NOT be favorable")
                     .isFalse();
@@ -222,12 +226,14 @@ class SolarIndicesTest {
                     .as("A-index at threshold should NOT be favorable")
                     .isFalse();
 
-            var justBelow = new SolarIndices(150.0, threshold - 1, 2, DEFAULT_SUNSPOT_NUMBER, Instant.now(), TEST_SOURCE);
+            var justBelow = new SolarIndices(
+                    150.0, threshold - 1, 2, DEFAULT_SUNSPOT_NUMBER, Instant.now(), TEST_SOURCE);
             assertThat(justBelow.isFavorable())
                     .as("A-index just below threshold should be favorable")
                     .isTrue();
 
-            var justAbove = new SolarIndices(150.0, threshold + 1, 2, DEFAULT_SUNSPOT_NUMBER, Instant.now(), TEST_SOURCE);
+            var justAbove = new SolarIndices(
+                    150.0, threshold + 1, 2, DEFAULT_SUNSPOT_NUMBER, Instant.now(), TEST_SOURCE);
             assertThat(justAbove.isFavorable())
                     .as("A-index just above threshold should NOT be favorable")
                     .isFalse();

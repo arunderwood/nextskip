@@ -48,11 +48,10 @@ import java.util.function.Supplier;
 public abstract class AbstractExternalDataClient<T>
         implements ExternalDataClient<T> {
 
-    private final Logger log = LoggerFactory.getLogger(getClass());
-
     protected final WebClient webClient;
     protected final CacheManager cacheManager;
 
+    private final Logger log = LoggerFactory.getLogger(getClass());
     private final CircuitBreaker circuitBreaker;
     private final Retry retry;
 

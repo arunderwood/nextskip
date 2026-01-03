@@ -534,5 +534,5 @@ class GridSquareTest {
     /**
      * Test case record for reference implementations.
      */
-    record TestCase(String gridSquare, double latitude, double longitude) {}
+    record TestCase(String gridSquare, double latitude, double longitude) { }
 }

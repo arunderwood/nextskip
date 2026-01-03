@@ -86,7 +86,7 @@ public class HamQslSolarRefreshService extends AbstractRefreshService {
     protected CacheRefreshEvent createCacheRefreshEvent() {
         // Only refresh cache if data was actually saved
         if (skipped) {
-            return new CacheRefreshEvent("solarIndices (skipped)", () -> {});
+            return new CacheRefreshEvent("solarIndices (skipped)", () -> { });
         }
         return new CacheRefreshEvent("solarIndices",
                 () -> solarIndicesCache.refresh(CacheConfig.CACHE_KEY));

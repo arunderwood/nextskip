@@ -85,8 +85,10 @@ class SummitTest {
 
     @Test
     void shouldBeEqual_WhenAllFieldsMatch() {
-        Summit summit1 = new Summit(REFERENCE_W7W_LC_001, NAME_MOUNT_SAINT_HELENS, REGION_CODE_WA, ASSOCIATION_CODE_W7W);
-        Summit summit2 = new Summit(REFERENCE_W7W_LC_001, NAME_MOUNT_SAINT_HELENS, REGION_CODE_WA, ASSOCIATION_CODE_W7W);
+        Summit summit1 = new Summit(
+                REFERENCE_W7W_LC_001, NAME_MOUNT_SAINT_HELENS, REGION_CODE_WA, ASSOCIATION_CODE_W7W);
+        Summit summit2 = new Summit(
+                REFERENCE_W7W_LC_001, NAME_MOUNT_SAINT_HELENS, REGION_CODE_WA, ASSOCIATION_CODE_W7W);
 
         assertEquals(summit1, summit2);
         assertEquals(summit1.hashCode(), summit2.hashCode());
@@ -94,7 +96,8 @@ class SummitTest {
 
     @Test
     void shouldNotBeEqual_WhenReferencesDiffer() {
-        Summit summit1 = new Summit(REFERENCE_W7W_LC_001, NAME_MOUNT_SAINT_HELENS, REGION_CODE_WA, ASSOCIATION_CODE_W7W);
+        Summit summit1 = new Summit(
+                REFERENCE_W7W_LC_001, NAME_MOUNT_SAINT_HELENS, REGION_CODE_WA, ASSOCIATION_CODE_W7W);
         Summit summit2 = new Summit("W7W/LC-002", "Mount Adams", REGION_CODE_WA, ASSOCIATION_CODE_W7W);
 
         assertNotEquals(summit1, summit2);
@@ -102,7 +105,8 @@ class SummitTest {
 
     @Test
     void shouldHandle_W7RegionSummits() {
-        Summit summit = new Summit(REFERENCE_W7W_LC_001, NAME_MOUNT_SAINT_HELENS, REGION_CODE_WA, ASSOCIATION_CODE_W7W);
+        Summit summit = new Summit(
+                REFERENCE_W7W_LC_001, NAME_MOUNT_SAINT_HELENS, REGION_CODE_WA, ASSOCIATION_CODE_W7W);
 
         assertEquals(REGION_CODE_WA, summit.regionCode());
         assertEquals(ASSOCIATION_CODE_W7W, summit.associationCode());

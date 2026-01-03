@@ -160,7 +160,8 @@ class BandConditionTest {
             int goodScore = new BandCondition(FrequencyBand.BAND_20M, BandConditionRating.GOOD, confidence).getScore();
             int fairScore = new BandCondition(FrequencyBand.BAND_20M, BandConditionRating.FAIR, confidence).getScore();
             int poorScore = new BandCondition(FrequencyBand.BAND_20M, BandConditionRating.POOR, confidence).getScore();
-            int unknownScore = new BandCondition(FrequencyBand.BAND_20M, BandConditionRating.UNKNOWN, confidence).getScore();
+            int unknownScore = new BandCondition(
+                    FrequencyBand.BAND_20M, BandConditionRating.UNKNOWN, confidence).getScore();
 
             assertThat(goodScore).as("GOOD >= FAIR").isGreaterThanOrEqualTo(fairScore);
             assertThat(fairScore).as("FAIR >= POOR").isGreaterThanOrEqualTo(poorScore);
@@ -171,10 +172,14 @@ class BandConditionTest {
         void testGetScore_RatingOrderingInvariant_MultipleConfidenceLevels() {
             // Rating ordering should hold at all confidence levels
             for (double confidence : new double[]{0.0, 0.25, 0.5, 0.75, 1.0}) {
-                int goodScore = new BandCondition(FrequencyBand.BAND_20M, BandConditionRating.GOOD, confidence).getScore();
-                int fairScore = new BandCondition(FrequencyBand.BAND_20M, BandConditionRating.FAIR, confidence).getScore();
-                int poorScore = new BandCondition(FrequencyBand.BAND_20M, BandConditionRating.POOR, confidence).getScore();
-                int unknownScore = new BandCondition(FrequencyBand.BAND_20M, BandConditionRating.UNKNOWN, confidence).getScore();
+                int goodScore = new BandCondition(
+                        FrequencyBand.BAND_20M, BandConditionRating.GOOD, confidence).getScore();
+                int fairScore = new BandCondition(
+                        FrequencyBand.BAND_20M, BandConditionRating.FAIR, confidence).getScore();
+                int poorScore = new BandCondition(
+                        FrequencyBand.BAND_20M, BandConditionRating.POOR, confidence).getScore();
+                int unknownScore = new BandCondition(
+                        FrequencyBand.BAND_20M, BandConditionRating.UNKNOWN, confidence).getScore();
 
                 assertThat(goodScore)
                         .as("At %.2f confidence: GOOD >= FAIR", confidence)
