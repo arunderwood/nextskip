@@ -12,7 +12,7 @@ WORKDIR /app
 # Copy Gradle wrapper and build files first (better layer caching)
 COPY gradlew gradlew.bat ./
 COPY gradle/ gradle/
-COPY build.gradle settings.gradle ./
+COPY build.gradle.kts settings.gradle.kts ./
 
 # Copy source code
 COPY src/ src/
