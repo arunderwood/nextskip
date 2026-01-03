@@ -4,12 +4,11 @@ import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
 import io.github.resilience4j.retry.RetryRegistry;
+import io.nextskip.common.client.ExternalApiException;
 import io.nextskip.contests.internal.dto.ContestICalDto;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.cache.CacheManager;
-import org.springframework.cache.concurrent.ConcurrentMapCacheManager;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import java.util.List;
@@ -21,6 +20,8 @@ import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -34,7 +35,6 @@ class ContestCalendarClientTest {
 
     private WireMockServer wireMockServer;
     private ContestCalendarClient client;
-    private CacheManager cacheManager;
     private CircuitBreakerRegistry circuitBreakerRegistry;
     private RetryRegistry retryRegistry;
 
@@ -49,9 +49,8 @@ class ContestCalendarClientTest {
 
         String baseUrl = "http://localhost:" + wireMockServer.port();
         WebClient.Builder webClientBuilder = WebClient.builder();
-        cacheManager = new ConcurrentMapCacheManager("contests");
 
-        client = new StubContestCalendarClient(webClientBuilder, cacheManager,
+        client = new StubContestCalendarClient(webClientBuilder,
                 circuitBreakerRegistry, retryRegistry, baseUrl);
     }
 
@@ -195,11 +194,8 @@ class ContestCalendarClientTest {
                         .withStatus(500)
                         .withBody("Internal Server Error")));
 
-        // With AbstractExternalDataClient, errors return empty list (fallback)
-        List<ContestICalDto> result = client.fetch();
-
-        assertNotNull(result);
-        assertTrue(result.isEmpty());
+        // Server error throws exception
+        assertThrows(ExternalApiException.class, () -> client.fetch());
     }
 
     @Test
@@ -210,11 +206,8 @@ class ContestCalendarClientTest {
                         .withHeader(HEADER_CONTENT_TYPE, CONTENT_TYPE_CALENDAR)
                         .withBody("")));
 
-        // With AbstractExternalDataClient, errors return empty list (fallback)
-        List<ContestICalDto> result = client.fetch();
-
-        assertNotNull(result);
-        assertTrue(result.isEmpty());
+        // Empty response throws exception
+        assertThrows(ExternalApiException.class, () -> client.fetch());
     }
 
     @Test
@@ -224,11 +217,8 @@ class ContestCalendarClientTest {
                         .withStatus(404)
                         .withBody("Not Found")));
 
-        // With AbstractExternalDataClient, errors return empty list (fallback)
-        List<ContestICalDto> result = client.fetch();
-
-        assertNotNull(result);
-        assertTrue(result.isEmpty());
+        // Not found error throws exception
+        assertThrows(ExternalApiException.class, () -> client.fetch());
     }
 
     @Test
@@ -236,11 +226,8 @@ class ContestCalendarClientTest {
         // Simulate network error by stopping server
         wireMockServer.stop();
 
-        // With AbstractExternalDataClient, errors return empty list (fallback)
-        List<ContestICalDto> result = client.fetch();
-
-        assertNotNull(result);
-        assertTrue(result.isEmpty());
+        // Network error throws exception
+        assertThrows(Exception.class, () -> client.fetch());
     }
 
     @Test
@@ -335,23 +322,23 @@ class ContestCalendarClientTest {
 
         // Then: Freshness tracking should be updated
         assertNotNull(client.getLastSuccessfulRefresh());
-        assertFalse(client.isServingStaleData());
+        assertFalse(client.isStale());
         assertNotNull(client.getDataAge());
     }
 
     @Test
-    void shouldTrack_StaleDataAfterFailedFetch() {
+    void shouldNotUpdate_FreshnessAfterFailedFetch() {
         // Given: API returns error
         wireMockServer.stubFor(get(urlEqualTo("/"))
                 .willReturn(aResponse()
                         .withStatus(500)
                         .withBody("Internal Server Error")));
 
-        // When: Fetch contests
-        client.fetch();
+        // When: Fetch contests - should throw exception
+        assertThrows(ExternalApiException.class, () -> client.fetch());
 
-        // Then: Should be serving stale/default data
-        assertTrue(client.isServingStaleData());
+        // Then: Freshness should not be updated (null since never succeeded)
+        assertNull(client.getLastSuccessfulRefresh());
     }
 
     /**
@@ -360,11 +347,10 @@ class ContestCalendarClientTest {
     static class StubContestCalendarClient extends ContestCalendarClient {
         StubContestCalendarClient(
                 WebClient.Builder webClientBuilder,
-                CacheManager cacheManager,
                 CircuitBreakerRegistry circuitBreakerRegistry,
                 RetryRegistry retryRegistry,
                 String testUrl) {
-            super(webClientBuilder, cacheManager, circuitBreakerRegistry, retryRegistry, testUrl);
+            super(webClientBuilder, circuitBreakerRegistry, retryRegistry, testUrl);
         }
     }
 }

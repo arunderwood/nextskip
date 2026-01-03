@@ -9,7 +9,6 @@ import io.nextskip.common.client.AbstractExternalDataClient;
 import io.nextskip.common.client.InvalidApiResponseException;
 import io.nextskip.propagation.internal.dto.HamQslDto.HamQslData;
 import io.nextskip.propagation.model.SolarIndices;
-import org.springframework.cache.CacheManager;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 
@@ -32,7 +31,6 @@ import java.time.Instant;
  * <ul>
  *   <li>Circuit breaker to prevent cascading failures</li>
  *   <li>Retry logic for transient failures</li>
- *   <li>Cache fallback on failures</li>
  *   <li>Freshness tracking for UI display</li>
  * </ul>
  *
@@ -44,8 +42,6 @@ public class HamQslSolarClient extends AbstractExternalDataClient<SolarIndices> 
 
     private static final String CLIENT_NAME = "hamqsl-solar";
     private static final String SOURCE_NAME = "HamQSL";
-    private static final String CACHE_NAME = "hamqslSolar";
-    private static final String CACHE_KEY = "indices";
 
     /**
      * Refresh interval for data fetching.
@@ -65,19 +61,17 @@ public class HamQslSolarClient extends AbstractExternalDataClient<SolarIndices> 
     @org.springframework.beans.factory.annotation.Autowired
     public HamQslSolarClient(
             WebClient.Builder webClientBuilder,
-            CacheManager cacheManager,
             CircuitBreakerRegistry circuitBreakerRegistry,
             RetryRegistry retryRegistry) {
-        this(webClientBuilder, cacheManager, circuitBreakerRegistry, retryRegistry, HAMQSL_URL);
+        this(webClientBuilder, circuitBreakerRegistry, retryRegistry, HAMQSL_URL);
     }
 
     protected HamQslSolarClient(
             WebClient.Builder webClientBuilder,
-            CacheManager cacheManager,
             CircuitBreakerRegistry circuitBreakerRegistry,
             RetryRegistry retryRegistry,
             String baseUrl) {
-        super(webClientBuilder, cacheManager, circuitBreakerRegistry, retryRegistry, baseUrl);
+        super(webClientBuilder, circuitBreakerRegistry, retryRegistry, baseUrl);
         this.xmlMapper = SHARED_XML_MAPPER;
     }
 
@@ -91,16 +85,6 @@ public class HamQslSolarClient extends AbstractExternalDataClient<SolarIndices> 
     @Override
     public String getSourceName() {
         return SOURCE_NAME;
-    }
-
-    @Override
-    protected String getCacheName() {
-        return CACHE_NAME;
-    }
-
-    @Override
-    protected String getCacheKey() {
-        return CACHE_KEY;
     }
 
     @Override
@@ -158,11 +142,6 @@ public class HamQslSolarClient extends AbstractExternalDataClient<SolarIndices> 
             throw new InvalidApiResponseException(SOURCE_NAME,
                     "Failed to parse HamQSL solar data: " + e.getMessage(), e);
         }
-    }
-
-    @Override
-    protected SolarIndices getDefaultValue() {
-        return null; // No sensible default for solar indices
     }
 
     // ========== XML Security Configuration ==========

@@ -5,7 +5,6 @@ import io.github.resilience4j.retry.RetryRegistry;
 import io.nextskip.common.client.AbstractExternalDataClient;
 import io.nextskip.common.client.InvalidApiResponseException;
 import io.nextskip.propagation.model.SolarIndices;
-import org.springframework.cache.CacheManager;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 
@@ -27,7 +26,6 @@ import java.util.List;
  * <ul>
  *   <li>Circuit breaker to prevent cascading failures</li>
  *   <li>Retry logic for transient failures</li>
- *   <li>Cache fallback on failures</li>
  *   <li>Freshness tracking for UI display</li>
  * </ul>
  */
@@ -36,8 +34,6 @@ public class NoaaSwpcClient extends AbstractExternalDataClient<SolarIndices> {
 
     private static final String CLIENT_NAME = "noaa";
     private static final String SOURCE_NAME = "NOAA";
-    private static final String CACHE_NAME = "solarIndices";
-    private static final String CACHE_KEY = "latest";
 
     /**
      * Refresh interval for data fetching.
@@ -54,19 +50,17 @@ public class NoaaSwpcClient extends AbstractExternalDataClient<SolarIndices> {
     @org.springframework.beans.factory.annotation.Autowired
     public NoaaSwpcClient(
             WebClient.Builder webClientBuilder,
-            CacheManager cacheManager,
             CircuitBreakerRegistry circuitBreakerRegistry,
             RetryRegistry retryRegistry) {
-        this(webClientBuilder, cacheManager, circuitBreakerRegistry, retryRegistry, NOAA_URL);
+        this(webClientBuilder, circuitBreakerRegistry, retryRegistry, NOAA_URL);
     }
 
     protected NoaaSwpcClient(
             WebClient.Builder webClientBuilder,
-            CacheManager cacheManager,
             CircuitBreakerRegistry circuitBreakerRegistry,
             RetryRegistry retryRegistry,
             String baseUrl) {
-        super(webClientBuilder, cacheManager, circuitBreakerRegistry, retryRegistry, baseUrl);
+        super(webClientBuilder, circuitBreakerRegistry, retryRegistry, baseUrl);
     }
 
     // ========== AbstractExternalDataClient implementation ==========
@@ -79,16 +73,6 @@ public class NoaaSwpcClient extends AbstractExternalDataClient<SolarIndices> {
     @Override
     public String getSourceName() {
         return SOURCE_NAME;
-    }
-
-    @Override
-    protected String getCacheName() {
-        return CACHE_NAME;
-    }
-
-    @Override
-    protected String getCacheKey() {
-        return CACHE_KEY;
     }
 
     @Override
@@ -138,19 +122,6 @@ public class NoaaSwpcClient extends AbstractExternalDataClient<SolarIndices> {
         getLog().info("Successfully fetched solar indices: SFI={}, Sunspots={}",
                 latest.solarFlux(), latest.sunspotNumber());
         return indices;
-    }
-
-    @Override
-    protected SolarIndices getDefaultValue() {
-        // Return degraded data rather than null
-        return new SolarIndices(
-                100.0,  // Default SFI
-                10,     // Default A-index
-                3,      // Default K-index
-                50,     // Default sunspot number
-                Instant.now(),
-                "NOAA SWPC (Degraded)"
-        );
     }
 
     // ========== NOAA-specific parsing ==========

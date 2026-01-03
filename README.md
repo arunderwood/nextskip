@@ -55,6 +55,9 @@ Amateur radio has many activities—DX chasing, POTA/SOTA activations, contestin
 | **Card**       | A UI component displaying one activity's current conditions                               |
 | **Module**     | A backend package that fetches and scores one activity's data                             |
 | **Feed**       | An external data source that provides activity information                                |
+| **FeedClient** | A component that fetches data from a Feed with circuit breaker and retry resilience       |
+| **LoadingCache** | A Caffeine cache backed by database queries for fast read access                        |
+| **RefreshTask** | A db-scheduler recurring task that coordinates: Feed fetch → DB persist → cache refresh  |
 
 </details>
 

@@ -6,11 +6,10 @@ import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
 import io.github.resilience4j.retry.RetryRegistry;
 import io.nextskip.activations.model.Activation;
 import io.nextskip.activations.model.ActivationType;
+import io.nextskip.common.client.ExternalApiException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.cache.CacheManager;
-import org.springframework.cache.concurrent.ConcurrentMapCacheManager;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import java.util.List;
@@ -21,7 +20,6 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * Unit tests for PotaClient using WireMock to simulate the POTA API.
  */
-@SuppressWarnings("PMD.AvoidDuplicateLiterals") // Test JSON fixtures intentionally duplicated
 class PotaClientTest {
 
     private static final String POTA_API_SOURCE = "POTA API";
@@ -31,7 +29,6 @@ class PotaClientTest {
 
     private WireMockServer wireMockServer;
     private PotaClient potaClient;
-    private CacheManager cacheManager;
     private CircuitBreakerRegistry circuitBreakerRegistry;
     private RetryRegistry retryRegistry;
 
@@ -48,9 +45,8 @@ class PotaClientTest {
         // Configure client to use WireMock server
         String baseUrl = wireMockServer.baseUrl();
         WebClient.Builder webClientBuilder = WebClient.builder();
-        cacheManager = new ConcurrentMapCacheManager("potaActivations");
 
-        potaClient = new StubPotaClient(webClientBuilder, cacheManager,
+        potaClient = new StubPotaClient(webClientBuilder,
                 circuitBreakerRegistry, retryRegistry, baseUrl);
     }
 
@@ -194,32 +190,24 @@ class PotaClientTest {
     }
 
     @Test
-    void shouldHandle_HttpErrorWithFallback() {
+    void shouldThrow_ExceptionOnHttpError() {
         // Given: API returns 500 error
         wireMockServer.stubFor(get(urlEqualTo("/"))
                 .willReturn(aResponse()
                         .withStatus(500)
                         .withBody("Internal Server Error")));
 
-        // When: Fetch activations
-        List<Activation> result = potaClient.fetch();
-
-        // Then: Should return empty list (fallback)
-        assertNotNull(result);
-        assertTrue(result.isEmpty());
+        // When/Then: Fetch activations should throw exception
+        assertThrows(ExternalApiException.class, () -> potaClient.fetch());
     }
 
     @Test
-    void shouldHandle_NetworkErrorWithFallback() {
-        // Given: Simulate network error by not stubbing any response
+    void shouldThrow_ExceptionOnNetworkError() {
+        // Given: Simulate network error by stopping WireMock
         wireMockServer.stop();
 
-        // When: Fetch activations
-        List<Activation> result = potaClient.fetch();
-
-        // Then: Should return empty list (fallback)
-        assertNotNull(result);
-        assertTrue(result.isEmpty());
+        // When/Then: Fetch activations should throw exception
+        assertThrows(Exception.class, () -> potaClient.fetch());
     }
 
     @Test
@@ -384,69 +372,22 @@ class PotaClientTest {
 
         // Then: Freshness tracking should be updated
         assertNotNull(potaClient.getLastSuccessfulRefresh());
-        assertFalse(potaClient.isServingStaleData());
         assertNotNull(potaClient.getDataAge());
     }
 
     @Test
-    void shouldTrack_StaleDataAfterFailedFetch() {
+    void shouldNotUpdate_FreshnessAfterFailedFetch() {
         // Given: API returns error
         wireMockServer.stubFor(get(urlEqualTo("/"))
                 .willReturn(aResponse()
                         .withStatus(500)
                         .withBody("Internal Server Error")));
 
-        // When: Fetch activations
-        potaClient.fetch();
+        // When: Fetch activations (should throw)
+        assertThrows(ExternalApiException.class, () -> potaClient.fetch());
 
-        // Then: Should be serving stale/default data
-        assertTrue(potaClient.isServingStaleData());
-    }
-
-    @Test
-    void shouldReturn_CachedDataOnSubsequentError() {
-        // Given: First successful fetch populates cache
-        String jsonResponse = """
-            [
-              {
-                "spotId": 123456,
-                "activator": "W1ABC",
-                "reference": "US-0001",
-                "name": "Test Park",
-                "frequency": "14250",
-                "mode": "SSB",
-                "spotTime": "2025-12-14T12:30:00"
-              }
-            ]
-            """;
-
-        wireMockServer.stubFor(get(urlEqualTo("/"))
-                .willReturn(aResponse()
-                        .withStatus(200)
-                        .withHeader(HEADER_CONTENT_TYPE, CONTENT_TYPE_JSON)
-                        .withBody(jsonResponse)));
-
-        // First fetch - populates cache
-        List<Activation> firstResult = potaClient.fetch();
-        assertEquals(1, firstResult.size());
-        assertFalse(potaClient.isServingStaleData());
-
-        // Now setup server to return error
-        wireMockServer.resetAll();
-        wireMockServer.stubFor(get(urlEqualTo("/"))
-                .willReturn(aResponse()
-                        .withStatus(500)
-                        .withBody("Internal Server Error")));
-
-        // Clear the cache to force a fresh fetch attempt
-        cacheManager.getCache("potaActivations").clear();
-
-        // When: Second fetch fails
-        List<Activation> secondResult = potaClient.fetch();
-
-        // Then: Should return default (empty list) since cache was cleared
-        assertNotNull(secondResult);
-        assertTrue(potaClient.isServingStaleData());
+        // Then: Freshness should not be updated (null since never succeeded)
+        assertNull(potaClient.getLastSuccessfulRefresh());
     }
 
     @Test
@@ -543,11 +484,10 @@ class PotaClientTest {
     static class StubPotaClient extends PotaClient {
         StubPotaClient(
                 WebClient.Builder webClientBuilder,
-                CacheManager cacheManager,
                 CircuitBreakerRegistry circuitBreakerRegistry,
                 RetryRegistry retryRegistry,
                 String testUrl) {
-            super(webClientBuilder, cacheManager, circuitBreakerRegistry, retryRegistry, testUrl);
+            super(webClientBuilder, circuitBreakerRegistry, retryRegistry, testUrl);
         }
     }
 }

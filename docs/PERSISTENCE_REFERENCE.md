@@ -5,16 +5,22 @@ Quick reference for adding data source integrations with persistence.
 ## Architecture
 
 ```
-External API → db-scheduler task → Database → cache.refresh("all")
+External API → FeedClient.fetch() → RefreshTask → Database → cache.refresh("all")
+                      ↓ (throws on failure)           ↓                ↓
+                Scheduler reschedules        LoadingCache serves DB data
                                                       ↓
-Browser ← @BrowserCallable ← Service ← LoadingCache ← DB
+               Browser ← @BrowserCallable ← Service ← LoadingCache
 ```
+
+**Key principle**: FeedClients do not cache—they fetch and throw on failure. The database
+serves as the single source of truth, with LoadingCache providing fast reads.
 
 ## Reference Examples
 
 | Component | Reference File | Key Pattern |
 |-----------|----------------|-------------|
 | Domain Model | `propagation/model/SolarIndices.java` | Immutable Java record |
+| FeedClient | `propagation/internal/NoaaSwpcClient.java` | Circuit breaker + retry, no caching |
 | Entity (simple) | `propagation/persistence/entity/SolarIndicesEntity.java` | `fromDomain()` / `toDomain()` |
 | Entity (complex) | `activations/persistence/entity/ActivationEntity.java` | Polymorphic flattening |
 | Entity (collections) | `contests/persistence/entity/ContestEntity.java` | `@ElementCollection` |
