@@ -4,14 +4,14 @@ import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
 import io.github.resilience4j.retry.RetryRegistry;
+import io.nextskip.common.client.ExternalApiException;
+import io.nextskip.common.client.InvalidApiResponseException;
 import io.nextskip.common.model.FrequencyBand;
 import io.nextskip.propagation.model.BandCondition;
 import io.nextskip.propagation.model.BandConditionRating;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.cache.CacheManager;
-import org.springframework.cache.concurrent.ConcurrentMapCacheManager;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import java.util.List;
@@ -23,6 +23,8 @@ import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -36,7 +38,6 @@ class HamQslBandClientTest {
 
     private WireMockServer wireMockServer;
     private HamQslBandClient client;
-    private CacheManager cacheManager;
     private CircuitBreakerRegistry circuitBreakerRegistry;
     private RetryRegistry retryRegistry;
 
@@ -50,9 +51,8 @@ class HamQslBandClientTest {
 
         String baseUrl = wireMockServer.baseUrl();
         WebClient.Builder webClientBuilder = WebClient.builder();
-        cacheManager = new ConcurrentMapCacheManager("hamqslBand");
 
-        client = new StubHamQslBandClient(webClientBuilder, cacheManager,
+        client = new StubHamQslBandClient(webClientBuilder,
                 circuitBreakerRegistry, retryRegistry, baseUrl);
     }
 
@@ -108,10 +108,8 @@ class HamQslBandClientTest {
                         .withHeader(HEADER_CONTENT_TYPE, CONTENT_TYPE_XML)
                         .withBody("")));
 
-        // Empty response triggers fallback - returns empty list
-        List<BandCondition> result = client.fetch();
-        assertNotNull(result);
-        assertTrue(result.isEmpty());
+        // Empty response throws exception
+        assertThrows(InvalidApiResponseException.class, () -> client.fetch());
     }
 
     @Test
@@ -121,10 +119,8 @@ class HamQslBandClientTest {
                         .withStatus(500)
                         .withBody("Internal Server Error")));
 
-        // Server error triggers fallback - returns empty list
-        List<BandCondition> result = client.fetch();
-        assertNotNull(result);
-        assertTrue(result.isEmpty());
+        // Server error throws exception
+        assertThrows(ExternalApiException.class, () -> client.fetch());
     }
 
     @Test
@@ -135,9 +131,8 @@ class HamQslBandClientTest {
                         .withHeader(HEADER_CONTENT_TYPE, CONTENT_TYPE_XML)
                         .withBody("<invalid>xml")));
 
-        List<BandCondition> result = client.fetch();
-        assertNotNull(result);
-        assertTrue(result.isEmpty());
+        // Malformed XML throws exception
+        assertThrows(InvalidApiResponseException.class, () -> client.fetch());
     }
 
     @Test
@@ -150,9 +145,8 @@ class HamQslBandClientTest {
                         .withHeader(HEADER_CONTENT_TYPE, CONTENT_TYPE_XML)
                         .withBody(xmlResponse)));
 
-        List<BandCondition> result = client.fetch();
-        assertNotNull(result);
-        assertTrue(result.isEmpty());
+        // Missing solardata element throws exception
+        assertThrows(InvalidApiResponseException.class, () -> client.fetch());
     }
 
     @Test
@@ -329,20 +323,21 @@ class HamQslBandClientTest {
         client.fetch();
 
         assertNotNull(client.getLastSuccessfulRefresh());
-        assertFalse(client.isServingStaleData());
         assertNotNull(client.getDataAge());
     }
 
     @Test
-    void shouldTrack_StaleDataAfterFailedFetch() {
+    void shouldNotUpdate_FreshnessAfterFailedFetch() {
         wireMockServer.stubFor(get(urlEqualTo("/"))
                 .willReturn(aResponse()
                         .withStatus(500)
                         .withBody("Internal Server Error")));
 
-        client.fetch();
+        // Fetch should throw exception
+        assertThrows(ExternalApiException.class, () -> client.fetch());
 
-        assertTrue(client.isServingStaleData());
+        // Freshness should not be updated (null since never succeeded)
+        assertNull(client.getLastSuccessfulRefresh());
     }
 
     @Test
@@ -391,11 +386,10 @@ class HamQslBandClientTest {
     static class StubHamQslBandClient extends HamQslBandClient {
         StubHamQslBandClient(
                 WebClient.Builder webClientBuilder,
-                CacheManager cacheManager,
                 CircuitBreakerRegistry circuitBreakerRegistry,
                 RetryRegistry retryRegistry,
                 String testUrl) {
-            super(webClientBuilder, cacheManager, circuitBreakerRegistry, retryRegistry, testUrl);
+            super(webClientBuilder, circuitBreakerRegistry, retryRegistry, testUrl);
         }
     }
 }

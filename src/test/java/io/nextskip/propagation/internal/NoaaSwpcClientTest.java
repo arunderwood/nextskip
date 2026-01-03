@@ -4,12 +4,12 @@ import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
 import io.github.resilience4j.retry.RetryRegistry;
+import io.nextskip.common.client.ExternalApiException;
+import io.nextskip.common.client.InvalidApiResponseException;
 import io.nextskip.propagation.model.SolarIndices;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.cache.CacheManager;
-import org.springframework.cache.concurrent.ConcurrentMapCacheManager;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
@@ -19,6 +19,8 @@ import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -27,13 +29,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class NoaaSwpcClientTest {
 
     private static final String NOAA_SWPC_SOURCE = "NOAA SWPC";
-    private static final String DEGRADED_SOURCE_MARKER = "Degraded";
     private static final String CONTENT_TYPE = "Content-Type";
     private static final String CONTENT_TYPE_JSON = "application/json";
 
     private WireMockServer wireMockServer;
     private NoaaSwpcClient client;
-    private CacheManager cacheManager;
     private CircuitBreakerRegistry circuitBreakerRegistry;
     private RetryRegistry retryRegistry;
 
@@ -50,10 +50,9 @@ class NoaaSwpcClientTest {
         // Configure client to use WireMock server
         String baseUrl = "http://localhost:" + wireMockServer.port();
         WebClient.Builder webClientBuilder = WebClient.builder();
-        cacheManager = new ConcurrentMapCacheManager("solarIndices");
 
         // Create a custom client that overrides the URL
-        client = new StubNoaaSwpcClient(webClientBuilder, cacheManager,
+        client = new StubNoaaSwpcClient(webClientBuilder,
                 circuitBreakerRegistry, retryRegistry, baseUrl);
     }
 
@@ -98,51 +97,42 @@ class NoaaSwpcClientTest {
     }
 
     @Test
-    void testFetch_EmptyResponse_ReturnsDegradedData() {
+    void testFetch_EmptyResponse_ThrowsException() {
         wireMockServer.stubFor(get(urlEqualTo("/"))
                 .willReturn(aResponse()
                         .withStatus(200)
                         .withHeader(CONTENT_TYPE, CONTENT_TYPE_JSON)
                         .withBody("[]")));
 
-        // Empty response triggers fallback to degraded data
-        SolarIndices result = client.fetch();
-
-        assertNotNull(result);
-        assertTrue(result.source().contains(DEGRADED_SOURCE_MARKER));
+        // Empty response throws exception
+        assertThrows(InvalidApiResponseException.class, () -> client.fetch());
     }
 
     @Test
-    void testFetch_ServerError_ReturnsDegradedData() {
+    void testFetch_ServerError_ThrowsException() {
         wireMockServer.stubFor(get(urlEqualTo("/"))
                 .willReturn(aResponse()
                         .withStatus(500)
                         .withBody("Internal Server Error")));
 
-        // Server error triggers fallback to degraded data
-        SolarIndices result = client.fetch();
-
-        assertNotNull(result);
-        assertTrue(result.source().contains(DEGRADED_SOURCE_MARKER));
+        // Server error throws exception
+        assertThrows(ExternalApiException.class, () -> client.fetch());
     }
 
     @Test
-    void testFetch_MalformedJson_ReturnsDegradedData() {
+    void testFetch_MalformedJson_ThrowsException() {
         wireMockServer.stubFor(get(urlEqualTo("/"))
                 .willReturn(aResponse()
                         .withStatus(200)
                         .withHeader(CONTENT_TYPE, CONTENT_TYPE_JSON)
                         .withBody("{ invalid json }")));
 
-        // Malformed JSON triggers fallback to degraded data
-        SolarIndices result = client.fetch();
-
-        assertNotNull(result);
-        assertTrue(result.source().contains(DEGRADED_SOURCE_MARKER));
+        // Malformed JSON throws exception
+        assertThrows(Exception.class, () -> client.fetch());
     }
 
     @Test
-    void testFetch_MissingFields_ReturnsDegradedData() {
+    void testFetch_MissingFields_ThrowsException() {
         String jsonResponse = """
             [
                 {
@@ -157,11 +147,8 @@ class NoaaSwpcClientTest {
                         .withHeader(CONTENT_TYPE, CONTENT_TYPE_JSON)
                         .withBody(jsonResponse)));
 
-        // Missing required fields triggers fallback to degraded data
-        SolarIndices result = client.fetch();
-
-        assertNotNull(result);
-        assertTrue(result.source().contains(DEGRADED_SOURCE_MARKER));
+        // Missing required fields throws exception
+        assertThrows(InvalidApiResponseException.class, () -> client.fetch());
     }
 
     @Test
@@ -218,7 +205,6 @@ class NoaaSwpcClientTest {
 
         // Freshness tracking should be updated
         assertNotNull(client.getLastSuccessfulRefresh());
-        assertFalse(client.isServingStaleData());
         assertNotNull(client.getDataAge());
     }
 
@@ -229,10 +215,11 @@ class NoaaSwpcClientTest {
                         .withStatus(500)
                         .withBody("Internal Server Error")));
 
-        client.fetch();
+        // Fetch should throw exception
+        assertThrows(ExternalApiException.class, () -> client.fetch());
 
-        // Should be serving stale/default data
-        assertTrue(client.isServingStaleData());
+        // Freshness should not be updated (null since never succeeded)
+        assertNull(client.getLastSuccessfulRefresh());
     }
 
     @Test
@@ -267,57 +254,16 @@ class NoaaSwpcClientTest {
         assertFalse(client.isStale());
     }
 
-    @Test
-    void testCacheFallback_ReturnsCachedData() {
-        // Given: First successful fetch populates cache
-        String jsonResponse = """
-            [
-                {
-                    "time-tag": "2025-01-01T00:00:00Z",
-                    "ssn": 120,
-                    "f10.7": 150.5
-                }
-            ]
-            """;
-
-        wireMockServer.stubFor(get(urlEqualTo("/"))
-                .willReturn(aResponse()
-                        .withStatus(200)
-                        .withHeader(CONTENT_TYPE, CONTENT_TYPE_JSON)
-                        .withBody(jsonResponse)));
-
-        // First fetch - populates cache
-        SolarIndices firstResult = client.fetch();
-        assertEquals(150.5, firstResult.solarFluxIndex(), 0.01);
-        assertFalse(client.isServingStaleData());
-
-        // Clear cache and setup error response
-        cacheManager.getCache("solarIndices").clear();
-        wireMockServer.resetAll();
-        wireMockServer.stubFor(get(urlEqualTo("/"))
-                .willReturn(aResponse()
-                        .withStatus(500)
-                        .withBody("Internal Server Error")));
-
-        // When: Second fetch fails
-        SolarIndices secondResult = client.fetch();
-
-        // Then: Should return degraded data and mark as stale
-        assertNotNull(secondResult);
-        assertTrue(client.isServingStaleData());
-    }
-
     /**
      * Stub subclass that allows URL override for testing.
      */
     static class StubNoaaSwpcClient extends NoaaSwpcClient {
         StubNoaaSwpcClient(
                 WebClient.Builder webClientBuilder,
-                CacheManager cacheManager,
                 CircuitBreakerRegistry circuitBreakerRegistry,
                 RetryRegistry retryRegistry,
                 String testUrl) {
-            super(webClientBuilder, cacheManager, circuitBreakerRegistry, retryRegistry, testUrl);
+            super(webClientBuilder, circuitBreakerRegistry, retryRegistry, testUrl);
         }
     }
 }

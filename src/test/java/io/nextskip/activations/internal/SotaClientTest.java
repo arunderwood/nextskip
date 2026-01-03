@@ -6,11 +6,10 @@ import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
 import io.github.resilience4j.retry.RetryRegistry;
 import io.nextskip.activations.model.Activation;
 import io.nextskip.activations.model.ActivationType;
+import io.nextskip.common.client.ExternalApiException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.cache.CacheManager;
-import org.springframework.cache.concurrent.ConcurrentMapCacheManager;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import java.time.Instant;
@@ -36,7 +35,6 @@ class SotaClientTest {
 
     private WireMockServer wireMockServer;
     private SotaClient sotaClient;
-    private CacheManager cacheManager;
     private CircuitBreakerRegistry circuitBreakerRegistry;
     private RetryRegistry retryRegistry;
 
@@ -53,9 +51,8 @@ class SotaClientTest {
         // Configure client to use WireMock server
         String baseUrl = wireMockServer.baseUrl();
         WebClient.Builder webClientBuilder = WebClient.builder();
-        cacheManager = new ConcurrentMapCacheManager("sotaActivations");
 
-        sotaClient = new StubSotaClient(webClientBuilder, cacheManager,
+        sotaClient = new StubSotaClient(webClientBuilder,
                 circuitBreakerRegistry, retryRegistry, baseUrl);
     }
 
@@ -252,32 +249,24 @@ class SotaClientTest {
     }
 
     @Test
-    void shouldHandle_HttpErrorWithFallback() {
+    void shouldThrow_ExceptionOnHttpError() {
         // Given: API returns 500 error
         wireMockServer.stubFor(get(urlEqualTo("/"))
                 .willReturn(aResponse()
                         .withStatus(500)
                         .withBody("Internal Server Error")));
 
-        // When: Fetch activations
-        List<Activation> result = sotaClient.fetch();
-
-        // Then: Should return empty list (fallback)
-        assertNotNull(result);
-        assertTrue(result.isEmpty());
+        // When/Then: Fetch activations should throw exception
+        assertThrows(ExternalApiException.class, () -> sotaClient.fetch());
     }
 
     @Test
-    void shouldHandle_NetworkErrorWithFallback() {
+    void shouldThrow_ExceptionOnNetworkError() {
         // Given: Simulate network error by stopping server
         wireMockServer.stop();
 
-        // When: Fetch activations
-        List<Activation> result = sotaClient.fetch();
-
-        // Then: Should return empty list (fallback)
-        assertNotNull(result);
-        assertTrue(result.isEmpty());
+        // When/Then: Fetch activations should throw exception
+        assertThrows(Exception.class, () -> sotaClient.fetch());
     }
 
     @Test
@@ -455,23 +444,22 @@ class SotaClientTest {
 
         // Then: Freshness tracking should be updated
         assertNotNull(sotaClient.getLastSuccessfulRefresh());
-        assertFalse(sotaClient.isServingStaleData());
         assertNotNull(sotaClient.getDataAge());
     }
 
     @Test
-    void shouldTrack_StaleDataAfterFailedFetch() {
+    void shouldNotUpdate_FreshnessAfterFailedFetch() {
         // Given: API returns error
         wireMockServer.stubFor(get(urlEqualTo("/"))
                 .willReturn(aResponse()
                         .withStatus(500)
                         .withBody("Internal Server Error")));
 
-        // When: Fetch activations
-        sotaClient.fetch();
+        // When: Fetch activations (should throw)
+        assertThrows(ExternalApiException.class, () -> sotaClient.fetch());
 
-        // Then: Should be serving stale/default data
-        assertTrue(sotaClient.isServingStaleData());
+        // Then: Freshness should not be updated (null since never succeeded)
+        assertNull(sotaClient.getLastSuccessfulRefresh());
     }
 
     @Test
@@ -602,11 +590,10 @@ class SotaClientTest {
     static class StubSotaClient extends SotaClient {
         StubSotaClient(
                 WebClient.Builder webClientBuilder,
-                CacheManager cacheManager,
                 CircuitBreakerRegistry circuitBreakerRegistry,
                 RetryRegistry retryRegistry,
                 String testUrl) {
-            super(webClientBuilder, cacheManager, circuitBreakerRegistry, retryRegistry, testUrl);
+            super(webClientBuilder, circuitBreakerRegistry, retryRegistry, testUrl);
         }
     }
 }

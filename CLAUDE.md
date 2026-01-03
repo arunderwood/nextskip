@@ -240,10 +240,12 @@ All code should adhere to SOLID design principles:
 
 ### Key Design Patterns
 
-**Resilience Pattern**: All external API clients use Circuit Breaker + Retry + Cache Fallback
+**Resilience Pattern**: All FeedClients use Circuit Breaker + Retry + Database Persistence
 
 - Configuration in `application.yml`
-- See `NoaaSwpcClient.java` and `HamQslClient.java` for reference implementations
+- See `NoaaSwpcClient.java` and `HamQslSolarClient.java` for reference implementations
+- On failure, exceptions propagate to the scheduler which logs and reschedules
+- LoadingCache continues serving last-known-good data from database
 
 **Type-Safe DTOs**: Java records with built-in validation
 

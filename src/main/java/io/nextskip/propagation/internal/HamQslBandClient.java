@@ -12,7 +12,6 @@ import io.nextskip.propagation.internal.dto.HamQslDto.BandConditionEntry;
 import io.nextskip.propagation.internal.dto.HamQslDto.HamQslData;
 import io.nextskip.propagation.model.BandCondition;
 import io.nextskip.propagation.model.BandConditionRating;
-import org.springframework.cache.CacheManager;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 
@@ -37,7 +36,6 @@ import java.util.Locale;
  * <ul>
  *   <li>Circuit breaker to prevent cascading failures</li>
  *   <li>Retry logic for transient failures</li>
- *   <li>Cache fallback on failures</li>
  *   <li>Freshness tracking for UI display</li>
  * </ul>
  *
@@ -49,8 +47,6 @@ public class HamQslBandClient extends AbstractExternalDataClient<List<BandCondit
 
     private static final String CLIENT_NAME = "hamqsl-band";
     private static final String SOURCE_NAME = "HamQSL";
-    private static final String CACHE_NAME = "hamqslBand";
-    private static final String CACHE_KEY = "conditions";
 
     /**
      * Refresh interval for data fetching.
@@ -73,19 +69,17 @@ public class HamQslBandClient extends AbstractExternalDataClient<List<BandCondit
     @org.springframework.beans.factory.annotation.Autowired
     public HamQslBandClient(
             WebClient.Builder webClientBuilder,
-            CacheManager cacheManager,
             CircuitBreakerRegistry circuitBreakerRegistry,
             RetryRegistry retryRegistry) {
-        this(webClientBuilder, cacheManager, circuitBreakerRegistry, retryRegistry, HAMQSL_URL);
+        this(webClientBuilder, circuitBreakerRegistry, retryRegistry, HAMQSL_URL);
     }
 
     protected HamQslBandClient(
             WebClient.Builder webClientBuilder,
-            CacheManager cacheManager,
             CircuitBreakerRegistry circuitBreakerRegistry,
             RetryRegistry retryRegistry,
             String baseUrl) {
-        super(webClientBuilder, cacheManager, circuitBreakerRegistry, retryRegistry, baseUrl);
+        super(webClientBuilder, circuitBreakerRegistry, retryRegistry, baseUrl);
         this.xmlMapper = SHARED_XML_MAPPER;
     }
 
@@ -99,16 +93,6 @@ public class HamQslBandClient extends AbstractExternalDataClient<List<BandCondit
     @Override
     public String getSourceName() {
         return SOURCE_NAME;
-    }
-
-    @Override
-    protected String getCacheName() {
-        return CACHE_NAME;
-    }
-
-    @Override
-    protected String getCacheKey() {
-        return CACHE_KEY;
     }
 
     @Override
@@ -186,11 +170,6 @@ public class HamQslBandClient extends AbstractExternalDataClient<List<BandCondit
             throw new InvalidApiResponseException(SOURCE_NAME,
                     "Failed to parse HamQSL band conditions: " + e.getMessage(), e);
         }
-    }
-
-    @Override
-    protected List<BandCondition> getDefaultValue() {
-        return List.of();
     }
 
     // ========== Band Rating Parsing ==========

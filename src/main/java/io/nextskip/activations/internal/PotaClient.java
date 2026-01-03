@@ -8,7 +8,6 @@ import io.nextskip.activations.model.ActivationType;
 import io.nextskip.activations.model.Park;
 import io.nextskip.common.client.AbstractExternalDataClient;
 import io.nextskip.common.util.ParsingUtils;
-import org.springframework.cache.CacheManager;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 
@@ -25,7 +24,6 @@ import java.util.List;
  * <ul>
  *   <li>Circuit breaker to prevent cascading failures</li>
  *   <li>Retry logic for transient failures</li>
- *   <li>Cache fallback on failures</li>
  *   <li>Freshness tracking for UI display</li>
  * </ul>
  */
@@ -34,8 +32,6 @@ public class PotaClient extends AbstractExternalDataClient<List<Activation>> {
 
     private static final String CLIENT_NAME = "pota";
     private static final String SOURCE_NAME = "POTA API";
-    private static final String CACHE_NAME = "potaActivations";
-    private static final String CACHE_KEY = "current";
 
     /**
      * Refresh interval for data fetching.
@@ -50,19 +46,17 @@ public class PotaClient extends AbstractExternalDataClient<List<Activation>> {
     @org.springframework.beans.factory.annotation.Autowired
     public PotaClient(
             WebClient.Builder webClientBuilder,
-            CacheManager cacheManager,
             CircuitBreakerRegistry circuitBreakerRegistry,
             RetryRegistry retryRegistry) {
-        this(webClientBuilder, cacheManager, circuitBreakerRegistry, retryRegistry, POTA_URL);
+        this(webClientBuilder, circuitBreakerRegistry, retryRegistry, POTA_URL);
     }
 
     protected PotaClient(
             WebClient.Builder webClientBuilder,
-            CacheManager cacheManager,
             CircuitBreakerRegistry circuitBreakerRegistry,
             RetryRegistry retryRegistry,
             String baseUrl) {
-        super(webClientBuilder, cacheManager, circuitBreakerRegistry, retryRegistry, baseUrl);
+        super(webClientBuilder, circuitBreakerRegistry, retryRegistry, baseUrl);
     }
 
     // ========== AbstractExternalDataClient implementation ==========
@@ -75,16 +69,6 @@ public class PotaClient extends AbstractExternalDataClient<List<Activation>> {
     @Override
     public String getSourceName() {
         return SOURCE_NAME;
-    }
-
-    @Override
-    protected String getCacheName() {
-        return CACHE_NAME;
-    }
-
-    @Override
-    protected String getCacheKey() {
-        return CACHE_KEY;
     }
 
     @Override
@@ -120,11 +104,6 @@ public class PotaClient extends AbstractExternalDataClient<List<Activation>> {
 
         getLog().info("Successfully fetched {} POTA activations", activations.size());
         return activations;
-    }
-
-    @Override
-    protected List<Activation> getDefaultValue() {
-        return List.of();
     }
 
     // ========== POTA-specific parsing ==========

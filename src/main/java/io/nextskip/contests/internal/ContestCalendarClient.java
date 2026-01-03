@@ -13,7 +13,6 @@ import net.fortuna.ical4j.model.property.DtEnd;
 import net.fortuna.ical4j.model.property.DtStart;
 import net.fortuna.ical4j.model.property.Summary;
 import net.fortuna.ical4j.model.property.Url;
-import org.springframework.cache.CacheManager;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 
@@ -41,7 +40,6 @@ import java.util.Optional;
  * <ul>
  *   <li>Circuit breaker to prevent cascading failures</li>
  *   <li>Retry logic for transient failures</li>
- *   <li>Cache fallback on failures</li>
  *   <li>Freshness tracking for UI display</li>
  * </ul>
  */
@@ -51,8 +49,6 @@ public class ContestCalendarClient extends AbstractExternalDataClient<List<Conte
 
     private static final String CLIENT_NAME = "contests";
     private static final String SOURCE_NAME = "WA7BNM Contest Calendar";
-    private static final String CACHE_NAME = "contests";
-    private static final String CACHE_KEY = "upcoming";
 
     /**
      * Refresh interval for data fetching.
@@ -68,19 +64,17 @@ public class ContestCalendarClient extends AbstractExternalDataClient<List<Conte
     @org.springframework.beans.factory.annotation.Autowired
     public ContestCalendarClient(
             WebClient.Builder webClientBuilder,
-            CacheManager cacheManager,
             CircuitBreakerRegistry circuitBreakerRegistry,
             RetryRegistry retryRegistry) {
-        this(webClientBuilder, cacheManager, circuitBreakerRegistry, retryRegistry, CALENDAR_URL);
+        this(webClientBuilder, circuitBreakerRegistry, retryRegistry, CALENDAR_URL);
     }
 
     protected ContestCalendarClient(
             WebClient.Builder webClientBuilder,
-            CacheManager cacheManager,
             CircuitBreakerRegistry circuitBreakerRegistry,
             RetryRegistry retryRegistry,
             String baseUrl) {
-        super(webClientBuilder, cacheManager, circuitBreakerRegistry, retryRegistry, baseUrl);
+        super(webClientBuilder, circuitBreakerRegistry, retryRegistry, baseUrl);
     }
 
     // ========== AbstractExternalDataClient implementation ==========
@@ -93,16 +87,6 @@ public class ContestCalendarClient extends AbstractExternalDataClient<List<Conte
     @Override
     public String getSourceName() {
         return SOURCE_NAME;
-    }
-
-    @Override
-    protected String getCacheName() {
-        return CACHE_NAME;
-    }
-
-    @Override
-    protected String getCacheKey() {
-        return CACHE_KEY;
     }
 
     @Override
@@ -136,11 +120,6 @@ public class ContestCalendarClient extends AbstractExternalDataClient<List<Conte
 
         getLog().info("Successfully fetched {} contests from WA7BNM", contests.size());
         return contests;
-    }
-
-    @Override
-    protected List<ContestICalDto> getDefaultValue() {
-        return List.of();
     }
 
     // ========== iCal parsing ==========

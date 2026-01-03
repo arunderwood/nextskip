@@ -4,12 +4,12 @@ import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
 import io.github.resilience4j.retry.RetryRegistry;
+import io.nextskip.common.client.ExternalApiException;
+import io.nextskip.common.client.InvalidApiResponseException;
 import io.nextskip.propagation.model.SolarIndices;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.cache.CacheManager;
-import org.springframework.cache.concurrent.ConcurrentMapCacheManager;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
@@ -20,6 +20,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -33,7 +34,6 @@ class HamQslSolarClientTest {
 
     private WireMockServer wireMockServer;
     private HamQslSolarClient client;
-    private CacheManager cacheManager;
     private CircuitBreakerRegistry circuitBreakerRegistry;
     private RetryRegistry retryRegistry;
 
@@ -47,9 +47,8 @@ class HamQslSolarClientTest {
 
         String baseUrl = wireMockServer.baseUrl();
         WebClient.Builder webClientBuilder = WebClient.builder();
-        cacheManager = new ConcurrentMapCacheManager("hamqslSolar");
 
-        client = new StubHamQslSolarClient(webClientBuilder, cacheManager,
+        client = new StubHamQslSolarClient(webClientBuilder,
                 circuitBreakerRegistry, retryRegistry, baseUrl);
     }
 
@@ -88,9 +87,8 @@ class HamQslSolarClientTest {
                         .withHeader(HEADER_CONTENT_TYPE, CONTENT_TYPE_XML)
                         .withBody("")));
 
-        // Empty response triggers fallback - client returns null for default
-        SolarIndices result = client.fetch();
-        assertNull(result);
+        // Empty response throws exception
+        assertThrows(InvalidApiResponseException.class, () -> client.fetch());
     }
 
     @Test
@@ -100,9 +98,8 @@ class HamQslSolarClientTest {
                         .withStatus(500)
                         .withBody("Internal Server Error")));
 
-        // Server error triggers fallback - client returns null for default
-        SolarIndices result = client.fetch();
-        assertNull(result);
+        // Server error throws exception
+        assertThrows(ExternalApiException.class, () -> client.fetch());
     }
 
     @Test
@@ -113,8 +110,8 @@ class HamQslSolarClientTest {
                         .withHeader(HEADER_CONTENT_TYPE, CONTENT_TYPE_XML)
                         .withBody("<invalid>xml")));
 
-        SolarIndices result = client.fetch();
-        assertNull(result);
+        // Malformed XML throws exception
+        assertThrows(InvalidApiResponseException.class, () -> client.fetch());
     }
 
     @Test
@@ -127,8 +124,8 @@ class HamQslSolarClientTest {
                         .withHeader(HEADER_CONTENT_TYPE, CONTENT_TYPE_XML)
                         .withBody(xmlResponse)));
 
-        SolarIndices result = client.fetch();
-        assertNull(result);
+        // Missing solardata element throws exception
+        assertThrows(InvalidApiResponseException.class, () -> client.fetch());
     }
 
     @Test
@@ -175,20 +172,21 @@ class HamQslSolarClientTest {
         client.fetch();
 
         assertNotNull(client.getLastSuccessfulRefresh());
-        assertFalse(client.isServingStaleData());
         assertNotNull(client.getDataAge());
     }
 
     @Test
-    void shouldTrack_StaleDataAfterFailedFetch() {
+    void shouldNotUpdate_FreshnessAfterFailedFetch() {
         wireMockServer.stubFor(get(urlEqualTo("/"))
                 .willReturn(aResponse()
                         .withStatus(500)
                         .withBody("Internal Server Error")));
 
-        client.fetch();
+        // Fetch should throw exception
+        assertThrows(ExternalApiException.class, () -> client.fetch());
 
-        assertTrue(client.isServingStaleData());
+        // Freshness should not be updated (null since never succeeded)
+        assertNull(client.getLastSuccessfulRefresh());
     }
 
     @Test
@@ -259,11 +257,10 @@ class HamQslSolarClientTest {
     static class StubHamQslSolarClient extends HamQslSolarClient {
         StubHamQslSolarClient(
                 WebClient.Builder webClientBuilder,
-                CacheManager cacheManager,
                 CircuitBreakerRegistry circuitBreakerRegistry,
                 RetryRegistry retryRegistry,
                 String testUrl) {
-            super(webClientBuilder, cacheManager, circuitBreakerRegistry, retryRegistry, testUrl);
+            super(webClientBuilder, circuitBreakerRegistry, retryRegistry, testUrl);
         }
     }
 }
