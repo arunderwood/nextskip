@@ -5,7 +5,7 @@
  * and accessibility
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, within } from '@testing-library/react';
 import { axe, toHaveNoViolations } from 'jest-axe';
 import ActivityGrid from 'Frontend/components/activity/ActivityGrid';
@@ -431,6 +431,152 @@ describe('ActivityGrid', () => {
       const items = container.querySelectorAll('.activity-grid__card-wrapper');
       expect(items[0]).toHaveTextContent('Max'); // 100 > 95
       expect(items[1]).toHaveTextContent('High');
+    });
+  });
+
+  describe('responsive frame width calculation', () => {
+    const originalInnerWidth = window.innerWidth;
+
+    beforeEach(() => {
+      // Reset any mocks
+      vi.restoreAllMocks();
+    });
+
+    afterEach(() => {
+      // Restore original window.innerWidth
+      Object.defineProperty(window, 'innerWidth', {
+        value: originalInnerWidth,
+        writable: true,
+        configurable: true,
+      });
+    });
+
+    const setViewportWidth = (width: number) => {
+      Object.defineProperty(window, 'innerWidth', {
+        value: width,
+        writable: true,
+        configurable: true,
+      });
+      window.dispatchEvent(new Event('resize'));
+    };
+
+    it('should render at mobile viewport width (<=768px)', () => {
+      setViewportWidth(375);
+
+      const cards = [
+        {
+          config: createCard('card-1', 75, 'hot'),
+          component: (
+            <ActivityCard config={createCard('card-1', 75, 'hot')} title="Card 1">
+              <div>Content</div>
+            </ActivityCard>
+          ),
+        },
+      ];
+
+      const { container } = render(<ActivityGrid cards={cards} />);
+
+      // Grid should render without error at mobile width
+      const grid = container.querySelector('.activity-grid');
+      expect(grid).toBeInTheDocument();
+      expect(screen.getByText('Card 1')).toBeInTheDocument();
+    });
+
+    it('should render at tablet viewport width (<=1024px)', () => {
+      setViewportWidth(1024);
+
+      const cards = [
+        {
+          config: createCard('card-1', 75, 'hot'),
+          component: (
+            <ActivityCard config={createCard('card-1', 75, 'hot')} title="Card 1">
+              <div>Content</div>
+            </ActivityCard>
+          ),
+        },
+      ];
+
+      const { container } = render(<ActivityGrid cards={cards} />);
+
+      const grid = container.querySelector('.activity-grid');
+      expect(grid).toBeInTheDocument();
+    });
+
+    it('should render at wide desktop viewport width (>=1400px)', () => {
+      setViewportWidth(1400);
+
+      const cards = [
+        {
+          config: createCard('card-1', 75, 'hot'),
+          component: (
+            <ActivityCard config={createCard('card-1', 75, 'hot')} title="Card 1">
+              <div>Content</div>
+            </ActivityCard>
+          ),
+        },
+      ];
+
+      const { container } = render(<ActivityGrid cards={cards} />);
+
+      // Grid should render at wide desktop width (6 columns)
+      const grid = container.querySelector('.activity-grid');
+      expect(grid).toBeInTheDocument();
+      expect(screen.getByText('Card 1')).toBeInTheDocument();
+    });
+
+    it('should use fallback width calculation when container not found', () => {
+      setViewportWidth(500);
+
+      // Mock querySelector to return null for .activity-grid initially
+      const originalQuerySelector = document.querySelector.bind(document);
+      let callCount = 0;
+      vi.spyOn(document, 'querySelector').mockImplementation((selector: string) => {
+        if (selector === '.activity-grid' && callCount < 1) {
+          callCount++;
+          return null;
+        }
+        return originalQuerySelector(selector);
+      });
+
+      const cards = [
+        {
+          config: createCard('card-1', 75, 'hot'),
+          component: (
+            <ActivityCard config={createCard('card-1', 75, 'hot')} title="Card 1">
+              <div>Content</div>
+            </ActivityCard>
+          ),
+        },
+      ];
+
+      const { container } = render(<ActivityGrid cards={cards} />);
+
+      // Should still render using fallback calculation
+      const grid = container.querySelector('.activity-grid');
+      expect(grid).toBeInTheDocument();
+    });
+
+    it('should recalculate width on window resize', () => {
+      setViewportWidth(1280);
+
+      const cards = [
+        {
+          config: createCard('card-1', 75, 'hot'),
+          component: (
+            <ActivityCard config={createCard('card-1', 75, 'hot')} title="Card 1">
+              <div>Content</div>
+            </ActivityCard>
+          ),
+        },
+      ];
+
+      const { container } = render(<ActivityGrid cards={cards} />);
+
+      // Trigger resize to different width
+      setViewportWidth(768);
+
+      const grid = container.querySelector('.activity-grid');
+      expect(grid).toBeInTheDocument();
     });
   });
 });

@@ -29,10 +29,10 @@ function useResponsiveFrameWidth(baseColumns: number): number {
 
   useEffect(() => {
     const calculateWidth = () => {
-      // Get container width or fallback to window width
+      // Get container width - prefer actual container, fallback to calculated viewport width
       const container = document.querySelector('.activity-grid');
-      const containerWidth = container?.clientWidth || window.innerWidth;
       const gap = 24; // Default gap in pixels
+      const gridPadding = 24; // 12px on each side
 
       // Determine columns based on breakpoints
       let cols = baseColumns;
@@ -44,9 +44,19 @@ function useResponsiveFrameWidth(baseColumns: number): number {
         cols = 6; // wide desktop
       }
 
-      // Calculate frame width: (containerWidth - totalGaps) / columns
+      let availableWidth: number;
+      if (container) {
+        // Use actual container width (already accounts for parent padding)
+        availableWidth = container.clientWidth - gridPadding;
+      } else {
+        // Fallback: estimate available width accounting for app-main padding
+        const appMainPadding = window.innerWidth <= 768 ? 16 : 48; // 8px or 24px each side
+        availableWidth = window.innerWidth - appMainPadding - gridPadding;
+      }
+
+      // Calculate frame width: (availableWidth - totalGaps) / columns
       const totalGaps = (cols - 1) * gap;
-      const width = Math.floor((containerWidth - totalGaps) / cols);
+      const width = Math.floor((availableWidth - totalGaps) / cols);
       setFrameWidth(Math.max(150, width)); // minimum 150px
     };
 

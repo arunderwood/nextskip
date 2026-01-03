@@ -3,6 +3,16 @@
 .activity-grid {
   /* Padding provides space for box-shadow glow at grid edges */
   padding: 12px;
+  max-width: 100%;
+  overflow-x: hidden;
+  /* Ensure masonry grid content respects container bounds */
+  box-sizing: border-box;
+}
+
+/* Force masonry grid to respect container width */
+.activity-grid > div {
+  max-width: 100% !important;
+  overflow-x: hidden;
 }
 
 /* Card wrapper - masonry handles positioning and sizing via Frame */
