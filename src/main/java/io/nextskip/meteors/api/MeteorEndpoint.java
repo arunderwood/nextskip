@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.Instant;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -46,7 +47,9 @@ public class MeteorEndpoint {
                 .filter(s -> s.getStatus() == EventStatus.UPCOMING)
                 .count();
 
-        MeteorShower primary = meteorService.getPrimaryShower().orElse(null);
+        MeteorShower primary = showers.stream()
+                .max(Comparator.comparingInt(MeteorShower::getScore))
+                .orElse(null);
 
         MeteorShowersResponse response = new MeteorShowersResponse(
                 showers,

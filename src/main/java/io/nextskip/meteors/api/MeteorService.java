@@ -3,7 +3,6 @@ package io.nextskip.meteors.api;
 import io.nextskip.meteors.model.MeteorShower;
 
 import java.util.List;
-import java.util.Optional;
 
 /**
  * Public API for meteor shower data.
@@ -19,15 +18,6 @@ public interface MeteorService {
      * @return list of meteor showers sorted by peak date
      */
     List<MeteorShower> getMeteorShowers();
-
-    /**
-     * Get the currently most significant meteor shower.
-     *
-     * <p>Returns the shower with the highest score (if any are active/upcoming).
-     *
-     * @return the most significant shower, or empty if none relevant
-     */
-    Optional<MeteorShower> getPrimaryShower();
 
     /**
      * Get active showers (currently within visibility window).

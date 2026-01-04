@@ -9,9 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import java.util.Comparator;
 import java.util.List;
-import java.util.Optional;
 
 /**
  * Implementation of MeteorService.
@@ -47,12 +45,6 @@ public class MeteorServiceImpl implements MeteorService {
 
         LOG.info("Retrieved {} relevant meteor showers from cache", relevant.size());
         return relevant;
-    }
-
-    @Override
-    public Optional<MeteorShower> getPrimaryShower() {
-        return getMeteorShowers().stream()
-                .max(Comparator.comparingInt(MeteorShower::getScore));
     }
 
     @Override

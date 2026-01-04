@@ -10,7 +10,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
-import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -47,7 +46,6 @@ class MeteorEndpointTest {
         );
 
         when(meteorService.getMeteorShowers()).thenReturn(List.of(active, upcoming));
-        when(meteorService.getPrimaryShower()).thenReturn(Optional.of(active));
 
         MeteorShowersResponse response = endpoint.getMeteorShowers();
 
@@ -63,7 +61,6 @@ class MeteorEndpointTest {
     @Test
     void getMeteorShowers_handlesNoShowers() {
         when(meteorService.getMeteorShowers()).thenReturn(List.of());
-        when(meteorService.getPrimaryShower()).thenReturn(Optional.empty());
 
         MeteorShowersResponse response = endpoint.getMeteorShowers();
 
