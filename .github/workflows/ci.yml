@@ -94,13 +94,6 @@ jobs:
           path: build/test-results/test/*.xml
           reporter: java-junit
 
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v5
-        with:
-          files: build/reports/jacoco/test/jacocoTestReport.xml
-          flags: backend
-          token: ${{ secrets.CODECOV_TOKEN }}
-
       - name: Determine version
         id: version
         run: |
@@ -167,13 +160,6 @@ jobs:
           name: frontend-test-results
           retention-days: 7
           path: coverage/
-
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v5
-        with:
-          files: coverage/lcov.info
-          flags: frontend
-          token: ${{ secrets.CODECOV_TOKEN }}
 
   e2e-test:
     needs: [backend, frontend-test]
