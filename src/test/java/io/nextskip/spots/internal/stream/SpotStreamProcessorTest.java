@@ -1,7 +1,6 @@
 package io.nextskip.spots.internal.stream;
 
 import io.nextskip.spots.internal.client.SpotSource;
-import io.nextskip.spots.internal.enrichment.CallsignEnricher;
 import io.nextskip.spots.internal.enrichment.ContinentEnricher;
 import io.nextskip.spots.internal.enrichment.DistanceEnricher;
 import io.nextskip.spots.internal.parser.PskReporterJsonParser;
@@ -68,9 +67,6 @@ class SpotStreamProcessorTest {
 
     @Mock
     private PskReporterJsonParser parser;
-
-    @Mock
-    private CallsignEnricher callsignEnricher;
 
     @Mock
     private DistanceEnricher distanceEnricher;
@@ -274,7 +270,6 @@ class SpotStreamProcessorTest {
                 actorSystem,
                 spotSource,
                 parser,
-                callsignEnricher,
                 distanceEnricher,
                 continentEnricher,
                 spotRepository,
@@ -315,7 +310,6 @@ class SpotStreamProcessorTest {
     }
 
     private void setupEnrichersToPassThrough() {
-        when(callsignEnricher.enrich(any())).thenAnswer(inv -> inv.getArgument(0));
         when(distanceEnricher.enrich(any())).thenAnswer(inv -> inv.getArgument(0));
         when(continentEnricher.enrich(any())).thenAnswer(inv -> inv.getArgument(0));
     }
