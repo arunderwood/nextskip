@@ -218,6 +218,49 @@ public final class TestConstants {
     /** Contest is upcoming when starting within this many hours. */
     public static final long CONTEST_UPCOMING_HOURS = 72;
 
+    // ==========================================================================
+    // PSKReporter / Spots
+    // ==========================================================================
+
+    /** Default PSKReporter source name. */
+    public static final String PSKREPORTER_SOURCE = "PSKReporter";
+
+    /** Default FT8 frequency on 20m in Hz. */
+    public static final long FT8_20M_FREQUENCY_HZ = 14074000L;
+
+    /** Default signal-to-noise ratio. */
+    public static final int DEFAULT_SNR = -10;
+
+    /** Trans-Atlantic distance in km (FN31 to JO01). */
+    public static final int TRANSATLANTIC_DISTANCE_KM = 5500;
+
+    /** Trans-Pacific distance in km (CM97 to PM95). */
+    public static final int TRANSPACIFIC_DISTANCE_KM = 8500;
+
+    /** Default spot TTL in hours. */
+    public static final int SPOT_TTL_HOURS = 24;
+
+    /** Spot batch size for persistence. */
+    public static final int SPOT_BATCH_SIZE = 100;
+
+    /** Grid square tolerance for distance verification (km). */
+    public static final int DISTANCE_TOLERANCE_KM = 100;
+
+    /** North American grid square (Boston area). */
+    public static final String NA_GRID = "FN31";
+
+    /** European grid square (UK area). */
+    public static final String EU_GRID = "JO01";
+
+    /** Asian grid square (Japan area). */
+    public static final String AS_GRID = "PM95";
+
+    /** Oceania grid square (Australia area). */
+    public static final String OC_GRID = "QF22";
+
+    /** West coast NA grid square. */
+    public static final String NA_WEST_GRID = "CM97";
+
     private TestConstants() {
         // Prevent instantiation
     }

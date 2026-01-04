@@ -75,6 +75,21 @@ nextskip:
   refresh:
     eager-load: true  # Warm all caches on application startup
 
+  # PSKReporter Spots Configuration
+  spots:
+    enabled: true  # Enable/disable real-time spot ingestion
+    mqtt:
+      broker: tcp://mqtt.pskreporter.info:1883
+      topics:
+        - pskr/filter/v2/+/FT8/#  # All FT8 spots across all bands
+    processing:
+      batch-size: 100      # Spots per batch
+      batch-timeout: 1s    # Max wait before flushing partial batch
+      buffer-size: 10000   # Buffer size (drops oldest on overflow)
+    persistence:
+      ttl: 24h            # Time-to-live for spots
+      cleanup-interval: 1h # How often to run cleanup
+
 # Resilience4j Circuit Breaker Configuration
 resilience4j:
   circuitbreaker:

@@ -16,6 +16,9 @@ spring:
 nextskip:
   refresh:
     eager-load: false
+  # Disable MQTT ingestion during tests to prevent test pollution
+  spots:
+    enabled: false
 
 # db-scheduler disabled for test isolation
 # Scheduler tests use application-scheduler-test.yml profile instead
