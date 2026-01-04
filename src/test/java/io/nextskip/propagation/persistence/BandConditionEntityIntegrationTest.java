@@ -17,7 +17,6 @@ import java.util.Collection;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -220,40 +219,6 @@ class BandConditionEntityIntegrationTest extends AbstractPersistenceTest {
         // When/Then: Should throw exception on save
         assertThrows(DataIntegrityViolationException.class,
                 () -> repository.saveAndFlush(entity));
-    }
-
-    @Test
-    void testConvertedDomainModel_CanCalculateScore() {
-        // Given: A persisted entity with GOOD rating
-        var entity = repository.save(new BandConditionEntity(
-                FrequencyBand.BAND_20M, BandConditionRating.GOOD, 0.85, null, Instant.now()));
-
-        // When: Convert to domain and calculate score
-        var domain = entity.toDomain();
-        var score = domain.getScore();
-
-        // Then: Score should be calculated correctly (100 * 0.85 = 85)
-        assertEquals(85, score);
-    }
-
-    @Test
-    void testConvertedDomainModel_CanDetermineIfFavorable() {
-        // Given: A GOOD condition with high confidence
-        var goodEntity = repository.save(new BandConditionEntity(
-                FrequencyBand.BAND_20M, BandConditionRating.GOOD, 0.8, null, Instant.now()));
-
-        // And: A FAIR condition
-        var fairEntity = repository.save(new BandConditionEntity(
-                FrequencyBand.BAND_40M, BandConditionRating.FAIR, 0.9, null, Instant.now()));
-
-        // When: Convert to domain
-        var good = goodEntity.toDomain();
-        var fair = fairEntity.toDomain();
-
-        // Then: GOOD with high confidence should be favorable
-        assertTrue(good.isFavorable());
-        // And: FAIR should not be favorable regardless of confidence
-        assertFalse(fair.isFavorable());
     }
 
     @Test

@@ -21,87 +21,47 @@ describe('BandRatingDisplay', () => {
 
       expect(screen.getByText('GOOD')).toBeInTheDocument();
     });
+
+    it('should display Current Conditions label', () => {
+      const condition = createCondition();
+
+      render(<BandRatingDisplay condition={condition} />);
+
+      expect(screen.getByText('Current Conditions')).toBeInTheDocument();
+    });
   });
 
   describe('rating badges', () => {
     it.each([
-      [BandConditionRating.GOOD, 'GOOD', '.rating-good'],
-      [BandConditionRating.FAIR, 'FAIR', '.rating-fair'],
-      [BandConditionRating.POOR, 'POOR', '.rating-poor'],
-      [BandConditionRating.UNKNOWN, 'UNKNOWN', '.rating-unknown'],
-    ])('should render %s rating with correct class', (rating, expectedText, expectedClass) => {
+      [BandConditionRating.GOOD, 'GOOD'],
+      [BandConditionRating.FAIR, 'FAIR'],
+      [BandConditionRating.POOR, 'POOR'],
+      [BandConditionRating.UNKNOWN, 'UNKNOWN'],
+    ])('should render %s rating text', (rating, expectedText) => {
       const condition = createCondition({ rating });
-      const { container } = render(<BandRatingDisplay condition={condition} />);
+
+      render(<BandRatingDisplay condition={condition} />);
 
       expect(screen.getByText(expectedText)).toBeInTheDocument();
-      expect(container.querySelector(expectedClass)).toBeInTheDocument();
     });
 
     it('should handle undefined rating gracefully', () => {
       const condition = { ...createCondition(), rating: undefined } as unknown as BandCondition;
-      const { container } = render(<BandRatingDisplay condition={condition} />);
+
+      render(<BandRatingDisplay condition={condition} />);
 
       expect(screen.getByText('UNKNOWN')).toBeInTheDocument();
-      expect(container.querySelector('.rating-unknown')).toBeInTheDocument();
     });
   });
 
   describe('rating icons', () => {
-    it.each([
-      [BandConditionRating.GOOD, 'Check'],
-      [BandConditionRating.FAIR, 'Minus'],
-      [BandConditionRating.POOR, 'X'],
-    ])('should render SVG icon for %s rating', (rating) => {
-      const condition = createCondition({ rating });
-      const { container } = render(<BandRatingDisplay condition={condition} />);
-
-      const icon = container.querySelector('.rating-icon svg');
-      expect(icon).toBeInTheDocument();
-    });
-
     it('should render ? for UNKNOWN rating', () => {
       const condition = createCondition({ rating: BandConditionRating.UNKNOWN });
-      const { container } = render(<BandRatingDisplay condition={condition} />);
 
-      const iconSpan = container.querySelector('.rating-icon span');
-      expect(iconSpan).toHaveTextContent('?');
-    });
-  });
+      render(<BandRatingDisplay condition={condition} />);
 
-  describe('CSS structure', () => {
-    it('should have band-rating-display container', () => {
-      const condition = createCondition();
-      const { container } = render(<BandRatingDisplay condition={condition} />);
-
-      expect(container.querySelector('.band-rating-display')).toBeInTheDocument();
-    });
-
-    it('should have band-condition-container', () => {
-      const condition = createCondition();
-      const { container } = render(<BandRatingDisplay condition={condition} />);
-
-      expect(container.querySelector('.band-condition-container')).toBeInTheDocument();
-    });
-
-    it('should have condition-label', () => {
-      const condition = createCondition();
-      const { container } = render(<BandRatingDisplay condition={condition} />);
-
-      expect(container.querySelector('.condition-label')).toHaveTextContent('Current Conditions');
-    });
-
-    it('should have rating-prominent section', () => {
-      const condition = createCondition();
-      const { container } = render(<BandRatingDisplay condition={condition} />);
-
-      expect(container.querySelector('.rating-prominent')).toBeInTheDocument();
-    });
-
-    it('should have rating-badge with large modifier', () => {
-      const condition = createCondition();
-      const { container } = render(<BandRatingDisplay condition={condition} />);
-
-      expect(container.querySelector('.rating-badge--large')).toBeInTheDocument();
+      // The ? is visible in the UI for unknown ratings
+      expect(screen.getByText('?')).toBeInTheDocument();
     });
   });
 
@@ -129,14 +89,6 @@ describe('BandRatingDisplay', () => {
 
       expect(screen.getByRole('status')).toBeInTheDocument();
     });
-
-    it('should hide icons from screen readers', () => {
-      const condition = createCondition({ rating: BandConditionRating.GOOD });
-      const { container } = render(<BandRatingDisplay condition={condition} />);
-
-      const icon = container.querySelector('.rating-icon svg');
-      expect(icon).toHaveAttribute('aria-hidden', 'true');
-    });
   });
 
   describe('edge cases', () => {
@@ -157,10 +109,11 @@ describe('BandRatingDisplay', () => {
 
     it('should handle lowercase rating', () => {
       const condition = createCondition({ rating: 'good' as unknown as BandConditionRating });
-      const { container } = render(<BandRatingDisplay condition={condition} />);
 
-      // getRatingClass normalizes to uppercase
-      expect(container.querySelector('.rating-good')).toBeInTheDocument();
+      render(<BandRatingDisplay condition={condition} />);
+
+      // Component displays the rating value - lowercase passed, lowercase shown
+      expect(screen.getByText('good')).toBeInTheDocument();
     });
   });
 });

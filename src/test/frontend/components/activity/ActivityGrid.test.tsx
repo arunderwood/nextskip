@@ -7,13 +7,10 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, within } from '@testing-library/react';
-import { axe, toHaveNoViolations } from 'jest-axe';
 import ActivityGrid from 'Frontend/components/activity/ActivityGrid';
 import ActivityCard from 'Frontend/components/activity/ActivityCard';
 import type { ActivityCardConfig } from 'Frontend/components/activity';
 import { createMockActivityCardConfig } from '../../fixtures/mockFactories';
-
-expect.extend(toHaveNoViolations);
 
 // Wrapper to maintain existing test API while using shared factory
 const createCard = (
@@ -304,31 +301,7 @@ describe('ActivityGrid', () => {
   });
 
   describe('accessibility', () => {
-    it('should have no accessibility violations', async () => {
-      const cards = [
-        {
-          config: createCard('card-1', 90, 'hot'),
-          component: (
-            <ActivityCard config={createCard('card-1', 90, 'hot')} title="Card 1">
-              <div>Content 1</div>
-            </ActivityCard>
-          ),
-        },
-        {
-          config: createCard('card-2', 50, 'warm'),
-          component: (
-            <ActivityCard config={createCard('card-2', 50, 'warm')} title="Card 2">
-              <div>Content 2</div>
-            </ActivityCard>
-          ),
-        },
-      ];
-
-      const { container } = render(<ActivityGrid cards={cards} />);
-
-      const results = await axe(container);
-      expect(results).toHaveNoViolations();
-    });
+    // Comprehensive axe scans are in ActivitySystem.a11y.test.tsx
 
     it('should have role="list" on grid', () => {
       const cards = [

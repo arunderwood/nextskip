@@ -7,6 +7,10 @@ import net.jqwik.api.ForAll;
 import net.jqwik.api.Property;
 import net.jqwik.api.Provide;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.NullAndEmptySource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.Locale;
 
@@ -27,23 +31,11 @@ class CallsignTest {
     // Basic parsing tests
     // ===========================================
 
-    @Test
-    void testCallsign_NullValue_ThrowsException() {
-        assertThatThrownBy(() -> new Callsign(null))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("null or blank");
-    }
-
-    @Test
-    void testCallsign_BlankValue_ThrowsException() {
-        assertThatThrownBy(() -> new Callsign("   "))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("null or blank");
-    }
-
-    @Test
-    void testCallsign_EmptyValue_ThrowsException() {
-        assertThatThrownBy(() -> new Callsign(""))
+    @ParameterizedTest
+    @NullAndEmptySource
+    @ValueSource(strings = {"   ", "\t", "\n"})
+    void testCallsign_NullOrBlankValue_ThrowsException(String input) {
+        assertThatThrownBy(() -> new Callsign(input))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("null or blank");
     }
@@ -73,67 +65,22 @@ class CallsignTest {
     // Prefix extraction tests
     // ===========================================
 
-    @Test
-    void testGetPrefix_StandardUsCallsign_ReturnsW1() {
-        Callsign callsign = CallsignFixtures.usCallsign();
+    @ParameterizedTest(name = "{0} -> prefix {1}")
+    @CsvSource({
+        "W1AW, W1",        // US
+        "JA1ABC, JA1",     // Japan
+        "VK2XYZ, VK2",     // Australia
+        "DL1ABC, DL1",     // Germany
+        "G3ABC, G3",       // UK
+        "PY2ABC, PY2",     // Brazil
+        "4X1ABC, 4X1",     // Israel (numeric prefix)
+        "VE3ABC, VE3",     // Canada
+        "W1AW/P, W1"       // Portable suffix ignored
+    })
+    void testGetPrefix_VariousCallsigns_ReturnsCorrectPrefix(String callsignValue, String expectedPrefix) {
+        Callsign callsign = new Callsign(callsignValue);
 
-        assertThat(callsign.getPrefix()).isEqualTo("W1");
-    }
-
-    @Test
-    void testGetPrefix_JapanCallsign_ReturnsJA1() {
-        Callsign callsign = CallsignFixtures.japanCallsign();
-
-        assertThat(callsign.getPrefix()).isEqualTo("JA1");
-    }
-
-    @Test
-    void testGetPrefix_AustraliaCallsign_ReturnsVK2() {
-        Callsign callsign = CallsignFixtures.australiaCallsign();
-
-        assertThat(callsign.getPrefix()).isEqualTo("VK2");
-    }
-
-    @Test
-    void testGetPrefix_GermanyCallsign_ReturnsDL1() {
-        Callsign callsign = CallsignFixtures.germanyCallsign();
-
-        assertThat(callsign.getPrefix()).isEqualTo("DL1");
-    }
-
-    @Test
-    void testGetPrefix_UkCallsign_ReturnsG3() {
-        Callsign callsign = CallsignFixtures.ukCallsign();
-
-        assertThat(callsign.getPrefix()).isEqualTo("G3");
-    }
-
-    @Test
-    void testGetPrefix_BrazilCallsign_ReturnsPY2() {
-        Callsign callsign = CallsignFixtures.brazilCallsign();
-
-        assertThat(callsign.getPrefix()).isEqualTo("PY2");
-    }
-
-    @Test
-    void testGetPrefix_NumericPrefix_Returns4X1() {
-        Callsign callsign = CallsignFixtures.israelCallsign();
-
-        assertThat(callsign.getPrefix()).isEqualTo("4X1");
-    }
-
-    @Test
-    void testGetPrefix_CanadaCallsign_ReturnsVE3() {
-        Callsign callsign = CallsignFixtures.canadaCallsign();
-
-        assertThat(callsign.getPrefix()).isEqualTo("VE3");
-    }
-
-    @Test
-    void testGetPrefix_PortableCallsign_IgnoresSuffix() {
-        Callsign callsign = CallsignFixtures.portableCallsign();
-
-        assertThat(callsign.getPrefix()).isEqualTo("W1");
+        assertThat(callsign.getPrefix()).isEqualTo(expectedPrefix);
     }
 
     // ===========================================
@@ -280,90 +227,34 @@ class CallsignTest {
     // Suffix tests
     // ===========================================
 
-    @Test
-    void testGetSuffix_NoSuffix_ReturnsNull() {
-        Callsign callsign = CallsignFixtures.usCallsign();
+    @ParameterizedTest(name = "{0} -> suffix {1}")
+    @CsvSource({
+        "W1AW/P, P",           // Portable
+        "W1AW/M, M",           // Mobile
+        "W1AW/MM, MM",         // Maritime mobile
+        "W1AW/QRP, QRP",       // QRP
+        "W1AW/7, 7",           // Digit suffix
+        "W1AW/P/QRP, P/QRP",   // Multiple suffixes
+        "F/W1AW/P, P",         // Portable prefix with suffix
+        "VK/JA1ABC/QRP, QRP"   // Portable prefix with QRP
+    })
+    void testGetSuffix_WithSuffix_ReturnsSuffix(String callsignValue, String expectedSuffix) {
+        Callsign callsign = new Callsign(callsignValue);
+
+        assertThat(callsign.getSuffix()).isEqualTo(expectedSuffix);
+    }
+
+    @ParameterizedTest(name = "{0} has null suffix")
+    @ValueSource(strings = {"W1AW", "W1AW/", "M/SQ9VR"})
+    void testGetSuffix_NoSuffix_ReturnsNull(String callsignValue) {
+        Callsign callsign = new Callsign(callsignValue);
 
         assertThat(callsign.getSuffix()).isNull();
-    }
-
-    @Test
-    void testGetSuffix_PortableSuffix_ReturnsP() {
-        Callsign callsign = CallsignFixtures.portableCallsign();
-
-        assertThat(callsign.getSuffix()).isEqualTo("P");
-    }
-
-    @Test
-    void testGetSuffix_MobileSuffix_ReturnsM() {
-        Callsign callsign = CallsignFixtures.mobileCallsign();
-
-        assertThat(callsign.getSuffix()).isEqualTo("M");
-    }
-
-    @Test
-    void testGetSuffix_MaritimeMobileSuffix_ReturnsMM() {
-        Callsign callsign = CallsignFixtures.maritimeMobileCallsign();
-
-        assertThat(callsign.getSuffix()).isEqualTo("MM");
-    }
-
-    @Test
-    void testGetSuffix_QrpSuffix_ReturnsQRP() {
-        Callsign callsign = CallsignFixtures.qrpCallsign();
-
-        assertThat(callsign.getSuffix()).isEqualTo("QRP");
-    }
-
-    @Test
-    void testGetSuffix_TrailingSlash_ReturnsNull() {
-        Callsign callsign = new Callsign("W1AW/");
-
-        assertThat(callsign.getSuffix()).isNull();
-    }
-
-    @Test
-    void testGetSuffix_DigitSuffix_ReturnsSeven() {
-        Callsign callsign = new Callsign("W1AW/7");
-
-        assertThat(callsign.getSuffix()).isEqualTo("7");
-    }
-
-    @Test
-    void testGetSuffix_MultipleSuffixes_ReturnsFirstPart() {
-        // When there are multiple slashes, suffix returns everything after first slash
-        Callsign callsign = new Callsign("W1AW/P/QRP");
-
-        assertThat(callsign.getSuffix()).isEqualTo("P/QRP");
     }
 
     // ===========================================
-    // Suffix tests with portable prefix
+    // Suffix type tests (with portable prefix)
     // ===========================================
-
-    @Test
-    void testGetSuffix_PortablePrefixNoSuffix_ReturnsNull() {
-        // M/SQ9VR has portable prefix but no suffix
-        Callsign callsign = new Callsign("M/SQ9VR");
-
-        assertThat(callsign.getSuffix()).isNull();
-    }
-
-    @Test
-    void testGetSuffix_PortablePrefixWithSuffix_ReturnsSuffix() {
-        // F/W1AW/P has portable prefix F and suffix P
-        Callsign callsign = new Callsign("F/W1AW/P");
-
-        assertThat(callsign.getSuffix()).isEqualTo("P");
-    }
-
-    @Test
-    void testGetSuffix_PortablePrefixWithQrpSuffix_ReturnsQrp() {
-        // VK/JA1ABC/QRP has portable prefix VK and suffix QRP
-        Callsign callsign = new Callsign("VK/JA1ABC/QRP");
-
-        assertThat(callsign.getSuffix()).isEqualTo("QRP");
-    }
 
     @Test
     void testIsPortable_PortablePrefixWithPSuffix_ReturnsTrue() {
@@ -482,166 +373,55 @@ class CallsignTest {
     // SWL (Shortwave Listener) tests
     // ===========================================
 
-    @Test
-    void testIsSwl_NetherlandsSwl_ReturnsTrue() {
-        Callsign callsign = new Callsign("NL9222");
+    @ParameterizedTest(name = "{0} is SWL")
+    @ValueSource(strings = {"NL9222", "RS123456", "DE12345", "nl9222"})
+    void testIsSwl_ValidSwlFormats_ReturnsTrue(String callsignValue) {
+        Callsign callsign = new Callsign(callsignValue);
 
         assertThat(callsign.isSwl()).isTrue();
     }
 
-    @Test
-    void testIsSwl_UkRsgbSwl_ReturnsTrue() {
-        Callsign callsign = new Callsign("RS123456");
-
-        assertThat(callsign.isSwl()).isTrue();
-    }
-
-    @Test
-    void testIsSwl_GermanySwl_ReturnsTrue() {
-        Callsign callsign = new Callsign("DE12345");
-
-        assertThat(callsign.isSwl()).isTrue();
-    }
-
-    @Test
-    void testIsSwl_StandardCallsign_ReturnsFalse() {
-        Callsign callsign = new Callsign("W1AW");
+    @ParameterizedTest(name = "{0} is not SWL")
+    @ValueSource(strings = {"W1AW", "NL12", "NL1234567", "N12345"})
+    void testIsSwl_InvalidSwlFormats_ReturnsFalse(String callsignValue) {
+        Callsign callsign = new Callsign(callsignValue);
 
         assertThat(callsign.isSwl()).isFalse();
-    }
-
-    @Test
-    void testIsSwl_TooFewDigits_ReturnsFalse() {
-        // SWL requires 3-6 digits
-        Callsign callsign = new Callsign("NL12");
-
-        assertThat(callsign.isSwl()).isFalse();
-    }
-
-    @Test
-    void testIsSwl_TooManyDigits_ReturnsFalse() {
-        // SWL requires 3-6 digits
-        Callsign callsign = new Callsign("NL1234567");
-
-        assertThat(callsign.isSwl()).isFalse();
-    }
-
-    @Test
-    void testIsSwl_SingleLetterPrefix_ReturnsFalse() {
-        // SWL requires 2-3 letter prefix
-        Callsign callsign = new Callsign("N12345");
-
-        assertThat(callsign.isSwl()).isFalse();
-    }
-
-    @Test
-    void testIsSwl_CaseInsensitive_ReturnsTrue() {
-        Callsign callsign = new Callsign("nl9222");
-
-        assertThat(callsign.isSwl()).isTrue();
     }
 
     // ===========================================
     // Validation tests
     // ===========================================
 
-    @Test
-    void testIsValid_StandardCallsign_ReturnsTrue() {
-        Callsign callsign = CallsignFixtures.usCallsign();
+    @ParameterizedTest(name = "{0} is valid")
+    @ValueSource(strings = {
+        "W1AW",       // Standard US
+        "4X1ABC",     // Numeric prefix
+        "W1AW/P",     // With suffix
+        "K1A",        // Special event 1x1
+        "G3A",        // Very short
+        "W1",         // Two char ends in digit
+        "M/SQ9VR",    // Portable prefix
+        "F/W1AW/P"    // Portable prefix with suffix
+    })
+    void testIsValid_ValidCallsigns_ReturnsTrue(String callsignValue) {
+        Callsign callsign = new Callsign(callsignValue);
 
         assertThat(callsign.isValid()).isTrue();
     }
 
-    @Test
-    void testIsValid_NumericPrefixCallsign_ReturnsTrue() {
-        Callsign callsign = CallsignFixtures.israelCallsign();
-
-        assertThat(callsign.isValid()).isTrue();
-    }
-
-    @Test
-    void testIsValid_CallsignWithSuffix_ReturnsTrue() {
-        Callsign callsign = CallsignFixtures.portableCallsign();
-
-        assertThat(callsign.isValid()).isTrue();
-    }
-
-    @Test
-    void testIsValid_SpecialEvent1x1_K1A_ReturnsTrue() {
-        Callsign callsign = new Callsign("K1A");
-
-        assertThat(callsign.isValid()).isTrue();
-    }
-
-    @Test
-    void testIsValid_VeryShort_G3A_ReturnsTrue() {
-        Callsign callsign = new Callsign("G3A");
-
-        assertThat(callsign.isValid()).isTrue();
-    }
-
-    @Test
-    void testIsValid_TwoCharEndsInDigit_ReturnsTrue() {
-        Callsign callsign = new Callsign("W1");
-
-        // Two-character callsigns ending in digit are now valid
-        // (LAST_CHAR_NOT_LETTER check removed to support SWL callsigns)
-        assertThat(callsign.isValid()).isTrue();
-    }
-
-    @Test
-    void testIsValid_SingleChar_ReturnsFalse() {
-        Callsign callsign = new Callsign("W");
+    @ParameterizedTest(name = "{0} is invalid")
+    @ValueSource(strings = {
+        "W",          // Single char - too short
+        "W1ABCDEFG",  // Too long
+        "WABC",       // No digit
+        "12345",      // No letter
+        "Q1ABC"       // Q prefix reserved
+    })
+    void testIsValid_InvalidCallsigns_ReturnsFalse(String callsignValue) {
+        Callsign callsign = new Callsign(callsignValue);
 
         assertThat(callsign.isValid()).isFalse();
-    }
-
-    @Test
-    void testIsValid_TooLong_ReturnsFalse() {
-        Callsign callsign = new Callsign("W1ABCDEFG");
-
-        assertThat(callsign.isValid()).isFalse();
-    }
-
-    @Test
-    void testIsValid_NoDigit_ReturnsFalse() {
-        Callsign callsign = new Callsign("WABC");
-
-        assertThat(callsign.isValid()).isFalse();
-    }
-
-    @Test
-    void testIsValid_NoLetter_ReturnsFalse() {
-        Callsign callsign = new Callsign("12345");
-
-        assertThat(callsign.isValid()).isFalse();
-    }
-
-    @Test
-    void testIsValid_QPrefix_ReturnsFalse() {
-        Callsign callsign = new Callsign("Q1ABC");
-
-        assertThat(callsign.isValid()).isFalse();
-    }
-
-    // ===========================================
-    // Validation tests with portable prefix
-    // ===========================================
-
-    @Test
-    void testIsValid_PortablePrefix_ReturnsTrue() {
-        // M/SQ9VR - portable prefix with valid base call
-        Callsign callsign = new Callsign("M/SQ9VR");
-
-        assertThat(callsign.isValid()).isTrue();
-    }
-
-    @Test
-    void testIsValid_PortablePrefixWithSuffix_ReturnsTrue() {
-        // F/W1AW/P - portable prefix with valid base call and suffix
-        Callsign callsign = new Callsign("F/W1AW/P");
-
-        assertThat(callsign.isValid()).isTrue();
     }
 
     @Test
