@@ -7,6 +7,7 @@ import io.nextskip.activations.model.ActivationType;
 import io.nextskip.activations.persistence.repository.ActivationRepository;
 import io.nextskip.common.scheduler.RefreshTaskCoordinator;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
@@ -51,8 +52,9 @@ public class SotaRefreshTask implements RefreshTaskCoordinator {
      * @param recurringTask the created recurring task bean
      */
     @Autowired
-    public void setRecurringTask(@Lazy RecurringTask<Void> sotaRecurringTask) {
-        this.recurringTask = sotaRecurringTask;
+    public void setRecurringTask(
+            @Lazy @Qualifier("sotaRecurringTask") RecurringTask<Void> task) {
+        this.recurringTask = task;
     }
 
     /**
