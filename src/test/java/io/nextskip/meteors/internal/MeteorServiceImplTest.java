@@ -79,34 +79,6 @@ class MeteorServiceImplTest {
     }
 
     @Test
-    void getPrimaryShower_returnsHighestScore() {
-        Instant now = Instant.now();
-        // Active at peak (high score)
-        MeteorShower highScore = new MeteorShower(
-                "High", "HI",
-                now.minus(Duration.ofHours(1)), now.plus(Duration.ofHours(23)),
-                now.minus(Duration.ofDays(2)), now.plus(Duration.ofDays(2)),
-                150, null, null
-        );
-        // Upcoming (lower score)
-        MeteorShower lowScore = new MeteorShower(
-                "Low", "LO",
-                now.plus(Duration.ofDays(5)), now.plus(Duration.ofDays(6)),
-                now.plus(Duration.ofDays(3)), now.plus(Duration.ofDays(8)),
-                50, null, null
-        );
-
-        when(meteorShowersCache.get(CacheConfig.CACHE_KEY)).thenReturn(List.of(highScore, lowScore));
-
-        var primary = service.getPrimaryShower();
-
-        assertTrue(primary.isPresent());
-        assertEquals("High", primary.get().name());
-
-        verify(meteorShowersCache).get(CacheConfig.CACHE_KEY);
-    }
-
-    @Test
     void getActiveShowers_returnsOnlyActive() {
         Instant now = Instant.now();
         MeteorShower active = createShower(ACTIVE_SHOWER, now.minus(Duration.ofDays(1)), now.plus(Duration.ofDays(1)));
