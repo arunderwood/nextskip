@@ -6,6 +6,7 @@ import com.github.kagkarlsson.scheduler.task.schedule.FixedDelay;
 import io.nextskip.common.scheduler.RefreshTaskCoordinator;
 import io.nextskip.meteors.persistence.repository.MeteorShowerRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
@@ -50,8 +51,9 @@ public class MeteorRefreshTask implements RefreshTaskCoordinator {
      * @param recurringTask the created recurring task bean
      */
     @Autowired
-    public void setRecurringTask(@Lazy RecurringTask<Void> meteorRecurringTask) {
-        this.recurringTask = meteorRecurringTask;
+    public void setRecurringTask(
+            @Lazy @Qualifier("meteorRecurringTask") RecurringTask<Void> task) {
+        this.recurringTask = task;
     }
 
     /**

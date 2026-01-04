@@ -6,6 +6,7 @@ import com.github.kagkarlsson.scheduler.task.schedule.FixedDelay;
 import io.nextskip.common.scheduler.RefreshTaskCoordinator;
 import io.nextskip.propagation.persistence.repository.SolarIndicesRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
@@ -51,8 +52,9 @@ public class HamQslSolarRefreshTask implements RefreshTaskCoordinator {
      * @param recurringTask the created recurring task bean
      */
     @Autowired
-    public void setRecurringTask(@Lazy RecurringTask<Void> hamQslSolarRecurringTask) {
-        this.recurringTask = hamQslSolarRecurringTask;
+    public void setRecurringTask(
+            @Lazy @Qualifier("hamQslSolarRecurringTask") RecurringTask<Void> task) {
+        this.recurringTask = task;
     }
 
     /**
