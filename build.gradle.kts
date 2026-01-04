@@ -20,20 +20,6 @@ plugins {
 group = "io.nextskip"
 version = "0.0.1-SNAPSHOT"
 
-// GitHub Actions log grouping for better CI visibility
-// Wraps each task execution in collapsible ::group:: sections
-// Uses doFirst/doLast pattern for configuration cache compatibility
-if (System.getenv("GITHUB_ACTIONS") != null) {
-    tasks.configureEach {
-        doFirst {
-            println("::group::${path}")
-        }
-        doLast {
-            println("::endgroup::")
-        }
-    }
-}
-
 java {
     toolchain {
         languageVersion = JavaLanguageVersion.of(25)
@@ -145,9 +131,6 @@ dependencies {
     // Pekko Streams for high-volume ETL
     implementation(libs.pekko.stream)
 
-    // Observability
-    runtimeOnly(libs.micrometer.registry.prometheus)
-
     // Database
     implementation(libs.spring.boot.starter.data.jpa)
     runtimeOnly(libs.postgresql)
@@ -232,14 +215,6 @@ tasks.named<Test>("test") {
         "-XX:+EnableDynamicAgentLoading",
         "-Dnet.bytebuddy.experimental=true"
     )
-}
-
-configurations.all {
-    resolutionStrategy {
-        // Exclude old google-collections in favor of guava
-        // Required: Checkstyle transitively depends on google-collections which conflicts with guava
-        exclude(group = "com.google.collections", module = "google-collections")
-    }
 }
 
 // Code quality plugin configurations
