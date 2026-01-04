@@ -10,16 +10,22 @@ import java.util.regex.Pattern;
  * <p>This model parses callsigns into their components:
  * <ul>
  *   <li><b>Prefix</b>: The country identifier (e.g., W1, JA1, VK2, G)</li>
+ *   <li><b>Portable prefix</b>: Country prefix when operating abroad (e.g., M/ for England)</li>
  *   <li><b>Suffix</b>: Optional modifier (e.g., /P for portable, /M for mobile)</li>
- *   <li><b>Base call</b>: The callsign without suffix</li>
+ *   <li><b>Base call</b>: The callsign without prefix or suffix</li>
  * </ul>
  *
  * <p>Examples:
  * <pre>
- * new Callsign("W1ABC").getPrefix()     // "W1"
- * new Callsign("JA1ABC/P").getSuffix()  // "P"
- * new Callsign("G3XYZ/QRP").isQrp()     // true
- * new Callsign("VK2ABC/M").isMobile()   // true
+ * new Callsign("W1ABC").getPrefix()           // "W1"
+ * new Callsign("JA1ABC/P").getSuffix()        // "P"
+ * new Callsign("G3XYZ/QRP").isQrp()           // true
+ * new Callsign("VK2ABC/M").isMobile()         // true
+ * new Callsign("M/SQ9VR").getPortablePrefix() // "M"
+ * new Callsign("M/SQ9VR").getBaseCall()       // "SQ9VR"
+ * new Callsign("F/W1AW/P").getPortablePrefix()// "F"
+ * new Callsign("F/W1AW/P").getBaseCall()      // "W1AW"
+ * new Callsign("F/W1AW/P").getSuffix()        // "P"
  * </pre>
  *
  * <p>Provides foundation for cty.dat-based DXCC lookup in Phase 2.
@@ -33,6 +39,12 @@ public record Callsign(String value) {
 
     /** Maximum length for base callsign per ITU allocations. */
     private static final int MAX_BASE_CALL_LENGTH = 7;
+
+    /** Maximum length for portable prefix (e.g., M, F, VK, EA8). */
+    private static final int MAX_PORTABLE_PREFIX_LENGTH = 3;
+
+    /** Minimum length for base call after portable prefix (to distinguish from suffix). */
+    private static final int MIN_BASE_AFTER_PREFIX_LENGTH = 3;
 
     /**
      * Reasons why a callsign validation might fail.
@@ -158,7 +170,62 @@ public record Callsign(String value) {
     }
 
     /**
-     * Returns the callsign without any suffix or SSID.
+     * Returns the portable prefix if present.
+     *
+     * <p>When an amateur operates from a different country, they prepend
+     * the visited country's prefix:
+     * <ul>
+     *   <li>M/SQ9VR → M (Polish operator SQ9VR operating from England)</li>
+     *   <li>F/W1AW → F (US operator W1AW operating from France)</li>
+     *   <li>VK/JA1ABC → VK (Japanese operator JA1ABC operating from Australia)</li>
+     *   <li>EA8/G3ABC → EA8 (UK operator G3ABC operating from Canary Islands)</li>
+     *   <li>F/W1AW/P → F (with additional /P suffix)</li>
+     * </ul>
+     *
+     * <p>A portable prefix is identified when:
+     * <ul>
+     *   <li>The first segment before "/" is 1-3 characters</li>
+     *   <li>The second segment is at least 3 characters (a valid callsign)</li>
+     * </ul>
+     *
+     * @return the portable prefix, or null if none
+     */
+    public String getPortablePrefix() {
+        // Strip SSID first
+        String withoutSsid = SSID_PATTERN.matcher(value).replaceFirst("");
+
+        int firstSlash = withoutSsid.indexOf('/');
+        if (firstSlash <= 0) {
+            return null;
+        }
+
+        String firstPart = withoutSsid.substring(0, firstSlash);
+        String remainder = withoutSsid.substring(firstSlash + 1);
+
+        // Get the second part (before any suffix slash)
+        int secondSlash = remainder.indexOf('/');
+        String secondPart = secondSlash > 0 ? remainder.substring(0, secondSlash) : remainder;
+
+        // Portable prefix: first part is short (1-3 chars), second part looks like a callsign
+        if (firstPart.length() <= MAX_PORTABLE_PREFIX_LENGTH
+                && secondPart.length() >= MIN_BASE_AFTER_PREFIX_LENGTH) {
+            return firstPart;
+        }
+
+        return null;
+    }
+
+    /**
+     * Returns whether this callsign has a portable prefix.
+     *
+     * @return true if a portable prefix is present
+     */
+    public boolean hasPortablePrefix() {
+        return getPortablePrefix() != null;
+    }
+
+    /**
+     * Returns the callsign without any prefix, suffix, or SSID.
      *
      * <p>Examples:
      * <ul>
@@ -167,23 +234,37 @@ public record Callsign(String value) {
      *   <li>G3XYZ/QRP → G3XYZ</li>
      *   <li>K9TRV-4 → K9TRV (APRS SSID stripped)</li>
      *   <li>K9TRV-4/P → K9TRV (both SSID and suffix stripped)</li>
+     *   <li>M/SQ9VR → SQ9VR (portable prefix stripped)</li>
+     *   <li>F/W1AW/P → W1AW (both portable prefix and suffix stripped)</li>
      * </ul>
      *
      * @return the base callsign
      */
     public String getBaseCall() {
-        String base = value;
-
         // Strip APRS SSID suffix first (e.g., "-4" from "K9TRV-4")
-        base = SSID_PATTERN.matcher(base).replaceFirst("");
+        String base = SSID_PATTERN.matcher(value).replaceFirst("");
 
-        // Then strip traditional suffix (e.g., "/P" from "W1AW/P")
-        int slashIndex = base.indexOf('/');
-        if (slashIndex > 0) {
-            base = base.substring(0, slashIndex);
+        int firstSlash = base.indexOf('/');
+        if (firstSlash <= 0) {
+            // No slash, entire string is the base call
+            return base;
         }
 
-        return base;
+        String firstPart = base.substring(0, firstSlash);
+        String remainder = base.substring(firstSlash + 1);
+
+        // Check for portable prefix pattern: short prefix / longer callsign
+        int secondSlash = remainder.indexOf('/');
+        String secondPart = secondSlash > 0 ? remainder.substring(0, secondSlash) : remainder;
+
+        if (firstPart.length() <= MAX_PORTABLE_PREFIX_LENGTH
+                && secondPart.length() >= MIN_BASE_AFTER_PREFIX_LENGTH) {
+            // This is a portable prefix (e.g., M/SQ9VR) - base call is second part
+            return secondPart;
+        }
+
+        // Not a portable prefix - first part is the base call (e.g., W1AW/P)
+        return firstPart;
     }
 
     /**
@@ -201,16 +282,38 @@ public record Callsign(String value) {
      * <p>Note: APRS SSIDs (e.g., -4) are not considered suffixes.
      * For K9TRV-4/P, this returns "P", not "-4/P".
      *
+     * <p>Note: Portable prefixes (e.g., M/) are not considered suffixes.
+     * For F/W1AW/P, this returns "P", not "W1AW/P".
+     *
      * @return the suffix, or null if none
      */
     public String getSuffix() {
         // Strip SSID first so K9TRV-4/P returns "P", not "-4/P"
         String withoutSsid = SSID_PATTERN.matcher(value).replaceFirst("");
-        int slashIndex = withoutSsid.indexOf('/');
-        if (slashIndex > 0 && slashIndex < withoutSsid.length() - 1) {
-            return withoutSsid.substring(slashIndex + 1);
+
+        int firstSlash = withoutSsid.indexOf('/');
+        if (firstSlash <= 0) {
+            return null;
         }
-        return null;
+
+        String firstPart = withoutSsid.substring(0, firstSlash);
+        String remainder = withoutSsid.substring(firstSlash + 1);
+
+        // Check for portable prefix pattern
+        int secondSlash = remainder.indexOf('/');
+        String secondPart = secondSlash > 0 ? remainder.substring(0, secondSlash) : remainder;
+
+        if (firstPart.length() <= MAX_PORTABLE_PREFIX_LENGTH
+                && secondPart.length() >= MIN_BASE_AFTER_PREFIX_LENGTH) {
+            // This is a portable prefix - look for suffix after the base call
+            if (secondSlash > 0 && secondSlash < remainder.length() - 1) {
+                return remainder.substring(secondSlash + 1);
+            }
+            return null;
+        }
+
+        // Not a portable prefix - everything after first slash is suffix (if non-empty)
+        return remainder.isEmpty() ? null : remainder;
     }
 
     /**

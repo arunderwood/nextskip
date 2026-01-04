@@ -137,6 +137,114 @@ class CallsignTest {
     }
 
     // ===========================================
+    // Portable prefix tests
+    // ===========================================
+
+    @Test
+    void testGetPortablePrefix_NoPrefix_ReturnsNull() {
+        Callsign callsign = new Callsign("W1AW");
+
+        assertThat(callsign.getPortablePrefix()).isNull();
+    }
+
+    @Test
+    void testGetPortablePrefix_WithSuffixOnly_ReturnsNull() {
+        Callsign callsign = new Callsign("W1AW/P");
+
+        assertThat(callsign.getPortablePrefix()).isNull();
+    }
+
+    @Test
+    void testGetPortablePrefix_SingleCharPrefix_ReturnsPrefix() {
+        // M/SQ9VR = Polish operator operating from England
+        Callsign callsign = new Callsign("M/SQ9VR");
+
+        assertThat(callsign.getPortablePrefix()).isEqualTo("M");
+    }
+
+    @Test
+    void testGetPortablePrefix_TwoCharPrefix_ReturnsPrefix() {
+        // VK/JA1ABC = Japanese operator operating from Australia
+        Callsign callsign = new Callsign("VK/JA1ABC");
+
+        assertThat(callsign.getPortablePrefix()).isEqualTo("VK");
+    }
+
+    @Test
+    void testGetPortablePrefix_ThreeCharPrefix_ReturnsPrefix() {
+        // EA8/G3ABC = UK operator operating from Canary Islands
+        Callsign callsign = new Callsign("EA8/G3ABC");
+
+        assertThat(callsign.getPortablePrefix()).isEqualTo("EA8");
+    }
+
+    @Test
+    void testGetPortablePrefix_FourCharPrefix_ReturnsNull() {
+        // W1AW/P is not a portable prefix - first part is too long
+        Callsign callsign = new Callsign("W1AW/P");
+
+        assertThat(callsign.getPortablePrefix()).isNull();
+    }
+
+    @Test
+    void testGetPortablePrefix_WithSuffix_ReturnsPrefix() {
+        // F/W1AW/P = US operator operating from France, portable
+        Callsign callsign = new Callsign("F/W1AW/P");
+
+        assertThat(callsign.getPortablePrefix()).isEqualTo("F");
+    }
+
+    @Test
+    void testGetPortablePrefix_ShortSecondPart_ReturnsNull() {
+        // M/AB is too short to be a callsign - not treated as portable prefix
+        Callsign callsign = new Callsign("M/AB");
+
+        assertThat(callsign.getPortablePrefix()).isNull();
+    }
+
+    @Test
+    void testHasPortablePrefix_WithPrefix_ReturnsTrue() {
+        Callsign callsign = new Callsign("F/W1AW");
+
+        assertThat(callsign.hasPortablePrefix()).isTrue();
+    }
+
+    @Test
+    void testHasPortablePrefix_WithoutPrefix_ReturnsFalse() {
+        Callsign callsign = new Callsign("W1AW/P");
+
+        assertThat(callsign.hasPortablePrefix()).isFalse();
+    }
+
+    // ===========================================
+    // Base call tests with portable prefix
+    // ===========================================
+
+    @Test
+    void testGetBaseCall_WithPortablePrefix_ReturnsBaseCall() {
+        // M/SQ9VR -> base call is SQ9VR
+        Callsign callsign = new Callsign("M/SQ9VR");
+
+        assertThat(callsign.getBaseCall()).isEqualTo("SQ9VR");
+    }
+
+    @Test
+    void testGetBaseCall_WithPortablePrefixAndSuffix_ReturnsBaseCall() {
+        // F/W1AW/P -> base call is W1AW
+        Callsign callsign = new Callsign("F/W1AW/P");
+
+        assertThat(callsign.getBaseCall()).isEqualTo("W1AW");
+    }
+
+    @Test
+    void testGetBaseCall_WithPortablePrefixAndQrpSuffix_ReturnsBaseCall() {
+        // VK/JA1ABC/QRP -> base call is JA1ABC
+        Callsign callsign = new Callsign("VK/JA1ABC/QRP");
+
+        assertThat(callsign.getBaseCall()).isEqualTo("JA1ABC");
+    }
+
+    // ===========================================
     // Base call tests
     // ===========================================
 
@@ -227,6 +335,69 @@ class CallsignTest {
         Callsign callsign = new Callsign("W1AW/P/QRP");
 
         assertThat(callsign.getSuffix()).isEqualTo("P/QRP");
+    }
+
+    // ===========================================
+    // Suffix tests with portable prefix
+    // ===========================================
+
+    @Test
+    void testGetSuffix_PortablePrefixNoSuffix_ReturnsNull() {
+        // M/SQ9VR has portable prefix but no suffix
+        Callsign callsign = new Callsign("M/SQ9VR");
+
+        assertThat(callsign.getSuffix()).isNull();
+    }
+
+    @Test
+    void testGetSuffix_PortablePrefixWithSuffix_ReturnsSuffix() {
+        // F/W1AW/P has portable prefix F and suffix P
+        Callsign callsign = new Callsign("F/W1AW/P");
+
+        assertThat(callsign.getSuffix()).isEqualTo("P");
+    }
+
+    @Test
+    void testGetSuffix_PortablePrefixWithQrpSuffix_ReturnsQrp() {
+        // VK/JA1ABC/QRP has portable prefix VK and suffix QRP
+        Callsign callsign = new Callsign("VK/JA1ABC/QRP");
+
+        assertThat(callsign.getSuffix()).isEqualTo("QRP");
+    }
+
+    @Test
+    void testIsPortable_PortablePrefixWithPSuffix_ReturnsTrue() {
+        Callsign callsign = new Callsign("F/W1AW/P");
+
+        assertThat(callsign.isPortable()).isTrue();
+    }
+
+    @Test
+    void testIsMobile_PortablePrefixWithMSuffix_ReturnsTrue() {
+        Callsign callsign = new Callsign("M/SQ9VR/M");
+
+        assertThat(callsign.isMobile()).isTrue();
+    }
+
+    @Test
+    void testIsQrp_PortablePrefixWithQrpSuffix_ReturnsTrue() {
+        Callsign callsign = new Callsign("VK/JA1ABC/QRP");
+
+        assertThat(callsign.isQrp()).isTrue();
+    }
+
+    @Test
+    void testHasSuffix_PortablePrefixNoSuffix_ReturnsFalse() {
+        Callsign callsign = new Callsign("M/SQ9VR");
+
+        assertThat(callsign.hasSuffix()).isFalse();
+    }
+
+    @Test
+    void testHasSuffix_PortablePrefixWithSuffix_ReturnsTrue() {
+        Callsign callsign = new Callsign("F/W1AW/P");
+
+        assertThat(callsign.hasSuffix()).isTrue();
     }
 
     // ===========================================
@@ -387,6 +558,55 @@ class CallsignTest {
         Callsign callsign = new Callsign("Q1ABC");
 
         assertThat(callsign.isValid()).isFalse();
+    }
+
+    // ===========================================
+    // Validation tests with portable prefix
+    // ===========================================
+
+    @Test
+    void testIsValid_PortablePrefix_ReturnsTrue() {
+        // M/SQ9VR - portable prefix with valid base call
+        Callsign callsign = new Callsign("M/SQ9VR");
+
+        assertThat(callsign.isValid()).isTrue();
+    }
+
+    @Test
+    void testIsValid_PortablePrefixWithSuffix_ReturnsTrue() {
+        // F/W1AW/P - portable prefix with valid base call and suffix
+        Callsign callsign = new Callsign("F/W1AW/P");
+
+        assertThat(callsign.isValid()).isTrue();
+    }
+
+    @Test
+    void testIsValid_PortablePrefixInvalidBaseCall_ReturnsFalse() {
+        // F/Q1ABC - portable prefix with Q-prefix base call (invalid)
+        Callsign callsign = new Callsign("F/Q1ABC");
+
+        assertThat(callsign.isValid()).isFalse();
+    }
+
+    @Test
+    void testValidate_PortablePrefix_ValidatesBaseCall() {
+        // M/SQ9VR - validates the base call SQ9VR, not M
+        Callsign callsign = new Callsign("M/SQ9VR");
+
+        Callsign.ValidationResult result = callsign.validate();
+
+        assertThat(result.isValid()).isTrue();
+    }
+
+    @Test
+    void testValidate_PortablePrefixQInBase_ReturnsQPrefixFailure() {
+        // VK/Q1ABC - base call starts with Q
+        Callsign callsign = new Callsign("VK/Q1ABC");
+
+        Callsign.ValidationResult result = callsign.validate();
+
+        assertThat(result.isValid()).isFalse();
+        assertThat(result.failure()).isEqualTo(Callsign.ValidationFailure.Q_PREFIX);
     }
 
     // ===========================================
