@@ -43,7 +43,7 @@ db-scheduler = "16.6.0"
 paho-mqtt = "1.2.5"
 
 # Streaming (Pekko)
-pekko = "1.1.5"
+pekko = "1.4.0"
 
 [plugins]
 spring-boot = { id = "org.springframework.boot", version.ref = "spring-boot" }

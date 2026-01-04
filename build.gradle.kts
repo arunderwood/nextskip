@@ -353,6 +353,8 @@ pitest {
     historyOutputLocation = file("${rootDir}/.pitest-history")
     // Fail build if mutation score drops below threshold
     mutationThreshold = 75
+    // Timeout to prevent hangs when mutations cause infinite waits (e.g., in backoff/retry logic)
+    timeoutConstInMillis = 15000
     jvmArgs = listOf(
         "--add-opens", "java.base/java.lang=ALL-UNNAMED",
         "--enable-native-access=ALL-UNNAMED",

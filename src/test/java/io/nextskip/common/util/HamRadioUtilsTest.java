@@ -163,7 +163,7 @@ class HamRadioUtilsTest {
         assertFalse(HamRadioUtils.isValidCallsign("")); // Empty
         assertFalse(HamRadioUtils.isValidCallsign(null)); // Null
         assertFalse(HamRadioUtils.isValidCallsign("Q1ABC")); // Q prefix reserved for Q-codes
-        assertFalse(HamRadioUtils.isValidCallsign("W1AB1")); // Ends with digit (ITU guideline)
+        // Note: W1AB1 is now valid (LAST_CHAR_NOT_LETTER check removed to support SWL callsigns)
     }
 
     @Test

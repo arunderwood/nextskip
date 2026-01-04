@@ -66,10 +66,7 @@ public record Callsign(String value) {
         NO_DIGIT("Must contain at least one digit"),
 
         /** Q prefixes are reserved for Q-codes (QSL, QTH, etc.). */
-        Q_PREFIX("Q prefixes are reserved for service codes"),
-
-        /** Per ITU rules, last character of suffix should be a letter (informational only). */
-        LAST_CHAR_NOT_LETTER("Last character of suffix is not a letter (ITU guideline)");
+        Q_PREFIX("Q prefixes are reserved for service codes");
 
         private final String description;
 
@@ -129,6 +126,13 @@ public record Callsign(String value) {
     // Used by packet radio to identify station type (e.g., K9TRV-4, K9TRV-4/P)
     // Matches SSID at end of string OR before a slash suffix
     private static final Pattern SSID_PATTERN = Pattern.compile("-([0-9]|1[0-5])(?=/|$)");
+
+    // SWL (Shortwave Listener) callsign pattern: 2-3 letter country prefix + 3-6 digits
+    // Examples: NL9222 (Netherlands), RS123456 (UK RSGB), DE12345 (Germany)
+    private static final Pattern SWL_PATTERN = Pattern.compile(
+            "^([A-Z]{2,3})([0-9]{3,6})$",
+            Pattern.CASE_INSENSITIVE
+    );
 
     /**
      * Creates a Callsign from the given value.
@@ -362,6 +366,24 @@ public record Callsign(String value) {
     }
 
     /**
+     * Returns whether this appears to be an SWL (Shortwave Listener) callsign.
+     *
+     * <p>SWL callsigns are issued by national amateur radio societies for
+     * receive-only stations. They typically consist of a country prefix
+     * followed by all digits (e.g., NL9222 for Netherlands, RS123456 for UK RSGB).
+     *
+     * <p><strong>Note:</strong> This is a heuristic based on common SWL formats
+     * and may not be 100% accurate. There is no authoritative database of SWL
+     * callsign patterns, and formats vary by country. False positives and
+     * negatives are possible.
+     *
+     * @return true if this matches a common SWL callsign pattern
+     */
+    public boolean isSwl() {
+        return SWL_PATTERN.matcher(getBaseCall()).matches();
+    }
+
+    /**
      * Returns the APRS SSID if present.
      *
      * <p>APRS (Automatic Packet Reporting System) uses SSID suffixes in the
@@ -403,8 +425,7 @@ public record Callsign(String value) {
      *   <li>Length: 2-7 characters (supports special event 1x1 callsigns like K1A)</li>
      *   <li>Must contain at least one letter</li>
      *   <li>Must contain at least one digit</li>
-     *   <li>Q prefix warning (Q codes are reserved, but logged rather than rejected)</li>
-     *   <li>Last character letter check (ITU guideline, informational)</li>
+     *   <li>Q prefix check (Q codes are reserved for service abbreviations)</li>
      * </ol>
      *
      * @return validation result with failure reason if invalid
@@ -441,13 +462,6 @@ public record Callsign(String value) {
         // Q prefix check (Q codes are reserved for service abbreviations)
         if (baseCall.startsWith("Q")) {
             return ValidationResult.failed(ValidationFailure.Q_PREFIX);
-        }
-
-        // ITU guideline: last character of suffix should be a letter
-        // This is informational - many valid callsigns violate this (e.g., W1AW/7)
-        char lastChar = baseCall.charAt(baseCall.length() - 1);
-        if (Character.isDigit(lastChar)) {
-            return ValidationResult.failed(ValidationFailure.LAST_CHAR_NOT_LETTER);
         }
 
         return ValidationResult.VALID;

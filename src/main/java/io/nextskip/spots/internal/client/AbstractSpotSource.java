@@ -141,6 +141,10 @@ public abstract class AbstractSpotSource implements SpotSource {
      * <p>Subclasses should call this from their connection-lost callbacks
      * to trigger automatic reconnection.
      *
+     * <p><b>Note:</b> If the underlying client library handles reconnection
+     * internally (e.g., Paho MQTT with {@code setAutomaticReconnect(true)}),
+     * subclasses should NOT call this method to avoid dual reconnection.
+     *
      * @param cause the reason for disconnection
      */
     protected void onConnectionLost(Throwable cause) {

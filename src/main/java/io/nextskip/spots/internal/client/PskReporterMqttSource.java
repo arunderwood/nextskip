@@ -79,6 +79,7 @@ public class PskReporterMqttSource extends AbstractSpotSource implements MqttCal
 
         MqttConnectionOptions options = new MqttConnectionOptions();
         options.setAutomaticReconnect(true);
+        options.setAutomaticReconnectDelay(1, 300);  // 1 sec min, 5 min (300 sec) max
         options.setCleanStart(true);
         options.setConnectionTimeout(30);
         options.setKeepAliveInterval(60);
@@ -110,13 +111,20 @@ public class PskReporterMqttSource extends AbstractSpotSource implements MqttCal
         return client != null && client.isConnected();
     }
 
+    /**
+     * Package-private setter for testing purposes.
+     */
+    void setClient(MqttClient client) {
+        this.client = client;
+    }
+
     // MqttCallback implementations
 
     @Override
     public void disconnected(MqttDisconnectResponse disconnectResponse) {
         LOG.warn("MQTT disconnected: {}", disconnectResponse.getReasonString());
-        // Paho handles auto-reconnect, but we track state
-        onConnectionLost(disconnectResponse.getException());
+        // Paho handles auto-reconnect internally - do NOT call onConnectionLost()
+        // which would trigger a competing manual reconnect and cause RC:142 cascade
     }
 
     @Override
@@ -144,17 +152,23 @@ public class PskReporterMqttSource extends AbstractSpotSource implements MqttCal
     public void connectComplete(boolean reconnect, String serverURI) {
         if (reconnect) {
             LOG.info("MQTT reconnected to {}", serverURI);
-            // Re-subscribe after reconnection
-            try {
-                for (String topic : topics) {
-                    client.subscribe(topic, 0);
-                    LOG.info("Re-subscribed to topic: {}", topic);
-                }
-            } catch (MqttException e) {
-                LOG.error("Failed to re-subscribe after reconnect: {}", e.getMessage());
-            }
         } else {
             LOG.info("MQTT connected to {}", serverURI);
+        }
+        // Subscribe (or re-subscribe after reconnection)
+        try {
+            for (String topic : topics) {
+                client.subscribe(topic, 0);
+                LOG.info("{} to topic: {}", reconnect ? "Re-subscribed" : "Subscribed", topic);
+            }
+        } catch (MqttException e) {
+            LOG.error("Failed to subscribe after connect: {}. Disconnecting to trigger retry.",
+                    e.getMessage());
+            try {
+                client.disconnect();  // Paho will auto-reconnect
+            } catch (MqttException ignored) {
+                // Best effort disconnect
+            }
         }
     }
 
