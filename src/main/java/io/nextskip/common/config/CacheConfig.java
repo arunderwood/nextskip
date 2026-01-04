@@ -65,7 +65,7 @@ public class CacheConfig {
     private static final Duration METEOR_SHOWERS_EXPIRY = Duration.ofHours(4);
 
     // Data retention periods for DB queries
-    private static final Duration ACTIVATIONS_RETENTION = Duration.ofHours(2);
+    private static final Duration ACTIVATIONS_RETENTION = Duration.ofMinutes(30);
     private static final Duration BAND_CONDITIONS_RETENTION = Duration.ofHours(1);
 
     private final Clock clock;
