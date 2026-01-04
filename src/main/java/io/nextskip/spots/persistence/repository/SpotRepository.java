@@ -2,6 +2,8 @@ package io.nextskip.spots.persistence.repository;
 
 import io.nextskip.spots.persistence.entity.SpotEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.Instant;
@@ -19,6 +21,7 @@ import java.util.Optional;
  * </ul>
  */
 @Repository
+@SuppressWarnings("PMD.AvoidDuplicateLiterals") // JPQL parameter names are intentionally repeated
 public interface SpotRepository extends JpaRepository<SpotEntity, Long> {
 
     /**
@@ -76,4 +79,118 @@ public interface SpotRepository extends JpaRepository<SpotEntity, Long> {
      * @return list of spots with highest distances
      */
     List<SpotEntity> findTopByBandAndDistanceKmNotNullOrderByDistanceKmDesc(String band);
+
+    // ========================================================================
+    // Phase 2: Band Activity Aggregation Queries
+    // ========================================================================
+
+    /**
+     * Counts spots by band within a time window.
+     *
+     * <p>Used for current activity aggregation.
+     *
+     * @param band  the band (e.g., "20m")
+     * @param since minimum spotted_at time
+     * @return count of spots on the band since the given time
+     */
+    long countByBandAndSpottedAtAfter(String band, Instant since);
+
+    /**
+     * Finds the maximum distance for a band within a time window.
+     *
+     * @param band  the band (e.g., "20m")
+     * @param since minimum spotted_at time
+     * @return maximum distance in km, or empty if no spots with distance data
+     */
+    @Query("""
+            SELECT MAX(s.distanceKm) FROM SpotEntity s
+            WHERE s.band = :band
+            AND s.spottedAt > :since
+            AND s.distanceKm IS NOT NULL
+            """)
+    Optional<Integer> findMaxDistanceByBandAndSpottedAtAfter(
+            @Param("band") String band,
+            @Param("since") Instant since);
+
+    /**
+     * Finds the spot with maximum distance for DX path details.
+     *
+     * <p>Returns the most recent spot with the maximum distance on a band.
+     * Used to provide callsign details for the max DX path display.
+     *
+     * @param band  the band (e.g., "20m")
+     * @param since minimum spotted_at time
+     * @return the spot with maximum distance, or empty if no spots
+     */
+    @Query("""
+            SELECT s FROM SpotEntity s
+            WHERE s.band = :band
+            AND s.spottedAt > :since
+            AND s.distanceKm = (
+                SELECT MAX(s2.distanceKm) FROM SpotEntity s2
+                WHERE s2.band = :band AND s2.spottedAt > :since
+            )
+            ORDER BY s.spottedAt DESC
+            LIMIT 1
+            """)
+    Optional<SpotEntity> findMaxDxSpotByBandAndSpottedAtAfter(
+            @Param("band") String band,
+            @Param("since") Instant since);
+
+    /**
+     * Counts continent path occurrences for a band within a time window.
+     *
+     * <p>Returns rows of [spotterContinent, spottedContinent, count] for
+     * cross-continent spots. Used to determine which major paths are active.
+     *
+     * @param band  the band (e.g., "20m")
+     * @param since minimum spotted_at time
+     * @return list of [spotterContinent, spottedContinent, count] tuples
+     */
+    @Query("""
+            SELECT s.spotterContinent, s.spottedContinent, COUNT(s)
+            FROM SpotEntity s
+            WHERE s.band = :band
+            AND s.spottedAt > :since
+            AND s.spotterContinent IS NOT NULL
+            AND s.spottedContinent IS NOT NULL
+            AND s.spotterContinent <> s.spottedContinent
+            GROUP BY s.spotterContinent, s.spottedContinent
+            """)
+    List<Object[]> countContinentPathsByBandAndSpottedAtAfter(
+            @Param("band") String band,
+            @Param("since") Instant since);
+
+    /**
+     * Finds distinct bands with activity since the given time.
+     *
+     * <p>Used to determine which bands to aggregate.
+     *
+     * @param since minimum spotted_at time
+     * @return list of band names with recent activity
+     */
+    @Query("SELECT DISTINCT s.band FROM SpotEntity s WHERE s.spottedAt > :since")
+    List<String> findDistinctBandsWithActivitySince(@Param("since") Instant since);
+
+    /**
+     * Finds mode distribution for a band to determine primary mode.
+     *
+     * <p>Returns rows of [mode, count] ordered by count descending.
+     * The first result is the most common mode on the band.
+     *
+     * @param band  the band (e.g., "20m")
+     * @param since minimum spotted_at time
+     * @return list of [mode, count] tuples, most common first
+     */
+    @Query("""
+            SELECT s.mode, COUNT(s) as cnt
+            FROM SpotEntity s
+            WHERE s.band = :band
+            AND s.spottedAt > :since
+            GROUP BY s.mode
+            ORDER BY cnt DESC
+            """)
+    List<Object[]> findModeDistributionByBandSince(
+            @Param("band") String band,
+            @Param("since") Instant since);
 }

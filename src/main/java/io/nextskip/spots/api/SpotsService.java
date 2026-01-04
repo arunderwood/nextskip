@@ -1,82 +1,59 @@
 package io.nextskip.spots.api;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import io.nextskip.spots.internal.client.SpotSource;
-import io.nextskip.spots.internal.stream.SpotStreamProcessor;
-import io.nextskip.spots.persistence.repository.SpotRepository;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.stereotype.Service;
+import io.nextskip.spots.model.BandActivity;
 
+import java.time.Duration;
 import java.time.Instant;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 /**
- * Public API for spot status and statistics.
+ * Public API for spot status, statistics, and band activity.
  *
- * <p>Provides minimal status endpoints for Phase 1:
+ * <p>This interface provides access to:
  * <ul>
- *   <li>MQTT connection status</li>
- *   <li>Spot count in database</li>
- *   <li>Most recent spot timestamp</li>
- *   <li>Processing statistics</li>
+ *   <li>MQTT connection status and processing statistics</li>
+ *   <li>Aggregated band activity data</li>
+ *   <li>Recent spot queries</li>
  * </ul>
  *
- * <p>Phase 2 will add {@code @BrowserCallable} endpoints for frontend access.
+ * <p>Implementation is provided by
+ * {@link io.nextskip.spots.internal.SpotsServiceImpl}.
  */
-@Service
-@ConditionalOnProperty(prefix = "nextskip.spots", name = "enabled", havingValue = "true", matchIfMissing = true)
-@SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Spring-managed beans are intentionally shared")
-public class SpotsService {
+public interface SpotsService {
 
-    private final SpotSource spotSource;
-    private final SpotRepository spotRepository;
-    private final SpotStreamProcessor streamProcessor;
-
-    public SpotsService(
-            SpotSource spotSource,
-            SpotRepository spotRepository,
-            SpotStreamProcessor streamProcessor) {
-        this.spotSource = spotSource;
-        this.spotRepository = spotRepository;
-        this.streamProcessor = streamProcessor;
-    }
+    // ========================================================================
+    // Phase 1: Status and Statistics
+    // ========================================================================
 
     /**
      * Returns whether the MQTT source is currently connected.
      *
      * @return true if connected and receiving data
      */
-    public boolean isConnected() {
-        return spotSource.isConnected();
-    }
+    boolean isConnected();
 
     /**
      * Returns the name of the spot source.
      *
      * @return source name (e.g., "PSKReporter MQTT")
      */
-    public String getSourceName() {
-        return spotSource.getSourceName();
-    }
+    String getSourceName();
 
     /**
      * Returns the total count of spots in the database.
      *
      * @return spot count
      */
-    public long getSpotCount() {
-        return spotRepository.count();
-    }
+    long getSpotCount();
 
     /**
      * Returns the timestamp of the most recent spot.
      *
      * @return most recent spot time, or empty if no spots exist
      */
-    public Optional<Instant> getLastSpotTime() {
-        return spotRepository.findTopByOrderBySpottedAtDesc()
-                .map(entity -> entity.getSpottedAt());
-    }
+    Optional<Instant> getLastSpotTime();
 
     /**
      * Returns the total number of spots processed through the pipeline.
@@ -86,18 +63,14 @@ public class SpotsService {
      *
      * @return spots processed count
      */
-    public long getSpotsProcessed() {
-        return streamProcessor.getSpotsProcessed();
-    }
+    long getSpotsProcessed();
 
     /**
      * Returns the total number of batches persisted to the database.
      *
      * @return batches persisted count
      */
-    public long getBatchesPersisted() {
-        return streamProcessor.getBatchesPersisted();
-    }
+    long getBatchesPersisted();
 
     /**
      * Returns the count of spots received in the last specified minutes.
@@ -105,8 +78,45 @@ public class SpotsService {
      * @param minutes the time window in minutes
      * @return count of spots received within the time window
      */
-    public long getSpotCountSince(int minutes) {
-        Instant cutoff = Instant.now().minusSeconds(minutes * 60L);
-        return spotRepository.countByCreatedAtAfter(cutoff);
-    }
+    long getSpotCountSince(int minutes);
+
+    // ========================================================================
+    // Phase 2: Band Activity Aggregation
+    // ========================================================================
+
+    /**
+     * Returns current band activity for all active bands.
+     *
+     * <p>Results are cached and refreshed periodically (typically every minute).
+     * Only bands with recent activity (within the last 2 hours) are included.
+     *
+     * @return map of band name to aggregated activity data
+     */
+    Map<String, BandActivity> getCurrentActivity();
+
+    /**
+     * Returns activity for a specific band.
+     *
+     * @param band the band name (e.g., "20m")
+     * @return band activity, or empty if no recent activity
+     */
+    Optional<BandActivity> getBandActivity(String band);
+
+    /**
+     * Returns the full response DTO for the frontend.
+     *
+     * <p>Includes all band activities, timestamp, and connection status.
+     *
+     * @return BandActivityResponse with all activity data
+     */
+    BandActivityResponse getBandActivityResponse();
+
+    /**
+     * Returns recent spots for a band within a time window.
+     *
+     * @param band   the band name (e.g., "20m")
+     * @param window the time window to query
+     * @return list of recent spots, most recent first
+     */
+    List<io.nextskip.spots.model.Spot> getRecentSpots(String band, Duration window);
 }

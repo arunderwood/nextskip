@@ -1,7 +1,10 @@
 package io.nextskip.spots.api;
 
+import com.github.benmanes.caffeine.cache.LoadingCache;
+import io.nextskip.spots.internal.SpotsServiceImpl;
 import io.nextskip.spots.internal.client.SpotSource;
 import io.nextskip.spots.internal.stream.SpotStreamProcessor;
+import io.nextskip.spots.model.BandActivity;
 import io.nextskip.spots.persistence.entity.SpotEntity;
 import io.nextskip.spots.persistence.repository.SpotRepository;
 import io.nextskip.test.fixtures.SpotFixtures;
@@ -14,6 +17,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneId;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -41,11 +45,15 @@ class SpotsServiceTest {
     @Mock
     private SpotStreamProcessor streamProcessor;
 
+    @Mock
+    private LoadingCache<String, Map<String, BandActivity>> bandActivityCache;
+
     private SpotsService spotsService;
 
     @BeforeEach
     void setUp() {
-        spotsService = new SpotsService(spotSource, spotRepository, streamProcessor);
+        spotsService = new SpotsServiceImpl(spotSource, spotRepository, streamProcessor,
+                bandActivityCache, FIXED_CLOCK);
     }
 
     // ===========================================
@@ -220,7 +228,8 @@ class SpotsServiceTest {
 
     @Test
     void testConstructor_AllDependenciesProvided_CreatesService() {
-        SpotsService service = new SpotsService(spotSource, spotRepository, streamProcessor);
+        SpotsService service = new SpotsServiceImpl(spotSource, spotRepository, streamProcessor,
+                bandActivityCache, FIXED_CLOCK);
 
         // Verify service can call methods without NullPointerException
         when(spotSource.isConnected()).thenReturn(true);

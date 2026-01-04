@@ -91,6 +91,13 @@ nextskip:
     persistence:
       ttl: 24h            # Time-to-live for spots
       cleanup-interval: 1h # How often to run cleanup
+    aggregation:
+      refresh-interval: 1m    # How often to recalculate band activity
+      ft8-window: 15m         # Aggregation window for FT8/FT4
+      cw-window: 30m          # Aggregation window for CW
+      ssb-window: 60m         # Aggregation window for SSB
+      baseline-multiplier: 4  # Baseline = window * multiplier (e.g., 1h for FT8)
+      min-path-spots: 5       # Minimum spots to consider a path active
 
 # Resilience4j Circuit Breaker Configuration
 resilience4j:
