@@ -113,6 +113,11 @@ public record Callsign(String value) {
             Pattern.CASE_INSENSITIVE
     );
 
+    // APRS SSID suffix pattern: -0 through -15
+    // Used by packet radio to identify station type (e.g., K9TRV-4, K9TRV-4/P)
+    // Matches SSID at end of string OR before a slash suffix
+    private static final Pattern SSID_PATTERN = Pattern.compile("-([0-9]|1[0-5])(?=/|$)");
+
     /**
      * Creates a Callsign from the given value.
      *
@@ -153,23 +158,32 @@ public record Callsign(String value) {
     }
 
     /**
-     * Returns the callsign without any suffix.
+     * Returns the callsign without any suffix or SSID.
      *
      * <p>Examples:
      * <ul>
      *   <li>W1ABC → W1ABC</li>
      *   <li>W1ABC/P → W1ABC</li>
      *   <li>G3XYZ/QRP → G3XYZ</li>
+     *   <li>K9TRV-4 → K9TRV (APRS SSID stripped)</li>
+     *   <li>K9TRV-4/P → K9TRV (both SSID and suffix stripped)</li>
      * </ul>
      *
      * @return the base callsign
      */
     public String getBaseCall() {
-        int slashIndex = value.indexOf('/');
+        String base = value;
+
+        // Strip APRS SSID suffix first (e.g., "-4" from "K9TRV-4")
+        base = SSID_PATTERN.matcher(base).replaceFirst("");
+
+        // Then strip traditional suffix (e.g., "/P" from "W1AW/P")
+        int slashIndex = base.indexOf('/');
         if (slashIndex > 0) {
-            return value.substring(0, slashIndex);
+            base = base.substring(0, slashIndex);
         }
-        return value;
+
+        return base;
     }
 
     /**
@@ -184,12 +198,17 @@ public record Callsign(String value) {
      *   <li>QRP - Low power</li>
      * </ul>
      *
+     * <p>Note: APRS SSIDs (e.g., -4) are not considered suffixes.
+     * For K9TRV-4/P, this returns "P", not "-4/P".
+     *
      * @return the suffix, or null if none
      */
     public String getSuffix() {
-        int slashIndex = value.indexOf('/');
-        if (slashIndex > 0 && slashIndex < value.length() - 1) {
-            return value.substring(slashIndex + 1);
+        // Strip SSID first so K9TRV-4/P returns "P", not "-4/P"
+        String withoutSsid = SSID_PATTERN.matcher(value).replaceFirst("");
+        int slashIndex = withoutSsid.indexOf('/');
+        if (slashIndex > 0 && slashIndex < withoutSsid.length() - 1) {
+            return withoutSsid.substring(slashIndex + 1);
         }
         return null;
     }
@@ -237,6 +256,40 @@ public record Callsign(String value) {
      */
     public boolean isQrp() {
         return "QRP".equalsIgnoreCase(getSuffix());
+    }
+
+    /**
+     * Returns the APRS SSID if present.
+     *
+     * <p>APRS (Automatic Packet Reporting System) uses SSID suffixes in the
+     * format {@code CALLSIGN-N} where N is 0-15 to identify station types:
+     * <ul>
+     *   <li>0 - Primary station</li>
+     *   <li>1-4 - Additional stations</li>
+     *   <li>5 - Smartphone</li>
+     *   <li>7 - HT (handheld)</li>
+     *   <li>9 - Mobile</li>
+     *   <li>10 - Internet gateway</li>
+     *   <li>15 - Generic additional station</li>
+     * </ul>
+     *
+     * @return the SSID (0-15), or null if no valid SSID present
+     */
+    public Integer getSsid() {
+        Matcher matcher = SSID_PATTERN.matcher(value);
+        if (matcher.find()) {
+            return Integer.parseInt(matcher.group(1));
+        }
+        return null;
+    }
+
+    /**
+     * Returns whether this callsign has an APRS SSID suffix.
+     *
+     * @return true if SSID present (0-15)
+     */
+    public boolean hasSsid() {
+        return getSsid() != null;
     }
 
     /**

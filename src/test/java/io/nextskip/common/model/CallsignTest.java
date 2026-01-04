@@ -16,10 +16,11 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 /**
  * Unit tests for {@link Callsign}.
  *
- * <p>Tests callsign parsing, prefix extraction, suffix handling, and validation.
+ * <p>Tests callsign parsing, prefix extraction, suffix handling, SSID handling, and validation.
  * Includes property-based tests for invariants.
  */
-@SuppressWarnings("PMD.AvoidDuplicateLiterals") // Test data uses repeated callsign values
+@SuppressWarnings({"PMD.AvoidDuplicateLiterals", "PMD.CyclomaticComplexity"})
+// Test data uses repeated callsign values; comprehensive test suite has high method count
 class CallsignTest {
 
     // ===========================================
@@ -562,5 +563,225 @@ class CallsignTest {
                 "PY2ABC", "4X1ABC", "VE3ABC", "W1AW/P", "W1AW/M",
                 "W1AW/MM", "W1AW/QRP", "K2DEF", "N3XYZ", "AA1AA"
         );
+    }
+
+    // ===========================================
+    // APRS SSID tests
+    // ===========================================
+
+    @Test
+    void testGetSsid_SsidZero_ReturnsZero() {
+        Callsign callsign = new Callsign("K9TRV-0");
+
+        assertThat(callsign.getSsid()).isEqualTo(0);
+    }
+
+    @Test
+    void testGetSsid_SsidFifteen_ReturnsFifteen() {
+        Callsign callsign = new Callsign("K9TRV-15");
+
+        assertThat(callsign.getSsid()).isEqualTo(15);
+    }
+
+    @Test
+    void testGetSsid_ValidSsid_ReturnsValue() {
+        assertThat(new Callsign("K9TRV-4").getSsid()).isEqualTo(4);
+        assertThat(new Callsign("W1AW-9").getSsid()).isEqualTo(9);
+    }
+
+    @Test
+    void testGetSsid_NoSsid_ReturnsNull() {
+        assertThat(new Callsign("W1AW").getSsid()).isNull();
+        assertThat(new Callsign("W1AW/P").getSsid()).isNull();
+    }
+
+    @Test
+    void testGetSsid_InvalidSsid_ReturnsNull() {
+        // -16 and above are not valid SSIDs
+        assertThat(new Callsign("K9TRV-16").getSsid()).isNull();
+        assertThat(new Callsign("K9TRV-100").getSsid()).isNull();
+    }
+
+    @Test
+    void testGetSsid_LettersAfterHyphen_ReturnsNull() {
+        // K9TRV-A is not an SSID (could be a suffix notation)
+        assertThat(new Callsign("K9TRV-A").getSsid()).isNull();
+    }
+
+    @Test
+    void testHasSsid_WithSsid_ReturnsTrue() {
+        assertThat(new Callsign("K9TRV-4").hasSsid()).isTrue();
+    }
+
+    @Test
+    void testHasSsid_WithoutSsid_ReturnsFalse() {
+        assertThat(new Callsign("W1AW").hasSsid()).isFalse();
+        assertThat(new Callsign("W1AW/P").hasSsid()).isFalse();
+    }
+
+    // ===========================================
+    // Base call extraction with SSID
+    // ===========================================
+
+    @Test
+    void testGetBaseCall_WithSsid_StripsSsid() {
+        assertThat(new Callsign("K9TRV-4").getBaseCall()).isEqualTo("K9TRV");
+        assertThat(new Callsign("W1AW-15").getBaseCall()).isEqualTo("W1AW");
+    }
+
+    @Test
+    void testGetBaseCall_WithSsidAndSuffix_StripsBoth() {
+        // Edge case: SSID + suffix (rare but possible)
+        assertThat(new Callsign("K9TRV-4/P").getBaseCall()).isEqualTo("K9TRV");
+    }
+
+    @Test
+    void testGetPrefix_WithSsid_IgnoresSsid() {
+        Callsign callsign = new Callsign("K9TRV-4");
+
+        assertThat(callsign.getPrefix()).isEqualTo("K9");
+    }
+
+    // ===========================================
+    // SSID + suffix interaction tests
+    // ===========================================
+
+    @Test
+    void testIsPortable_WithSsidAndPortableSuffix_ReturnsTrue() {
+        Callsign callsign = new Callsign("K9TRV-4/P");
+
+        assertThat(callsign.isPortable()).isTrue();
+    }
+
+    @Test
+    void testIsPortable_WithSsidOnly_ReturnsFalse() {
+        Callsign callsign = new Callsign("K9TRV-4");
+
+        assertThat(callsign.isPortable()).isFalse();
+    }
+
+    @Test
+    void testIsMobile_WithSsidAndMobileSuffix_ReturnsTrue() {
+        Callsign callsign = new Callsign("K9TRV-4/M");
+
+        assertThat(callsign.isMobile()).isTrue();
+    }
+
+    @Test
+    void testGetSuffix_WithSsidOnly_ReturnsNull() {
+        Callsign callsign = new Callsign("K9TRV-4");
+
+        assertThat(callsign.getSuffix()).isNull();
+    }
+
+    @Test
+    void testGetSuffix_WithSsidAndSuffix_ReturnsSlashSuffix() {
+        Callsign callsign = new Callsign("K9TRV-4/P");
+
+        assertThat(callsign.getSuffix()).isEqualTo("P");
+    }
+
+    @Test
+    void testHasSuffix_WithSsidOnly_ReturnsFalse() {
+        Callsign callsign = new Callsign("K9TRV-4");
+
+        assertThat(callsign.hasSuffix()).isFalse();
+    }
+
+    @Test
+    void testHasSuffix_WithSsidAndSuffix_ReturnsTrue() {
+        Callsign callsign = new Callsign("K9TRV-4/P");
+
+        assertThat(callsign.hasSuffix()).isTrue();
+    }
+
+    @Test
+    void testGetSsid_WithSsidAndSuffix_ReturnsSsid() {
+        Callsign callsign = new Callsign("K9TRV-4/P");
+
+        assertThat(callsign.getSsid()).isEqualTo(4);
+    }
+
+    // ===========================================
+    // Validation with SSID
+    // ===========================================
+
+    @Test
+    void testValidate_WithSsid_ValidatesBaseCall() {
+        assertThat(new Callsign("K9TRV-4").validate().isValid()).isTrue();
+        assertThat(new Callsign("W1AW-0").validate().isValid()).isTrue();
+    }
+
+    @Test
+    void testValidate_InvalidBaseWithValidSsid_ReturnsFailure() {
+        // Q prefix is invalid, even with valid SSID
+        Callsign callsign = new Callsign("Q1ABC-4");
+
+        assertThat(callsign.validate().isValid()).isFalse();
+        assertThat(callsign.validate().failure())
+                .isEqualTo(Callsign.ValidationFailure.Q_PREFIX);
+    }
+
+    @Test
+    void testValidate_InvalidSsid_ValidatesAsNormal() {
+        // -16 is not a valid SSID, so it's kept as part of the callsign
+        // K9TRV-16 = 8 chars which exceeds the 7-char max
+        Callsign callsign = new Callsign("K9TRV-16");
+
+        assertThat(callsign.getSsid()).isNull();
+        assertThat(callsign.validate().failure())
+                .isEqualTo(Callsign.ValidationFailure.TOO_LONG);
+    }
+
+    @Test
+    void testValidate_InvalidSsid_ShorterCallsign_LastCharNotLetter() {
+        // -16 is not a valid SSID, so it's kept as part of the callsign
+        // W1A-16 = 6 chars, ends in digit
+        Callsign callsign = new Callsign("W1A-16");
+
+        assertThat(callsign.getSsid()).isNull();
+        assertThat(callsign.validate().failure())
+                .isEqualTo(Callsign.ValidationFailure.LAST_CHAR_NOT_LETTER);
+    }
+
+    // ===========================================
+    // SSID property-based tests
+    // ===========================================
+
+    @Property
+    void ssidInValidRange_AlwaysReturnsCorrectValue(
+            @ForAll("validSsids") int ssid) {
+        Callsign callsign = new Callsign("K9TRV-" + ssid);
+
+        assertThat(callsign.getSsid()).isEqualTo(ssid);
+        assertThat(callsign.hasSsid()).isTrue();
+    }
+
+    @Property
+    void ssidOutsideValidRange_AlwaysReturnsNull(
+            @ForAll("invalidSsids") int invalidSsid) {
+        Callsign callsign = new Callsign("K9TRV-" + invalidSsid);
+
+        assertThat(callsign.getSsid()).isNull();
+        assertThat(callsign.hasSsid()).isFalse();
+    }
+
+    @Property
+    void baseCallNeverContainsSsid_ForValidSsids(
+            @ForAll("validSsids") int ssid) {
+        Callsign callsign = new Callsign("K9TRV-" + ssid);
+
+        assertThat(callsign.getBaseCall()).isEqualTo("K9TRV");
+        assertThat(callsign.getBaseCall()).doesNotContain("-");
+    }
+
+    @Provide
+    Arbitrary<Integer> validSsids() {
+        return Arbitraries.integers().between(0, 15);
+    }
+
+    @Provide
+    Arbitrary<Integer> invalidSsids() {
+        return Arbitraries.integers().between(16, 999);
     }
 }
