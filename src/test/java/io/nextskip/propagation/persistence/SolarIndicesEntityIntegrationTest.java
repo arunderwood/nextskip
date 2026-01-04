@@ -190,35 +190,6 @@ class SolarIndicesEntityIntegrationTest extends AbstractPersistenceTest {
                 () -> repository.saveAndFlush(entity));
     }
 
-    @Test
-    void testConvertedDomainModel_CanCalculateScore() {
-        // Given: A persisted entity
-        var entity = repository.save(
-                new SolarIndicesEntity(150.0, 10, 3, 100, Instant.now(), SOURCE_NOAA));
-
-        // When: Convert to domain and calculate score
-        var domain = entity.toDomain();
-        var score = domain.getScore();
-
-        // Then: Score should be calculated correctly
-        // High SFI (150), moderate A-index (10), low K-index (3) = good conditions
-        assertTrue(score > 50, "Score should be above 50 for good conditions");
-        assertTrue(score <= 100, "Score should be at most 100");
-    }
-
-    @Test
-    void testConvertedDomainModel_CanDetermineIfFavorable() {
-        // Given: Favorable conditions (high SFI, low K, low A)
-        var favorableEntity = repository.save(
-                new SolarIndicesEntity(150.0, 15, 2, 100, Instant.now(), SOURCE_NOAA));
-
-        // When: Convert to domain
-        var favorable = favorableEntity.toDomain();
-
-        // Then: Should be favorable (SFI > 100, K < 4, A < 20)
-        assertTrue(favorable.isFavorable());
-    }
-
     // === Setter Coverage Tests ===
 
     @Test

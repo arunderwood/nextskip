@@ -1,6 +1,7 @@
 import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
 import { resolve } from 'path';
+import os from 'os';
 
 export default defineConfig({
   plugins: [react()],
@@ -10,6 +11,14 @@ export default defineConfig({
     setupFiles: './src/test/frontend/setup.ts',
     include: ['src/test/frontend/**/*.{test,spec}.{ts,tsx}'],
     css: true,
+    // Enable parallel test execution
+    pool: 'threads',
+    poolOptions: {
+      threads: {
+        minThreads: 1,
+        maxThreads: Math.max(1, Math.floor(os.cpus().length * 0.75)),
+      },
+    },
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'json-summary', 'html', 'lcov'],

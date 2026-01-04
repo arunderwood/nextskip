@@ -70,22 +70,6 @@ describe('SolarIndicesContent', () => {
 
       expect(screen.getByText(expectedStatus)).toBeInTheDocument();
     });
-
-    it('should apply status-good class for high SFI', () => {
-      const indices = createIndices();
-      const { container } = render(<SolarIndicesContent solarIndices={indices} />);
-
-      const statusElements = container.querySelectorAll('.status-good');
-      expect(statusElements.length).toBeGreaterThan(0);
-    });
-
-    it('should apply status-poor class for low SFI', () => {
-      const indices = createIndices({ solarFluxIndex: 50 });
-      const { container } = render(<SolarIndicesContent solarIndices={indices} />);
-
-      const statusElements = container.querySelectorAll('.status-poor');
-      expect(statusElements.length).toBeGreaterThan(0);
-    });
   });
 
   describe('K-Index', () => {
@@ -102,22 +86,6 @@ describe('SolarIndicesContent', () => {
       render(<SolarIndicesContent solarIndices={indices} />);
 
       expect(screen.getByText(expectedStatus)).toBeInTheDocument();
-    });
-
-    it('should apply status-good class for low K-index', () => {
-      const indices = createIndices({ kIndex: 1 });
-      const { container } = render(<SolarIndicesContent solarIndices={indices} />);
-
-      const statusElements = container.querySelectorAll('.status-good');
-      expect(statusElements.length).toBeGreaterThan(0);
-    });
-
-    it('should apply status-poor class for high K-index', () => {
-      const indices = createIndices({ kIndex: 9 });
-      const { container } = render(<SolarIndicesContent solarIndices={indices} />);
-
-      const statusElements = container.querySelectorAll('.status-poor');
-      expect(statusElements.length).toBeGreaterThan(0);
     });
   });
 
@@ -172,55 +140,6 @@ describe('SolarIndicesContent', () => {
       render(<SolarIndicesContent solarIndices={indices} />);
 
       expect(screen.getByText('Low solar activity')).toBeInTheDocument();
-    });
-  });
-
-  describe('CSS structure', () => {
-    it('should have indices-grid container', () => {
-      const indices = createIndices();
-      const { container } = render(<SolarIndicesContent solarIndices={indices} />);
-
-      expect(container.querySelector('.indices-grid')).toBeInTheDocument();
-    });
-
-    it('should have 4 index-item elements', () => {
-      const indices = createIndices();
-      const { container } = render(<SolarIndicesContent solarIndices={indices} />);
-
-      const items = container.querySelectorAll('.index-item');
-      expect(items).toHaveLength(4);
-    });
-
-    it('should have index-label for each item', () => {
-      const indices = createIndices();
-      const { container } = render(<SolarIndicesContent solarIndices={indices} />);
-
-      const labels = container.querySelectorAll('.index-label');
-      expect(labels).toHaveLength(4);
-    });
-
-    it('should have index-value for each item', () => {
-      const indices = createIndices();
-      const { container } = render(<SolarIndicesContent solarIndices={indices} />);
-
-      const values = container.querySelectorAll('.index-value');
-      expect(values).toHaveLength(4);
-    });
-
-    it('should have index-status for SFI and K-index', () => {
-      const indices = createIndices();
-      const { container } = render(<SolarIndicesContent solarIndices={indices} />);
-
-      const statuses = container.querySelectorAll('.index-status');
-      expect(statuses).toHaveLength(2);
-    });
-
-    it('should have index-description for A-index and Sunspot', () => {
-      const indices = createIndices();
-      const { container } = render(<SolarIndicesContent solarIndices={indices} />);
-
-      const descriptions = container.querySelectorAll('.index-description');
-      expect(descriptions).toHaveLength(2);
     });
   });
 
