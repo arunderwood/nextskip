@@ -88,6 +88,7 @@ caffeine = { module = "com.github.ben-manes.caffeine:caffeine" }
 resilience4j-spring-boot3 = { module = "io.github.resilience4j:resilience4j-spring-boot3", version.ref = "resilience4j" }
 resilience4j-circuitbreaker = { module = "io.github.resilience4j:resilience4j-circuitbreaker", version.ref = "resilience4j" }
 resilience4j-retry = { module = "io.github.resilience4j:resilience4j-retry", version.ref = "resilience4j" }
+resilience4j-micrometer = { module = "io.github.resilience4j:resilience4j-micrometer", version.ref = "resilience4j" }
 
 # Jackson XML
 jackson-dataformat-xml = { module = "com.fasterxml.jackson.dataformat:jackson-dataformat-xml" }
@@ -117,7 +118,7 @@ pekko-stream = { module = "org.apache.pekko:pekko-stream_2.13", version.ref = "p
 pekko-stream-testkit = { module = "org.apache.pekko:pekko-stream-testkit_2.13", version.ref = "pekko" }
 
 [bundles]
-resilience4j = ["resilience4j-spring-boot3", "resilience4j-circuitbreaker", "resilience4j-retry"]
+resilience4j = ["resilience4j-spring-boot3", "resilience4j-circuitbreaker", "resilience4j-retry", "resilience4j-micrometer"]
 spring-boot-web = ["spring-boot-starter-web", "spring-boot-starter-cache", "spring-boot-starter-actuator", "spring-boot-starter-validation"]
 vaadin = ["vaadin-spring-boot-starter", "hilla-spring-boot-starter"]
 testcontainers = ["spring-boot-testcontainers", "testcontainers-postgresql", "testcontainers-junit-jupiter"]
