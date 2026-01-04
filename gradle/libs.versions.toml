@@ -39,6 +39,12 @@ testcontainers = "2.0.3"
 # Scheduling
 db-scheduler = "16.6.0"
 
+# MQTT
+paho-mqtt = "1.2.5"
+
+# Streaming (Pekko)
+pekko = "1.1.5"
+
 [plugins]
 spring-boot = { id = "org.springframework.boot", version.ref = "spring-boot" }
 spring-dependency-management = { id = "io.spring.dependency-management", version.ref = "spring-dependency-management" }
@@ -105,6 +111,13 @@ byte-buddy = { module = "net.bytebuddy:byte-buddy", version.ref = "byte-buddy" }
 
 # Property-based testing
 jqwik = { module = "net.jqwik:jqwik", version.ref = "jqwik" }
+
+# MQTT client
+paho-mqttv5-client = { module = "org.eclipse.paho:org.eclipse.paho.mqttv5.client", version.ref = "paho-mqtt" }
+
+# Pekko Streams
+pekko-stream = { module = "org.apache.pekko:pekko-stream_2.13", version.ref = "pekko" }
+pekko-stream-testkit = { module = "org.apache.pekko:pekko-stream-testkit_2.13", version.ref = "pekko" }
 
 [bundles]
 resilience4j = ["resilience4j-spring-boot3", "resilience4j-circuitbreaker", "resilience4j-retry"]

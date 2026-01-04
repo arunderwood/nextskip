@@ -146,6 +146,7 @@ class HamRadioUtilsTest {
     }
 
     @Test
+    @SuppressWarnings("deprecation") // Testing deprecated method
     void shouldValidate_Callsign_Valid() {
         assertTrue(HamRadioUtils.isValidCallsign("W1AW"));
         assertTrue(HamRadioUtils.isValidCallsign("K5ABC"));
@@ -155,13 +156,14 @@ class HamRadioUtilsTest {
     }
 
     @Test
+    @SuppressWarnings("deprecation") // Testing deprecated method
     void shouldValidate_Callsign_Invalid() {
         assertFalse(HamRadioUtils.isValidCallsign("ABC")); // No number
         assertFalse(HamRadioUtils.isValidCallsign("1")); // Too short
         assertFalse(HamRadioUtils.isValidCallsign("")); // Empty
         assertFalse(HamRadioUtils.isValidCallsign(null)); // Null
-        assertFalse(HamRadioUtils.isValidCallsign("ABCD5")); // Too many letters before number
-        assertFalse(HamRadioUtils.isValidCallsign("W1ABCDE")); // Too many letters after number
+        assertFalse(HamRadioUtils.isValidCallsign("Q1ABC")); // Q prefix reserved for Q-codes
+        assertFalse(HamRadioUtils.isValidCallsign("W1AB1")); // Ends with digit (ITU guideline)
     }
 
     @Test
