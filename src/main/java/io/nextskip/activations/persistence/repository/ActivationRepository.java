@@ -3,6 +3,8 @@ package io.nextskip.activations.persistence.repository;
 import io.nextskip.activations.model.ActivationType;
 import io.nextskip.activations.persistence.entity.ActivationEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.Instant;
@@ -121,4 +123,26 @@ public interface ActivationRepository extends JpaRepository<ActivationEntity, Lo
      * @return number of deleted records
      */
     int deleteBySourceAndLastSeenAtBefore(String source, Instant lastSeenAt);
+
+    /**
+     * Find the most recent activation per (callsign, location) pair.
+     *
+     * <p>De-duplicates spots so each activator at each location appears only once,
+     * showing only the most recent spot. This matches POTA/SOTA native UI behavior
+     * where multiple spots for the same operator at the same location are collapsed.
+     *
+     * <p>Uses PostgreSQL DISTINCT ON for efficient single-query de-duplication.
+     *
+     * @param cutoff minimum spottedAt timestamp (exclusive)
+     * @return list of de-duplicated activations, one per (callsign, location) pair
+     */
+    @Query(
+            value = """
+                SELECT DISTINCT ON (activator_callsign, location_reference) *
+                FROM activations
+                WHERE spotted_at > :cutoff
+                ORDER BY activator_callsign, location_reference, spotted_at DESC
+                """,
+            nativeQuery = true)
+    List<ActivationEntity> findLatestPerCallsignAndLocation(@Param("cutoff") Instant cutoff);
 }

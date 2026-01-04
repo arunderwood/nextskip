@@ -85,8 +85,8 @@ class CacheConfigTest {
 
     @Test
     void testActivationsCache_LoadsFromRepository() {
-        // Given: Repository returns empty list
-        when(activationRepository.findBySpottedAtAfterOrderBySpottedAtDesc(any()))
+        // Given: Repository returns empty list (de-duplicated by callsign+location)
+        when(activationRepository.findLatestPerCallsignAndLocation(any()))
                 .thenReturn(Collections.emptyList());
 
         // When: Create cache and get data
@@ -164,14 +164,14 @@ class CacheConfigTest {
 
     @Test
     void testLoadActivations_ReturnsActivationsFromRepository() {
-        // Given: Repository returns activation entities
+        // Given: Repository returns activation entities (de-duplicated by callsign+location)
         Instant now = Instant.now();
         Activation activation = new Activation(
                 "spot-1", "W1ABC", ActivationType.POTA, 14250.0, "SSB", now, now, 5, "pota",
                 new Park("K-1234", "Test Park", "CA", "US", "CM97", 37.5, -122.1)
         );
         ActivationEntity entity = ActivationEntity.fromDomain(activation);
-        when(activationRepository.findBySpottedAtAfterOrderBySpottedAtDesc(any()))
+        when(activationRepository.findLatestPerCallsignAndLocation(any()))
                 .thenReturn(List.of(entity));
 
         // When: Call loader method directly
@@ -186,8 +186,8 @@ class CacheConfigTest {
 
     @Test
     void testLoadActivations_ReturnsEmptyList() {
-        // Given: Repository returns empty list
-        when(activationRepository.findBySpottedAtAfterOrderBySpottedAtDesc(any()))
+        // Given: Repository returns empty list (de-duplicated by callsign+location)
+        when(activationRepository.findLatestPerCallsignAndLocation(any()))
                 .thenReturn(Collections.emptyList());
 
         // When: Call loader method directly
