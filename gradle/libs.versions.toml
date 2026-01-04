@@ -98,9 +98,6 @@ ical4j = { module = "org.mnode.ical4j:ical4j", version.ref = "ical4j" }
 # Jsoup for HTML parsing
 jsoup = { module = "org.jsoup:jsoup", version.ref = "jsoup" }
 
-# Observability
-micrometer-registry-prometheus = { module = "io.micrometer:micrometer-registry-prometheus" }
-
 # Testing
 reactor-test = { module = "io.projectreactor:reactor-test" }
 wiremock-standalone = { module = "org.wiremock:wiremock-standalone", version.ref = "wiremock" }

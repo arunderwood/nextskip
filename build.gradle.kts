@@ -131,9 +131,6 @@ dependencies {
     // Pekko Streams for high-volume ETL
     implementation(libs.pekko.stream)
 
-    // Observability
-    runtimeOnly(libs.micrometer.registry.prometheus)
-
     // Database
     implementation(libs.spring.boot.starter.data.jpa)
     runtimeOnly(libs.postgresql)
