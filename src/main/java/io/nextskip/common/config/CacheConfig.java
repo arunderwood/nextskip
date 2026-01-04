@@ -93,18 +93,24 @@ public class CacheConfig {
     }
 
     /**
-     * Loads activations from the database.
-     * Package-private for testing.
+     * Loads activations from the database, de-duplicated by (callsign, location).
+     *
+     * <p>Uses {@link ActivationRepository#findLatestPerCallsignAndLocation(Instant)} to
+     * return only the most recent spot per (callsign, location) pair. This matches
+     * POTA/SOTA native UI behavior where multiple spots for the same operator at the
+     * same location are collapsed into one entry.
+     *
+     * <p>Package-private for testing.
      */
     List<Activation> loadActivations(ActivationRepository repository) {
         LOG.debug("Loading activations from database");
         Instant cutoff = Instant.now(clock).minus(ACTIVATIONS_RETENTION);
         List<Activation> activations = repository
-                .findBySpottedAtAfterOrderBySpottedAtDesc(cutoff)
+                .findLatestPerCallsignAndLocation(cutoff)
                 .stream()
                 .map(ActivationEntity::toDomain)
                 .toList();
-        LOG.info("Loaded {} activations from database", activations.size());
+        LOG.info("Loaded {} unique activations from database", activations.size());
         return activations;
     }
 

@@ -66,6 +66,20 @@ class ActivationEntityIntegrationTest extends AbstractPersistenceTest {
     private static final double TEST_LAT = 40.0;
     private static final double TEST_LON = -105.0;
 
+    // Spot IDs for de-duplication tests
+    private static final String SPOT_ID_1 = "spot-1";
+    private static final String SPOT_ID_2 = "spot-2";
+    private static final String SPOT_ID_3 = "spot-3";
+
+    // Alternate values for de-duplication tests
+    private static final String ALT_PARK_REFERENCE_1 = "K-0001";
+    private static final String ALT_PARK_REFERENCE_2 = "K-0002";
+    private static final String ALT_PARK_REFERENCE_3 = "K-0818";
+    private static final String ALT_CALLSIGN_1 = "W1ABC";
+    private static final String ALT_CALLSIGN_2 = "K2DEF";
+    private static final String ALT_CALLSIGN_3 = "W1XYZ";
+    private static final String ALT_CALLSIGN_4 = "N2OLD";
+
     @Autowired
     private ActivationRepository repository;
 
@@ -310,9 +324,9 @@ class ActivationEntityIntegrationTest extends AbstractPersistenceTest {
         // Given: Activations from different operators
         var now = Instant.now();
 
-        repository.save(createActivationEntity("spot-1", now, "W1ABC"));
-        repository.save(createActivationEntity("spot-2", now, CALLSIGN));
-        repository.save(createActivationEntity("spot-3", now, CALLSIGN));
+        repository.save(createActivationEntity(SPOT_ID_1, now, ALT_CALLSIGN_1));
+        repository.save(createActivationEntity(SPOT_ID_2, now, CALLSIGN));
+        repository.save(createActivationEntity(SPOT_ID_3, now, CALLSIGN));
 
         // When: Find by callsign
         var result = repository.findByActivatorCallsignOrderBySpottedAtDesc(CALLSIGN);
@@ -549,5 +563,133 @@ class ActivationEntityIntegrationTest extends AbstractPersistenceTest {
                 PARK_REFERENCE, PARK_NAME, PARK_REGION,
                 PARK_COUNTRY, PARK_GRID, TEST_LAT, TEST_LON, null
         );
+    }
+
+    private ActivationEntity createActivationEntity(
+            String spotId, Instant spottedAt, String callsign, String locationRef) {
+        return new ActivationEntity(
+                spotId, callsign, ActivationType.POTA,
+                FREQUENCY_20M, MODE_FT8, spottedAt, spottedAt, 10, POTA_SOURCE,
+                locationRef, PARK_NAME, PARK_REGION,
+                PARK_COUNTRY, PARK_GRID, TEST_LAT, TEST_LON, null
+        );
+    }
+
+    // === De-duplication Query Tests ===
+
+    @Test
+    void testFindLatestPerCallsignAndLocation_MultipleSpotsSameGroup_ReturnsOnlyMostRecent() {
+        // Given: Same callsign at same location, different times
+        var now = Instant.now();
+        repository.save(createActivationEntity(
+                "spot-old", now.minus(5, ChronoUnit.MINUTES), CALLSIGN, PARK_REFERENCE));
+        var mostRecent = repository.save(createActivationEntity(
+                "spot-new", now.minus(1, ChronoUnit.MINUTES), CALLSIGN, PARK_REFERENCE));
+
+        // When: Query de-duplicates by (callsign, location)
+        var cutoff = now.minus(30, ChronoUnit.MINUTES);
+        var result = repository.findLatestPerCallsignAndLocation(cutoff);
+
+        // Then: Only the most recent spot should be returned
+        assertEquals(1, result.size());
+        assertEquals(mostRecent.getId(), result.get(0).getId());
+    }
+
+    @Test
+    void testFindLatestPerCallsignAndLocation_DifferentLocations_ReturnsBoth() {
+        // Given: Same callsign at different locations
+        var now = Instant.now();
+        var spot1 = repository.save(createActivationEntity(
+                SPOT_ID_1, now.minus(2, ChronoUnit.MINUTES), CALLSIGN, ALT_PARK_REFERENCE_1));
+        var spot2 = repository.save(createActivationEntity(
+                SPOT_ID_2, now.minus(1, ChronoUnit.MINUTES), CALLSIGN, ALT_PARK_REFERENCE_2));
+
+        // When: Query de-duplicates by (callsign, location)
+        var cutoff = now.minus(30, ChronoUnit.MINUTES);
+        var result = repository.findLatestPerCallsignAndLocation(cutoff);
+
+        // Then: Both should be returned (different locations)
+        assertEquals(2, result.size());
+        var resultIds = result.stream().map(ActivationEntity::getId).toList();
+        assertTrue(resultIds.contains(spot1.getId()));
+        assertTrue(resultIds.contains(spot2.getId()));
+    }
+
+    @Test
+    void testFindLatestPerCallsignAndLocation_DifferentCallsigns_ReturnsBoth() {
+        // Given: Different callsigns at same location
+        var now = Instant.now();
+        var spot1 = repository.save(createActivationEntity(
+                SPOT_ID_1, now.minus(2, ChronoUnit.MINUTES), ALT_CALLSIGN_1, PARK_REFERENCE));
+        var spot2 = repository.save(createActivationEntity(
+                SPOT_ID_2, now.minus(1, ChronoUnit.MINUTES), ALT_CALLSIGN_2, PARK_REFERENCE));
+
+        // When: Query de-duplicates by (callsign, location)
+        var cutoff = now.minus(30, ChronoUnit.MINUTES);
+        var result = repository.findLatestPerCallsignAndLocation(cutoff);
+
+        // Then: Both should be returned (different callsigns)
+        assertEquals(2, result.size());
+        var resultIds = result.stream().map(ActivationEntity::getId).toList();
+        assertTrue(resultIds.contains(spot1.getId()));
+        assertTrue(resultIds.contains(spot2.getId()));
+    }
+
+    @Test
+    void testFindLatestPerCallsignAndLocation_OutsideTimeWindow_Excluded() {
+        // Given: Activation outside the time window
+        var now = Instant.now();
+        repository.save(createActivationEntity(
+                "spot-old", now.minus(35, ChronoUnit.MINUTES), CALLSIGN, PARK_REFERENCE));
+
+        // When: Query with 30-minute cutoff
+        var cutoff = now.minus(30, ChronoUnit.MINUTES);
+        var result = repository.findLatestPerCallsignAndLocation(cutoff);
+
+        // Then: Should be excluded
+        assertEquals(0, result.size());
+    }
+
+    @Test
+    void testFindLatestPerCallsignAndLocation_MixedScenario_CorrectDeduplication() {
+        // Given: Multiple scenarios combined:
+        // - CALLSIGN at PARK_REFERENCE: 3 spots (keep most recent)
+        // - CALLSIGN at ALT_PARK_REFERENCE_3: 1 spot (keep)
+        // - ALT_CALLSIGN_3 at PARK_REFERENCE: 2 spots (keep most recent)
+        // - ALT_CALLSIGN_4 at ALT_PARK_REFERENCE_1: 1 old spot (exclude)
+        var now = Instant.now();
+
+        // CALLSIGN at PARK_REFERENCE (3 spots, keep most recent)
+        repository.save(createActivationEntity(
+                SPOT_ID_1, now.minus(10, ChronoUnit.MINUTES), CALLSIGN, PARK_REFERENCE));
+        repository.save(createActivationEntity(
+                SPOT_ID_2, now.minus(5, ChronoUnit.MINUTES), CALLSIGN, PARK_REFERENCE));
+        var callsignAtPark = repository.save(createActivationEntity(
+                SPOT_ID_3, now.minus(1, ChronoUnit.MINUTES), CALLSIGN, PARK_REFERENCE));
+
+        // CALLSIGN at ALT_PARK_REFERENCE_3 (1 spot)
+        var callsignAtAltPark = repository.save(createActivationEntity(
+                "spot-4", now.minus(3, ChronoUnit.MINUTES), CALLSIGN, ALT_PARK_REFERENCE_3));
+
+        // ALT_CALLSIGN_3 at PARK_REFERENCE (2 spots, keep most recent)
+        repository.save(createActivationEntity(
+                "spot-5", now.minus(8, ChronoUnit.MINUTES), ALT_CALLSIGN_3, PARK_REFERENCE));
+        var altCallsignAtPark = repository.save(createActivationEntity(
+                "spot-6", now.minus(2, ChronoUnit.MINUTES), ALT_CALLSIGN_3, PARK_REFERENCE));
+
+        // ALT_CALLSIGN_4 at ALT_PARK_REFERENCE_1 (old spot, outside window)
+        repository.save(createActivationEntity(
+                "spot-7", now.minus(45, ChronoUnit.MINUTES), ALT_CALLSIGN_4, ALT_PARK_REFERENCE_1));
+
+        // When: Query with 30-minute cutoff
+        var cutoff = now.minus(30, ChronoUnit.MINUTES);
+        var result = repository.findLatestPerCallsignAndLocation(cutoff);
+
+        // Then: Should have exactly 3 results (3 unique callsign+location pairs within window)
+        assertEquals(3, result.size());
+        var resultIds = result.stream().map(ActivationEntity::getId).toList();
+        assertTrue(resultIds.contains(callsignAtPark.getId()), "Should include CALLSIGN at PARK_REFERENCE");
+        assertTrue(resultIds.contains(callsignAtAltPark.getId()), "Should include CALLSIGN at ALT_PARK_REFERENCE_3");
+        assertTrue(resultIds.contains(altCallsignAtPark.getId()), "Should include ALT_CALLSIGN_3 at PARK_REFERENCE");
     }
 }
