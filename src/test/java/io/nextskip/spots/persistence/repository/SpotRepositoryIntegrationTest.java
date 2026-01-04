@@ -369,11 +369,14 @@ class SpotRepositoryIntegrationTest extends AbstractPersistenceTest {
 
     @Test
     void testDomainRoundTrip_SaveAndConvert_PreservesData() {
+        // Use truncated timestamp to match PostgreSQL precision (microseconds)
+        Instant fixedSpottedAt = BASE_TIME.truncatedTo(ChronoUnit.MICROS);
         Spot original = SpotFixtures.spot()
                 .band("17m")
                 .mode("FT4")
                 .frequencyHz(18100000L)
                 .snr(5)
+                .spottedAt(fixedSpottedAt)
                 .spotterCall("N5XX")
                 .spotterGrid("EM13")
                 .spotterContinent("NA")
