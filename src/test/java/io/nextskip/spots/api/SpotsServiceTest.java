@@ -42,6 +42,9 @@ class SpotsServiceTest {
 
     private static final Instant BASE_TIME = Instant.parse("2023-06-15T12:00:00Z");
     private static final Clock FIXED_CLOCK = Clock.fixed(BASE_TIME, ZoneId.of("UTC"));
+    private static final String BAND_20M = "20m";
+    private static final String BAND_40M = "40m";
+    private static final String BAND_160M = "160m";
 
     @Mock
     private SpotSource spotSource;
@@ -253,15 +256,15 @@ class SpotsServiceTest {
         @Test
         void testGetCurrentActivity_CacheHasData_ReturnsActivities() {
             Map<String, BandActivity> activities = Map.of(
-                    "20m", createBandActivity("20m", 100),
-                    "40m", createBandActivity("40m", 50)
+                    BAND_20M, createBandActivity(BAND_20M, 100),
+                    BAND_40M, createBandActivity(BAND_40M, 50)
             );
             when(bandActivityCache.get(CacheConfig.CACHE_KEY)).thenReturn(activities);
 
             Map<String, BandActivity> result = spotsService.getCurrentActivity();
 
             assertThat(result).hasSize(2);
-            assertThat(result).containsKeys("20m", "40m");
+            assertThat(result).containsKeys(BAND_20M, BAND_40M);
         }
 
         @Test
@@ -294,11 +297,11 @@ class SpotsServiceTest {
 
         @Test
         void testGetBandActivity_ExistingBand_ReturnsActivity() {
-            BandActivity expected = createBandActivity("20m", 100);
-            Map<String, BandActivity> activities = Map.of("20m", expected);
+            BandActivity expected = createBandActivity(BAND_20M, 100);
+            Map<String, BandActivity> activities = Map.of(BAND_20M, expected);
             when(bandActivityCache.get(CacheConfig.CACHE_KEY)).thenReturn(activities);
 
-            Optional<BandActivity> result = spotsService.getBandActivity("20m");
+            Optional<BandActivity> result = spotsService.getBandActivity(BAND_20M);
 
             assertThat(result).isPresent();
             assertThat(result.get()).isEqualTo(expected);
@@ -306,10 +309,10 @@ class SpotsServiceTest {
 
         @Test
         void testGetBandActivity_NonExistentBand_ReturnsEmpty() {
-            Map<String, BandActivity> activities = Map.of("20m", createBandActivity("20m", 100));
+            Map<String, BandActivity> activities = Map.of(BAND_20M, createBandActivity(BAND_20M, 100));
             when(bandActivityCache.get(CacheConfig.CACHE_KEY)).thenReturn(activities);
 
-            Optional<BandActivity> result = spotsService.getBandActivity("160m");
+            Optional<BandActivity> result = spotsService.getBandActivity(BAND_160M);
 
             assertThat(result).isEmpty();
         }
@@ -318,7 +321,7 @@ class SpotsServiceTest {
         void testGetBandActivity_EmptyCache_ReturnsEmpty() {
             when(bandActivityCache.get(CacheConfig.CACHE_KEY)).thenReturn(Map.of());
 
-            Optional<BandActivity> result = spotsService.getBandActivity("20m");
+            Optional<BandActivity> result = spotsService.getBandActivity(BAND_20M);
 
             assertThat(result).isEmpty();
         }
@@ -334,7 +337,7 @@ class SpotsServiceTest {
         @Test
         void testGetBandActivityResponse_WithActivities_ReturnsResponse() {
             Map<String, BandActivity> activities = Map.of(
-                    "20m", createBandActivity("20m", 100)
+                    BAND_20M, createBandActivity(BAND_20M, 100)
             );
             when(bandActivityCache.get(CacheConfig.CACHE_KEY)).thenReturn(activities);
             when(spotSource.isConnected()).thenReturn(true);
@@ -367,21 +370,21 @@ class SpotsServiceTest {
         @Test
         void testGetRecentSpots_WithSpots_ReturnsSpotList() {
             SpotEntity entity1 = SpotFixtures.spotEntity(
-                    SpotFixtures.spot().band("20m").spottedAt(BASE_TIME.minusSeconds(60)).build(),
+                    SpotFixtures.spot().band(BAND_20M).spottedAt(BASE_TIME.minusSeconds(60)).build(),
                     FIXED_CLOCK
             );
             SpotEntity entity2 = SpotFixtures.spotEntity(
-                    SpotFixtures.spot().band("20m").spottedAt(BASE_TIME.minusSeconds(120)).build(),
+                    SpotFixtures.spot().band(BAND_20M).spottedAt(BASE_TIME.minusSeconds(120)).build(),
                     FIXED_CLOCK
             );
             when(spotRepository.findByBandAndSpottedAtAfterOrderBySpottedAtDesc(
                     any(String.class), any(Instant.class)))
                     .thenReturn(List.of(entity1, entity2));
 
-            List<Spot> result = spotsService.getRecentSpots("20m", Duration.ofMinutes(15));
+            List<Spot> result = spotsService.getRecentSpots(BAND_20M, Duration.ofMinutes(15));
 
             assertThat(result).hasSize(2);
-            assertThat(result.get(0).band()).isEqualTo("20m");
+            assertThat(result.get(0).band()).isEqualTo(BAND_20M);
         }
 
         @Test
@@ -390,7 +393,7 @@ class SpotsServiceTest {
                     any(String.class), any(Instant.class)))
                     .thenReturn(List.of());
 
-            List<Spot> result = spotsService.getRecentSpots("160m", Duration.ofMinutes(15));
+            List<Spot> result = spotsService.getRecentSpots(BAND_160M, Duration.ofMinutes(15));
 
             assertThat(result).isEmpty();
         }

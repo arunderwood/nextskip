@@ -18,6 +18,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 class BandActivityResponseTest {
 
     private static final Instant NOW = Instant.parse("2025-01-15T12:00:00Z");
+    private static final String BAND_20M = "20m";
+    private static final String BAND_40M = "40m";
+    private static final String BAND_15M = "15m";
 
     // =========================================================================
     // Constructor Tests
@@ -29,7 +32,7 @@ class BandActivityResponseTest {
         @Test
         void testConstructor_FullValues_SetsAllFields() {
             Map<String, BandActivity> activities = Map.of(
-                    "20m", createBandActivity("20m", 100)
+                    BAND_20M, createBandActivity(BAND_20M, 100)
             );
 
             BandActivityResponse response = new BandActivityResponse(activities, NOW, true);
@@ -49,17 +52,17 @@ class BandActivityResponseTest {
         @Test
         void testConstructor_DefensiveCopy_MapNotModifiable() {
             Map<String, BandActivity> mutableMap = new HashMap<>();
-            mutableMap.put("20m", createBandActivity("20m", 100));
+            mutableMap.put(BAND_20M, createBandActivity(BAND_20M, 100));
 
             BandActivityResponse response = new BandActivityResponse(mutableMap, NOW, true);
 
             // Modify original
-            mutableMap.put("40m", createBandActivity("40m", 50));
+            mutableMap.put(BAND_40M, createBandActivity(BAND_40M, 50));
 
             // Response should not be affected
             assertThat(response.bandActivities()).hasSize(1);
-            assertThat(response.bandActivities()).containsKey("20m");
-            assertThat(response.bandActivities()).doesNotContainKey("40m");
+            assertThat(response.bandActivities()).containsKey(BAND_20M);
+            assertThat(response.bandActivities()).doesNotContainKey(BAND_40M);
         }
     }
 
@@ -73,9 +76,9 @@ class BandActivityResponseTest {
         @Test
         void testGetBandCount_MultipleBands_ReturnsCount() {
             Map<String, BandActivity> activities = Map.of(
-                    "20m", createBandActivity("20m", 100),
-                    "40m", createBandActivity("40m", 50),
-                    "15m", createBandActivity("15m", 75)
+                    BAND_20M, createBandActivity(BAND_20M, 100),
+                    BAND_40M, createBandActivity(BAND_40M, 50),
+                    BAND_15M, createBandActivity(BAND_15M, 75)
             );
 
             BandActivityResponse response = new BandActivityResponse(activities, NOW, true);
@@ -101,9 +104,9 @@ class BandActivityResponseTest {
         @Test
         void testGetTotalSpotCount_MultipleBands_SumsAllCounts() {
             Map<String, BandActivity> activities = Map.of(
-                    "20m", createBandActivity("20m", 100),
-                    "40m", createBandActivity("40m", 50),
-                    "15m", createBandActivity("15m", 75)
+                    BAND_20M, createBandActivity(BAND_20M, 100),
+                    BAND_40M, createBandActivity(BAND_40M, 50),
+                    BAND_15M, createBandActivity(BAND_15M, 75)
             );
 
             BandActivityResponse response = new BandActivityResponse(activities, NOW, true);
@@ -121,7 +124,7 @@ class BandActivityResponseTest {
         @Test
         void testGetTotalSpotCount_SingleBand_ReturnsCount() {
             Map<String, BandActivity> activities = Map.of(
-                    "20m", createBandActivity("20m", 150)
+                    BAND_20M, createBandActivity(BAND_20M, 150)
             );
 
             BandActivityResponse response = new BandActivityResponse(activities, NOW, true);
@@ -140,7 +143,7 @@ class BandActivityResponseTest {
         @Test
         void testHasActivity_WithBands_ReturnsTrue() {
             Map<String, BandActivity> activities = Map.of(
-                    "20m", createBandActivity("20m", 100)
+                    BAND_20M, createBandActivity(BAND_20M, 100)
             );
 
             BandActivityResponse response = new BandActivityResponse(activities, NOW, true);
@@ -173,7 +176,7 @@ class BandActivityResponseTest {
         @Test
         void testBandActivities_ReturnsBandActivitiesMap() {
             Map<String, BandActivity> activities = Map.of(
-                    "20m", createBandActivity("20m", 100)
+                    BAND_20M, createBandActivity(BAND_20M, 100)
             );
 
             BandActivityResponse response = new BandActivityResponse(activities, NOW, true);

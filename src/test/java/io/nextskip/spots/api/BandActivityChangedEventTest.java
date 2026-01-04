@@ -18,6 +18,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 class BandActivityChangedEventTest {
 
     private static final Instant NOW = Instant.parse("2025-01-15T12:00:00Z");
+    private static final String BAND_20M = "20m";
+    private static final String BAND_40M = "40m";
+    private static final String BAND_15M = "15m";
+    private static final String BAND_160M = "160m";
 
     // =========================================================================
     // Constructor Tests
@@ -36,17 +40,17 @@ class BandActivityChangedEventTest {
         @Test
         void testConstructor_DefensiveCopy_MapNotModifiable() {
             Map<String, BandActivity> mutableMap = new HashMap<>();
-            mutableMap.put("20m", createBandActivity("20m", 100, true));
+            mutableMap.put(BAND_20M, createBandActivity(BAND_20M, 100, true));
 
             BandActivityChangedEvent event = new BandActivityChangedEvent(mutableMap);
 
             // Modify original
-            mutableMap.put("40m", createBandActivity("40m", 50, false));
+            mutableMap.put(BAND_40M, createBandActivity(BAND_40M, 50, false));
 
             // Event should not be affected
             assertThat(event.bandActivities()).hasSize(1);
-            assertThat(event.bandActivities()).containsKey("20m");
-            assertThat(event.bandActivities()).doesNotContainKey("40m");
+            assertThat(event.bandActivities()).containsKey(BAND_20M);
+            assertThat(event.bandActivities()).doesNotContainKey(BAND_40M);
         }
     }
 
@@ -61,21 +65,21 @@ class BandActivityChangedEventTest {
         void testGetHotBands_MultipleFavorableBands_ReturnsAll() {
             // Note: isFavorable requires spotCount >= 100, trend > 0, and non-empty paths
             Map<String, BandActivity> activities = Map.of(
-                    "20m", createBandActivity("20m", 150, true),  // favorable: count>=100, trend>0, has paths
-                    "15m", createBandActivity("15m", 200, true),  // favorable: count>=100, trend>0, has paths
-                    "40m", createBandActivity("40m", 50, false)   // not favorable: count<100
+                    BAND_20M, createBandActivity(BAND_20M, 150, true),
+                    BAND_15M, createBandActivity(BAND_15M, 200, true),
+                    BAND_40M, createBandActivity(BAND_40M, 50, false)
             );
 
             BandActivityChangedEvent event = new BandActivityChangedEvent(activities);
 
-            assertThat(event.getHotBands()).containsExactlyInAnyOrder("20m", "15m");
+            assertThat(event.getHotBands()).containsExactlyInAnyOrder(BAND_20M, BAND_15M);
         }
 
         @Test
         void testGetHotBands_NoFavorableBands_ReturnsEmpty() {
             Map<String, BandActivity> activities = Map.of(
-                    "20m", createBandActivity("20m", 50, false),
-                    "40m", createBandActivity("40m", 30, false)
+                    BAND_20M, createBandActivity(BAND_20M, 50, false),
+                    BAND_40M, createBandActivity(BAND_40M, 30, false)
             );
 
             BandActivityChangedEvent event = new BandActivityChangedEvent(activities);
@@ -101,9 +105,9 @@ class BandActivityChangedEventTest {
         @Test
         void testGetTotalSpotCount_MultipleBands_SumsAllCounts() {
             Map<String, BandActivity> activities = Map.of(
-                    "20m", createBandActivity("20m", 100, true),
-                    "40m", createBandActivity("40m", 50, false),
-                    "15m", createBandActivity("15m", 75, false)
+                    BAND_20M, createBandActivity(BAND_20M, 100, true),
+                    BAND_40M, createBandActivity(BAND_40M, 50, false),
+                    BAND_15M, createBandActivity(BAND_15M, 75, false)
             );
 
             BandActivityChangedEvent event = new BandActivityChangedEvent(activities);
@@ -122,7 +126,7 @@ class BandActivityChangedEventTest {
         @Test
         void testGetTotalSpotCount_SingleBand_ReturnsCount() {
             Map<String, BandActivity> activities = Map.of(
-                    "20m", createBandActivity("20m", 150, true)
+                    BAND_20M, createBandActivity(BAND_20M, 150, true)
             );
 
             BandActivityChangedEvent event = new BandActivityChangedEvent(activities);
@@ -141,9 +145,9 @@ class BandActivityChangedEventTest {
         @Test
         void testGetBandCount_MultipleBands_ReturnsCount() {
             Map<String, BandActivity> activities = Map.of(
-                    "20m", createBandActivity("20m", 100, true),
-                    "40m", createBandActivity("40m", 50, false),
-                    "15m", createBandActivity("15m", 75, true)
+                    BAND_20M, createBandActivity(BAND_20M, 100, true),
+                    BAND_40M, createBandActivity(BAND_40M, 50, false),
+                    BAND_15M, createBandActivity(BAND_15M, 75, true)
             );
 
             BandActivityChangedEvent event = new BandActivityChangedEvent(activities);
@@ -169,7 +173,7 @@ class BandActivityChangedEventTest {
         @Test
         void testHasActivity_WithBands_ReturnsTrue() {
             Map<String, BandActivity> activities = Map.of(
-                    "20m", createBandActivity("20m", 100, true)
+                    BAND_20M, createBandActivity(BAND_20M, 100, true)
             );
 
             BandActivityChangedEvent event = new BandActivityChangedEvent(activities);
@@ -201,30 +205,30 @@ class BandActivityChangedEventTest {
 
         @Test
         void testGetActivity_ExistingBand_ReturnsActivity() {
-            BandActivity expected = createBandActivity("20m", 100, true);
-            Map<String, BandActivity> activities = Map.of("20m", expected);
+            BandActivity expected = createBandActivity(BAND_20M, 100, true);
+            Map<String, BandActivity> activities = Map.of(BAND_20M, expected);
 
             BandActivityChangedEvent event = new BandActivityChangedEvent(activities);
 
-            assertThat(event.getActivity("20m")).isEqualTo(expected);
+            assertThat(event.getActivity(BAND_20M)).isEqualTo(expected);
         }
 
         @Test
         void testGetActivity_NonExistentBand_ReturnsNull() {
             Map<String, BandActivity> activities = Map.of(
-                    "20m", createBandActivity("20m", 100, true)
+                    BAND_20M, createBandActivity(BAND_20M, 100, true)
             );
 
             BandActivityChangedEvent event = new BandActivityChangedEvent(activities);
 
-            assertThat(event.getActivity("160m")).isNull();
+            assertThat(event.getActivity(BAND_160M)).isNull();
         }
 
         @Test
         void testGetActivity_EmptyMap_ReturnsNull() {
             BandActivityChangedEvent event = new BandActivityChangedEvent(Map.of());
 
-            assertThat(event.getActivity("20m")).isNull();
+            assertThat(event.getActivity(BAND_20M)).isNull();
         }
     }
 
