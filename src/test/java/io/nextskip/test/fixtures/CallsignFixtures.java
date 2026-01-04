@@ -44,6 +44,11 @@ public final class CallsignFixtures {
     public static final String LONG_CALLSIGN = "VP2EXYZ";
     public static final String NUMERIC_PREFIX_CALLSIGN = "4X1ABC";
 
+    // SWL (Shortwave Listener) callsigns
+    public static final String NETHERLANDS_SWL = "NL9222";
+    public static final String UK_RSGB_SWL = "RS123456";
+    public static final String GERMANY_SWL = "DE12345";
+
     private CallsignFixtures() {
         // Utility class
     }
@@ -182,5 +187,36 @@ public final class CallsignFixtures {
      */
     public static Callsign numericPrefixCallsign() {
         return new Callsign(NUMERIC_PREFIX_CALLSIGN);
+    }
+
+    /**
+     * Creates a Netherlands SWL callsign (NL9222).
+     *
+     * <p>SWL (Shortwave Listener) callsigns are issued by national amateur
+     * radio societies for receive-only stations. They typically consist of
+     * a country prefix followed by digits.
+     *
+     * @return Netherlands SWL callsign
+     */
+    public static Callsign netherlandsSwlCallsign() {
+        return new Callsign(NETHERLANDS_SWL);
+    }
+
+    /**
+     * Creates a UK RSGB SWL callsign (RS123456).
+     *
+     * @return UK RSGB SWL callsign
+     */
+    public static Callsign ukSwlCallsign() {
+        return new Callsign(UK_RSGB_SWL);
+    }
+
+    /**
+     * Creates a Germany SWL callsign (DE12345).
+     *
+     * @return Germany SWL callsign
+     */
+    public static Callsign germanySwlCallsign() {
+        return new Callsign(GERMANY_SWL);
     }
 }
