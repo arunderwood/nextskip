@@ -1,0 +1,108 @@
+databaseChangeLog:
+  - changeSet:
+      id: 010-create-spots-table
+      author: nextskip
+      comment: PSKReporter spots table for real-time HF activity tracking
+      changes:
+        - createTable:
+            tableName: spots
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: source
+                  type: varchar(20)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: band
+                  type: varchar(10)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: mode
+                  type: varchar(10)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: frequency_hz
+                  type: bigint
+              - column:
+                  name: snr
+                  type: integer
+              - column:
+                  name: spotted_at
+                  type: timestamp with time zone
+                  constraints:
+                    nullable: false
+              - column:
+                  name: spotter_call
+                  type: varchar(20)
+              - column:
+                  name: spotter_grid
+                  type: varchar(6)
+              - column:
+                  name: spotter_continent
+                  type: varchar(2)
+              - column:
+                  name: spotted_call
+                  type: varchar(20)
+              - column:
+                  name: spotted_grid
+                  type: varchar(6)
+              - column:
+                  name: spotted_continent
+                  type: varchar(2)
+              - column:
+                  name: distance_km
+                  type: integer
+              - column:
+                  name: created_at
+                  type: timestamp with time zone
+                  constraints:
+                    nullable: false
+                  defaultValueComputed: now()
+
+  - changeSet:
+      id: 010-create-spots-indices
+      author: nextskip
+      comment: Indices for spots table optimized for common query patterns
+      changes:
+        - createIndex:
+            indexName: idx_spots_band_time
+            tableName: spots
+            columns:
+              - column:
+                  name: band
+              - column:
+                  name: spotted_at
+                  descending: true
+        - createIndex:
+            indexName: idx_spots_mode_time
+            tableName: spots
+            columns:
+              - column:
+                  name: mode
+              - column:
+                  name: spotted_at
+                  descending: true
+        - createIndex:
+            indexName: idx_spots_distance
+            tableName: spots
+            columns:
+              - column:
+                  name: band
+              - column:
+                  name: distance_km
+                  descending: true
+        - createIndex:
+            indexName: idx_spots_created_at
+            tableName: spots
+            columns:
+              - column:
+                  name: created_at

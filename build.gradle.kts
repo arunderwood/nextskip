@@ -139,6 +139,12 @@ dependencies {
     // Jsoup for HTML parsing
     implementation(libs.jsoup)
 
+    // MQTT client for PSKReporter
+    implementation(libs.paho.mqttv5.client)
+
+    // Pekko Streams for high-volume ETL
+    implementation(libs.pekko.stream)
+
     // Observability
     runtimeOnly(libs.micrometer.registry.prometheus)
 
@@ -171,6 +177,9 @@ dependencies {
 
     // Property-based testing
     testImplementation(libs.jqwik)
+
+    // Pekko Streams testkit
+    testImplementation(libs.pekko.stream.testkit)
 }
 
 // OpenTelemetry agent configuration
