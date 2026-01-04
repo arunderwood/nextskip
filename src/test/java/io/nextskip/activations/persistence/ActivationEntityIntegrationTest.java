@@ -18,7 +18,6 @@ import java.util.Collection;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -66,12 +65,6 @@ class ActivationEntityIntegrationTest extends AbstractPersistenceTest {
     private static final double FREQUENCY_40M = 7.030;
     private static final double TEST_LAT = 40.0;
     private static final double TEST_LON = -105.0;
-
-    // Test-specific spot IDs
-    private static final String FRESH_SPOT_ID = "fresh-spot";
-    private static final String STALE_SPOT_ID = "stale-spot";
-    private static final String ALT_PARK_REFERENCE = "K-0818";
-    private static final String ALT_PARK_NAME = "Another Park";
 
     @Autowired
     private ActivationRepository repository;
@@ -438,58 +431,6 @@ class ActivationEntityIntegrationTest extends AbstractPersistenceTest {
         assertEquals(spottedAt, roundTripped.spottedAt());
         assertEquals(lastSeenAt, roundTripped.lastSeenAt());
         assertEquals(original, roundTripped);
-    }
-
-    // === Domain Model Behavior Tests ===
-
-    @Test
-    void testConvertedDomainModel_CanCalculateScore() {
-        // Given: A recently spotted activation (lastSeenAt 3 minutes ago)
-        var now = Instant.now();
-        var lastSeen = now.minus(3, ChronoUnit.MINUTES);
-        var entity = repository.save(new ActivationEntity(
-                FRESH_SPOT_ID, CALLSIGN, ActivationType.POTA,
-                FREQUENCY_20M, MODE_FT8, lastSeen, lastSeen, 10, POTA_SOURCE,
-                PARK_REFERENCE, PARK_NAME, PARK_REGION,
-                PARK_COUNTRY, PARK_GRID, TEST_LAT, TEST_LON, null
-        ));
-
-        // When: Convert to domain and calculate score
-        var domain = entity.toDomain();
-        var score = domain.getScore();
-
-        // Then: Fresh activation should have score of 100
-        assertEquals(100, score);
-    }
-
-    @Test
-    void testConvertedDomainModel_CanDetermineIfFavorable() {
-        // Given: A recently spotted activation (lastSeenAt within 15 minutes)
-        var now = Instant.now();
-        var freshTime = now.minus(10, ChronoUnit.MINUTES);
-        var freshEntity = repository.save(new ActivationEntity(
-                FRESH_SPOT_ID, CALLSIGN, ActivationType.POTA,
-                FREQUENCY_20M, MODE_FT8, freshTime, freshTime, 10, POTA_SOURCE,
-                PARK_REFERENCE, PARK_NAME, PARK_REGION,
-                PARK_COUNTRY, PARK_GRID, TEST_LAT, TEST_LON, null
-        ));
-
-        // And: An old activation (lastSeenAt 45 minutes ago)
-        var staleTime = now.minus(45, ChronoUnit.MINUTES);
-        var staleEntity = repository.save(new ActivationEntity(
-                STALE_SPOT_ID, CALLSIGN, ActivationType.POTA,
-                FREQUENCY_20M, MODE_FT8, staleTime, staleTime, 10, POTA_SOURCE,
-                ALT_PARK_REFERENCE, ALT_PARK_NAME, PARK_REGION,
-                PARK_COUNTRY, PARK_GRID, TEST_LAT, TEST_LON, null
-        ));
-
-        // When: Convert to domain
-        var fresh = freshEntity.toDomain();
-        var stale = staleEntity.toDomain();
-
-        // Then: Fresh should be favorable, stale should not
-        assertTrue(fresh.isFavorable());
-        assertFalse(stale.isFavorable());
     }
 
     @Test

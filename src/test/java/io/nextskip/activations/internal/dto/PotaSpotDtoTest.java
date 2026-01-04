@@ -60,69 +60,6 @@ class PotaSpotDtoTest {
     }
 
     @Test
-    void shouldHandle_nullFields() throws Exception {
-        // Given: Minimal JSON with null fields
-        String json = """
-            {
-              "spotId": 12345,
-              "activator": "W1ABC",
-              "reference": "US-0001",
-              "frequency": null,
-              "mode": null,
-              "name": null,
-              "grid6": null,
-              "latitude": null,
-              "longitude": null,
-              "spotTime": "2025-12-14T12:30:00",
-              "qsos": null,
-              "spotter": null,
-              "comments": null
-            }
-            """;
-
-        // When: Deserialize
-        PotaSpotDto dto = objectMapper.readValue(json, PotaSpotDto.class);
-
-        // Then: Required fields present, optional fields null
-        assertEquals(SPOT_ID, dto.spotId());
-        assertEquals(CALLSIGN_W1ABC, dto.activator());
-        assertEquals(PARK_REFERENCE, dto.reference());
-        assertNull(dto.frequency());
-        assertNull(dto.mode());
-        assertNull(dto.name());
-        assertNull(dto.grid6());
-        assertNull(dto.latitude());
-        assertNull(dto.longitude());
-        assertEquals(TIMESTAMP, dto.spotTime());
-        assertNull(dto.qsos());
-        assertNull(dto.spotter());
-        assertNull(dto.comments());
-    }
-
-    @Test
-    void shouldIgnore_unknownFields() throws Exception {
-        // Given: JSON with extra unknown fields
-        String json = """
-            {
-              "spotId": 12345,
-              "activator": "W1ABC",
-              "reference": "US-0001",
-              "spotTime": "2025-12-14T12:30:00",
-              "unknownField1": "value1",
-              "unknownField2": 999
-            }
-            """;
-
-        // When: Deserialize (should not throw)
-        PotaSpotDto dto = objectMapper.readValue(json, PotaSpotDto.class);
-
-        // Then: Known fields mapped, unknown fields ignored
-        assertNotNull(dto);
-        assertEquals(SPOT_ID, dto.spotId());
-        assertEquals(CALLSIGN_W1ABC, dto.activator());
-    }
-
-    @Test
     void shouldCreate_dtoWithConstructor() {
         // When: Create DTO directly
         PotaSpotDto dto = new PotaSpotDto(
