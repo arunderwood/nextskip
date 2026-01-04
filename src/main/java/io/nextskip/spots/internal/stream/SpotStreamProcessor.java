@@ -2,6 +2,7 @@ package io.nextskip.spots.internal.stream;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.nextskip.spots.internal.client.SpotSource;
+import io.nextskip.spots.internal.enrichment.CallsignEnricher;
 import io.nextskip.spots.internal.enrichment.ContinentEnricher;
 import io.nextskip.spots.internal.enrichment.DistanceEnricher;
 import io.nextskip.spots.internal.parser.PskReporterJsonParser;
@@ -57,6 +58,7 @@ public class SpotStreamProcessor {
     private final ActorSystem actorSystem;
     private final SpotSource spotSource;
     private final PskReporterJsonParser parser;
+    private final CallsignEnricher callsignEnricher;
     private final DistanceEnricher distanceEnricher;
     private final ContinentEnricher continentEnricher;
     private final SpotRepository spotRepository;
@@ -73,6 +75,7 @@ public class SpotStreamProcessor {
             ActorSystem actorSystem,
             SpotSource spotSource,
             PskReporterJsonParser parser,
+            CallsignEnricher callsignEnricher,
             DistanceEnricher distanceEnricher,
             ContinentEnricher continentEnricher,
             SpotRepository spotRepository,
@@ -82,6 +85,7 @@ public class SpotStreamProcessor {
         this.actorSystem = actorSystem;
         this.spotSource = spotSource;
         this.parser = parser;
+        this.callsignEnricher = callsignEnricher;
         this.distanceEnricher = distanceEnricher;
         this.continentEnricher = continentEnricher;
         this.spotRepository = spotRepository;
@@ -120,6 +124,8 @@ public class SpotStreamProcessor {
                 .map(parser::parse)
                 .filter(Optional::isPresent)
                 .map(Optional::get)
+                // Validate callsigns (logs failures but keeps all spots)
+                .map(callsignEnricher::enrich)
                 // Enrich with distance and continent
                 .map(distanceEnricher::enrich)
                 .map(continentEnricher::enrich)

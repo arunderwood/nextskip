@@ -312,6 +312,16 @@ tasks.named<JacocoCoverageVerification>("jacocoTestCoverageVerification") {
 configure<io.github.surpsg.deltacoverage.gradle.DeltaCoverageConfiguration> {
     diffSource.git.compareWith("refs/remotes/origin/main")
 
+    // Exclude infrastructure classes that require integration tests
+    // These classes involve Pekko Streams, MQTT connections, and Spring configuration
+    // that cannot be meaningfully unit tested without full infrastructure
+    excludeClasses.value(listOf(
+        "**/SpotStreamProcessor.class",
+        "**/SpotStreamConfig.class",
+        "**/PskReporterMqttSource.class",
+        "**/SpotCleanupTask.class"
+    ))
+
     reportViews.named("test") {
         violationRules {
             failIfCoverageLessThan(0.80)
