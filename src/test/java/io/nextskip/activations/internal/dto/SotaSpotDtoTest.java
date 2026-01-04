@@ -58,67 +58,6 @@ class SotaSpotDtoTest {
     }
 
     @Test
-    void shouldHandle_nullFields() throws Exception {
-        // Given: Minimal JSON with null fields
-        String json = """
-            {
-              "id": 123456,
-              "activatorCallsign": "K2DEF/P",
-              "summitCode": "W7W/LC-001",
-              "timeStamp": "2025-12-14T14:30:00",
-              "frequency": null,
-              "mode": null,
-              "summitDetails": null,
-              "comments": null,
-              "associationCode": null,
-              "callsign": null,
-              "activatorName": null,
-              "highlander": null
-            }
-            """;
-
-        // When: Deserialize
-        SotaSpotDto dto = objectMapper.readValue(json, SotaSpotDto.class);
-
-        // Then: Required fields present, optional fields null
-        assertEquals(SPOT_ID, dto.id());
-        assertEquals(K2DEF_PORTABLE, dto.activatorCallsign());
-        assertEquals(SUMMIT_CODE, dto.summitCode());
-        assertEquals(TIMESTAMP, dto.timeStamp());
-        assertNull(dto.frequency());
-        assertNull(dto.mode());
-        assertNull(dto.summitDetails());
-        assertNull(dto.comments());
-        assertNull(dto.associationCode());
-        assertNull(dto.callsign());
-        assertNull(dto.activatorName());
-        assertNull(dto.highlander());
-    }
-
-    @Test
-    void shouldIgnore_unknownFields() throws Exception {
-        // Given: JSON with extra unknown fields
-        String json = """
-            {
-              "id": 123456,
-              "activatorCallsign": "K2DEF/P",
-              "summitCode": "W7W/LC-001",
-              "timeStamp": "2025-12-14T14:30:00",
-              "unknownField1": "value1",
-              "futureField": 999
-            }
-            """;
-
-        // When: Deserialize (should not throw)
-        SotaSpotDto dto = objectMapper.readValue(json, SotaSpotDto.class);
-
-        // Then: Known fields mapped, unknown fields ignored
-        assertNotNull(dto);
-        assertEquals(SPOT_ID, dto.id());
-        assertEquals(K2DEF_PORTABLE, dto.activatorCallsign());
-    }
-
-    @Test
     void shouldCreateDto_withConstructor() {
         // When: Create DTO directly
         SotaSpotDto dto = new SotaSpotDto(

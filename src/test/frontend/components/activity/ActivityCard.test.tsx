@@ -7,12 +7,9 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { axe, toHaveNoViolations } from 'jest-axe';
 import ActivityCard from 'Frontend/components/activity/ActivityCard';
 import type { ActivityCardConfig } from 'Frontend/components/activity';
 import { createMockActivityCardConfig } from '../../fixtures/mockFactories';
-
-expect.extend(toHaveNoViolations);
 
 // Use shared factory with test-specific defaults
 const mockConfig: ActivityCardConfig = createMockActivityCardConfig({
@@ -157,28 +154,7 @@ describe('ActivityCard', () => {
   });
 
   describe('accessibility', () => {
-    it('should have no accessibility violations (non-interactive)', async () => {
-      const { container } = render(
-        <ActivityCard config={mockConfig} title="Test Card" subtitle="Subtitle">
-          <div>Content</div>
-        </ActivityCard>,
-      );
-
-      const results = await axe(container);
-      expect(results).toHaveNoViolations();
-    });
-
-    it('should have no accessibility violations (interactive)', async () => {
-      const handleClick = vi.fn();
-      const { container } = render(
-        <ActivityCard config={mockConfig} title="Test Card" onClick={handleClick}>
-          <div>Content</div>
-        </ActivityCard>,
-      );
-
-      const results = await axe(container);
-      expect(results).toHaveNoViolations();
-    });
+    // Comprehensive axe scans are in ActivitySystem.a11y.test.tsx
 
     it('should use custom aria-label when provided', () => {
       render(

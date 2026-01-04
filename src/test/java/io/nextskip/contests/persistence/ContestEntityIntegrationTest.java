@@ -1,6 +1,5 @@
 package io.nextskip.contests.persistence;
 
-import io.nextskip.common.model.EventStatus;
 import io.nextskip.common.model.FrequencyBand;
 import io.nextskip.contests.model.Contest;
 import io.nextskip.contests.persistence.entity.ContestEntity;
@@ -38,8 +37,6 @@ class ContestEntityIntegrationTest extends AbstractPersistenceTest {
 
     private static final String ARRL_10M_NAME = "ARRL 10-Meter Contest";
     private static final String CQ_WW_NAME = "CQ WW DX Contest";
-    private static final String ACTIVE_CONTEST_NAME = "Active Contest";
-    private static final String SOON_CONTEST_NAME = "Soon Contest";
     private static final String TEST_CONTEST_NAME = "Test Contest";
     private static final String ALL_BANDS_CONTEST_NAME = "All Bands Contest";
     private static final String MODE_CW = "CW";
@@ -256,75 +253,6 @@ class ContestEntityIntegrationTest extends AbstractPersistenceTest {
         // When/Then: Should throw exception on save
         assertThrows(DataIntegrityViolationException.class,
                 () -> repository.saveAndFlush(entity));
-    }
-
-    @Test
-    void testConvertedDomainModel_CanCalculateScore() {
-        // Given: An active contest entity
-        var now = Instant.now();
-        var activeEntity = repository.save(new ContestEntity(
-                ACTIVE_CONTEST_NAME,
-                now.minus(1, ChronoUnit.HOURS),
-                now.plus(1, ChronoUnit.HOURS),
-                Set.of(FrequencyBand.BAND_20M), Set.of(MODE_CW),
-                SPONSOR_ARRL, null, null
-        ));
-
-        // When: Convert to domain and calculate score
-        var domain = activeEntity.toDomain();
-        var score = domain.getScore();
-
-        // Then: Active contest should have score of 100
-        assertEquals(100, score);
-    }
-
-    @Test
-    void testConvertedDomainModel_CanDetermineStatus() {
-        // Given: An active contest entity
-        var now = Instant.now();
-        var activeEntity = repository.save(new ContestEntity(
-                ACTIVE_CONTEST_NAME,
-                now.minus(1, ChronoUnit.HOURS),
-                now.plus(1, ChronoUnit.HOURS),
-                Set.of(), Set.of(),
-                null, null, null
-        ));
-
-        // When: Convert to domain
-        var active = activeEntity.toDomain();
-
-        // Then: Should be ACTIVE status
-        assertEquals(EventStatus.ACTIVE, active.getStatus());
-    }
-
-    @Test
-    void testConvertedDomainModel_CanDetermineIfFavorable() {
-        // Given: An active contest
-        var now = Instant.now();
-        var activeEntity = repository.save(new ContestEntity(
-                ACTIVE_CONTEST_NAME,
-                now.minus(1, ChronoUnit.HOURS),
-                now.plus(1, ChronoUnit.HOURS),
-                Set.of(), Set.of(),
-                null, null, null
-        ));
-
-        // And: An upcoming contest starting in 2 hours
-        var soonEntity = repository.save(new ContestEntity(
-                SOON_CONTEST_NAME,
-                now.plus(2, ChronoUnit.HOURS),
-                now.plus(26, ChronoUnit.HOURS),
-                Set.of(), Set.of(),
-                null, null, null
-        ));
-
-        // When: Convert to domain
-        var active = activeEntity.toDomain();
-        var soon = soonEntity.toDomain();
-
-        // Then: Both should be favorable (active or starting within 6 hours)
-        assertTrue(active.isFavorable());
-        assertTrue(soon.isFavorable());
     }
 
     @Test

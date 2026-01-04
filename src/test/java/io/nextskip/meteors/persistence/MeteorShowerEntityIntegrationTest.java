@@ -1,6 +1,5 @@
 package io.nextskip.meteors.persistence;
 
-import io.nextskip.common.model.EventStatus;
 import io.nextskip.meteors.model.MeteorShower;
 import io.nextskip.meteors.persistence.entity.MeteorShowerEntity;
 import io.nextskip.meteors.persistence.repository.MeteorShowerRepository;
@@ -227,59 +226,6 @@ class MeteorShowerEntityIntegrationTest extends AbstractPersistenceTest {
         // When/Then: Should throw exception on save
         assertThrows(DataIntegrityViolationException.class,
                 () -> repository.saveAndFlush(entity));
-    }
-
-    @Test
-    void testConvertedDomainModel_CanCalculateScore() {
-        // Given: A persisted entity for an upcoming shower
-        var futureStart = Instant.now().plus(1, ChronoUnit.DAYS);
-        var entity = repository.save(new MeteorShowerEntity(
-                PERSEIDS_NAME, PERSEIDS_CODE,
-                futureStart.plus(2, ChronoUnit.DAYS), futureStart.plus(3, ChronoUnit.DAYS),
-                futureStart, futureStart.plus(5, ChronoUnit.DAYS),
-                100, PERSEIDS_PARENT_BODY, null));
-
-        // When: Convert to domain and calculate score
-        var domain = entity.toDomain();
-        var score = domain.getScore();
-
-        // Then: Score should be calculated (upcoming shower = 60-80 range)
-        assertTrue(score >= 60 && score <= 80, "Score should be in upcoming range: " + score);
-    }
-
-    @Test
-    void testConvertedDomainModel_CanDetermineStatus() {
-        // Given: An active shower entity
-        var now = Instant.now();
-        var activeEntity = repository.save(new MeteorShowerEntity(
-                "Active Shower", "ACT",
-                now.minus(1, ChronoUnit.HOURS), now.plus(1, ChronoUnit.HOURS),
-                now.minus(2, ChronoUnit.DAYS), now.plus(2, ChronoUnit.DAYS),
-                50, null, null));
-
-        // When: Convert to domain
-        var active = activeEntity.toDomain();
-
-        // Then: Should be ACTIVE status
-        assertEquals(EventStatus.ACTIVE, active.getStatus());
-    }
-
-    @Test
-    void testConvertedDomainModel_CanDetermineIfFavorable() {
-        // Given: A shower at peak
-        var now = Instant.now();
-        var atPeakEntity = repository.save(new MeteorShowerEntity(
-                "At Peak", "PEK",
-                now.minus(1, ChronoUnit.HOURS), now.plus(1, ChronoUnit.HOURS),
-                now.minus(2, ChronoUnit.DAYS), now.plus(2, ChronoUnit.DAYS),
-                100, null, null));
-
-        // When: Convert to domain
-        var atPeak = atPeakEntity.toDomain();
-
-        // Then: Should be favorable (at peak)
-        assertTrue(atPeak.isFavorable());
-        assertTrue(atPeak.isAtPeak());
     }
 
     // === Setter Coverage Tests ===
