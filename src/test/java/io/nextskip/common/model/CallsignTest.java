@@ -479,6 +479,69 @@ class CallsignTest {
     }
 
     // ===========================================
+    // SWL (Shortwave Listener) tests
+    // ===========================================
+
+    @Test
+    void testIsSwl_NetherlandsSwl_ReturnsTrue() {
+        Callsign callsign = new Callsign("NL9222");
+
+        assertThat(callsign.isSwl()).isTrue();
+    }
+
+    @Test
+    void testIsSwl_UkRsgbSwl_ReturnsTrue() {
+        Callsign callsign = new Callsign("RS123456");
+
+        assertThat(callsign.isSwl()).isTrue();
+    }
+
+    @Test
+    void testIsSwl_GermanySwl_ReturnsTrue() {
+        Callsign callsign = new Callsign("DE12345");
+
+        assertThat(callsign.isSwl()).isTrue();
+    }
+
+    @Test
+    void testIsSwl_StandardCallsign_ReturnsFalse() {
+        Callsign callsign = new Callsign("W1AW");
+
+        assertThat(callsign.isSwl()).isFalse();
+    }
+
+    @Test
+    void testIsSwl_TooFewDigits_ReturnsFalse() {
+        // SWL requires 3-6 digits
+        Callsign callsign = new Callsign("NL12");
+
+        assertThat(callsign.isSwl()).isFalse();
+    }
+
+    @Test
+    void testIsSwl_TooManyDigits_ReturnsFalse() {
+        // SWL requires 3-6 digits
+        Callsign callsign = new Callsign("NL1234567");
+
+        assertThat(callsign.isSwl()).isFalse();
+    }
+
+    @Test
+    void testIsSwl_SingleLetterPrefix_ReturnsFalse() {
+        // SWL requires 2-3 letter prefix
+        Callsign callsign = new Callsign("N12345");
+
+        assertThat(callsign.isSwl()).isFalse();
+    }
+
+    @Test
+    void testIsSwl_CaseInsensitive_ReturnsTrue() {
+        Callsign callsign = new Callsign("nl9222");
+
+        assertThat(callsign.isSwl()).isTrue();
+    }
+
+    // ===========================================
     // Validation tests
     // ===========================================
 
@@ -518,11 +581,12 @@ class CallsignTest {
     }
 
     @Test
-    void testIsValid_TwoCharEndsInDigit_ReturnsFalse() {
+    void testIsValid_TwoCharEndsInDigit_ReturnsTrue() {
         Callsign callsign = new Callsign("W1");
 
-        // Fails because last char is not a letter (ITU guideline)
-        assertThat(callsign.isValid()).isFalse();
+        // Two-character callsigns ending in digit are now valid
+        // (LAST_CHAR_NOT_LETTER check removed to support SWL callsigns)
+        assertThat(callsign.isValid()).isTrue();
     }
 
     @Test
@@ -674,23 +738,23 @@ class CallsignTest {
     }
 
     @Test
-    void testValidate_LastCharDigit_ReturnsLastCharNotLetterFailure() {
+    void testValidate_LastCharDigit_ReturnsValid() {
+        // Callsigns ending in digits are now valid (supports SWL callsigns)
         Callsign callsign = new Callsign("W1AB1");
 
         Callsign.ValidationResult result = callsign.validate();
 
-        assertThat(result.isValid()).isFalse();
-        assertThat(result.failure()).isEqualTo(Callsign.ValidationFailure.LAST_CHAR_NOT_LETTER);
+        assertThat(result.isValid()).isTrue();
     }
 
     @Test
-    void testValidate_TwoCharEndsInDigit_ReturnsLastCharNotLetterFailure() {
+    void testValidate_TwoCharEndsInDigit_ReturnsValid() {
+        // Two-character callsigns ending in digits are now valid
         Callsign callsign = new Callsign("W1");
 
         Callsign.ValidationResult result = callsign.validate();
 
-        assertThat(result.isValid()).isFalse();
-        assertThat(result.failure()).isEqualTo(Callsign.ValidationFailure.LAST_CHAR_NOT_LETTER);
+        assertThat(result.isValid()).isTrue();
     }
 
     @Test
@@ -954,14 +1018,13 @@ class CallsignTest {
     }
 
     @Test
-    void testValidate_InvalidSsid_ShorterCallsign_LastCharNotLetter() {
+    void testValidate_InvalidSsid_ShorterCallsign_IsValid() {
         // -16 is not a valid SSID, so it's kept as part of the callsign
-        // W1A-16 = 6 chars, ends in digit
+        // W1A-16 = 6 chars, ends in digit - now valid since LAST_CHAR_NOT_LETTER removed
         Callsign callsign = new Callsign("W1A-16");
 
         assertThat(callsign.getSsid()).isNull();
-        assertThat(callsign.validate().failure())
-                .isEqualTo(Callsign.ValidationFailure.LAST_CHAR_NOT_LETTER);
+        assertThat(callsign.validate().isValid()).isTrue();
     }
 
     // ===========================================

@@ -109,16 +109,6 @@ class CallsignEnricherTest {
                 eq("PSKReporter:spotter"));
     }
 
-    @Test
-    void testEnrich_LastCharDigit_RecordsLastCharNotLetterFailure() {
-        Spot spot = createSpot("W1AB1", "W1AW");
-
-        enricher.enrich(spot);
-
-        verify(sampler).recordFailure(eq("W1AB1"), eq(Callsign.ValidationFailure.LAST_CHAR_NOT_LETTER),
-                eq("PSKReporter:spotter"));
-    }
-
     // ===========================================
     // enrich tests - null/blank callsigns
     // ===========================================
