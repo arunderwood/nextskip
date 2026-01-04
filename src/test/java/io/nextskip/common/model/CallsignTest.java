@@ -213,6 +213,21 @@ class CallsignTest {
         assertThat(callsign.getSuffix()).isNull();
     }
 
+    @Test
+    void testGetSuffix_DigitSuffix_ReturnsSeven() {
+        Callsign callsign = new Callsign("W1AW/7");
+
+        assertThat(callsign.getSuffix()).isEqualTo("7");
+    }
+
+    @Test
+    void testGetSuffix_MultipleSuffixes_ReturnsFirstPart() {
+        // When there are multiple slashes, suffix returns everything after first slash
+        Callsign callsign = new Callsign("W1AW/P/QRP");
+
+        assertThat(callsign.getSuffix()).isEqualTo("P/QRP");
+    }
+
     // ===========================================
     // Has suffix tests
     // ===========================================
@@ -317,8 +332,30 @@ class CallsignTest {
     }
 
     @Test
-    void testIsValid_TooShort_ReturnsFalse() {
+    void testIsValid_SpecialEvent1x1_K1A_ReturnsTrue() {
+        Callsign callsign = new Callsign("K1A");
+
+        assertThat(callsign.isValid()).isTrue();
+    }
+
+    @Test
+    void testIsValid_VeryShort_G3A_ReturnsTrue() {
+        Callsign callsign = new Callsign("G3A");
+
+        assertThat(callsign.isValid()).isTrue();
+    }
+
+    @Test
+    void testIsValid_TwoCharEndsInDigit_ReturnsFalse() {
         Callsign callsign = new Callsign("W1");
+
+        // Fails because last char is not a letter (ITU guideline)
+        assertThat(callsign.isValid()).isFalse();
+    }
+
+    @Test
+    void testIsValid_SingleChar_ReturnsFalse() {
+        Callsign callsign = new Callsign("W");
 
         assertThat(callsign.isValid()).isFalse();
     }
@@ -342,6 +379,104 @@ class CallsignTest {
         Callsign callsign = new Callsign("12345");
 
         assertThat(callsign.isValid()).isFalse();
+    }
+
+    @Test
+    void testIsValid_QPrefix_ReturnsFalse() {
+        Callsign callsign = new Callsign("Q1ABC");
+
+        assertThat(callsign.isValid()).isFalse();
+    }
+
+    // ===========================================
+    // Validate method tests (detailed results)
+    // ===========================================
+
+    @Test
+    void testValidate_ValidCallsign_ReturnsValid() {
+        Callsign callsign = CallsignFixtures.usCallsign();
+
+        Callsign.ValidationResult result = callsign.validate();
+
+        assertThat(result.isValid()).isTrue();
+        assertThat(result.failure()).isNull();
+    }
+
+    @Test
+    void testValidate_TooShort_ReturnsTooShortFailure() {
+        Callsign callsign = new Callsign("W");
+
+        Callsign.ValidationResult result = callsign.validate();
+
+        assertThat(result.isValid()).isFalse();
+        assertThat(result.failure()).isEqualTo(Callsign.ValidationFailure.TOO_SHORT);
+    }
+
+    @Test
+    void testValidate_TooLong_ReturnsTooLongFailure() {
+        Callsign callsign = new Callsign("W1ABCDEFG");
+
+        Callsign.ValidationResult result = callsign.validate();
+
+        assertThat(result.isValid()).isFalse();
+        assertThat(result.failure()).isEqualTo(Callsign.ValidationFailure.TOO_LONG);
+    }
+
+    @Test
+    void testValidate_NoLetter_ReturnsNoLetterFailure() {
+        Callsign callsign = new Callsign("12345");
+
+        Callsign.ValidationResult result = callsign.validate();
+
+        assertThat(result.isValid()).isFalse();
+        assertThat(result.failure()).isEqualTo(Callsign.ValidationFailure.NO_LETTER);
+    }
+
+    @Test
+    void testValidate_NoDigit_ReturnsNoDigitFailure() {
+        Callsign callsign = new Callsign("WABC");
+
+        Callsign.ValidationResult result = callsign.validate();
+
+        assertThat(result.isValid()).isFalse();
+        assertThat(result.failure()).isEqualTo(Callsign.ValidationFailure.NO_DIGIT);
+    }
+
+    @Test
+    void testValidate_QPrefix_ReturnsQPrefixFailure() {
+        Callsign callsign = new Callsign("Q1ABC");
+
+        Callsign.ValidationResult result = callsign.validate();
+
+        assertThat(result.isValid()).isFalse();
+        assertThat(result.failure()).isEqualTo(Callsign.ValidationFailure.Q_PREFIX);
+    }
+
+    @Test
+    void testValidate_LastCharDigit_ReturnsLastCharNotLetterFailure() {
+        Callsign callsign = new Callsign("W1AB1");
+
+        Callsign.ValidationResult result = callsign.validate();
+
+        assertThat(result.isValid()).isFalse();
+        assertThat(result.failure()).isEqualTo(Callsign.ValidationFailure.LAST_CHAR_NOT_LETTER);
+    }
+
+    @Test
+    void testValidate_TwoCharEndsInDigit_ReturnsLastCharNotLetterFailure() {
+        Callsign callsign = new Callsign("W1");
+
+        Callsign.ValidationResult result = callsign.validate();
+
+        assertThat(result.isValid()).isFalse();
+        assertThat(result.failure()).isEqualTo(Callsign.ValidationFailure.LAST_CHAR_NOT_LETTER);
+    }
+
+    @Test
+    void testValidationFailure_GetDescription_ReturnsDescription() {
+        Callsign.ValidationFailure failure = Callsign.ValidationFailure.TOO_SHORT;
+
+        assertThat(failure.getDescription()).isEqualTo("Base call less than 2 characters");
     }
 
     // ===========================================

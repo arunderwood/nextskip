@@ -1,5 +1,6 @@
 package io.nextskip.common.util;
 
+import io.nextskip.common.model.Callsign;
 import io.nextskip.common.model.Coordinates;
 import io.nextskip.common.model.GridSquare;
 
@@ -173,15 +174,19 @@ public final class HamRadioUtils {
      *
      * @param callsign The callsign to validate
      * @return true if the callsign appears valid
+     * @deprecated Use {@link Callsign#isValid()} instead for more detailed validation.
+     *             This method will be removed in a future release.
      */
+    @Deprecated(forRemoval = true)
     public static boolean isValidCallsign(String callsign) {
         if (callsign == null || callsign.isBlank()) {
             return false;
         }
 
-        // Basic regex for amateur radio callsigns
-        // Most callsigns are 3-6 characters with at least one number
-        String pattern = "^[A-Z0-9]{1,3}[0-9][A-Z0-9]{0,3}$";
-        return callsign.toUpperCase(Locale.ROOT).matches(pattern);
+        try {
+            return new Callsign(callsign).isValid();
+        } catch (IllegalArgumentException e) {
+            return false;
+        }
     }
 }

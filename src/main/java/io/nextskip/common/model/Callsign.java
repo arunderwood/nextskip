@@ -28,6 +28,84 @@ import java.util.regex.Pattern;
  */
 public record Callsign(String value) {
 
+    /** Minimum length for base callsign (supports special event 1x1 callsigns like K1A). */
+    private static final int MIN_BASE_CALL_LENGTH = 2;
+
+    /** Maximum length for base callsign per ITU allocations. */
+    private static final int MAX_BASE_CALL_LENGTH = 7;
+
+    /**
+     * Reasons why a callsign validation might fail.
+     *
+     * <p>Note: These are logged for analysis but don't cause rejection
+     * in the permissive validation mode used by the spot pipeline.
+     */
+    public enum ValidationFailure {
+        /** Base call is less than 2 characters. */
+        TOO_SHORT("Base call less than 2 characters"),
+
+        /** Base call exceeds 7 characters. */
+        TOO_LONG("Base call exceeds 7 characters"),
+
+        /** Callsign must contain at least one letter. */
+        NO_LETTER("Must contain at least one letter"),
+
+        /** Callsign must contain at least one digit. */
+        NO_DIGIT("Must contain at least one digit"),
+
+        /** Q prefixes are reserved for Q-codes (QSL, QTH, etc.). */
+        Q_PREFIX("Q prefixes are reserved for service codes"),
+
+        /** Per ITU rules, last character of suffix should be a letter (informational only). */
+        LAST_CHAR_NOT_LETTER("Last character of suffix is not a letter (ITU guideline)");
+
+        private final String description;
+
+        ValidationFailure(String description) {
+            this.description = description;
+        }
+
+        /**
+         * Returns the human-readable description of the failure.
+         *
+         * @return failure description
+         */
+        public String getDescription() {
+            return description;
+        }
+    }
+
+    /**
+     * Result of callsign validation.
+     *
+     * @param valid true if the callsign passes validation
+     * @param failure the reason for failure, or null if valid
+     */
+    public record ValidationResult(boolean valid, ValidationFailure failure) {
+
+        /** Singleton for valid callsigns. */
+        public static final ValidationResult VALID = new ValidationResult(true, null);
+
+        /**
+         * Creates a failed validation result.
+         *
+         * @param failure the reason for failure
+         * @return failed validation result
+         */
+        public static ValidationResult failed(ValidationFailure failure) {
+            return new ValidationResult(false, failure);
+        }
+
+        /**
+         * Returns whether this result represents a valid callsign.
+         *
+         * @return true if valid
+         */
+        public boolean isValid() {
+            return valid;
+        }
+    }
+
     // Prefix extraction: captures the country prefix (letters + first digit)
     // Examples: W1, JA1, VK2, G3, 4X1
     private static final Pattern PREFIX_PATTERN = Pattern.compile(
@@ -162,19 +240,31 @@ public record Callsign(String value) {
     }
 
     /**
-     * Validates that this callsign matches a basic amateur radio format.
+     * Validates this callsign and returns detailed results.
      *
-     * <p>This is a basic validation checking for reasonable structure.
-     * It does not validate against actual ITU allocations.
+     * <p>Validation checks (in order):
+     * <ol>
+     *   <li>Length: 2-7 characters (supports special event 1x1 callsigns like K1A)</li>
+     *   <li>Must contain at least one letter</li>
+     *   <li>Must contain at least one digit</li>
+     *   <li>Q prefix warning (Q codes are reserved, but logged rather than rejected)</li>
+     *   <li>Last character letter check (ITU guideline, informational)</li>
+     * </ol>
      *
-     * @return true if the callsign appears valid
+     * @return validation result with failure reason if invalid
      */
-    public boolean isValid() {
+    public ValidationResult validate() {
         String baseCall = getBaseCall();
-        // Basic check: 3-7 characters, contains at least one letter and one digit
-        if (baseCall.length() < 3 || baseCall.length() > 7) {
-            return false;
+
+        // Length check (supports special event 1x1 callsigns like K1A, G3A)
+        if (baseCall.length() < MIN_BASE_CALL_LENGTH) {
+            return ValidationResult.failed(ValidationFailure.TOO_SHORT);
         }
+        if (baseCall.length() > MAX_BASE_CALL_LENGTH) {
+            return ValidationResult.failed(ValidationFailure.TOO_LONG);
+        }
+
+        // Must contain at least one letter and one digit
         boolean hasLetter = false;
         boolean hasDigit = false;
         for (char c : baseCall.toCharArray()) {
@@ -185,7 +275,41 @@ public record Callsign(String value) {
                 hasDigit = true;
             }
         }
-        return hasLetter && hasDigit;
+        if (!hasLetter) {
+            return ValidationResult.failed(ValidationFailure.NO_LETTER);
+        }
+        if (!hasDigit) {
+            return ValidationResult.failed(ValidationFailure.NO_DIGIT);
+        }
+
+        // Q prefix check (Q codes are reserved for service abbreviations)
+        if (baseCall.startsWith("Q")) {
+            return ValidationResult.failed(ValidationFailure.Q_PREFIX);
+        }
+
+        // ITU guideline: last character of suffix should be a letter
+        // This is informational - many valid callsigns violate this (e.g., W1AW/7)
+        char lastChar = baseCall.charAt(baseCall.length() - 1);
+        if (Character.isDigit(lastChar)) {
+            return ValidationResult.failed(ValidationFailure.LAST_CHAR_NOT_LETTER);
+        }
+
+        return ValidationResult.VALID;
+    }
+
+    /**
+     * Validates that this callsign matches a basic amateur radio format.
+     *
+     * <p>This is a basic validation checking for reasonable structure.
+     * It does not validate against actual ITU allocations.
+     *
+     * <p>For detailed validation results including failure reasons,
+     * use {@link #validate()} instead.
+     *
+     * @return true if the callsign appears valid
+     */
+    public boolean isValid() {
+        return validate().isValid();
     }
 
     @Override

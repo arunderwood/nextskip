@@ -72,6 +72,34 @@ class AbstractSpotSourceTest {
         assertThat(spotSource.isConnected()).isTrue();
     }
 
+    @Test
+    void testConnect_ConcurrentConnection_BlockedByConnectingFlag() throws InterruptedException {
+        // Use a slow connecting source that blocks during connection
+        SlowConnectingSpotSource slowSource = new SlowConnectingSpotSource();
+
+        // Start first connection in a separate thread
+        Thread connectThread = new Thread(slowSource::connect);
+        connectThread.start();
+
+        // Wait for first connection to start
+        await().atMost(Duration.ofSeconds(2))
+                .untilAsserted(() -> assertThat(slowSource.isConnecting()).isTrue());
+
+        // Try second connection while first is in progress
+        slowSource.connect();
+
+        // Second connection should return immediately without incrementing connect attempts
+        // because connecting flag is already set
+        assertThat(slowSource.getConnectAttempts()).isEqualTo(1);
+
+        // Allow first connection to complete
+        slowSource.releaseConnection();
+        connectThread.join(5000);
+
+        assertThat(slowSource.isConnected()).isTrue();
+        slowSource.disconnect();
+    }
+
     // ===========================================
     // disconnect tests
     // ===========================================
@@ -105,6 +133,19 @@ class AbstractSpotSourceTest {
         await().during(Duration.ofMillis(500)).untilAsserted(() ->
                 assertThat(spotSource.getConnectAttempts()).isEqualTo(attemptsAfterDisconnect)
         );
+    }
+
+    @Test
+    void testDisconnect_HandlesExceptionGracefully() {
+        ThrowingDisconnectSpotSource throwingSource = new ThrowingDisconnectSpotSource();
+        throwingSource.connect();
+        assertThat(throwingSource.isConnected()).isTrue();
+
+        // Should not throw even if doDisconnect throws RuntimeException
+        throwingSource.disconnect();
+
+        // Disconnect should complete despite exception
+        assertThat(throwingSource.getDisconnectCalls()).isEqualTo(1);
     }
 
     // ===========================================
@@ -288,6 +329,90 @@ class AbstractSpotSourceTest {
         void simulateConnectionLost(Throwable cause) {
             connected.set(false);
             onConnectionLost(cause);
+        }
+    }
+
+    /**
+     * Test implementation that blocks during connection to test concurrent access.
+     */
+    private static final class SlowConnectingSpotSource extends AbstractSpotSource {
+
+        private final AtomicBoolean connected = new AtomicBoolean(false);
+        private final AtomicBoolean connecting = new AtomicBoolean(false);
+        private final AtomicInteger connectAttempts = new AtomicInteger(0);
+        private final java.util.concurrent.CountDownLatch connectionLatch =
+                new java.util.concurrent.CountDownLatch(1);
+
+        @Override
+        protected void doConnect() throws Exception {
+            connecting.set(true);
+            connectAttempts.incrementAndGet();
+            // Block until released
+            connectionLatch.await();
+            connected.set(true);
+            connecting.set(false);
+        }
+
+        @Override
+        protected void doDisconnect() {
+            connected.set(false);
+        }
+
+        @Override
+        protected boolean isConnectedInternal() {
+            return connected.get();
+        }
+
+        @Override
+        public String getSourceName() {
+            return "Slow Test Source";
+        }
+
+        boolean isConnecting() {
+            return connecting.get();
+        }
+
+        int getConnectAttempts() {
+            return connectAttempts.get();
+        }
+
+        void releaseConnection() {
+            connectionLatch.countDown();
+        }
+    }
+
+    /**
+     * Test implementation that throws on disconnect to test exception handling.
+     */
+    private static final class ThrowingDisconnectSpotSource extends AbstractSpotSource {
+
+        private final AtomicBoolean connected = new AtomicBoolean(false);
+        private final AtomicInteger disconnectCalls = new AtomicInteger(0);
+
+        @Override
+        protected void doConnect() {
+            connected.set(true);
+        }
+
+        @Override
+        @SuppressWarnings("PMD.AvoidThrowingRawExceptionTypes") // Intentionally testing exception handling
+        protected void doDisconnect() {
+            disconnectCalls.incrementAndGet();
+            throw new RuntimeException("Simulated disconnect failure");
+        }
+
+        @Override
+        protected boolean isConnectedInternal() {
+            return connected.get();
+        }
+
+        @Override
+        public String getSourceName() {
+            return "Throwing Disconnect Source";
+        }
+
+        int getDisconnectCalls() {
+            return disconnectCalls.get();
         }
     }
 }
