@@ -11,10 +11,18 @@ import io.nextskip.spots.persistence.entity.SpotEntity;
 import io.nextskip.spots.persistence.repository.SpotRepository;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
+import org.apache.pekko.Done;
 import org.apache.pekko.NotUsed;
 import org.apache.pekko.actor.ActorSystem;
 import org.apache.pekko.japi.Pair;
+import org.apache.pekko.japi.function.Function;
+import org.apache.pekko.stream.ActorAttributes;
+import org.apache.pekko.stream.KillSwitches;
 import org.apache.pekko.stream.OverflowStrategy;
+import org.apache.pekko.stream.QueueOfferResult;
+import org.apache.pekko.stream.Supervision;
+import org.apache.pekko.stream.UniqueKillSwitch;
+import org.apache.pekko.stream.javadsl.Keep;
 import org.apache.pekko.stream.javadsl.Sink;
 import org.apache.pekko.stream.javadsl.Source;
 import org.apache.pekko.stream.javadsl.SourceQueueWithComplete;
@@ -30,6 +38,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -54,6 +64,7 @@ import java.util.concurrent.atomic.AtomicLong;
 public class SpotStreamProcessor {
 
     private static final Logger LOG = LoggerFactory.getLogger(SpotStreamProcessor.class);
+    private static final long SHUTDOWN_TIMEOUT_SECONDS = 10;
 
     private final ActorSystem actorSystem;
     private final SpotSource spotSource;
@@ -62,13 +73,28 @@ public class SpotStreamProcessor {
     private final DistanceEnricher distanceEnricher;
     private final ContinentEnricher continentEnricher;
     private final SpotRepository spotRepository;
+    private final ExecutorService persistenceExecutor;
 
     private final int batchSize;
     private final Duration batchTimeout;
     private final int bufferSize;
+    private final int persistenceParallelism;
 
     private final AtomicLong spotsProcessed = new AtomicLong(0);
     private final AtomicLong batchesPersisted = new AtomicLong(0);
+    private final AtomicLong droppedMessages = new AtomicLong(0);
+
+    private volatile UniqueKillSwitch killSwitch;
+    private volatile CompletionStage<Done> streamCompletion;
+
+    /**
+     * Supervision strategy that resumes processing on transient errors.
+     * Logs the error and continues with the next element.
+     */
+    private final Function<Throwable, Supervision.Directive> supervisionDecider = exception -> {
+        LOG.error("Stream processing error (resuming): {}", exception.getMessage(), exception);
+        return Supervision.resume();
+    };
 
     @SuppressWarnings("checkstyle:ParameterNumber") // Spring constructor injection with required dependencies
     public SpotStreamProcessor(
@@ -79,9 +105,11 @@ public class SpotStreamProcessor {
             DistanceEnricher distanceEnricher,
             ContinentEnricher continentEnricher,
             SpotRepository spotRepository,
+            ExecutorService spotPersistenceExecutor,
             @Value("${nextskip.spots.processing.batch-size:100}") int batchSize,
             @Value("${nextskip.spots.processing.batch-timeout:1s}") Duration batchTimeout,
-            @Value("${nextskip.spots.processing.buffer-size:10000}") int bufferSize) {
+            @Value("${nextskip.spots.processing.buffer-size:10000}") int bufferSize,
+            @Value("${nextskip.spots.processing.persistence-parallelism:2}") int persistenceParallelism) {
         this.actorSystem = actorSystem;
         this.spotSource = spotSource;
         this.parser = parser;
@@ -89,15 +117,17 @@ public class SpotStreamProcessor {
         this.distanceEnricher = distanceEnricher;
         this.continentEnricher = continentEnricher;
         this.spotRepository = spotRepository;
+        this.persistenceExecutor = spotPersistenceExecutor;
         this.batchSize = batchSize;
         this.batchTimeout = batchTimeout;
         this.bufferSize = bufferSize;
+        this.persistenceParallelism = persistenceParallelism;
     }
 
     @PostConstruct
     public void start() {
-        LOG.info("Starting spot stream processor (batchSize={}, timeout={}, buffer={})",
-                batchSize, batchTimeout, bufferSize);
+        LOG.info("Starting spot stream processor (batchSize={}, timeout={}, buffer={}, parallelism={})",
+                batchSize, batchTimeout, bufferSize, persistenceParallelism);
 
         // Create Pekko queue source with dropHead overflow strategy
         Pair<SourceQueueWithComplete<String>, Source<String, NotUsed>> queuePair =
@@ -106,11 +136,13 @@ public class SpotStreamProcessor {
 
         SourceQueueWithComplete<String> queue = queuePair.first();
 
-        // Set up message handler to offer to queue
+        // Set up message handler to offer to queue with drop tracking
         spotSource.setMessageHandler(message -> {
             queue.offer(message).whenComplete((result, error) -> {
                 if (error != null) {
                     LOG.debug("Failed to offer message to queue: {}", error.getMessage());
+                } else if (QueueOfferResult.dropped().equals(result)) {
+                    droppedMessages.incrementAndGet();
                 }
             });
         });
@@ -118,8 +150,12 @@ public class SpotStreamProcessor {
         // Connect to the spot source
         spotSource.connect();
 
-        // Build the processing pipeline
-        queuePair.second()
+        // Build the processing pipeline with supervision strategy and KillSwitch
+        Pair<UniqueKillSwitch, CompletionStage<Done>> materialized = queuePair.second()
+                // Apply supervision strategy to resume on transient errors
+                .withAttributes(ActorAttributes.withSupervisionStrategy(supervisionDecider))
+                // Add KillSwitch for graceful shutdown
+                .viaMat(KillSwitches.single(), Keep.right())
                 // Parse JSON to Spot
                 .map(parser::parse)
                 .filter(Optional::isPresent)
@@ -136,25 +172,48 @@ public class SpotStreamProcessor {
                 })
                 // Batch for efficient persistence
                 .groupedWithin(batchSize, batchTimeout)
-                // Async persist each batch
-                .mapAsync(1, this::persistBatchAsync)
-                // Run the stream
-                .runWith(Sink.ignore(), actorSystem);
+                // Async persist each batch with configurable parallelism (unordered for throughput)
+                .mapAsyncUnordered(persistenceParallelism, this::persistBatchAsync)
+                // Run the stream and capture both KillSwitch and completion
+                .toMat(Sink.ignore(), Keep.both())
+                .run(actorSystem);
+
+        this.killSwitch = materialized.first();
+        this.streamCompletion = materialized.second();
 
         LOG.info("Spot stream processor started");
     }
 
     @PreDestroy
+    @SuppressWarnings("PMD.AvoidCatchingGenericException") // Graceful shutdown handling
     public void stop() {
-        LOG.info("Stopping spot stream processor. Processed {} spots in {} batches",
-                spotsProcessed.get(), batchesPersisted.get());
+        LOG.info("Stopping spot stream processor. Processed {} spots in {} batches (dropped {})",
+                spotsProcessed.get(), batchesPersisted.get(), droppedMessages.get());
+
+        // Gracefully shutdown the stream via KillSwitch
+        if (killSwitch != null) {
+            LOG.debug("Initiating graceful stream shutdown");
+            killSwitch.shutdown();
+
+            // Wait for in-flight elements to complete
+            if (streamCompletion != null) {
+                try {
+                    streamCompletion.toCompletableFuture()
+                            .get(SHUTDOWN_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+                    LOG.debug("Stream shutdown completed gracefully");
+                } catch (Exception e) {
+                    LOG.warn("Stream shutdown did not complete within {}s: {}",
+                            SHUTDOWN_TIMEOUT_SECONDS, e.getMessage());
+                }
+            }
+        }
     }
 
     private CompletionStage<List<Spot>> persistBatchAsync(List<Spot> spots) {
         return CompletableFuture.supplyAsync(() -> {
             persistBatch(spots);
             return spots;
-        });
+        }, persistenceExecutor);
     }
 
     @Transactional
@@ -195,5 +254,17 @@ public class SpotStreamProcessor {
      */
     public long getBatchesPersisted() {
         return batchesPersisted.get();
+    }
+
+    /**
+     * Returns the total number of messages dropped due to buffer overflow.
+     *
+     * <p>When the buffer fills up, the oldest messages are dropped (dropHead strategy)
+     * to prioritize recent data. This counter tracks how many messages were lost.
+     *
+     * @return count of messages dropped from the buffer
+     */
+    public long getDroppedMessages() {
+        return droppedMessages.get();
     }
 }

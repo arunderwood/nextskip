@@ -83,9 +83,11 @@ nextskip:
       topics:
         - pskr/filter/v2/+/FT8/#  # All FT8 spots across all bands
     processing:
-      batch-size: 100      # Spots per batch
-      batch-timeout: 1s    # Max wait before flushing partial batch
-      buffer-size: 10000   # Buffer size (drops oldest on overflow)
+      batch-size: 100              # Spots per batch
+      batch-timeout: 1s            # Max wait before flushing partial batch
+      buffer-size: 10000           # Buffer size (drops oldest on overflow)
+      persistence-threads: 2       # Thread pool size for DB writes (I/O-bound, safe for single-core)
+      persistence-parallelism: 2   # Concurrent batches in mapAsyncUnordered
     persistence:
       ttl: 24h            # Time-to-live for spots
       cleanup-interval: 1h # How often to run cleanup
@@ -202,3 +204,19 @@ posthog:
     enabled: false
     ingest-url: https://us.i.posthog.com
     assets-url: https://us-assets.i.posthog.com
+
+# Apache Pekko Configuration (for spot stream processing)
+# Tuned for single-core production environment
+pekko:
+  stream:
+    materializer:
+      max-input-buffer-size: 8       # Smaller buffers for single-core
+      initial-input-buffer-size: 2
+  actor:
+    default-dispatcher:
+      type: "Dispatcher"
+      executor: "fork-join-executor"
+      fork-join-executor:
+        parallelism-min: 1           # Minimum for single-core
+        parallelism-factor: 1.0      # 1 thread per core
+        parallelism-max: 4           # Cap for burst handling
