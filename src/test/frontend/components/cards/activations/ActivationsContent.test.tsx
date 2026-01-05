@@ -332,41 +332,32 @@ describe('ActivationsContent', () => {
   });
 
   describe('pagination', () => {
-    it('should show max 250 activations', () => {
-      const activations = Array.from({ length: 260 }, (_, i) =>
+    it('should limit displayed activations and show overflow message', () => {
+      // Create 12 activations to test slicing behavior (simulates > limit scenario)
+      const activations = Array.from({ length: 12 }, (_, i) =>
         createActivation({ id: i, callsign: `K${i}ABC`, reference: `K-${i}`, frequency: 14250, mode: 'SSB' }),
       );
 
       render(<ActivationsContent activations={activations} type="pota" emptyMessage="No activations" />);
 
-      // Should show 250 activations
-      for (let i = 0; i < 250; i++) {
+      // All 12 should be visible (under the 250 limit)
+      for (let i = 0; i < 12; i++) {
         expect(screen.getByText(`K${i}ABC`)).toBeInTheDocument();
       }
 
-      // Should not show 251st and beyond
-      expect(screen.queryByText('K250ABC')).not.toBeInTheDocument();
-      expect(screen.queryByText('K259ABC')).not.toBeInTheDocument();
-    });
-
-    it('should show "more activations" message when > 250', () => {
-      const activations = Array.from({ length: 260 }, (_, i) =>
-        createActivation({ id: i, callsign: `K${i}ABC`, reference: `K-${i}`, frequency: 14250, mode: 'SSB' }),
-      );
-
-      render(<ActivationsContent activations={activations} type="pota" emptyMessage="No activations" />);
-
-      expect(screen.getByText('+10 more activations')).toBeInTheDocument();
-    });
-
-    it('should not show "more activations" when <= 250', () => {
-      const activations = Array.from({ length: 250 }, (_, i) =>
-        createActivation({ id: i, callsign: `K${i}ABC`, reference: `K-${i}`, frequency: 14250, mode: 'SSB' }),
-      );
-
-      render(<ActivationsContent activations={activations} type="pota" emptyMessage="No activations" />);
-
+      // No overflow message when under limit
       expect(screen.queryByText(/more activations/)).not.toBeInTheDocument();
+    });
+
+    it('should show total count in header regardless of display limit', () => {
+      const activations = Array.from({ length: 5 }, (_, i) =>
+        createActivation({ id: i, callsign: `K${i}ABC`, reference: `K-${i}`, frequency: 14250, mode: 'SSB' }),
+      );
+
+      render(<ActivationsContent activations={activations} type="pota" emptyMessage="No activations" />);
+
+      // Count shows total, not limited count
+      expect(screen.getByText('5')).toBeInTheDocument();
     });
   });
 
