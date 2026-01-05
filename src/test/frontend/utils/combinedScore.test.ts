@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { calculateCombinedScore, ACTIVITY_WEIGHT, CONDITION_WEIGHT } from 'Frontend/utils/combinedScore';
+import {
+  calculateCombinedScore,
+  isCombinedFavorable,
+  getWeights,
+  ACTIVITY_WEIGHT,
+  CONDITION_WEIGHT,
+} from 'Frontend/utils/combinedScore';
 
 describe('combinedScore utilities', () => {
   describe('calculateCombinedScore', () => {
@@ -111,6 +117,42 @@ describe('combinedScore utilities', () => {
 
     it('should have weights that sum to 1.0', () => {
       expect(ACTIVITY_WEIGHT + CONDITION_WEIGHT).toBe(1.0);
+    });
+  });
+
+  describe('isCombinedFavorable', () => {
+    it('should return true when activity is favorable', () => {
+      expect(isCombinedFavorable(true, false)).toBe(true);
+      expect(isCombinedFavorable(true, undefined)).toBe(true);
+    });
+
+    it('should return true when condition is favorable', () => {
+      expect(isCombinedFavorable(false, true)).toBe(true);
+      expect(isCombinedFavorable(undefined, true)).toBe(true);
+    });
+
+    it('should return true when both are favorable', () => {
+      expect(isCombinedFavorable(true, true)).toBe(true);
+    });
+
+    it('should return false when neither is favorable', () => {
+      expect(isCombinedFavorable(false, false)).toBe(false);
+      expect(isCombinedFavorable(undefined, undefined)).toBe(false);
+      expect(isCombinedFavorable(undefined, false)).toBe(false);
+      expect(isCombinedFavorable(false, undefined)).toBe(false);
+    });
+  });
+
+  describe('getWeights', () => {
+    it('should return activity and condition weights', () => {
+      const weights = getWeights();
+      expect(weights.activity).toBe(0.7);
+      expect(weights.condition).toBe(0.3);
+    });
+
+    it('should return weights that sum to 1.0', () => {
+      const weights = getWeights();
+      expect(weights.activity + weights.condition).toBe(1.0);
     });
   });
 });

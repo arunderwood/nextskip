@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { getModeConfig, getSupportedModes, getAllModes } from 'Frontend/config/modeRegistry';
+import {
+  getModeConfig,
+  getSupportedModes,
+  getAllModes,
+  isModeSupported,
+  getModeDisplayName,
+} from 'Frontend/config/modeRegistry';
 
 describe('modeRegistry', () => {
   describe('getModeConfig', () => {
@@ -102,6 +108,43 @@ describe('modeRegistry', () => {
       const config = getModeConfig('FT8');
       // displayName is optional, so we just check it exists or is undefined
       expect(config?.displayName === undefined || typeof config?.displayName === 'string').toBe(true);
+    });
+  });
+
+  describe('isModeSupported', () => {
+    it('should return true for supported modes', () => {
+      expect(isModeSupported('FT8')).toBe(true);
+      expect(isModeSupported('CW')).toBe(true);
+    });
+
+    it('should return false for unsupported modes', () => {
+      expect(isModeSupported('SSB')).toBe(false);
+      expect(isModeSupported('FT4')).toBe(false);
+    });
+
+    it('should return false for unknown modes', () => {
+      expect(isModeSupported('UNKNOWN_MODE')).toBe(false);
+    });
+
+    it('should return false for undefined input', () => {
+      expect(isModeSupported(undefined)).toBe(false);
+    });
+  });
+
+  describe('getModeDisplayName', () => {
+    it('should return mode value when no displayName override', () => {
+      expect(getModeDisplayName('FT8')).toBe('FT8');
+      expect(getModeDisplayName('CW')).toBe('CW');
+      expect(getModeDisplayName('SSB')).toBe('SSB');
+    });
+
+    it('should return empty string for undefined input', () => {
+      expect(getModeDisplayName(undefined)).toBe('');
+    });
+
+    it('should return mode value for unknown modes', () => {
+      // Unknown modes return the input string as-is
+      expect(getModeDisplayName('UNKNOWN_MODE')).toBe('UNKNOWN_MODE');
     });
   });
 });
