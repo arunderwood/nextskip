@@ -11,12 +11,20 @@ export default defineConfig({
     setupFiles: './src/test/frontend/setup.ts',
     include: ['src/test/frontend/**/*.{test,spec}.{ts,tsx}'],
     css: true,
-    // Enable parallel test execution
+    // Enable parallel test execution (Vitest 4+ top-level options)
     pool: 'threads',
     maxWorkers: Math.max(1, Math.floor(os.cpus().length * 0.75)),
     coverage: {
       provider: 'v8',
-      reporter: ['text', 'json', 'json-summary', 'html', 'lcov'],
+      // text-summary for console, lcov for cover-diff (written to file only)
+      reporter: [
+        ['text-summary', { file: null }], // Console summary
+        ['json', { file: 'coverage-final.json' }],
+        ['json-summary', { file: 'coverage-summary.json' }],
+        ['html', { subdir: 'html' }],
+        ['lcov', { file: 'lcov.info' }], // For cover-diff, file only
+      ],
+      reportsDirectory: './coverage',
       exclude: [
         'node_modules/',
         'src/test/',

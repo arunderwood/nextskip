@@ -8,7 +8,7 @@
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage",
     "test:ci": "npm run format:check && npm run lint && npm run lint:sarif && vitest run --coverage --reporter=default --reporter=github-actions",
-    "test:delta": "npm run test:coverage && DIFF=$(git diff origin/main -- 'src/main/frontend/**' 'src/test/frontend/**'); if [ -z \"$DIFF\" ]; then echo 'No frontend changes to check'; else echo \"$DIFF\" | npx cover-diff; fi",
+    "test:delta": "npm run test:coverage && DIFF=$(git diff origin/main -- 'src/main/frontend/**' 'src/test/frontend/**'); if [ -z \"$DIFF\" ]; then echo 'No frontend changes to check'; else OUTPUT=$(echo \"$DIFF\" | npx cover-diff 2>&1); STATUS=$?; echo \"$OUTPUT\" | grep -v '^TN:\\|^SF:\\|^FN[A-Z]*:\\|^DA:\\|^BRDA:\\|^BR[FH]:\\|^FN[FH]:\\|^end_of_record'; if [ $STATUS -ne 0 ]; then echo '\\n❌ Delta coverage failed! Changed files need ≥80% line and ≥70% branch coverage.'; exit 1; fi; fi",
     "e2e": "playwright test",
     "e2e:ui": "playwright test --ui",
     "e2e:headed": "playwright test --headed",
