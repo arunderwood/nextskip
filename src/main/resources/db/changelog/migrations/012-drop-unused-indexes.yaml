@@ -1,0 +1,12 @@
+databaseChangeLog:
+  - changeSet:
+      id: 012-drop-unused-indexes
+      author: arunderwood
+      comment: Remove unused indexes identified in DB health review (January 2026)
+      changes:
+        - dropIndex:
+            indexName: idx_spots_mode_time
+            tableName: spots
+        - dropIndex:
+            indexName: idx_activations_callsign
+            tableName: activations
