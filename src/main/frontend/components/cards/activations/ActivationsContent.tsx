@@ -84,7 +84,7 @@ function ActivationsContent({ activations, type, emptyMessage }: Props) {
                 >
                   {activation.activatorCallsign}
                 </a>
-                {(activation.location as ActivationLocationExt)?.reference && (
+                {(activation.location as ActivationLocationExt)?.reference ? (
                   <a
                     href={
                       type === 'pota'
@@ -100,7 +100,7 @@ function ActivationsContent({ activations, type, emptyMessage }: Props) {
                   >
                     {(activation.location as ActivationLocationExt).reference}
                   </a>
-                )}
+                ) : null}
               </div>
               <div className="activation-details">
                 <span className="frequency">{formatFrequency(activation.frequency)}</span>
