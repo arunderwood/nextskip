@@ -97,22 +97,22 @@ describe('PotaActivationsContent', () => {
     vi.useRealTimers();
   });
 
-  it('should limit display to 8 activations with overflow message', () => {
-    const manyActivations = Array.from({ length: 10 }, (_, i) =>
+  it('should display activations with correct count', () => {
+    const activations = Array.from({ length: 10 }, (_, i) =>
       createMockPotaActivation({ spotId: `${i + 1}`, activatorCallsign: `W${i}ABC` }),
     );
 
-    render(<PotaActivationsContent activations={manyActivations} />);
+    render(<PotaActivationsContent activations={activations} />);
 
     // Should show count of 10
     expect(screen.getByText('10')).toBeInTheDocument();
 
-    // Should show "+2 more activations" message (10 total - 8 displayed)
-    expect(screen.getByText('+2 more activations')).toBeInTheDocument();
+    // Should not show overflow message when under limit
+    expect(screen.queryByText(/more activations/)).not.toBeInTheDocument();
 
-    // Should render exactly 8 callsign links
+    // Should render all 10 activation items (each with 2 links: callsign + reference)
     const links = screen.getAllByRole('link');
-    expect(links).toHaveLength(8);
+    expect(links).toHaveLength(20); // 10 activations * 2 links each
   });
 
   it('should be WCAG 2.1 AA compliant', async () => {

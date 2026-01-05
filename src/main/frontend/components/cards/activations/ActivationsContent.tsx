@@ -21,9 +21,41 @@ interface Props {
   emptyMessage: string;
 }
 
+const MAX_DISPLAY_ACTIVATIONS = 250;
+
+/**
+ * Generate URL for park/summit details page
+ */
+function getPotaReferenceUrl(reference: string): string {
+  return `https://pota.app/#/park/${reference}`;
+}
+
+/**
+ * Generate SOTA summit URL. The sotl.as URL format requires the full summit reference
+ * including the association code (e.g., "JA/ST-013" not just "ST-013").
+ */
+function getSotaReferenceUrl(reference: string, associationCode?: string): string {
+  // If reference already contains a slash, it includes the association (e.g., "W7W/LC-001")
+  if (reference.includes('/')) {
+    return `https://sotl.as/summits/${reference}`;
+  }
+  // Otherwise, prepend the association code if available (e.g., "JA" + "ST-013" -> "JA/ST-013")
+  if (associationCode) {
+    return `https://sotl.as/summits/${associationCode}/${reference}`;
+  }
+  // Fallback if no association code available
+  return `https://sotl.as/summits/${reference}`;
+}
+
 function ActivationsContent({ activations, type, emptyMessage }: Props) {
-  // Show up to 8 most recent activations (memoized to avoid recalculating)
-  const displayActivations = useMemo(() => activations.slice(0, 8), [activations]);
+  // Sort by most recent spot time and limit display count (memoized to avoid recalculating)
+  const displayActivations = useMemo(
+    () =>
+      [...activations]
+        .sort((a, b) => new Date(b.spottedAt ?? 0).getTime() - new Date(a.spottedAt ?? 0).getTime())
+        .slice(0, MAX_DISPLAY_ACTIVATIONS),
+    [activations],
+  );
 
   const contentClass = `${type}-content`;
   const locationClass = type === 'pota' ? 'park-name' : 'summit-name';
@@ -52,7 +84,23 @@ function ActivationsContent({ activations, type, emptyMessage }: Props) {
                 >
                   {activation.activatorCallsign}
                 </a>
-                <span className="reference-code">{(activation.location as ActivationLocationExt)?.reference}</span>
+                {(activation.location as ActivationLocationExt)?.reference ? (
+                  <a
+                    href={
+                      type === 'pota'
+                        ? getPotaReferenceUrl((activation.location as ActivationLocationExt).reference!)
+                        : getSotaReferenceUrl(
+                            (activation.location as ActivationLocationExt).reference!,
+                            (activation.location as ActivationLocationExt).associationCode,
+                          )
+                    }
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="reference-code"
+                  >
+                    {(activation.location as ActivationLocationExt).reference}
+                  </a>
+                ) : null}
               </div>
               <div className="activation-details">
                 <span className="frequency">{formatFrequency(activation.frequency)}</span>
@@ -72,7 +120,9 @@ function ActivationsContent({ activations, type, emptyMessage }: Props) {
         </ul>
       )}
 
-      {activations.length > 8 && <div className="more-activations">+{activations.length - 8} more activations</div>}
+      {activations.length > MAX_DISPLAY_ACTIVATIONS && (
+        <div className="more-activations">+{activations.length - MAX_DISPLAY_ACTIVATIONS} more activations</div>
+      )}
     </div>
   );
 }

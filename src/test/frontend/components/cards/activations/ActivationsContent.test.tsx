@@ -15,6 +15,8 @@ describe('ActivationsContent', () => {
     mode: string;
     name?: string;
     regionCode?: string;
+    spottedAt?: string;
+    associationCode?: string;
   }
 
   const createActivation = (params: ActivationParams): Activation =>
@@ -23,7 +25,13 @@ describe('ActivationsContent', () => {
       activatorCallsign: params.callsign,
       frequency: params.frequency,
       mode: params.mode,
-      location: { reference: params.reference, name: params.name, regionCode: params.regionCode },
+      spottedAt: params.spottedAt,
+      location: {
+        reference: params.reference,
+        name: params.name,
+        regionCode: params.regionCode,
+        associationCode: params.associationCode,
+      },
     });
 
   describe('POTA type', () => {
@@ -198,13 +206,61 @@ describe('ActivationsContent', () => {
       expect(link).toHaveAttribute('rel', 'noopener noreferrer');
     });
 
+    it('should show POTA reference link to pota.app', () => {
+      const activations = [
+        createActivation({ id: 1, callsign: 'K1ABC', reference: 'US-0001', frequency: 14250, mode: 'SSB' }),
+      ];
+
+      render(<ActivationsContent activations={activations} type="pota" emptyMessage="No activations" />);
+
+      const link = screen.getByRole('link', { name: 'US-0001' });
+      expect(link).toHaveAttribute('href', 'https://pota.app/#/park/US-0001');
+      expect(link).toHaveAttribute('target', '_blank');
+      expect(link).toHaveAttribute('rel', 'noopener noreferrer');
+    });
+
+    it('should show SOTA reference link to sotl.as with full reference', () => {
+      const activations = [
+        createActivation({ id: 1, callsign: 'K1ABC', reference: 'W7W/LC-001', frequency: 14250, mode: 'CW' }),
+      ];
+
+      render(<ActivationsContent activations={activations} type="sota" emptyMessage="No activations" />);
+
+      const link = screen.getByRole('link', { name: 'W7W/LC-001' });
+      expect(link).toHaveAttribute('href', 'https://sotl.as/summits/W7W/LC-001');
+      expect(link).toHaveAttribute('target', '_blank');
+      expect(link).toHaveAttribute('rel', 'noopener noreferrer');
+    });
+
+    it('should show SOTA reference link using associationCode when reference lacks prefix', () => {
+      const activations = [
+        createActivation({
+          id: 1,
+          callsign: 'JA1ABC',
+          reference: 'ST-013',
+          frequency: 14250,
+          mode: 'CW',
+          associationCode: 'JA',
+        }),
+      ];
+
+      render(<ActivationsContent activations={activations} type="sota" emptyMessage="No activations" />);
+
+      const link = screen.getByRole('link', { name: 'ST-013' });
+      expect(link).toHaveAttribute('href', 'https://sotl.as/summits/JA/ST-013');
+      expect(link).toHaveAttribute('target', '_blank');
+      expect(link).toHaveAttribute('rel', 'noopener noreferrer');
+    });
+
     it('should show mode or Unknown', () => {
+      const now = new Date().toISOString();
       const withMode = createActivation({
         id: 1,
         callsign: 'K1ABC',
         reference: 'K-1234',
         frequency: 14250,
         mode: 'SSB',
+        spottedAt: now,
       });
       const withoutMode = createActivation({
         id: 2,
@@ -212,6 +268,7 @@ describe('ActivationsContent', () => {
         reference: 'K-5678',
         frequency: 7074,
         mode: '',
+        spottedAt: now,
       });
 
       const { rerender } = render(
@@ -275,41 +332,32 @@ describe('ActivationsContent', () => {
   });
 
   describe('pagination', () => {
-    it('should show max 8 activations', () => {
-      const activations = Array.from({ length: 10 }, (_, i) =>
-        createActivation({ id: i, callsign: `K${i}ABC`, reference: `K-${i}`, frequency: 14250, mode: 'SSB' }),
-      );
-
-      render(<ActivationsContent activations={activations} type="pota" emptyMessage="No activations" />);
-
-      // Should show 8 activations
-      for (let i = 0; i < 8; i++) {
-        expect(screen.getByText(`K${i}ABC`)).toBeInTheDocument();
-      }
-
-      // Should not show 9th and 10th
-      expect(screen.queryByText('K8ABC')).not.toBeInTheDocument();
-      expect(screen.queryByText('K9ABC')).not.toBeInTheDocument();
-    });
-
-    it('should show "more activations" message when > 8', () => {
+    it('should limit displayed activations and show overflow message', () => {
+      // Create 12 activations to test slicing behavior (simulates > limit scenario)
       const activations = Array.from({ length: 12 }, (_, i) =>
         createActivation({ id: i, callsign: `K${i}ABC`, reference: `K-${i}`, frequency: 14250, mode: 'SSB' }),
       );
 
       render(<ActivationsContent activations={activations} type="pota" emptyMessage="No activations" />);
 
-      expect(screen.getByText('+4 more activations')).toBeInTheDocument();
+      // All 12 should be visible (under the 250 limit)
+      for (let i = 0; i < 12; i++) {
+        expect(screen.getByText(`K${i}ABC`)).toBeInTheDocument();
+      }
+
+      // No overflow message when under limit
+      expect(screen.queryByText(/more activations/)).not.toBeInTheDocument();
     });
 
-    it('should not show "more activations" when <= 8', () => {
-      const activations = Array.from({ length: 8 }, (_, i) =>
+    it('should show total count in header regardless of display limit', () => {
+      const activations = Array.from({ length: 5 }, (_, i) =>
         createActivation({ id: i, callsign: `K${i}ABC`, reference: `K-${i}`, frequency: 14250, mode: 'SSB' }),
       );
 
       render(<ActivationsContent activations={activations} type="pota" emptyMessage="No activations" />);
 
-      expect(screen.queryByText(/more activations/)).not.toBeInTheDocument();
+      // Count shows total, not limited count
+      expect(screen.getByText('5')).toBeInTheDocument();
     });
   });
 
@@ -326,10 +374,50 @@ describe('ActivationsContent', () => {
       // Rerender with same activations
       rerender(<ActivationsContent activations={activations} type="pota" emptyMessage="No activations" />);
 
-      // Should still show 8 items (verifies memoization didn't break behavior)
-      for (let i = 0; i < 8; i++) {
+      // Should still show all 10 items (verifies memoization didn't break behavior)
+      for (let i = 0; i < 10; i++) {
         expect(screen.getByText(`K${i}ABC`)).toBeInTheDocument();
       }
+    });
+  });
+
+  describe('sorting', () => {
+    it('should sort activations by most recent spot time first', () => {
+      const activations = [
+        createActivation({
+          id: 1,
+          callsign: 'OLDEST',
+          reference: 'K-1',
+          frequency: 14250,
+          mode: 'SSB',
+          spottedAt: new Date('2025-01-15T10:00:00Z').toISOString(),
+        }),
+        createActivation({
+          id: 2,
+          callsign: 'NEWEST',
+          reference: 'K-2',
+          frequency: 14250,
+          mode: 'SSB',
+          spottedAt: new Date('2025-01-15T11:30:00Z').toISOString(),
+        }),
+        createActivation({
+          id: 3,
+          callsign: 'MIDDLE',
+          reference: 'K-3',
+          frequency: 14250,
+          mode: 'SSB',
+          spottedAt: new Date('2025-01-15T11:00:00Z').toISOString(),
+        }),
+      ];
+
+      render(<ActivationsContent activations={activations} type="pota" emptyMessage="No activations" />);
+
+      // Get callsign links (every other link, starting at index 0)
+      const links = screen.getAllByRole('link');
+      const callsignLinks = links.filter((_, i) => i % 2 === 0);
+      expect(callsignLinks[0]).toHaveTextContent('NEWEST');
+      expect(callsignLinks[1]).toHaveTextContent('MIDDLE');
+      expect(callsignLinks[2]).toHaveTextContent('OLDEST');
     });
   });
 });

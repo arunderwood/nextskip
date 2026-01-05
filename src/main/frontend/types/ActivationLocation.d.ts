@@ -8,4 +8,6 @@ export interface ActivationLocationExt {
   reference?: string;
   name?: string;
   regionCode?: string;
+  /** SOTA association code (e.g., "W7W", "JA"), only present for Summit locations */
+  associationCode?: string;
 }
