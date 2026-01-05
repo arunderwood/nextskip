@@ -5,11 +5,13 @@ import {
   ActivationsEndpoint,
   ContestEndpoint,
   MeteorEndpoint,
+  SpotsEndpoint,
 } from 'Frontend/generated/endpoints';
 import type PropagationResponse from 'Frontend/generated/io/nextskip/propagation/api/PropagationResponse';
 import type ActivationsResponse from 'Frontend/generated/io/nextskip/activations/api/ActivationsResponse';
 import type ContestsResponse from 'Frontend/generated/io/nextskip/contests/api/ContestsResponse';
 import type MeteorShowersResponse from 'Frontend/generated/io/nextskip/meteors/api/MeteorShowersResponse';
+import type BandActivityResponse from 'Frontend/generated/io/nextskip/spots/api/BandActivityResponse';
 import type { DashboardData } from '../components/cards/types';
 import { ActivityGrid } from '../components/activity';
 import { useDashboardCards } from '../hooks/useDashboardCards';
@@ -24,12 +26,14 @@ import '../components/cards/propagation';
 import '../components/cards/activations';
 import '../components/cards/contests';
 import '../components/cards/meteor-showers';
+import '../components/cards/band-activity';
 
 function DashboardView() {
   const [propagationData, setPropagationData] = useState<PropagationResponse | undefined>(undefined);
   const [activationsData, setActivationsData] = useState<ActivationsResponse | undefined>(undefined);
   const [contestsData, setContestsData] = useState<ContestsResponse | undefined>(undefined);
   const [meteorShowersData, setMeteorShowersData] = useState<MeteorShowersResponse | undefined>(undefined);
+  const [spotsData, setSpotsData] = useState<BandActivityResponse | undefined>(undefined);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
@@ -50,17 +54,20 @@ function DashboardView() {
       setError(null);
 
       // Fetch data from all Hilla endpoints in parallel
-      const [propagation, activations, contests, meteorShowers] = await Promise.all([
+      // Spots endpoint may not be available if module is disabled
+      const [propagation, activations, contests, meteorShowers, spots] = await Promise.all([
         PropagationEndpoint.getPropagationData(),
         ActivationsEndpoint.getActivations(),
         ContestEndpoint.getContests(),
         MeteorEndpoint.getMeteorShowers(),
+        SpotsEndpoint.getBandActivity().catch(() => undefined),
       ]);
 
       setPropagationData(propagation);
       setActivationsData(activations);
       setContestsData(contests);
       setMeteorShowersData(meteorShowers);
+      setSpotsData(spots);
       setLastUpdate(new Date());
     } catch (err) {
       console.error('Error fetching dashboard data:', err);
@@ -88,10 +95,11 @@ function DashboardView() {
       activations: activationsData,
       contests: contestsData,
       meteorShowers: meteorShowersData,
+      spots: spotsData,
       // Future modules will add their data here:
       // satellites: satellitesData,
     }),
-    [propagationData, activationsData, contestsData, meteorShowersData],
+    [propagationData, activationsData, contestsData, meteorShowersData, spotsData],
   );
 
   // Get card configurations from registry (must be called before conditional returns)

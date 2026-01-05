@@ -10,6 +10,8 @@ import type BandCondition from '../mocks/generated/io/nextskip/propagation/model
 import BandConditionRating from '../mocks/generated/io/nextskip/propagation/model/BandConditionRating';
 import FrequencyBand from '../mocks/generated/io/nextskip/common/model/FrequencyBand';
 import type SolarIndices from '../mocks/generated/io/nextskip/propagation/model/SolarIndices';
+import type BandActivity from '../mocks/generated/io/nextskip/spots/model/BandActivity';
+import ContinentPath from '../mocks/generated/io/nextskip/spots/model/ContinentPath';
 import { TEST_CONSTANTS } from '../testConstants';
 
 // =============================================================================
@@ -378,7 +380,90 @@ export function createCoolCard(): CardInput {
 }
 
 // =============================================================================
+// BandActivity Factory (for band+mode activity card testing)
+// =============================================================================
+
+/**
+ * Creates a mock BandActivity with sensible defaults.
+ *
+ * @param overrides - Optional partial BandActivity to override defaults
+ * @returns A complete BandActivity object
+ */
+export function createMockBandActivity(overrides?: Partial<BandActivity>): BandActivity {
+  return {
+    band: '20m',
+    mode: 'FT8',
+    spotCount: 150,
+    baselineSpotCount: 100,
+    trendPercentage: 50,
+    maxDxKm: 8432,
+    maxDxPath: 'JA1ABC -> W6XYZ',
+    activePaths: [ContinentPath.NA_EU, ContinentPath.NA_AS, ContinentPath.EU_AS],
+    score: 75,
+    windowMinutes: 15,
+    ...overrides,
+  };
+}
+
+/**
+ * Creates a high-activity BandActivity.
+ *
+ * @returns A BandActivity with high spot count and trend
+ */
+export function createHighActivityBandActivity(): BandActivity {
+  return createMockBandActivity({
+    spotCount: 500,
+    baselineSpotCount: 100,
+    trendPercentage: 400,
+    maxDxKm: 15000,
+    activePaths: [
+      ContinentPath.NA_EU,
+      ContinentPath.NA_AS,
+      ContinentPath.EU_AS,
+      ContinentPath.NA_OC,
+      ContinentPath.EU_AF,
+      ContinentPath.NA_SA,
+    ],
+    score: 95,
+  });
+}
+
+/**
+ * Creates a low-activity BandActivity.
+ *
+ * @returns A BandActivity with low spot count
+ */
+export function createLowActivityBandActivity(): BandActivity {
+  return createMockBandActivity({
+    spotCount: 5,
+    baselineSpotCount: 50,
+    trendPercentage: -90,
+    maxDxKm: 500,
+    activePaths: [],
+    score: 10,
+  });
+}
+
+/**
+ * Creates a BandActivity with no spots.
+ *
+ * @returns A BandActivity with zero spots
+ */
+export function createEmptyBandActivity(): BandActivity {
+  return createMockBandActivity({
+    spotCount: 0,
+    baselineSpotCount: 0,
+    trendPercentage: 0,
+    maxDxKm: undefined,
+    maxDxPath: undefined,
+    activePaths: [],
+    score: 0,
+  });
+}
+
+// =============================================================================
 // Re-export types and enums for convenience
 // =============================================================================
 
-export { ActivationType, BandConditionRating, FrequencyBand };
+export { ActivationType, BandConditionRating, FrequencyBand, ContinentPath };
+export type { BandActivity };
