@@ -1,0 +1,35 @@
+databaseChangeLog:
+  - changeSet:
+      id: 011-create-spots-aggregation-indices
+      author: nextskip
+      comment: Additional indices for band activity aggregation queries (Phase 2)
+      changes:
+        # Index for mode-specific aggregation queries
+        # Supports: findModeDistributionByBandSince, mode-specific counts
+        - createIndex:
+            indexName: idx_spots_band_mode_time
+            tableName: spots
+            columns:
+              - column:
+                  name: band
+              - column:
+                  name: mode
+              - column:
+                  name: spotted_at
+                  descending: true
+
+        # Index for continent path analysis
+        # Supports: countContinentPathsByBandAndSpottedAtAfter
+        - createIndex:
+            indexName: idx_spots_continent_paths
+            tableName: spots
+            columns:
+              - column:
+                  name: band
+              - column:
+                  name: spotter_continent
+              - column:
+                  name: spotted_continent
+              - column:
+                  name: spotted_at
+                  descending: true

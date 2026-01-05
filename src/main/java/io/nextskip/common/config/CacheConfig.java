@@ -17,8 +17,11 @@ import io.nextskip.propagation.persistence.entity.BandConditionEntity;
 import io.nextskip.propagation.persistence.entity.SolarIndicesEntity;
 import io.nextskip.propagation.persistence.repository.BandConditionRepository;
 import io.nextskip.propagation.persistence.repository.SolarIndicesRepository;
+import io.nextskip.spots.internal.aggregation.BandActivityAggregator;
+import io.nextskip.spots.model.BandActivity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -26,6 +29,7 @@ import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -63,6 +67,7 @@ public class CacheConfig {
     private static final Duration BAND_CONDITIONS_EXPIRY = Duration.ofMinutes(45);
     private static final Duration CONTESTS_EXPIRY = Duration.ofHours(12);
     private static final Duration METEOR_SHOWERS_EXPIRY = Duration.ofHours(4);
+    private static final Duration BAND_ACTIVITY_EXPIRY = Duration.ofMinutes(2);
 
     // Data retention periods for DB queries
     private static final Duration ACTIVATIONS_RETENTION = Duration.ofMinutes(30);
@@ -268,5 +273,34 @@ public class CacheConfig {
                 .toList();
         LOG.info("Loaded {} meteor showers from database", showers.size());
         return showers;
+    }
+
+    /**
+     * LoadingCache for band activity aggregations.
+     *
+     * <p>Caches aggregated band activity data computed from spot data.
+     * Unlike other caches, this is backed by a service aggregator rather
+     * than a repository.
+     *
+     * <p>Short TTL (2 minutes) since band activity changes rapidly.
+     * The BandActivityRefreshTask triggers refresh every minute.
+     *
+     * @param aggregator the band activity aggregator service
+     * @return LoadingCache for band activity by band name
+     */
+    @Bean
+    @ConditionalOnBean(BandActivityAggregator.class)
+    public LoadingCache<String, Map<String, BandActivity>> bandActivityCache(
+            BandActivityAggregator aggregator) {
+        LOG.info("Creating bandActivity LoadingCache with {} expiry", BAND_ACTIVITY_EXPIRY);
+        return Caffeine.newBuilder()
+                .expireAfterWrite(BAND_ACTIVITY_EXPIRY)
+                .recordStats()
+                .build(key -> {
+                    LOG.debug("Loading band activity from aggregator");
+                    Map<String, BandActivity> activities = aggregator.aggregateAllBands();
+                    LOG.info("Loaded {} band activities from aggregator", activities.size());
+                    return activities;
+                });
     }
 }
