@@ -54,7 +54,7 @@ function ActivationsContent({ activations, type, emptyMessage }: Props) {
       [...activations]
         .sort((a, b) => new Date(b.spottedAt ?? 0).getTime() - new Date(a.spottedAt ?? 0).getTime())
         .slice(0, MAX_DISPLAY_ACTIVATIONS),
-    [activations]
+    [activations],
   );
 
   const contentClass = `${type}-content`;
@@ -91,7 +91,7 @@ function ActivationsContent({ activations, type, emptyMessage }: Props) {
                         ? getPotaReferenceUrl((activation.location as ActivationLocationExt).reference!)
                         : getSotaReferenceUrl(
                             (activation.location as ActivationLocationExt).reference!,
-                            (activation.location as ActivationLocationExt).associationCode
+                            (activation.location as ActivationLocationExt).associationCode,
                           )
                     }
                     target="_blank"
