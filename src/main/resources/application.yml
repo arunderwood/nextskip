@@ -89,7 +89,7 @@ nextskip:
       persistence-threads: 2       # Thread pool size for DB writes (I/O-bound, safe for single-core)
       persistence-parallelism: 2   # Concurrent batches in mapAsyncUnordered
     persistence:
-      ttl: 24h            # Time-to-live for spots
+      ttl: 6h             # Time-to-live for spots (reduced from 24h for storage optimization)
       cleanup-interval: 1h # How often to run cleanup
     aggregation:
       refresh-interval: 1m    # How often to recalculate band activity

@@ -1,0 +1,20 @@
+databaseChangeLog:
+  - changeSet:
+      id: 013-tune-autovacuum
+      author: arunderwood
+      comment: Configure more aggressive autovacuum for small tables (DB health review January 2026)
+      changes:
+        - sql:
+            comment: Reduce autovacuum thresholds for small tables that accumulate dead tuples
+            sql: |
+              -- scheduled_tasks: high churn, low row count - vacuum at 10 dead tuples
+              ALTER TABLE scheduled_tasks SET (autovacuum_vacuum_threshold = 10);
+              ALTER TABLE scheduled_tasks SET (autovacuum_vacuum_scale_factor = 0.05);
+
+              -- contests: moderate churn from refresh cycles - vacuum at 10 dead tuples
+              ALTER TABLE contests SET (autovacuum_vacuum_threshold = 10);
+              ALTER TABLE contests SET (autovacuum_vacuum_scale_factor = 0.1);
+
+              -- activations: moderate churn from POTA/SOTA refreshes - vacuum at 50 dead tuples
+              ALTER TABLE activations SET (autovacuum_vacuum_threshold = 50);
+              ALTER TABLE activations SET (autovacuum_vacuum_scale_factor = 0.1);
