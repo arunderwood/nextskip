@@ -13,12 +13,7 @@ export default defineConfig({
     css: true,
     // Enable parallel test execution
     pool: 'threads',
-    poolOptions: {
-      threads: {
-        minThreads: 1,
-        maxThreads: Math.max(1, Math.floor(os.cpus().length * 0.75)),
-      },
-    },
+    maxWorkers: Math.max(1, Math.floor(os.cpus().length * 0.75)),
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'json-summary', 'html', 'lcov'],
