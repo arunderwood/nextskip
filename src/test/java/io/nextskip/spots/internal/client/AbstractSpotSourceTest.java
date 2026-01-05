@@ -259,6 +259,43 @@ class AbstractSpotSourceTest {
     }
 
     // ===========================================
+    // isReceivingMessages tests
+    // ===========================================
+
+    @Test
+    void testIsReceivingMessages_NotConnected_ReturnsFalse() {
+        assertThat(spotSource.isReceivingMessages()).isFalse();
+    }
+
+    @Test
+    void testIsReceivingMessages_ConnectedNoMessages_ReturnsTrue() {
+        spotSource.connect();
+
+        // No messages yet but still within threshold - should return true
+        assertThat(spotSource.isReceivingMessages()).isTrue();
+    }
+
+    @Test
+    void testIsReceivingMessages_RecentMessage_ReturnsTrue() {
+        List<String> receivedMessages = new ArrayList<>();
+        spotSource.setMessageHandler(receivedMessages::add);
+        spotSource.connect();
+
+        spotSource.emitTestMessage("test message");
+
+        assertThat(spotSource.isReceivingMessages()).isTrue();
+    }
+
+    @Test
+    void testIsReceivingMessages_AfterDisconnect_ReturnsFalse() {
+        spotSource.connect();
+        spotSource.emitTestMessage("test message");
+        spotSource.disconnect();
+
+        assertThat(spotSource.isReceivingMessages()).isFalse();
+    }
+
+    // ===========================================
     // getSourceName tests
     // ===========================================
 

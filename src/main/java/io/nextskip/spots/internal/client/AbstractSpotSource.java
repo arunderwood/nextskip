@@ -4,12 +4,15 @@ import jakarta.annotation.PreDestroy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 /**
@@ -39,11 +42,20 @@ public abstract class AbstractSpotSource implements SpotSource {
     private static final long MAX_BACKOFF_MS = 60_000;
     private static final double BACKOFF_MULTIPLIER = 2.0;
 
+    /**
+     * Maximum time without receiving messages before considering the connection stale.
+     * FT8 spots should arrive every few seconds, so 30 seconds without messages
+     * indicates a problem even if the connection appears "connected".
+     */
+    private static final Duration MESSAGE_STALE_THRESHOLD = Duration.ofSeconds(30);
+
     private Consumer<String> messageHandler;
     private final AtomicBoolean connecting = new AtomicBoolean(false);
     private final AtomicInteger consecutiveFailures = new AtomicInteger(0);
+    private final AtomicReference<Instant> lastMessageTime = new AtomicReference<>();
     private final ScheduledExecutorService scheduler;
     private ScheduledFuture<?> reconnectFuture;
+    private ScheduledFuture<?> staleCheckFuture;
 
     protected AbstractSpotSource() {
         this.scheduler = Executors.newSingleThreadScheduledExecutor(r -> {
@@ -99,6 +111,7 @@ public abstract class AbstractSpotSource implements SpotSource {
             LOG.info("{}: Connecting...", getSourceName());
             doConnect();
             consecutiveFailures.set(0);
+            startStaleConnectionCheck();
             LOG.info("{}: Connected successfully", getSourceName());
         } catch (Exception e) {
             LOG.error("{}: Connection failed: {}", getSourceName(), e.getMessage());
@@ -120,6 +133,12 @@ public abstract class AbstractSpotSource implements SpotSource {
             reconnectFuture = null;
         }
 
+        // Cancel stale connection check
+        if (staleCheckFuture != null) {
+            staleCheckFuture.cancel(false);
+            staleCheckFuture = null;
+        }
+
         try {
             doDisconnect();
         } catch (RuntimeException e) {
@@ -133,6 +152,19 @@ public abstract class AbstractSpotSource implements SpotSource {
     @Override
     public boolean isConnected() {
         return isConnectedInternal();
+    }
+
+    @Override
+    public boolean isReceivingMessages() {
+        if (!isConnectedInternal()) {
+            return false;
+        }
+        Instant lastTime = lastMessageTime.get();
+        if (lastTime == null) {
+            // No messages received yet - give it time to start
+            return true;
+        }
+        return Duration.between(lastTime, Instant.now()).compareTo(MESSAGE_STALE_THRESHOLD) < 0;
     }
 
     /**
@@ -157,10 +189,12 @@ public abstract class AbstractSpotSource implements SpotSource {
      * Emits a message to downstream consumers.
      *
      * <p>Subclasses should call this when a message arrives from the source.
+     * Updates the last message timestamp for stale connection detection.
      *
      * @param message the raw message (typically JSON)
      */
     protected void emitMessage(String message) {
+        lastMessageTime.set(Instant.now());
         if (messageHandler != null) {
             messageHandler.accept(message);
         }
@@ -179,5 +213,65 @@ public abstract class AbstractSpotSource implements SpotSource {
     private long calculateBackoff(int failures) {
         double backoff = INITIAL_BACKOFF_MS * Math.pow(BACKOFF_MULTIPLIER, failures - 1);
         return Math.min((long) backoff, MAX_BACKOFF_MS);
+    }
+
+    /**
+     * Starts periodic checking for stale connections.
+     *
+     * <p>If the connection appears connected but no messages have been received
+     * within {@link #MESSAGE_STALE_THRESHOLD}, forces a reconnection.
+     */
+    private void startStaleConnectionCheck() {
+        // Cancel any existing check
+        if (staleCheckFuture != null) {
+            staleCheckFuture.cancel(false);
+        }
+
+        // Check every 10 seconds for stale connections (threshold is 30s)
+        long checkIntervalSeconds = 10;
+        staleCheckFuture = scheduler.scheduleAtFixedRate(
+                this::checkForStaleConnection,
+                checkIntervalSeconds,
+                checkIntervalSeconds,
+                TimeUnit.SECONDS
+        );
+    }
+
+    private void checkForStaleConnection() {
+        if (!isConnectedInternal()) {
+            // Not connected - reconnect will handle it
+            return;
+        }
+
+        Instant lastTime = lastMessageTime.get();
+        if (lastTime == null) {
+            // No messages received yet - give it more time
+            return;
+        }
+
+        Duration sinceLast = Duration.between(lastTime, Instant.now());
+        if (sinceLast.compareTo(MESSAGE_STALE_THRESHOLD) >= 0) {
+            LOG.warn("{}: Connection appears stale - no messages for {}. Forcing reconnection.",
+                    getSourceName(), sinceLast);
+            forceReconnect();
+        }
+    }
+
+    /**
+     * Forces a full disconnect and reconnect cycle.
+     *
+     * <p>Used when the connection appears connected but is not receiving messages.
+     */
+    private void forceReconnect() {
+        try {
+            LOG.info("{}: Forcing reconnection due to stale connection", getSourceName());
+            doDisconnect();
+        } catch (RuntimeException e) {
+            LOG.debug("{}: Error during force disconnect: {}", getSourceName(), e.getMessage());
+        }
+        // Clear last message time to avoid immediate re-trigger
+        lastMessageTime.set(null);
+        // Schedule reconnect with backoff
+        scheduleReconnect();
     }
 }
