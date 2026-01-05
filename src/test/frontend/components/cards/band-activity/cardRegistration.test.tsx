@@ -214,7 +214,7 @@ describe('Band Activity Card Registration', () => {
             expect(element).toBeTruthy();
 
             // Render and check content
-            render(<>{element}</>);
+            render(element);
             expect(screen.getByText('20m FT8')).toBeInTheDocument();
           }
         }
@@ -245,7 +245,7 @@ describe('Band Activity Card Registration', () => {
 
         if (ft8Config) {
           const element = bandActivityCard.render(data, ft8Config);
-          render(<>{element}</>);
+          render(element);
 
           // Should show spot count
           expect(screen.getByText(/150/)).toBeInTheDocument();
@@ -269,7 +269,7 @@ describe('Band Activity Card Registration', () => {
 
         if (ft8Config) {
           const element = bandActivityCard.render(data, ft8Config);
-          render(<>{element}</>);
+          render(element);
 
           // Should render without crashing, showing "No Activity Data"
           expect(screen.getByText('40m FT8')).toBeInTheDocument();
@@ -328,7 +328,7 @@ describe('Band Activity Card Registration', () => {
 
         if (ft8Config) {
           const element = bandActivityCard.render(data, ft8Config);
-          render(<>{element}</>);
+          render(element);
 
           // Should render activity data
           expect(screen.getByText(/100/)).toBeInTheDocument();
