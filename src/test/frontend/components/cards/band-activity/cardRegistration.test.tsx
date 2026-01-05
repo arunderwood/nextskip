@@ -47,9 +47,7 @@ const createMockBandActivity = (overrides: Partial<BandActivity> = {}): BandActi
   ...overrides,
 });
 
-const createMockBandActivityResponse = (
-  activities: Record<string, BandActivity> = {}
-): BandActivityResponse => ({
+const createMockBandActivityResponse = (activities: Record<string, BandActivity> = {}): BandActivityResponse => ({
   bandActivities: activities,
   isConnected: true,
   sourceType: 'PSKREPORTER',

@@ -160,11 +160,9 @@ public abstract class AbstractSpotSource implements SpotSource {
             return false;
         }
         Instant lastTime = lastMessageTime.get();
-        if (lastTime == null) {
-            // No messages received yet - give it time to start
-            return true;
-        }
-        return Duration.between(lastTime, Instant.now()).compareTo(MESSAGE_STALE_THRESHOLD) < 0;
+        // No messages received yet means we should give it time to start
+        return lastTime == null
+            || Duration.between(lastTime, Instant.now()).compareTo(MESSAGE_STALE_THRESHOLD) < 0;
     }
 
     /**
@@ -262,11 +260,12 @@ public abstract class AbstractSpotSource implements SpotSource {
      *
      * <p>Used when the connection appears connected but is not receiving messages.
      */
+    @SuppressWarnings("PMD.AvoidCatchingGenericException") // Intentional: must always proceed to reconnect
     private void forceReconnect() {
         try {
             LOG.info("{}: Forcing reconnection due to stale connection", getSourceName());
             doDisconnect();
-        } catch (RuntimeException e) {
+        } catch (Exception e) {
             LOG.debug("{}: Error during force disconnect: {}", getSourceName(), e.getMessage());
         }
         // Clear last message time to avoid immediate re-trigger
