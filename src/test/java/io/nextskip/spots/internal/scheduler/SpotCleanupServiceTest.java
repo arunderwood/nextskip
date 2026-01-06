@@ -19,6 +19,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -147,6 +148,18 @@ class SpotCleanupServiceTest {
 
         assertThat(deleted).isEqualTo(BATCH_SIZE);
         verify(spotRepository, times(2)).deleteExpiredSpotsBatch(any(Instant.class), eq(BATCH_SIZE));
+    }
+
+    @Test
+    void testExecuteCleanup_TransactionReturnsNull_TreatedAsZero() {
+        // When TransactionTemplate.execute() returns null (e.g., rollback), treat as 0 deleted
+        // Reset the mock to clear the lenient stub and configure new behavior
+        reset(transactionTemplate);
+        when(transactionTemplate.execute(any())).thenReturn(null);
+
+        int deleted = cleanupService.executeCleanup();
+
+        assertThat(deleted).isZero();
     }
 
     // ===========================================
