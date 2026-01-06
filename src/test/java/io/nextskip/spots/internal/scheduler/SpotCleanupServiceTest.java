@@ -14,18 +14,22 @@ import java.time.Instant;
 import static io.nextskip.test.TestConstants.SPOT_TTL_HOURS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
  * Unit tests for {@link SpotCleanupService}.
  *
- * <p>Tests cleanup logic and TTL configuration.
+ * <p>Tests cleanup logic, TTL configuration, and batched deletion behavior.
  */
 @ExtendWith(MockitoExtension.class)
 class SpotCleanupServiceTest {
 
     private static final Duration DEFAULT_TTL = Duration.ofHours(SPOT_TTL_HOURS);
+    private static final int BATCH_SIZE = 100_000;
 
     @Mock
     private SpotRepository spotRepository;
@@ -42,18 +46,35 @@ class SpotCleanupServiceTest {
     // ===========================================
 
     @Test
-    void testExecuteCleanup_DeletesOldSpots_ReturnsCount() {
-        when(spotRepository.deleteByCreatedAtBefore(any(Instant.class))).thenReturn(42);
+    void testExecuteCleanup_SingleBatch_ReturnsCount() {
+        // Single batch with fewer than BATCH_SIZE rows (indicates completion)
+        when(spotRepository.deleteExpiredSpotsBatch(any(Instant.class), eq(BATCH_SIZE)))
+                .thenReturn(42);
 
         int deleted = cleanupService.executeCleanup();
 
         assertThat(deleted).isEqualTo(42);
-        verify(spotRepository).deleteByCreatedAtBefore(any(Instant.class));
+        verify(spotRepository).deleteExpiredSpotsBatch(any(Instant.class), eq(BATCH_SIZE));
+    }
+
+    @Test
+    void testExecuteCleanup_MultipleBatches_ReturnsTotalCount() {
+        // First batch returns full BATCH_SIZE, second batch returns partial
+        when(spotRepository.deleteExpiredSpotsBatch(any(Instant.class), eq(BATCH_SIZE)))
+                .thenReturn(BATCH_SIZE)  // First batch: full
+                .thenReturn(BATCH_SIZE)  // Second batch: full
+                .thenReturn(50_000);     // Third batch: partial (done)
+
+        int deleted = cleanupService.executeCleanup();
+
+        assertThat(deleted).isEqualTo(BATCH_SIZE + BATCH_SIZE + 50_000);
+        verify(spotRepository, times(3)).deleteExpiredSpotsBatch(any(Instant.class), eq(BATCH_SIZE));
     }
 
     @Test
     void testExecuteCleanup_NoOldSpots_ReturnsZero() {
-        when(spotRepository.deleteByCreatedAtBefore(any(Instant.class))).thenReturn(0);
+        when(spotRepository.deleteExpiredSpotsBatch(any(Instant.class), anyInt()))
+                .thenReturn(0);
 
         int deleted = cleanupService.executeCleanup();
 
@@ -63,17 +84,18 @@ class SpotCleanupServiceTest {
     @Test
     void testExecuteCleanup_UsesTtlForCutoff() {
         Instant beforeCall = Instant.now();
-        when(spotRepository.deleteByCreatedAtBefore(any(Instant.class))).thenReturn(0);
+        when(spotRepository.deleteExpiredSpotsBatch(any(Instant.class), anyInt()))
+                .thenReturn(0);
 
         cleanupService.executeCleanup();
 
         ArgumentCaptor<Instant> cutoffCaptor = ArgumentCaptor.forClass(Instant.class);
-        verify(spotRepository).deleteByCreatedAtBefore(cutoffCaptor.capture());
+        verify(spotRepository).deleteExpiredSpotsBatch(cutoffCaptor.capture(), eq(BATCH_SIZE));
 
         Instant cutoff = cutoffCaptor.getValue();
         Instant expectedCutoff = beforeCall.minus(DEFAULT_TTL);
 
-        // Cutoff should be approximately 24 hours ago (within a few seconds)
+        // Cutoff should be approximately TTL ago (within a few seconds)
         assertThat(cutoff).isBetween(
                 expectedCutoff.minusSeconds(5),
                 expectedCutoff.plusSeconds(5)
@@ -85,12 +107,13 @@ class SpotCleanupServiceTest {
         Duration customTtl = Duration.ofHours(12);
         SpotCleanupService customService = new SpotCleanupService(spotRepository, customTtl);
         Instant beforeCall = Instant.now();
-        when(spotRepository.deleteByCreatedAtBefore(any(Instant.class))).thenReturn(0);
+        when(spotRepository.deleteExpiredSpotsBatch(any(Instant.class), anyInt()))
+                .thenReturn(0);
 
         customService.executeCleanup();
 
         ArgumentCaptor<Instant> cutoffCaptor = ArgumentCaptor.forClass(Instant.class);
-        verify(spotRepository).deleteByCreatedAtBefore(cutoffCaptor.capture());
+        verify(spotRepository).deleteExpiredSpotsBatch(cutoffCaptor.capture(), eq(BATCH_SIZE));
 
         Instant cutoff = cutoffCaptor.getValue();
         Instant expectedCutoff = beforeCall.minus(customTtl);
@@ -99,6 +122,19 @@ class SpotCleanupServiceTest {
                 expectedCutoff.minusSeconds(5),
                 expectedCutoff.plusSeconds(5)
         );
+    }
+
+    @Test
+    void testExecuteCleanup_ExactBatchSize_ContinuesUntilPartialBatch() {
+        // When batch returns exactly BATCH_SIZE, continue; stop only when < BATCH_SIZE
+        when(spotRepository.deleteExpiredSpotsBatch(any(Instant.class), eq(BATCH_SIZE)))
+                .thenReturn(BATCH_SIZE)  // Continue
+                .thenReturn(0);          // Stop (0 < BATCH_SIZE)
+
+        int deleted = cleanupService.executeCleanup();
+
+        assertThat(deleted).isEqualTo(BATCH_SIZE);
+        verify(spotRepository, times(2)).deleteExpiredSpotsBatch(any(Instant.class), eq(BATCH_SIZE));
     }
 
     // ===========================================

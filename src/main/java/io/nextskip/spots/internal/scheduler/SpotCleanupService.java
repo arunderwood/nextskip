@@ -18,7 +18,9 @@ import java.time.Instant;
  * <p>Spots are retained for a configurable TTL (default 24 hours).
  * This service is called by {@link SpotCleanupTask} on a recurring schedule.
  *
- * <p>The cleanup is transactional to ensure atomicity of the delete operation.
+ * <p>Cleanup uses batched deletion to handle high-volume scenarios where
+ * millions of rows may need to be deleted. Each batch is committed independently
+ * to avoid long-running transactions and ensure progress is preserved.
  */
 @Service
 @ConditionalOnProperty(prefix = "nextskip.spots", name = "enabled", havingValue = "true", matchIfMissing = true)
@@ -26,6 +28,13 @@ import java.time.Instant;
 public class SpotCleanupService {
 
     private static final Logger LOG = LoggerFactory.getLogger(SpotCleanupService.class);
+
+    /**
+     * Number of rows to delete per batch. Tuned to balance:
+     * - Transaction size (not too large to avoid timeouts)
+     * - Efficiency (not too small to avoid excessive round-trips)
+     */
+    private static final int CLEANUP_BATCH_SIZE = 100_000;
 
     private final SpotRepository spotRepository;
     private final Duration ttl;
@@ -38,24 +47,46 @@ public class SpotCleanupService {
     }
 
     /**
-     * Deletes spots older than the configured TTL.
+     * Deletes spots older than the configured TTL using batched deletion.
      *
-     * @return the number of spots deleted
+     * <p>Iteratively deletes batches of expired spots until none remain.
+     * Each batch is committed independently to avoid long-running transactions.
+     *
+     * @return the total number of spots deleted
      */
-    @Transactional
     public int executeCleanup() {
         Instant cutoff = Instant.now().minus(ttl);
         LOG.debug("Cleaning up spots older than {}", cutoff);
 
-        int deleted = spotRepository.deleteByCreatedAtBefore(cutoff);
+        int totalDeleted = 0;
+        int deleted;
 
-        if (deleted > 0) {
-            LOG.info("Spot cleanup complete: deleted {} spots older than {}", deleted, ttl);
+        do {
+            deleted = deleteBatch(cutoff);
+            totalDeleted += deleted;
+            if (deleted > 0) {
+                LOG.debug("Deleted batch of {} spots (total so far: {})", deleted, totalDeleted);
+            }
+        } while (deleted == CLEANUP_BATCH_SIZE);
+
+        if (totalDeleted > 0) {
+            LOG.info("Spot cleanup complete: deleted {} spots older than {}", totalDeleted, ttl);
         } else {
             LOG.debug("Spot cleanup complete: no expired spots found");
         }
 
-        return deleted;
+        return totalDeleted;
+    }
+
+    /**
+     * Deletes a single batch of expired spots within its own transaction.
+     *
+     * @param cutoff delete spots created before this time
+     * @return number of spots deleted in this batch
+     */
+    @Transactional
+    int deleteBatch(Instant cutoff) {
+        return spotRepository.deleteExpiredSpotsBatch(cutoff, CLEANUP_BATCH_SIZE);
     }
 
     /**
