@@ -7,7 +7,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -37,12 +37,15 @@ public class SpotCleanupService {
     private static final int CLEANUP_BATCH_SIZE = 100_000;
 
     private final SpotRepository spotRepository;
+    private final TransactionTemplate transactionTemplate;
     private final Duration ttl;
 
     public SpotCleanupService(
             SpotRepository spotRepository,
+            TransactionTemplate transactionTemplate,
             @Value("${nextskip.spots.persistence.ttl:24h}") Duration ttl) {
         this.spotRepository = spotRepository;
+        this.transactionTemplate = transactionTemplate;
         this.ttl = ttl;
     }
 
@@ -81,12 +84,17 @@ public class SpotCleanupService {
     /**
      * Deletes a single batch of expired spots within its own transaction.
      *
+     * <p>Uses programmatic transaction management via {@link TransactionTemplate}
+     * to ensure each batch commits independently, even when called from within
+     * the same class (avoiding Spring's proxy-based AOP limitation).
+     *
      * @param cutoff delete spots created before this time
      * @return number of spots deleted in this batch
      */
-    @Transactional
     int deleteBatch(Instant cutoff) {
-        return spotRepository.deleteExpiredSpotsBatch(cutoff, CLEANUP_BATCH_SIZE);
+        Integer deleted = transactionTemplate.execute(
+                status -> spotRepository.deleteExpiredSpotsBatch(cutoff, CLEANUP_BATCH_SIZE));
+        return deleted != null ? deleted : 0;
     }
 
     /**
