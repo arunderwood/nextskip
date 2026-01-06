@@ -4,11 +4,8 @@
  * Composes sub-components to display activity data, trends, DX reach,
  * propagation paths, and condition rating.
  *
- * Handles display states:
- * - Full data (activity + condition): Shows all sub-components
- * - Activity only: Hides ConditionBadge
- * - Condition only + supported mode: Shows "No Activity Data"
- * - Unsupported mode: Shows "Coming soon..."
+ * Cards are only rendered when activity data exists (no placeholder states).
+ * Unsupported modes with activity still show "Coming soon..." message.
  */
 
 import React from 'react';
@@ -20,7 +17,6 @@ import { TrendIndicator } from './TrendIndicator';
 import { DxReachDisplay } from './DxReachDisplay';
 import { PathStatusGrid } from './PathStatusGrid';
 import { ConditionBadge } from './ConditionBadge';
-import { NoActivityPlaceholder } from './NoActivityPlaceholder';
 import { ComingSoonPlaceholder } from './ComingSoonPlaceholder';
 import './BandModeActivityContent.css';
 
@@ -40,6 +36,7 @@ interface Props {
 
 /**
  * Renders the appropriate content based on available data and mode support.
+ * Note: Cards without activity are filtered out in createConfig, so activity should always exist.
  */
 export function BandModeActivityContent({ activity, condition, modeConfig, band: _band }: Props) {
   // Unsupported mode: show coming soon placeholder
@@ -47,15 +44,10 @@ export function BandModeActivityContent({ activity, condition, modeConfig, band:
     return <ComingSoonPlaceholder modeName={modeConfig.displayName ?? String(modeConfig.mode)} />;
   }
 
-  // Supported mode but no activity data: show no activity placeholder
-  // (We still render if we have condition data, just with placeholder for activity)
+  // Activity should always exist since cards without activity are not created
+  // But handle gracefully just in case
   if (!activity) {
-    return (
-      <div className="band-mode-activity-content">
-        <NoActivityPlaceholder />
-        {condition?.rating ? <ConditionBadge rating={condition.rating} /> : null}
-      </div>
-    );
+    return null;
   }
 
   // Full content with activity data

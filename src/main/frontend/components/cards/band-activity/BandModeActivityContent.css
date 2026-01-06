@@ -11,8 +11,8 @@
 .activity-bar-container {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  margin-bottom: 8px;
+  gap: 2px;
+  margin-bottom: 4px;
 }
 
 .activity-bar-label {
@@ -56,7 +56,7 @@
   justify-content: space-between;
   align-items: center;
   font-size: 0.75rem;
-  margin-bottom: 8px;
+  margin-bottom: 4px;
 }
 
 .trend-label {
@@ -108,7 +108,7 @@
   align-items: center;
   gap: 6px;
   font-size: 0.75rem;
-  margin-bottom: 8px;
+  margin-bottom: 4px;
   flex-wrap: wrap;
 }
 
@@ -145,7 +145,7 @@
    ============================================ */
 
 .path-grid-container {
-  margin-bottom: 8px;
+  margin-bottom: 4px;
 }
 
 .path-grid-label {
@@ -153,7 +153,7 @@
   color: var(--color-text-secondary);
   font-size: 0.75rem;
   font-weight: 500;
-  margin-bottom: 4px;
+  margin-bottom: 2px;
 }
 
 .path-grid {
@@ -298,11 +298,7 @@
   flex-direction: column;
 }
 
-/* Divider between sections */
-.band-mode-activity-content > *:not(:last-child) {
-  border-bottom: 1px solid var(--color-border);
-  padding-bottom: 8px;
-}
+/* Compact layout - no dividers, minimal gaps */
 
 /* ============================================
    Dark Mode Adjustments

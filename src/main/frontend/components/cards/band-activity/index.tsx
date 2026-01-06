@@ -37,7 +37,8 @@ function toBandModeActivity(activity: BandActivity): BandModeActivity {
     trendPercentage: activity.trendPercentage ?? 0,
     maxDxKm: activity.maxDxKm ?? undefined,
     maxDxPath: activity.maxDxPath ?? undefined,
-    activePaths: activity.activePaths?.map((p) => String(p)) ?? [],
+    // Hilla serializes Java enums as string names, so pass directly
+    activePaths: (activity.activePaths ?? []) as string[],
     score: activity.score ?? 0,
     windowMinutes: activity.windowMinutes ?? 15,
   };
@@ -140,8 +141,9 @@ const bandModeActivityCards: CardDefinition = {
         const modeId = String(modeConfig.mode);
         const activity = findActivity(data, band, modeId);
 
-        // Only create cards for supported modes OR modes with activity
-        if (!modeConfig.isSupported && !activity) {
+        // Only create cards when there's activity data
+        // Cards without activity are hidden (no "No Activity Data" placeholder)
+        if (!activity) {
           continue;
         }
 

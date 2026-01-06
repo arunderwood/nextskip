@@ -72,7 +72,7 @@ function asConfigArray(result: ActivityCardConfig | ActivityCardConfig[] | null)
 
 describe('Band Activity Card Registration', () => {
   describe('canRender', () => {
-    it('should return true when propagation data present', () => {
+    it('should not create cards when only propagation data present (no activity)', () => {
       const data: DashboardData = {
         propagation: {
           bandConditions: [createMockBandCondition()],
@@ -80,12 +80,12 @@ describe('Band Activity Card Registration', () => {
       };
       const { result } = renderHook(() => useDashboardCards(data));
 
-      // Should create band-mode-activity cards
+      // Cards are only created when activity data exists
       const bandCards = result.current.filter((c) => c.type === 'band-mode-activity');
-      expect(bandCards.length).toBeGreaterThan(0);
+      expect(bandCards.length).toBe(0);
     });
 
-    it('should return true when spots data present', () => {
+    it('should create cards when spots data present', () => {
       const data: DashboardData = {
         spots: createMockBandActivityResponse({
           '20m-FT8': createMockBandActivity(),
@@ -117,15 +117,16 @@ describe('Band Activity Card Registration', () => {
   describe('createConfig', () => {
     it('should create cards with proper IDs', () => {
       const data: DashboardData = {
-        propagation: {
-          bandConditions: [createMockBandCondition({ band: FrequencyBand.BAND_20M })],
-        },
+        spots: createMockBandActivityResponse({
+          '20m-FT8': createMockBandActivity({ band: '20m', mode: 'FT8' }),
+        }),
       };
       const { result } = renderHook(() => useDashboardCards(data));
 
       const bandCards = result.current.filter((c) => c.type === 'band-mode-activity');
-      // Should have IDs like "band-activity-20m-FT8", "band-activity-20m-CW"
+      // Should have IDs like "band-activity-20m-FT8"
       expect(bandCards.some((c) => c.id.startsWith('band-activity-'))).toBe(true);
+      expect(bandCards.some((c) => c.id === 'band-activity-20m-FT8')).toBe(true);
     });
 
     it('should calculate combined score from activity and condition', () => {
@@ -149,45 +150,46 @@ describe('Band Activity Card Registration', () => {
       }
     });
 
-    it('should use condition score when no activity data', () => {
+    it('should use activity score when only activity data present', () => {
       const data: DashboardData = {
-        propagation: {
-          bandConditions: [createMockBandCondition({ band: FrequencyBand.BAND_20M, score: 60 })],
-        },
+        spots: createMockBandActivityResponse({
+          '20m-FT8': createMockBandActivity({ band: '20m', mode: 'FT8', score: 75 }),
+        }),
       };
       const { result } = renderHook(() => useDashboardCards(data));
 
-      // Find a 20m card (should use condition score directly)
-      const card20m = result.current.find((c) => c.id.includes('20m'));
-      expect(card20m?.priority).toBe(60);
+      // Find a 20m card (should use activity score directly)
+      const card20m = result.current.find((c) => c.id === 'band-activity-20m-FT8');
+      expect(card20m?.priority).toBe(75);
     });
 
-    it('should create cards for supported modes', () => {
+    it('should create cards only for modes with activity', () => {
       const data: DashboardData = {
-        propagation: {
-          bandConditions: [createMockBandCondition({ band: FrequencyBand.BAND_20M })],
-        },
+        spots: createMockBandActivityResponse({
+          '20m-FT8': createMockBandActivity({ band: '20m', mode: 'FT8' }),
+          '20m-CW': createMockBandActivity({ band: '20m', mode: 'CW' }),
+        }),
       };
       const { result } = renderHook(() => useDashboardCards(data));
 
-      // Should have FT8 and CW cards (supported modes)
+      // Should have FT8 and CW cards (have activity data)
       const ft8Card = result.current.find((c) => c.id === 'band-activity-20m-FT8');
       const cwCard = result.current.find((c) => c.id === 'band-activity-20m-CW');
       expect(ft8Card).toBeDefined();
       expect(cwCard).toBeDefined();
     });
 
-    it('should skip unsupported modes without activity', () => {
+    it('should not create cards for modes without activity', () => {
       const data: DashboardData = {
-        propagation: {
-          bandConditions: [createMockBandCondition({ band: FrequencyBand.BAND_20M })],
-        },
+        spots: createMockBandActivityResponse({
+          '20m-FT8': createMockBandActivity({ band: '20m', mode: 'FT8' }),
+        }),
       };
       const { result } = renderHook(() => useDashboardCards(data));
 
-      // SSB is unsupported and has no activity data, so no card should be created
-      const ssbCard = result.current.find((c) => c.id === 'band-activity-20m-SSB');
-      expect(ssbCard).toBeUndefined();
+      // CW has no activity data, so no card should be created
+      const cwCard = result.current.find((c) => c.id === 'band-activity-20m-CW');
+      expect(cwCard).toBeUndefined();
     });
 
     it('should include unsupported modes when they have activity data', () => {
@@ -207,9 +209,9 @@ describe('Band Activity Card Registration', () => {
   describe('render', () => {
     it('should render card with title containing band and mode', () => {
       const data: DashboardData = {
-        propagation: {
-          bandConditions: [createMockBandCondition({ band: FrequencyBand.BAND_20M })],
-        },
+        spots: createMockBandActivityResponse({
+          '20m-FT8': createMockBandActivity({ band: '20m', mode: 'FT8' }),
+        }),
       };
 
       const cards = getRegisteredCards();
@@ -263,11 +265,12 @@ describe('Band Activity Card Registration', () => {
       }
     });
 
-    it('should handle missing activity gracefully', () => {
+    it('should handle missing condition gracefully', () => {
       const data: DashboardData = {
-        propagation: {
-          bandConditions: [createMockBandCondition({ band: FrequencyBand.BAND_40M })],
-        },
+        spots: createMockBandActivityResponse({
+          '40m-FT8': createMockBandActivity({ band: '40m', mode: 'FT8' }),
+        }),
+        // No propagation data
       };
 
       const cards = getRegisteredCards();
@@ -281,7 +284,7 @@ describe('Band Activity Card Registration', () => {
           const element = bandActivityCard.render(data, ft8Config);
           render(element);
 
-          // Should render without crashing, showing "No Activity Data"
+          // Should render without crashing
           expect(screen.getByText('40m FT8')).toBeInTheDocument();
         }
       }
@@ -289,13 +292,11 @@ describe('Band Activity Card Registration', () => {
 
     it('should handle multiple bands correctly', () => {
       const data: DashboardData = {
-        propagation: {
-          bandConditions: [
-            createMockBandCondition({ band: FrequencyBand.BAND_20M, score: 80 }),
-            createMockBandCondition({ band: FrequencyBand.BAND_40M, score: 60 }),
-            createMockBandCondition({ band: FrequencyBand.BAND_80M, score: 40 }),
-          ],
-        },
+        spots: createMockBandActivityResponse({
+          '20m-FT8': createMockBandActivity({ band: '20m', mode: 'FT8' }),
+          '40m-FT8': createMockBandActivity({ band: '40m', mode: 'FT8' }),
+          '80m-FT8': createMockBandActivity({ band: '80m', mode: 'FT8' }),
+        }),
       };
 
       const { result } = renderHook(() => useDashboardCards(data));
@@ -383,9 +384,9 @@ describe('Band Activity Card Registration', () => {
   describe('parseCardId', () => {
     it('should handle valid card IDs', () => {
       const data: DashboardData = {
-        propagation: {
-          bandConditions: [createMockBandCondition({ band: FrequencyBand.BAND_20M })],
-        },
+        spots: createMockBandActivityResponse({
+          '20m-FT8': createMockBandActivity({ band: '20m', mode: 'FT8' }),
+        }),
       };
 
       const cards = getRegisteredCards();
@@ -405,9 +406,9 @@ describe('Band Activity Card Registration', () => {
 
     it('should return null for invalid card IDs', () => {
       const data: DashboardData = {
-        propagation: {
-          bandConditions: [createMockBandCondition({ band: FrequencyBand.BAND_20M })],
-        },
+        spots: createMockBandActivityResponse({
+          '20m-FT8': createMockBandActivity({ band: '20m', mode: 'FT8' }),
+        }),
       };
 
       const cards = getRegisteredCards();
@@ -433,13 +434,11 @@ describe('Band Activity Card Registration', () => {
   describe('band sorting', () => {
     it('should sort bands by frequency (lower first)', () => {
       const data: DashboardData = {
-        propagation: {
-          bandConditions: [
-            createMockBandCondition({ band: FrequencyBand.BAND_10M }),
-            createMockBandCondition({ band: FrequencyBand.BAND_80M }),
-            createMockBandCondition({ band: FrequencyBand.BAND_20M }),
-          ],
-        },
+        spots: createMockBandActivityResponse({
+          '10m-FT8': createMockBandActivity({ band: '10m', mode: 'FT8' }),
+          '80m-FT8': createMockBandActivity({ band: '80m', mode: 'FT8' }),
+          '20m-FT8': createMockBandActivity({ band: '20m', mode: 'FT8' }),
+        }),
       };
 
       const { result } = renderHook(() => useDashboardCards(data));

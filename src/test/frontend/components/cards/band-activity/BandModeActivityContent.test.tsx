@@ -78,27 +78,23 @@ describe('BandModeActivityContent', () => {
     });
   });
 
-  describe('no activity placeholder', () => {
-    it('should show placeholder when supported mode has no activity', () => {
+  describe('no activity handling', () => {
+    it('should render nothing when supported mode has no activity', () => {
       const condition = createMockBandCondition();
 
-      render(<BandModeActivityContent condition={condition} modeConfig={supportedModeConfig} band="20m" />);
+      const { container } = render(
+        <BandModeActivityContent condition={condition} modeConfig={supportedModeConfig} band="20m" />,
+      );
 
-      // Should show no activity message
-      expect(screen.getByText(/No Activity Data/i)).toBeInTheDocument();
-
-      // Should still show condition badge
-      expect(screen.getByText('GOOD')).toBeInTheDocument();
+      // Should render nothing (cards without activity are filtered at registration level)
+      expect(container).toBeEmptyDOMElement();
     });
 
-    it('should show placeholder without condition badge when no condition', () => {
-      render(<BandModeActivityContent modeConfig={supportedModeConfig} band="20m" />);
+    it('should render nothing when no activity and no condition', () => {
+      const { container } = render(<BandModeActivityContent modeConfig={supportedModeConfig} band="20m" />);
 
-      // Should show no activity message
-      expect(screen.getByText(/No Activity Data/i)).toBeInTheDocument();
-
-      // Should not show condition badge
-      expect(screen.queryByText('GOOD')).not.toBeInTheDocument();
+      // Should render nothing
+      expect(container).toBeEmptyDOMElement();
     });
   });
 
@@ -226,6 +222,7 @@ describe('BandModeActivityContent', () => {
     it('should have no accessibility violations with no activity', async () => {
       const { container } = render(<BandModeActivityContent modeConfig={supportedModeConfig} band="20m" />);
 
+      // Component renders nothing for no activity, but axe should still pass
       const results = await axe(container);
       expect(results).toHaveNoViolations();
     });

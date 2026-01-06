@@ -12,6 +12,8 @@ import type { DashboardData } from 'Frontend/components/cards/types';
 import type PropagationResponse from 'Frontend/generated/io/nextskip/propagation/api/PropagationResponse';
 import type SolarIndices from 'Frontend/generated/io/nextskip/propagation/model/SolarIndices';
 import type BandCondition from 'Frontend/generated/io/nextskip/propagation/model/BandCondition';
+import type BandActivity from 'Frontend/generated/io/nextskip/spots/model/BandActivity';
+import type BandActivityResponse from 'Frontend/generated/io/nextskip/spots/api/BandActivityResponse';
 import FrequencyBand from 'Frontend/generated/io/nextskip/common/model/FrequencyBand';
 import BandConditionRating from 'Frontend/generated/io/nextskip/propagation/model/BandConditionRating';
 
@@ -39,6 +41,28 @@ const createMockBandCondition = (overrides: Partial<BandCondition> = {}): BandCo
   ...overrides,
 });
 
+const createMockBandActivity = (overrides: Partial<BandActivity> = {}): BandActivity => ({
+  band: '20m',
+  mode: 'FT8',
+  spotCount: 100,
+  baselineSpotCount: 80,
+  trendPercentage: 25,
+  maxDxKm: 5000,
+  maxDxPath: 'NA-EU',
+  activePaths: [],
+  score: 85,
+  favorable: true,
+  windowMinutes: 15,
+  ...overrides,
+});
+
+const createMockBandActivityResponse = (activities: Record<string, BandActivity> = {}): BandActivityResponse => ({
+  bandActivities: activities,
+  mqttConnected: true,
+  bandCount: Object.keys(activities).length,
+  totalSpotCount: Object.values(activities).reduce((sum, a) => sum + (a?.spotCount ?? 0), 0),
+});
+
 const createMockPropagationResponse = (overrides: Partial<PropagationResponse> = {}): PropagationResponse => ({
   solarIndices: createMockSolarIndices(),
   bandConditions: [
@@ -62,7 +86,7 @@ describe('useDashboardCards', () => {
     });
   });
 
-  it('should create band-mode-activity cards for each band + mode combo', () => {
+  it('should create band-mode-activity cards for each band + mode combo with activity', () => {
     const dashboardData: DashboardData = {
       propagation: createMockPropagationResponse({
         solarIndices: undefined,
@@ -71,11 +95,17 @@ describe('useDashboardCards', () => {
           createMockBandCondition({ band: FrequencyBand.BAND_40M }),
         ],
       }),
+      spots: createMockBandActivityResponse({
+        '20m-FT8': createMockBandActivity({ band: '20m', mode: 'FT8' }),
+        '20m-CW': createMockBandActivity({ band: '20m', mode: 'CW' }),
+        '40m-FT8': createMockBandActivity({ band: '40m', mode: 'FT8' }),
+        '40m-CW': createMockBandActivity({ band: '40m', mode: 'CW' }),
+      }),
     };
     const { result } = renderHook(() => useDashboardCards(dashboardData));
 
-    // 1 solar (loading) + cards for each band+mode combo
-    // With 2 bands and 2 supported modes (FT8, CW), expect at least 5 cards
+    // 1 solar (loading) + cards for each band+mode combo with activity
+    // With 2 bands and 2 modes with activity, expect at least 5 cards
     expect(result.current.length).toBeGreaterThanOrEqual(5);
 
     // Should include solar card
@@ -88,9 +118,8 @@ describe('useDashboardCards', () => {
 
   it('should use band-mode-activity type and 1x1 size for band activity cards', () => {
     const dashboardData: DashboardData = {
-      propagation: createMockPropagationResponse({
-        solarIndices: undefined,
-        bandConditions: [createMockBandCondition({ band: FrequencyBand.BAND_20M })],
+      spots: createMockBandActivityResponse({
+        '20m-FT8': createMockBandActivity({ band: '20m', mode: 'FT8' }),
       }),
     };
     const { result } = renderHook(() => useDashboardCards(dashboardData));
@@ -107,6 +136,8 @@ describe('useDashboardCards', () => {
   });
 
   it('should calculate priority using condition score when no activity data', () => {
+    // Cards are only created when activity data exists
+    // This test now verifies that no cards are created without activity
     const dashboardData: DashboardData = {
       propagation: createMockPropagationResponse({
         solarIndices: undefined,
@@ -118,20 +149,17 @@ describe('useDashboardCards', () => {
     };
     const { result } = renderHook(() => useDashboardCards(dashboardData));
 
-    // Find cards for 20m (should have higher priority than 40m)
-    const cards20m = result.current.filter((c) => c.id.includes('20m'));
-    const cards40m = result.current.filter((c) => c.id.includes('40m'));
-
-    if (cards20m.length > 0 && cards40m.length > 0) {
-      // When no activity data, priority should equal condition score
-      expect(cards20m[0].priority).toBe(80);
-      expect(cards40m[0].priority).toBe(60);
-    }
+    // No band-mode-activity cards without activity data
+    const bandActivityCards = result.current.filter((c) => c.type === 'band-mode-activity');
+    expect(bandActivityCards.length).toBe(0);
   });
 
-  it('should return solar and band-mode-activity cards when all data present', () => {
+  it('should return solar and band-mode-activity cards when activity data present', () => {
     const dashboardData: DashboardData = {
       propagation: createMockPropagationResponse(),
+      spots: createMockBandActivityResponse({
+        '20m-FT8': createMockBandActivity({ band: '20m', mode: 'FT8' }),
+      }),
     };
     const { result } = renderHook(() => useDashboardCards(dashboardData));
 
