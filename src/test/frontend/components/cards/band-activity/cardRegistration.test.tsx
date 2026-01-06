@@ -15,7 +15,9 @@ import type BandActivity from 'Frontend/generated/io/nextskip/spots/model/BandAc
 import type BandActivityResponse from 'Frontend/generated/io/nextskip/spots/api/BandActivityResponse';
 import FrequencyBand from 'Frontend/generated/io/nextskip/common/model/FrequencyBand';
 import BandConditionRating from 'Frontend/generated/io/nextskip/propagation/model/BandConditionRating';
+import ContinentPath from 'Frontend/generated/io/nextskip/spots/model/ContinentPath';
 import { getRegisteredCards } from 'Frontend/components/cards/CardRegistry';
+import type { ActivityCardConfig } from 'Frontend/types/activity';
 
 // Ensure card registration is loaded
 import 'Frontend/components/cards/band-activity';
@@ -41,18 +43,28 @@ const createMockBandActivity = (overrides: Partial<BandActivity> = {}): BandActi
   trendPercentage: 25,
   maxDxKm: 5000,
   maxDxPath: 'NA-EU',
-  activePaths: ['NA_EU', 'NA_AS'],
+  activePaths: [ContinentPath.NA_EU, ContinentPath.NA_AS],
   score: 85,
+  favorable: true,
   windowMinutes: 15,
   ...overrides,
 });
 
 const createMockBandActivityResponse = (activities: Record<string, BandActivity> = {}): BandActivityResponse => ({
   bandActivities: activities,
-  isConnected: true,
-  sourceType: 'PSKREPORTER',
-  lastUpdateTime: new Date().toISOString(),
+  mqttConnected: true,
+  bandCount: Object.keys(activities).length,
+  totalSpotCount: Object.values(activities).reduce((sum, a) => sum + (a?.spotCount ?? 0), 0),
 });
+
+/**
+ * Helper to safely get configs as array from createConfig result.
+ * Handles the union type: ActivityCardConfig | ActivityCardConfig[] | null
+ */
+function asConfigArray(result: ActivityCardConfig | ActivityCardConfig[] | null): ActivityCardConfig[] {
+  if (!result) return [];
+  return Array.isArray(result) ? result : [result];
+}
 
 // ===========================================
 // Card Registration Tests
@@ -204,19 +216,17 @@ describe('Band Activity Card Registration', () => {
       const bandActivityCard = cards.find((c) => c.canRender(data));
 
       if (bandActivityCard) {
-        const configs = bandActivityCard.createConfig(data);
-        expect(configs).toBeTruthy();
+        const configs = asConfigArray(bandActivityCard.createConfig(data));
+        expect(configs.length).toBeGreaterThan(0);
 
-        if (configs && configs.length > 0) {
-          const ft8Config = configs.find((c) => c.id === 'band-activity-20m-FT8');
-          if (ft8Config) {
-            const element = bandActivityCard.render(data, ft8Config);
-            expect(element).toBeTruthy();
+        const ft8Config = configs.find((c) => c.id === 'band-activity-20m-FT8');
+        if (ft8Config) {
+          const element = bandActivityCard.render(data, ft8Config);
+          expect(element).toBeTruthy();
 
-            // Render and check content
-            render(element);
-            expect(screen.getByText('20m FT8')).toBeInTheDocument();
-          }
+          // Render and check content
+          render(element);
+          expect(screen.getByText('20m FT8')).toBeInTheDocument();
         }
       }
     });
@@ -240,8 +250,8 @@ describe('Band Activity Card Registration', () => {
       const bandActivityCard = cards.find((c) => c.canRender(data));
 
       if (bandActivityCard) {
-        const configs = bandActivityCard.createConfig(data);
-        const ft8Config = configs?.find((c) => c.id === 'band-activity-20m-FT8');
+        const configs = asConfigArray(bandActivityCard.createConfig(data));
+        const ft8Config = configs.find((c) => c.id === 'band-activity-20m-FT8');
 
         if (ft8Config) {
           const element = bandActivityCard.render(data, ft8Config);
@@ -264,8 +274,8 @@ describe('Band Activity Card Registration', () => {
       const bandActivityCard = cards.find((c) => c.canRender(data));
 
       if (bandActivityCard) {
-        const configs = bandActivityCard.createConfig(data);
-        const ft8Config = configs?.find((c) => c.id === 'band-activity-40m-FT8');
+        const configs = asConfigArray(bandActivityCard.createConfig(data));
+        const ft8Config = configs.find((c) => c.id === 'band-activity-40m-FT8');
 
         if (ft8Config) {
           const element = bandActivityCard.render(data, ft8Config);
@@ -312,7 +322,7 @@ describe('Band Activity Card Registration', () => {
             trendPercentage: 25,
             maxDxKm: 5000,
             maxDxPath: 'NA-EU',
-            activePaths: ['NA_EU', 'NA_AS'],
+            activePaths: [ContinentPath.NA_EU, ContinentPath.NA_AS],
             score: 85,
             windowMinutes: 15,
           }),
@@ -323,8 +333,8 @@ describe('Band Activity Card Registration', () => {
       const bandActivityCard = cards.find((c) => c.canRender(data));
 
       if (bandActivityCard) {
-        const configs = bandActivityCard.createConfig(data);
-        const ft8Config = configs?.find((c) => c.id === 'band-activity-20m-FT8');
+        const configs = asConfigArray(bandActivityCard.createConfig(data));
+        const ft8Config = configs.find((c) => c.id === 'band-activity-20m-FT8');
 
         if (ft8Config) {
           const element = bandActivityCard.render(data, ft8Config);
@@ -337,13 +347,19 @@ describe('Band Activity Card Registration', () => {
       }
     });
 
-    it('should handle BandActivity with null/undefined fields', () => {
+    it('should handle BandActivity with minimal required fields', () => {
       const data: DashboardData = {
         spots: createMockBandActivityResponse({
           '20m-FT8': {
             band: '20m',
             mode: 'FT8',
-            // Most fields undefined
+            // Only required fields, optional fields undefined
+            spotCount: 0,
+            baselineSpotCount: 0,
+            trendPercentage: 0,
+            score: 0,
+            favorable: false,
+            windowMinutes: 15,
           },
         }),
       };
@@ -352,8 +368,8 @@ describe('Band Activity Card Registration', () => {
       const bandActivityCard = cards.find((c) => c.canRender(data));
 
       if (bandActivityCard) {
-        const configs = bandActivityCard.createConfig(data);
-        const ft8Config = configs?.find((c) => c.id === 'band-activity-20m-FT8');
+        const configs = asConfigArray(bandActivityCard.createConfig(data));
+        const ft8Config = configs.find((c) => c.id === 'band-activity-20m-FT8');
 
         if (ft8Config) {
           // Should not throw
@@ -376,8 +392,8 @@ describe('Band Activity Card Registration', () => {
       const bandActivityCard = cards.find((c) => c.canRender(data));
 
       if (bandActivityCard) {
-        const configs = bandActivityCard.createConfig(data);
-        const config = configs?.[0];
+        const configs = asConfigArray(bandActivityCard.createConfig(data));
+        const config = configs[0];
 
         if (config) {
           const element = bandActivityCard.render(data, config);
@@ -399,12 +415,12 @@ describe('Band Activity Card Registration', () => {
 
       if (bandActivityCard) {
         // Create a config with an invalid ID
-        const invalidConfig = {
+        const invalidConfig: ActivityCardConfig = {
           id: 'invalid-id-format',
           type: 'band-mode-activity',
-          size: '1x1' as const,
+          size: '1x1',
           priority: 50,
-          hotness: 'neutral' as const,
+          hotness: 'neutral',
         };
 
         const element = bandActivityCard.render(data, invalidConfig);
