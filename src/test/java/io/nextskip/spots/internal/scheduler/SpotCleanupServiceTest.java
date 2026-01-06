@@ -7,6 +7,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.transaction.support.TransactionCallback;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -16,6 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -34,11 +37,20 @@ class SpotCleanupServiceTest {
     @Mock
     private SpotRepository spotRepository;
 
+    @Mock
+    private TransactionTemplate transactionTemplate;
+
     private SpotCleanupService cleanupService;
 
     @BeforeEach
     void setUp() {
-        cleanupService = new SpotCleanupService(spotRepository, DEFAULT_TTL);
+        // Configure TransactionTemplate mock to execute the callback directly
+        lenient().when(transactionTemplate.execute(any()))
+                .thenAnswer(invocation -> {
+                    TransactionCallback<?> callback = invocation.getArgument(0);
+                    return callback.doInTransaction(null);
+                });
+        cleanupService = new SpotCleanupService(spotRepository, transactionTemplate, DEFAULT_TTL);
     }
 
     // ===========================================
@@ -105,7 +117,7 @@ class SpotCleanupServiceTest {
     @Test
     void testExecuteCleanup_CustomTtl_UsesConfiguredValue() {
         Duration customTtl = Duration.ofHours(12);
-        SpotCleanupService customService = new SpotCleanupService(spotRepository, customTtl);
+        SpotCleanupService customService = new SpotCleanupService(spotRepository, transactionTemplate, customTtl);
         Instant beforeCall = Instant.now();
         when(spotRepository.deleteExpiredSpotsBatch(any(Instant.class), anyInt()))
                 .thenReturn(0);
@@ -149,7 +161,7 @@ class SpotCleanupServiceTest {
     @Test
     void testGetTtl_CustomTtl_ReturnsConfiguredValue() {
         Duration customTtl = Duration.ofHours(48);
-        SpotCleanupService customService = new SpotCleanupService(spotRepository, customTtl);
+        SpotCleanupService customService = new SpotCleanupService(spotRepository, transactionTemplate, customTtl);
 
         assertThat(customService.getTtl()).isEqualTo(customTtl);
     }
@@ -161,7 +173,7 @@ class SpotCleanupServiceTest {
     @Test
     void testConstructor_NullTtl_DefaultsTo24Hours() {
         // The Spring @Value annotation provides the default, but we test the service works
-        SpotCleanupService service = new SpotCleanupService(spotRepository, Duration.ofHours(24));
+        SpotCleanupService service = new SpotCleanupService(spotRepository, transactionTemplate, Duration.ofHours(24));
 
         assertThat(service.getTtl()).isEqualTo(Duration.ofHours(24));
     }
@@ -169,7 +181,7 @@ class SpotCleanupServiceTest {
     @Test
     void testConstructor_ZeroTtl_Accepted() {
         // Edge case: immediate cleanup
-        SpotCleanupService service = new SpotCleanupService(spotRepository, Duration.ZERO);
+        SpotCleanupService service = new SpotCleanupService(spotRepository, transactionTemplate, Duration.ZERO);
 
         assertThat(service.getTtl()).isEqualTo(Duration.ZERO);
     }
@@ -178,7 +190,7 @@ class SpotCleanupServiceTest {
     void testConstructor_NegativeTtl_Accepted() {
         // Edge case: would delete future spots (unlikely but valid Duration)
         Duration negativeTtl = Duration.ofHours(-1);
-        SpotCleanupService service = new SpotCleanupService(spotRepository, negativeTtl);
+        SpotCleanupService service = new SpotCleanupService(spotRepository, transactionTemplate, negativeTtl);
 
         assertThat(service.getTtl()).isEqualTo(negativeTtl);
     }
