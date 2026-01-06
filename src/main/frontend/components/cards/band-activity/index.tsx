@@ -29,6 +29,11 @@ import type { BandModeActivity } from 'Frontend/types/spotterSource';
  * Convert backend BandActivity to frontend BandModeActivity interface.
  */
 function toBandModeActivity(activity: BandActivity): BandModeActivity {
+  // Filter out undefined values and ensure all values are strings
+  const paths = (activity.activePaths ?? [])
+    .filter((p): p is NonNullable<typeof p> => p !== undefined && p !== null)
+    .map((p) => String(p));
+
   return {
     band: activity.band ?? '',
     mode: activity.mode ?? '',
@@ -37,8 +42,7 @@ function toBandModeActivity(activity: BandActivity): BandModeActivity {
     trendPercentage: activity.trendPercentage ?? 0,
     maxDxKm: activity.maxDxKm ?? undefined,
     maxDxPath: activity.maxDxPath ?? undefined,
-    // Hilla serializes Java enums as string names, so pass directly
-    activePaths: (activity.activePaths ?? []) as string[],
+    activePaths: paths,
     score: activity.score ?? 0,
     windowMinutes: activity.windowMinutes ?? 15,
   };

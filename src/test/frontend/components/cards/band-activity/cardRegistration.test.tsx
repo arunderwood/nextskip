@@ -15,7 +15,6 @@ import type BandActivity from 'Frontend/generated/io/nextskip/spots/model/BandAc
 import type BandActivityResponse from 'Frontend/generated/io/nextskip/spots/api/BandActivityResponse';
 import FrequencyBand from 'Frontend/generated/io/nextskip/common/model/FrequencyBand';
 import BandConditionRating from 'Frontend/generated/io/nextskip/propagation/model/BandConditionRating';
-import ContinentPath from 'Frontend/generated/io/nextskip/spots/model/ContinentPath';
 import { getRegisteredCards } from 'Frontend/components/cards/CardRegistry';
 import type { ActivityCardConfig } from 'Frontend/types/activity';
 
@@ -43,7 +42,7 @@ const createMockBandActivity = (overrides: Partial<BandActivity> = {}): BandActi
   trendPercentage: 25,
   maxDxKm: 5000,
   maxDxPath: 'NA-EU',
-  activePaths: [ContinentPath.NA_EU, ContinentPath.NA_AS],
+  activePaths: ['NA_EU', 'NA_AS'],
   score: 85,
   favorable: true,
   windowMinutes: 15,
@@ -323,7 +322,7 @@ describe('Band Activity Card Registration', () => {
             trendPercentage: 25,
             maxDxKm: 5000,
             maxDxPath: 'NA-EU',
-            activePaths: [ContinentPath.NA_EU, ContinentPath.NA_AS],
+            activePaths: ['NA_EU', 'NA_AS'],
             score: 85,
             windowMinutes: 15,
           }),
