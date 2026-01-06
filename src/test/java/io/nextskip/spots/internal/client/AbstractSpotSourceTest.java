@@ -305,6 +305,123 @@ class AbstractSpotSourceTest {
     }
 
     // ===========================================
+    // Stale connection detection tests
+    // ===========================================
+
+    @Test
+    void testStaleConnectionCheck_NotConnected_NoAction() throws Exception {
+        // When not connected, stale check should do nothing
+        ReflectionTestSource source = new ReflectionTestSource();
+
+        // Trigger check while disconnected via reflection
+        source.invokeCheckForStaleConnection();
+
+        // Should not trigger force reconnect since not connected
+        assertThat(source.getForceReconnectCount()).isZero();
+    }
+
+    @Test
+    void testStaleConnectionCheck_NoMessagesYet_NoAction() throws Exception {
+        ReflectionTestSource source = new ReflectionTestSource();
+        source.connect();
+
+        // Trigger check - no messages yet, should give grace period
+        source.invokeCheckForStaleConnection();
+
+        // Should not trigger force reconnect when no messages have been received yet
+        assertThat(source.getForceReconnectCount()).isZero();
+        source.disconnect();
+    }
+
+    @Test
+    void testStaleConnectionCheck_RecentMessage_NoAction() throws Exception {
+        ReflectionTestSource source = new ReflectionTestSource();
+        source.connect();
+        source.emitTestMessage("recent message");
+
+        // Trigger check immediately after message - should be fine
+        source.invokeCheckForStaleConnection();
+
+        // Should not trigger force reconnect
+        assertThat(source.getForceReconnectCount()).isZero();
+        source.disconnect();
+    }
+
+    @Test
+    void testStaleConnectionCheck_StaleMessage_TriggersForceReconnect() throws Exception {
+        ReflectionTestSource source = new ReflectionTestSource();
+        source.connect();
+
+        // Emit a message then set the timestamp to 31 seconds ago (stale threshold is 30s)
+        source.emitTestMessage("test");
+        source.setLastMessageTime(java.time.Instant.now().minus(Duration.ofSeconds(31)));
+
+        // Trigger stale check
+        source.invokeCheckForStaleConnection();
+
+        // Should trigger force reconnect which calls doDisconnect()
+        assertThat(source.getDoDisconnectCalled()).isTrue();
+
+        // And schedule a reconnect
+        await().atMost(Duration.ofSeconds(5))
+                .untilAsserted(() -> assertThat(source.getConnectAttempts()).isGreaterThan(1));
+
+        source.disconnect();
+    }
+
+    @Test
+    void testForceReconnect_DisconnectsAndSchedulesReconnect() throws Exception {
+        ReflectionTestSource source = new ReflectionTestSource();
+        source.connect();
+        assertThat(source.isConnected()).isTrue();
+
+        // Trigger force reconnect via reflection
+        source.invokeForceReconnect();
+
+        // Should have disconnected
+        assertThat(source.getDoDisconnectCalled()).isTrue();
+
+        // Should have scheduled reconnect
+        await().atMost(Duration.ofSeconds(5))
+                .untilAsserted(() -> assertThat(source.getConnectAttempts()).isGreaterThan(1));
+
+        source.disconnect();
+    }
+
+    @Test
+    @SuppressWarnings("PMD.UnitTestShouldIncludeAssert") // Assertion via await().untilAsserted()
+    void testForceReconnect_DisconnectThrows_StillReconnects() throws Exception {
+        ThrowingReflectionTestSource source = new ThrowingReflectionTestSource();
+        source.connect();
+
+        // Trigger force reconnect - disconnect will throw
+        source.invokeForceReconnect();
+
+        // Should still schedule reconnect despite disconnect exception
+        await().atMost(Duration.ofSeconds(5))
+                .untilAsserted(() -> assertThat(source.getConnectAttempts()).isGreaterThan(1));
+
+        source.disconnect();
+    }
+
+    // ===========================================
+    // SpotSource interface default method test
+    // ===========================================
+
+    @Test
+    void testSpotSourceInterface_DefaultIsReceivingMessages_ReturnsIsConnected() {
+        // Test the default implementation of SpotSource.isReceivingMessages()
+        SpotSource source = new MinimalSpotSource();
+
+        // Not connected - should return false
+        assertThat(source.isReceivingMessages()).isFalse();
+
+        // Connect - default should delegate to isConnected()
+        ((MinimalSpotSource) source).setConnected(true);
+        assertThat(source.isReceivingMessages()).isTrue();
+    }
+
+    // ===========================================
     // Test implementation of AbstractSpotSource
     // ===========================================
 
@@ -450,6 +567,175 @@ class AbstractSpotSourceTest {
 
         int getDisconnectCalls() {
             return disconnectCalls.get();
+        }
+    }
+
+    /**
+     * Test implementation that uses reflection to access private methods
+     * for testing checkForStaleConnection() and forceReconnect().
+     */
+    @SuppressWarnings("PMD.AvoidAccessibilityAlteration") // Reflection required to test private methods
+    private static final class ReflectionTestSource extends AbstractSpotSource {
+
+        private final AtomicBoolean connected = new AtomicBoolean(false);
+        private final AtomicInteger connectAttempts = new AtomicInteger(0);
+        private final AtomicInteger forceReconnectCount = new AtomicInteger(0);
+        private final AtomicBoolean doDisconnectCalled = new AtomicBoolean(false);
+
+        @Override
+        protected void doConnect() {
+            connectAttempts.incrementAndGet();
+            connected.set(true);
+        }
+
+        @Override
+        protected void doDisconnect() {
+            doDisconnectCalled.set(true);
+            connected.set(false);
+        }
+
+        @Override
+        protected boolean isConnectedInternal() {
+            return connected.get();
+        }
+
+        @Override
+        public String getSourceName() {
+            return "Reflection Test Source";
+        }
+
+        void emitTestMessage(String message) {
+            emitMessage(message);
+        }
+
+        /**
+         * Uses reflection to invoke the private checkForStaleConnection method.
+         */
+        void invokeCheckForStaleConnection() throws ReflectiveOperationException {
+            java.lang.reflect.Method method = AbstractSpotSource.class.getDeclaredMethod("checkForStaleConnection");
+            method.setAccessible(true);
+            method.invoke(this);
+        }
+
+        /**
+         * Uses reflection to invoke the private forceReconnect method.
+         */
+        void invokeForceReconnect() throws ReflectiveOperationException {
+            java.lang.reflect.Method method = AbstractSpotSource.class.getDeclaredMethod("forceReconnect");
+            method.setAccessible(true);
+            forceReconnectCount.incrementAndGet();
+            method.invoke(this);
+        }
+
+        /**
+         * Uses reflection to set the lastMessageTime field directly.
+         */
+        @SuppressWarnings("unchecked") // Reflection-based field access
+        void setLastMessageTime(java.time.Instant time) throws ReflectiveOperationException {
+            java.lang.reflect.Field field = AbstractSpotSource.class.getDeclaredField("lastMessageTime");
+            field.setAccessible(true);
+            java.util.concurrent.atomic.AtomicReference<java.time.Instant> ref =
+                    (java.util.concurrent.atomic.AtomicReference<java.time.Instant>) field.get(this);
+            ref.set(time);
+        }
+
+        int getConnectAttempts() {
+            return connectAttempts.get();
+        }
+
+        int getForceReconnectCount() {
+            return forceReconnectCount.get();
+        }
+
+        boolean getDoDisconnectCalled() {
+            return doDisconnectCalled.get();
+        }
+    }
+
+    /**
+     * Test implementation that throws during disconnect, for testing forceReconnect exception handling.
+     */
+    @SuppressWarnings("PMD.AvoidAccessibilityAlteration") // Reflection required to test private method
+    private static final class ThrowingReflectionTestSource extends AbstractSpotSource {
+
+        private final AtomicBoolean connected = new AtomicBoolean(false);
+        private final AtomicInteger connectAttempts = new AtomicInteger(0);
+
+        @Override
+        protected void doConnect() {
+            connectAttempts.incrementAndGet();
+            connected.set(true);
+        }
+
+        @Override
+        @SuppressWarnings("PMD.AvoidThrowingRawExceptionTypes") // Intentionally testing exception handling
+        protected void doDisconnect() {
+            connected.set(false);
+            throw new RuntimeException("Simulated disconnect error during force reconnect");
+        }
+
+        @Override
+        protected boolean isConnectedInternal() {
+            return connected.get();
+        }
+
+        @Override
+        public String getSourceName() {
+            return "Throwing Reflection Test Source";
+        }
+
+        /**
+         * Uses reflection to invoke the private forceReconnect method.
+         */
+        void invokeForceReconnect() throws ReflectiveOperationException {
+            java.lang.reflect.Method method = AbstractSpotSource.class.getDeclaredMethod("forceReconnect");
+            method.setAccessible(true);
+            method.invoke(this);
+        }
+
+        int getConnectAttempts() {
+            return connectAttempts.get();
+        }
+    }
+
+    /**
+     * Minimal SpotSource implementation that uses the default isReceivingMessages().
+     * This tests the interface's default method directly.
+     */
+    private static final class MinimalSpotSource implements SpotSource {
+
+        private final AtomicBoolean connected = new AtomicBoolean(false);
+
+        @Override
+        public void setMessageHandler(java.util.function.Consumer<String> handler) {
+            // No-op for testing
+        }
+
+        @Override
+        public void connect() {
+            connected.set(true);
+        }
+
+        @Override
+        public void disconnect() {
+            connected.set(false);
+        }
+
+        @Override
+        public boolean isConnected() {
+            return connected.get();
+        }
+
+        // Note: we intentionally do NOT override isReceivingMessages()
+        // to test the interface's default implementation
+
+        @Override
+        public String getSourceName() {
+            return "Minimal SpotSource";
+        }
+
+        void setConnected(boolean value) {
+            connected.set(value);
         }
     }
 }
