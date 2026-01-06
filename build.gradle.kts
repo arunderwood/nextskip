@@ -315,6 +315,15 @@ configure<io.github.surpsg.deltacoverage.gradle.DeltaCoverageConfiguration> {
 pitest {
     targetClasses = setOf("io.nextskip.*")
     targetTests = setOf("io.nextskip.*")
+    // Exclude infrastructure/configuration classes from mutation testing.
+    // These have void method calls (e.g., setCorePoolSize) that configure Spring beans
+    // but don't affect observable test behavior - tests verify the app loads, not config values.
+    excludedClasses = setOf(
+        "io.nextskip.common.config.AsyncConfig",
+        "io.nextskip.common.config.ClockConfig",
+        "io.nextskip.common.config.ResilienceConfig",
+        "io.nextskip.common.scheduler.DbSchedulerConfig"
+    )
     mutators = setOf("DEFAULTS")
     // Dynamic thread allocation: use 75% of available cores, minimum 2
     val availableCores = Runtime.getRuntime().availableProcessors()
