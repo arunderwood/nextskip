@@ -2,6 +2,7 @@ package io.nextskip.spots.persistence.repository;
 
 import io.nextskip.spots.persistence.entity.SpotEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -31,8 +32,33 @@ public interface SpotRepository extends JpaRepository<SpotEntity, Long> {
      *
      * @param cutoff delete spots created before this time
      * @return number of spots deleted
+     * @deprecated Use {@link #deleteExpiredSpotsBatch(Instant, int)} for large-scale cleanup
      */
+    @Deprecated
     int deleteByCreatedAtBefore(Instant cutoff);
+
+    /**
+     * Deletes a batch of expired spots using native SQL for efficiency.
+     *
+     * <p>Uses ctid-based deletion to avoid loading entities into memory.
+     * This is critical for high-volume cleanup where millions of rows may
+     * need to be deleted. Called repeatedly by cleanup service until no
+     * more expired spots remain.
+     *
+     * @param cutoff delete spots created before this time
+     * @param batchSize maximum rows to delete per call
+     * @return number of spots deleted
+     */
+    @Modifying
+    @Query(value = """
+            DELETE FROM spots
+            WHERE ctid IN (
+                SELECT ctid FROM spots
+                WHERE created_at < :cutoff
+                LIMIT :batchSize
+            )
+            """, nativeQuery = true)
+    int deleteExpiredSpotsBatch(@Param("cutoff") Instant cutoff, @Param("batchSize") int batchSize);
 
     /**
      * Finds recent spots by band, ordered by spotted time descending.
