@@ -1,0 +1,333 @@
+/**
+ * Styles for Band Mode Activity Card components.
+ *
+ * Uses CSS variables from global.css for consistent theming.
+ */
+
+/* ============================================
+   Activity Bar
+   ============================================ */
+
+.activity-bar-container {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 4px;
+}
+
+.activity-bar-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 0.75rem;
+}
+
+.activity-bar-title {
+  color: var(--color-text-secondary);
+  font-weight: 500;
+}
+
+.activity-bar-value {
+  color: var(--color-text-primary);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.activity-bar {
+  height: 8px;
+  background: var(--color-surface-secondary);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.activity-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--hotness-warm-color), var(--hotness-hot-color));
+  border-radius: 4px;
+  transition: width 0.3s ease-out;
+}
+
+/* ============================================
+   Trend Indicator
+   ============================================ */
+
+.trend-indicator {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.75rem;
+  margin-bottom: 4px;
+}
+
+.trend-label {
+  color: var(--color-text-secondary);
+  font-weight: 500;
+}
+
+.trend-value {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 600;
+}
+
+.trend-icon {
+  flex-shrink: 0;
+}
+
+.trend-icon--up {
+  color: var(--hotness-hot-color);
+}
+
+.trend-icon--down {
+  color: var(--color-error);
+}
+
+.trend-icon--flat {
+  color: var(--color-text-secondary);
+}
+
+.trend-positive .trend-percentage {
+  color: var(--hotness-hot-color);
+}
+
+.trend-negative .trend-percentage {
+  color: var(--color-error);
+}
+
+.trend-flat .trend-percentage {
+  color: var(--color-text-secondary);
+}
+
+/* ============================================
+   DX Reach Display
+   ============================================ */
+
+.dx-reach-container {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  margin-bottom: 4px;
+  flex-wrap: wrap;
+}
+
+.dx-reach-icon {
+  color: var(--color-text-secondary);
+  flex-shrink: 0;
+}
+
+.dx-reach-label {
+  color: var(--color-text-secondary);
+  font-weight: 500;
+}
+
+.dx-reach-value {
+  color: var(--color-text-primary);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.dx-reach-path {
+  color: var(--color-text-secondary);
+  font-weight: 400;
+  margin-left: 4px;
+}
+
+.dx-reach--empty .dx-reach-value {
+  color: var(--color-text-secondary);
+  font-style: italic;
+  font-weight: 400;
+}
+
+/* ============================================
+   Path Status Grid
+   ============================================ */
+
+.path-grid-container {
+  margin-bottom: 4px;
+}
+
+.path-grid-label {
+  display: block;
+  color: var(--color-text-secondary);
+  font-size: 0.75rem;
+  font-weight: 500;
+  margin-bottom: 2px;
+}
+
+.path-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+}
+
+.path-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: 3px 4px;
+  border-radius: 4px;
+  font-size: 0.65rem;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+.path-item--active {
+  background: rgba(16, 185, 129, 0.15);
+  color: var(--hotness-hot-color);
+}
+
+.path-item--inactive {
+  background: var(--color-surface-secondary);
+  color: var(--color-text-secondary);
+}
+
+.path-display {
+  letter-spacing: -0.02em;
+}
+
+.path-status-icon {
+  flex-shrink: 0;
+}
+
+.path-status--active {
+  color: var(--hotness-hot-color);
+}
+
+.path-status--inactive {
+  color: var(--color-text-tertiary);
+  opacity: 0.5;
+}
+
+/* ============================================
+   Condition Badge
+   ============================================ */
+
+.condition-badge-container {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+}
+
+.condition-badge-label {
+  color: var(--color-text-secondary);
+  font-weight: 500;
+}
+
+.condition-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.condition-badge--good {
+  background: rgba(16, 185, 129, 0.15);
+  color: var(--hotness-hot-color);
+}
+
+.condition-badge--fair {
+  background: rgba(245, 158, 11, 0.15);
+  color: var(--hotness-warm-color);
+}
+
+.condition-badge--poor {
+  background: rgba(239, 68, 68, 0.15);
+  color: var(--color-error);
+}
+
+.condition-badge--unknown {
+  background: var(--color-surface-secondary);
+  color: var(--color-text-secondary);
+}
+
+/* ============================================
+   Placeholders
+   ============================================ */
+
+.placeholder-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 16px 8px;
+  text-align: center;
+  min-height: 80px;
+}
+
+.placeholder-icon {
+  color: var(--color-text-tertiary);
+  margin-bottom: 8px;
+}
+
+.placeholder-text {
+  color: var(--color-text-secondary);
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.placeholder-hint {
+  color: var(--color-text-tertiary);
+  font-size: 0.7rem;
+  margin-top: 4px;
+}
+
+.placeholder--coming-soon .placeholder-icon {
+  color: var(--hotness-warm-color);
+  opacity: 0.6;
+}
+
+.placeholder--coming-soon .placeholder-text {
+  color: var(--hotness-warm-color);
+}
+
+/* ============================================
+   BandModeActivityContent (Composed)
+   ============================================ */
+
+.band-mode-activity-content {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Compact layout - no dividers, minimal gaps */
+
+/* ============================================
+   Dark Mode Adjustments
+   ============================================ */
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) .activity-bar {
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  :root:not([data-theme='light']) .path-item--inactive {
+    background: rgba(255, 255, 255, 0.05);
+  }
+}
+
+:root[data-theme='dark'] .activity-bar {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+:root[data-theme='dark'] .path-item--inactive {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* ============================================
+   Reduced Motion
+   ============================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  .activity-bar-fill {
+    transition: none;
+  }
+}

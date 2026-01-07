@@ -36,6 +36,7 @@ export type ActivityType =
   | 'solar-indices'
   | 'band-conditions'
   | 'band-condition'
+  | 'band-mode-activity'
   | 'pota-activations'
   | 'sota-activations'
   | 'contests'

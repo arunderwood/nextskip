@@ -53,6 +53,21 @@ public interface SpotSource {
     boolean isConnected();
 
     /**
+     * Returns whether the source is receiving messages.
+     *
+     * <p>This is a stronger check than {@link #isConnected()}. A source
+     * may report as connected but not be receiving messages due to
+     * subscription issues or broker-side problems.
+     *
+     * <p>Default implementation returns {@link #isConnected()}.
+     *
+     * @return true if messages have been received recently
+     */
+    default boolean isReceivingMessages() {
+        return isConnected();
+    }
+
+    /**
      * Returns a human-readable name for this source.
      *
      * @return source name (e.g., "PSKReporter MQTT")

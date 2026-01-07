@@ -1,5 +1,7 @@
 package io.nextskip.spots.model;
 
+import com.fasterxml.jackson.annotation.JsonValue;
+
 import java.util.Arrays;
 import java.util.Locale;
 import java.util.Optional;
@@ -88,6 +90,18 @@ public enum ContinentPath {
      */
     public String getDisplayName() {
         return displayName;
+    }
+
+    /**
+     * Returns the enum name for JSON serialization.
+     *
+     * <p>This ensures the enum is serialized as "NA_EU" not "Trans-Atlantic (NA↔EU)".
+     *
+     * @return the enum constant name (e.g., "NA_EU")
+     */
+    @JsonValue
+    public String toJsonValue() {
+        return name();
     }
 
     /**
