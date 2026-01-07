@@ -37,7 +37,7 @@ jqwik = "1.9.3"
 testcontainers = "2.0.3"
 
 # Scheduling
-db-scheduler = "16.6.0"
+db-scheduler = "16.7.0"
 
 # MQTT
 paho-mqtt = "1.2.5"
@@ -74,7 +74,7 @@ postgresql = { module = "org.postgresql:postgresql" }
 spring-boot-starter-liquibase = { module = "org.springframework.boot:spring-boot-starter-liquibase" }
 
 # Scheduling
-db-scheduler-spring-boot-starter = { module = "com.github.kagkarlsson:db-scheduler-spring-boot-starter", version.ref = "db-scheduler" }
+db-scheduler-boot4-starter = { module = "com.github.kagkarlsson:db-scheduler-spring-boot-4-starter", version.ref = "db-scheduler" }
 
 # Testcontainers (2.x uses testcontainers- prefix for modules)
 spring-boot-testcontainers = { module = "org.springframework.boot:spring-boot-testcontainers" }

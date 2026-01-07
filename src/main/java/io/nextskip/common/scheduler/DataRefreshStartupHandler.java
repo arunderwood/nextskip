@@ -27,11 +27,6 @@ import java.util.List;
  * <p>Uses the {@link RefreshTaskCoordinator} interface to automatically discover
  * and coordinate all refresh tasks. New tasks are automatically included without
  * modifying this class (Open-Closed Principle).
- *
- * <p>Note: Uses @ConditionalOnProperty instead of @ConditionalOnBean(Scheduler.class)
- * because @ConditionalOnBean has timing issues with manual Scheduler configuration
- * (Spring Boot 4 workaround). The property check is semantically equivalent since
- * the Scheduler bean only exists when db-scheduler is enabled.
  */
 @Component
 @ConditionalOnProperty(value = "db-scheduler.enabled", havingValue = "true")

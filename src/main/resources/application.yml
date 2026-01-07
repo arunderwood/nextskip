@@ -19,12 +19,6 @@ server:
 spring:
   application:
     name: nextskip
-  # Exclude db-scheduler autoconfiguration (incompatible with Spring Boot 4)
-  # Manual configuration in DbSchedulerConfig.java until upstream fix is released
-  # Track: https://github.com/kagkarlsson/db-scheduler/issues/736
-  autoconfigure:
-    exclude:
-      - com.github.kagkarlsson.scheduler.boot.autoconfigure.DbSchedulerAutoConfiguration
   # Static resource caching for PWA
   web:
     resources:

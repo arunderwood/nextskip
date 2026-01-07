@@ -141,7 +141,7 @@ dependencies {
     implementation("org.hibernate.orm:hibernate-micrometer")
 
     // Scheduling
-    implementation(libs.db.scheduler.spring.boot.starter)
+    implementation(libs.db.scheduler.boot4.starter)
 
     // SpotBugs annotations (for @SuppressFBWarnings)
     compileOnly("com.github.spotbugs:spotbugs-annotations:4.9.8")
@@ -321,8 +321,7 @@ pitest {
     excludedClasses = setOf(
         "io.nextskip.common.config.AsyncConfig",
         "io.nextskip.common.config.ClockConfig",
-        "io.nextskip.common.config.ResilienceConfig",
-        "io.nextskip.common.scheduler.DbSchedulerConfig"
+        "io.nextskip.common.config.ResilienceConfig"
     )
     mutators = setOf("DEFAULTS")
     // Dynamic thread allocation: use 75% of available cores, minimum 2
