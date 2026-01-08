@@ -20,6 +20,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * 4. fromFrequencyKhz() - Band lookup by frequency (3 tests)
  * 5. fromFrequencyHz() - Band lookup by Hz frequency (1 test)
  * 6. fromString() - String parsing (4 tests)
+ * 7. getDxThresholds() - Band-specific DX thresholds (4 tests)
  */
 class FrequencyBandTest {
 
@@ -194,5 +195,67 @@ class FrequencyBandTest {
         assertNull(FrequencyBand.fromString(""));
         assertNull(FrequencyBand.fromString("   "));
         assertNull(FrequencyBand.fromString("\t"));
+    }
+
+    // ==========================================================================
+    // Category 7: getDxThresholds() - Band-Specific DX Thresholds
+    // ==========================================================================
+
+    @Test
+    void testGetDxThresholds_AllBandsHaveThresholds() {
+        // Every band must have non-null DX thresholds
+        for (FrequencyBand band : FrequencyBand.values()) {
+            FrequencyBand.DxThresholds thresholds = band.getDxThresholds();
+            assertTrue(thresholds != null,
+                    "Band " + band.getName() + " should have DX thresholds");
+        }
+    }
+
+    @Test
+    void testGetDxThresholds_InvariantExcellentGreaterThanGood() {
+        // Invariant: excellent > good > moderate for all bands
+        for (FrequencyBand band : FrequencyBand.values()) {
+            FrequencyBand.DxThresholds t = band.getDxThresholds();
+
+            assertTrue(t.excellentKm() > t.goodKm(),
+                    band.getName() + ": excellent (" + t.excellentKm()
+                            + ") should be > good (" + t.goodKm() + ")");
+
+            assertTrue(t.goodKm() > t.moderateKm(),
+                    band.getName() + ": good (" + t.goodKm()
+                            + ") should be > moderate (" + t.moderateKm() + ")");
+
+            assertTrue(t.moderateKm() > 0,
+                    band.getName() + ": moderate (" + t.moderateKm() + ") should be > 0");
+        }
+    }
+
+    @Test
+    void testGetDxThresholds_BandSpecificValues() {
+        // Verify specific bands have expected propagation-aware thresholds
+        // 160m is difficult - lower thresholds
+        FrequencyBand.DxThresholds t160 = FrequencyBand.BAND_160M.getDxThresholds();
+        assertEquals(3_000, t160.excellentKm(), "160m excellent should be 3,000 km (difficult band)");
+
+        // 20m is workhorse DX band - higher thresholds
+        FrequencyBand.DxThresholds t20 = FrequencyBand.BAND_20M.getDxThresholds();
+        assertEquals(15_000, t20.excellentKm(), "20m excellent should be 15,000 km (workhorse band)");
+
+        // 6m is VHF with sporadic-E - mid-range
+        FrequencyBand.DxThresholds t6 = FrequencyBand.BAND_6M.getDxThresholds();
+        assertEquals(5_000, t6.excellentKm(), "6m excellent should be 5,000 km (sporadic-E/F2)");
+    }
+
+    @Test
+    void testGetDxThresholds_DefaultExists() {
+        // Default thresholds should exist for unknown bands
+        FrequencyBand.DxThresholds defaultThresholds = FrequencyBand.DxThresholds.DEFAULT;
+
+        assertTrue(defaultThresholds != null, "Default thresholds should exist");
+        assertTrue(defaultThresholds.excellentKm() > 0, "Default excellent should be positive");
+        assertTrue(defaultThresholds.excellentKm() > defaultThresholds.goodKm(),
+                "Default should maintain excellent > good invariant");
+        assertTrue(defaultThresholds.goodKm() > defaultThresholds.moderateKm(),
+                "Default should maintain good > moderate invariant");
     }
 }

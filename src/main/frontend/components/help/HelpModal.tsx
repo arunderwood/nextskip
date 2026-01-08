@@ -23,6 +23,7 @@ import '../cards/propagation/PropagationHelp';
 import '../cards/activations/ActivationsHelp';
 import '../cards/contests/ContestsHelp';
 import '../cards/meteor-showers/MeteorShowersHelp';
+import '../cards/band-activity/BandActivityHelp';
 
 export function HelpModal({ isOpen, onClose }: HelpModalProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
