@@ -12,7 +12,13 @@
 export const bandDxThresholds = [
   { band: '160m', excellentKm: 3_000, goodKm: 1_500, moderateKm: 500, description: 'Difficult; night skip required' },
   { band: '80m', excellentKm: 5_000, goodKm: 2_500, moderateKm: 1_000, description: 'Regional; some DX at night' },
-  { band: '60m', excellentKm: 6_000, goodKm: 3_000, moderateKm: 1_500, description: 'Secondary allocation; variable propagation' },
+  {
+    band: '60m',
+    excellentKm: 6_000,
+    goodKm: 3_000,
+    moderateKm: 1_500,
+    description: 'Secondary allocation; variable propagation',
+  },
   { band: '40m', excellentKm: 7_000, goodKm: 4_000, moderateKm: 2_000, description: 'Day/night transitions' },
   { band: '30m', excellentKm: 8_000, goodKm: 5_000, moderateKm: 2_500, description: 'WARC; reliable propagation' },
   { band: '20m', excellentKm: 15_000, goodKm: 10_000, moderateKm: 5_000, description: 'Workhorse DX band' },
