@@ -16,6 +16,7 @@ export type HelpSectionId =
   | 'solar-indices'
   | 'band-conditions'
   | 'band-condition'
+  | 'band-dx-thresholds'
   | 'pota-activations'
   | 'sota-activations'
   | 'contests'
