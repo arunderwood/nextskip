@@ -209,8 +209,7 @@ Uses `@atakama/cover-diff` to compare coverage against `origin/main`.
 - Module-specific models in `model/` package
 - Isolated external dependencies
 
-**Current Modules**: common, propagation, activations, contests, meteors
-**Planned Modules**: See `nextskip-project-plan.md`
+**Modules**: common, propagation, activations, contests, meteors, spots
 
 ### Package Structure
 
@@ -462,16 +461,3 @@ This repository includes specialized agents and commands in `.claude/`:
 2. Use design tokens from `src/main/frontend/styles/global.css`
 3. Write tests in `src/test/frontend/` directory
 4. Ensure WCAG 2.1 AA compliance with jest-axe
-
-## Future Development
-
-See `nextskip-project-plan.md` for detailed roadmap:
-
-- **Phase 2**: POTA/SOTA activations module
-- **Phase 3**: Satellite tracking (N2YO, Celestrak)
-- **Phase 4**: Real-time HF activity (PSKReporter MQTT)
-- **Phase 5**: Contest calendar
-- **Phase 6**: Aggregated dashboard with WebSocket live updates
-- **Phase 7**: Spring AI conversational assistant
-
-Each module follows the same patterns established in Phase 1.

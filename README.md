@@ -307,7 +307,7 @@ Generated clients: `src/main/frontend/generated/`
 - Historical data analysis
 - Additional data sources integration
 
-See `nextskip-project-plan.md` for detailed roadmap.
+See GitHub issues for planned features.
 
 ## Data Attribution
 
