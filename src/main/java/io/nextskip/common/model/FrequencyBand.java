@@ -21,7 +21,7 @@ public enum FrequencyBand {
     // Low bands - difficult DX, lower thresholds
     BAND_160M("160m", 1800, 2000, new DxThresholds(3_000, 1_500, 500, "Difficult; night skip required")),
     BAND_80M("80m", 3500, 4000, new DxThresholds(5_000, 2_500, 1_000, "Regional; some DX at night")),
-    BAND_60M("60m", 5330, 5405, new DxThresholds(6_000, 3_000, 1_500, "WARC; variable propagation")),
+    BAND_60M("60m", 5330, 5405, new DxThresholds(6_000, 3_000, 1_500, "Secondary allocation; variable propagation")),
 
     // Transition bands
     BAND_40M("40m", 7000, 7300, new DxThresholds(7_000, 4_000, 2_000, "Day/night transitions")),
@@ -31,7 +31,7 @@ public enum FrequencyBand {
     BAND_20M("20m", 14000, 14350, new DxThresholds(15_000, 10_000, 5_000, "Workhorse DX band")),
     BAND_17M("17m", 18068, 18168, new DxThresholds(12_000, 8_000, 4_000, "WARC; solar-dependent")),
     BAND_15M("15m", 21000, 21450, new DxThresholds(14_000, 9_000, 4_500, "Solar-dependent; excellent when open")),
-    BAND_12M("12m", 24890, 24990, new DxThresholds(13_000, 8_500, 4_000, "WARC; similar to 15m")),
+    BAND_12M("12m", 24890, 24990, new DxThresholds(13_000, 8_500, 4_000, "WARC; similar to 10m/15m")),
     BAND_10M("10m", 28000, 29700, new DxThresholds(12_000, 7_000, 3_000, "Magic when open")),
 
     // VHF bands - rare propagation, low thresholds
