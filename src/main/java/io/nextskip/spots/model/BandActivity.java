@@ -1,6 +1,7 @@
 package io.nextskip.spots.model;
 
 import io.nextskip.common.api.Scoreable;
+import io.nextskip.common.model.FrequencyBand;
 
 import java.time.Instant;
 import java.util.Set;
@@ -54,9 +55,6 @@ public record BandActivity(
     private static final double STRONG_POSITIVE_TREND = 50.0;
     private static final double POSITIVE_TREND = 20.0;
 
-    private static final int EXCELLENT_DX_KM = 10_000;
-    private static final int GOOD_DX_KM = 5_000;
-    private static final int MODERATE_DX_KM = 2_000;
 
     private static final int MANY_PATHS = 4;
     private static final int SOME_PATHS = 2;
@@ -176,34 +174,63 @@ public record BandActivity(
     }
 
     /**
-     * Normalize DX distance to 0-100 score.
+     * Normalize DX distance to 0-100 score using band-specific thresholds.
      *
-     * <p>Scoring:
+     * <p>Scoring uses band-specific thresholds from {@link FrequencyBand.DxThresholds}
+     * because different bands have vastly different propagation characteristics:
      * <ul>
-     *   <li>10,000+ km: 100 points (excellent DX)</li>
-     *   <li>5,000-10,000 km: 70-100 points</li>
-     *   <li>2,000-5,000 km: 40-70 points</li>
-     *   <li>0-2,000 km: 0-40 points</li>
+     *   <li>160m: 3,000 km is exceptional (requires night skip)</li>
+     *   <li>20m: 15,000 km needed for excellent score (workhorse DX band)</li>
+     *   <li>6m: 5,000 km is legendary F2 propagation</li>
+     * </ul>
+     *
+     * <p>Scoring tiers (using band-specific thresholds):
+     * <ul>
+     *   <li>≥ excellent threshold: 100 points</li>
+     *   <li>good to excellent: 70-100 points (linear)</li>
+     *   <li>moderate to good: 40-70 points (linear)</li>
+     *   <li>0 to moderate: 0-40 points (linear)</li>
      *   <li>null (no data): 0 points</li>
      * </ul>
      */
     private int normalizeDx() {
         if (maxDxKm == null || maxDxKm <= 0) {
             return 0;
-        } else if (maxDxKm >= EXCELLENT_DX_KM) {
+        }
+
+        FrequencyBand.DxThresholds thresholds = getDxThresholds();
+        int excellent = thresholds.excellentKm();
+        int good = thresholds.goodKm();
+        int moderate = thresholds.moderateKm();
+
+        if (maxDxKm >= excellent) {
             return 100;
-        } else if (maxDxKm >= GOOD_DX_KM) {
-            double ratio = (double) (maxDxKm - GOOD_DX_KM)
-                    / (EXCELLENT_DX_KM - GOOD_DX_KM);
+        } else if (maxDxKm >= good) {
+            double ratio = (double) (maxDxKm - good) / (excellent - good);
             return (int) (70 + ratio * 30);
-        } else if (maxDxKm >= MODERATE_DX_KM) {
-            double ratio = (double) (maxDxKm - MODERATE_DX_KM)
-                    / (GOOD_DX_KM - MODERATE_DX_KM);
+        } else if (maxDxKm >= moderate) {
+            double ratio = (double) (maxDxKm - moderate) / (good - moderate);
             return (int) (40 + ratio * 30);
         } else {
-            double ratio = (double) maxDxKm / MODERATE_DX_KM;
+            double ratio = (double) maxDxKm / moderate;
             return (int) (ratio * 40);
         }
+    }
+
+    /**
+     * Gets the DX distance thresholds for this band.
+     *
+     * <p>Looks up the band name in {@link FrequencyBand} enum to get
+     * band-specific thresholds. Falls back to default thresholds for
+     * unknown bands.
+     *
+     * @return band-specific DX thresholds, or default if band not recognized
+     */
+    private FrequencyBand.DxThresholds getDxThresholds() {
+        FrequencyBand frequencyBand = FrequencyBand.fromString(band);
+        return frequencyBand != null
+                ? frequencyBand.getDxThresholds()
+                : FrequencyBand.DxThresholds.DEFAULT;
     }
 
     /**

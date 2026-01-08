@@ -471,6 +471,93 @@ class BandActivityTest {
     }
 
     // =========================================================================
+    // Band-Specific DX Scoring Tests
+    // =========================================================================
+
+    @Nested
+    class BandSpecificDxScoringTests {
+
+        @Test
+        void testDxScore_SameDistanceScoresHigherOnHarderBand() {
+            // 3,000 km on 160m is exceptional (excellent threshold = 3,000 km)
+            // 3,000 km on 20m is below moderate (moderate threshold = 5,000 km)
+            BandActivity dx160m = createBandActivityWithBandAndDx("160m", 3000);
+            BandActivity dx20m = createBandActivityWithBandAndDx("20m", 3000);
+
+            assertThat(dx160m.getScore())
+                    .as("3,000 km on 160m (difficult band) should score higher than on 20m (workhorse band)")
+                    .isGreaterThan(dx20m.getScore());
+        }
+
+        @Test
+        void testDxScore_160mExcellentThreshold() {
+            // 160m excellent threshold is 3,000 km
+            BandActivity atThreshold = createBandActivityWithBandAndDx("160m", 3000);
+            BandActivity belowThreshold = createBandActivityWithBandAndDx("160m", 1500);
+
+            // At excellent threshold should score higher than below
+            assertThat(atThreshold.getScore())
+                    .isGreaterThan(belowThreshold.getScore());
+        }
+
+        @Test
+        void testDxScore_20mRequiresMoreDistanceForHighScore() {
+            // 20m excellent threshold is 15,000 km - need more distance for same score
+            BandActivity long20mDx = createBandActivityWithBandAndDx("20m", 15000);
+            BandActivity short20mDx = createBandActivityWithBandAndDx("20m", 5000);
+
+            assertThat(long20mDx.getScore())
+                    .as("20m needs 15,000+ km for excellent score")
+                    .isGreaterThan(short20mDx.getScore());
+        }
+
+        @Test
+        void testDxScore_6mSporadicEDistance() {
+            // 6m excellent is 5,000 km (rare F2 propagation)
+            // 2,000 km is in the "good" range for 6m (sporadic-E)
+            BandActivity f2Distance = createBandActivityWithBandAndDx("6m", 5000);
+            BandActivity sporadicE = createBandActivityWithBandAndDx("6m", 2000);
+
+            assertThat(f2Distance.getScore())
+                    .as("F2 distance should score higher than sporadic-E distance")
+                    .isGreaterThan(sporadicE.getScore());
+        }
+
+        @Test
+        void testDxScore_UnknownBandUsesDefaultThresholds() {
+            // Unknown band should use default thresholds (7,000/4,000/2,000)
+            // This matches roughly 40m behavior
+            BandActivity unknownBand = createBandActivityWithBandAndDx("unknown", 7000);
+            BandActivity band40m = createBandActivityWithBandAndDx("40m", 7000);
+
+            // Both should score the same at the excellent threshold
+            assertThat(unknownBand.getScore())
+                    .as("Unknown band should use default thresholds similar to 40m")
+                    .isEqualTo(band40m.getScore());
+        }
+
+        @Test
+        void testDxScore_DifferentBandsSameDxScoresDifferently() {
+            // Same 5,000 km distance should score differently across bands
+            int distance = 5000;
+
+            int score160m = createBandActivityWithBandAndDx("160m", distance).getScore();
+            int score40m = createBandActivityWithBandAndDx("40m", distance).getScore();
+            int score20m = createBandActivityWithBandAndDx("20m", distance).getScore();
+
+            // 160m: 5,000 km is way above excellent (3,000 km) - should score highest
+            // 40m: 5,000 km is in good-excellent range (4,000-7,000 km)
+            // 20m: 5,000 km is at moderate threshold (5,000 km) - should score lowest
+            assertThat(score160m)
+                    .as("160m should score highest for 5,000 km")
+                    .isGreaterThan(score40m);
+            assertThat(score40m)
+                    .as("40m should score higher than 20m for 5,000 km")
+                    .isGreaterThan(score20m);
+        }
+    }
+
+    // =========================================================================
     // Helper Methods Tests
     // =========================================================================
 
@@ -644,6 +731,17 @@ class BandActivityTest {
     private BandActivity createBandActivityWithOnlyDx(Integer maxDxKm) {
         return new BandActivity(
                 "20m", "FT8", 50, 50, 0.0, maxDxKm,
+                maxDxKm != null && maxDxKm > 0 ? "W1AW → G3ABC" : null,
+                Set.of(), WINDOW_START, NOW, NOW
+        );
+    }
+
+    /**
+     * Create BandActivity with specific band and DX (for testing band-specific scoring).
+     */
+    private BandActivity createBandActivityWithBandAndDx(String band, Integer maxDxKm) {
+        return new BandActivity(
+                band, "FT8", 50, 50, 0.0, maxDxKm,
                 maxDxKm != null && maxDxKm > 0 ? "W1AW → G3ABC" : null,
                 Set.of(), WINDOW_START, NOW, NOW
         );

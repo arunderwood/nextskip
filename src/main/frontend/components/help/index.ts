@@ -5,6 +5,7 @@
 // Main components used by DashboardView
 export { HelpButton } from './HelpButton';
 export { HelpModal } from './HelpModal';
+export { BandDxHelp } from './BandDxHelp';
 
 // Registry for activity modules to register their help content
 export { registerHelp, getRegisteredHelp, clearHelpRegistry } from './HelpRegistry';
