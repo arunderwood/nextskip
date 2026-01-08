@@ -196,13 +196,6 @@ vaadin:
   pnpm:
     enable: false
 
-# PostHog Analytics Proxy Configuration
-posthog:
-  proxy:
-    enabled: false
-    ingest-url: https://us.i.posthog.com
-    assets-url: https://us-assets.i.posthog.com
-
 # Apache Pekko Configuration (for spot stream processing)
 # Tuned for single-core production environment
 pekko:
