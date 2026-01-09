@@ -1,18 +1,12 @@
 <!--
 SYNC IMPACT REPORT
 ==================
-Version change: 0.0.0 → 1.0.0 (MAJOR - initial constitution)
-Modified principles: N/A (initial creation)
+Version change: 1.0.0 → 1.1.0 (MINOR - new section added)
+Modified principles: None
 Added sections:
-  - Product Principles (4 principles)
-  - Engineering Principles (3 principles)
-  - Permitted Technologies
-  - Governance
-Removed sections: N/A (initial creation)
-Templates requiring updates:
-  - .specify/templates/plan-template.md ✅ aligned (Constitution Check references principles)
-  - .specify/templates/spec-template.md ✅ aligned (user stories support activity-centric design)
-  - .specify/templates/tasks-template.md ✅ aligned (phased implementation supports modularity)
+  - Before Merging Any Feature
+Removed sections: None
+Templates requiring updates: All aligned
 Follow-up TODOs: None
 -->
 
@@ -121,6 +115,17 @@ Every external integration is assumed to fail. The system MUST degrade gracefull
 **Rationale**: External services fail unpredictably. Users should see stale data—not
 error pages—when dependencies are unavailable.
 
+## Before Merging Any Feature
+
+Every feature branch MUST pass these validations before merging to main:
+
+- `npm run validate` — Frontend format, lint, tests, and delta coverage pass
+- `./gradlew build` — Backend compiles, tests, quality gates, and delta coverage pass
+- `./gradlew bootRun` — Application starts without runtime exceptions
+- TypeScript: 0 errors
+
+Fix quality violations properly. Suppressions require documented justification.
+
 ## Permitted Technologies
 
 New dependencies MUST align with the established technology stack. Introducing technologies
@@ -167,4 +172,4 @@ justification in the PR description.
 
 For detailed implementation guidance, refer to `.claude/CLAUDE.md`.
 
-**Version**: 1.0.0 | **Ratified**: 2026-01-08 | **Last Amended**: 2026-01-08
+**Version**: 1.1.0 | **Ratified**: 2026-01-08 | **Last Amended**: 2026-01-08
