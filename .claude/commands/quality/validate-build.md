@@ -67,9 +67,9 @@ This runs all frontend checks:
 
 **To Fix Failures**: Run `npm run lint:fix && npm run format` to auto-fix most issues
 
-### Step 3: Gradle Clean Build
+### Step 3: Gradle Build
 
-**Execute**: `time ./gradlew clean build`
+**Execute**: `time ./gradlew build`
 
 This runs the full build including:
 
