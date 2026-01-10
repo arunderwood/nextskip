@@ -20,7 +20,8 @@ import java.time.Instant;
  * <p>Configures the db-scheduler recurring task that delegates to
  * {@link NoaaRefreshService} for the actual refresh logic.
  *
- * <p>Task runs every 5 minutes (matching the NOAA client refresh interval).
+ * <p>Task runs every 30 minutes. NOAA solar cycle data updates approximately
+ * daily, so 30-minute polling balances freshness with bandwidth efficiency.
  *
  * <p>Implements {@link RefreshTaskCoordinator} to enable automatic discovery
  * by {@link io.nextskip.common.scheduler.DataRefreshStartupHandler}.
@@ -30,9 +31,9 @@ public class NoaaRefreshTask implements RefreshTaskCoordinator {
 
     private static final String TASK_NAME = "noaa-refresh";
     private static final String DISPLAY_NAME = "NOAA";
-    private static final Duration REFRESH_INTERVAL = Duration.ofMinutes(5);
+    private static final Duration REFRESH_INTERVAL = Duration.ofMinutes(30);
     private static final String NOAA_SOURCE = "NOAA SWPC";
-    private static final Duration STALE_THRESHOLD = Duration.ofMinutes(10);
+    private static final Duration STALE_THRESHOLD = Duration.ofHours(1);
 
     private final SolarIndicesRepository repository;
     private RecurringTask<Void> recurringTask;

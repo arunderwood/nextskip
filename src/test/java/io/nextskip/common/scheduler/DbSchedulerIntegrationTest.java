@@ -24,7 +24,8 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 class DbSchedulerIntegrationTest extends AbstractSchedulerTest {
 
-    private static final int EXPECTED_COORDINATOR_COUNT = 7;
+    // HamQSL solar+band consolidated into one coordinator
+    private static final int EXPECTED_COORDINATOR_COUNT = 6;
 
     @Autowired
     private ApplicationContext applicationContext;
@@ -78,8 +79,9 @@ class DbSchedulerIntegrationTest extends AbstractSchedulerTest {
                 .map(RefreshTaskCoordinator::getTaskName)
                 .toList();
 
+        // HamQSL solar+band consolidated into single "HamQSL" coordinator
         assertThat(taskNames)
-                .contains("POTA", "SOTA", "NOAA", "HamQSL Solar", "HamQSL Band", "Contest", "Meteor");
+                .contains("POTA", "SOTA", "NOAA", "HamQSL", "Contest", "Meteor");
     }
 
     @Test
@@ -89,8 +91,8 @@ class DbSchedulerIntegrationTest extends AbstractSchedulerTest {
         assertThat(applicationContext.containsBean("potaRecurringTask")).isTrue();
         assertThat(applicationContext.containsBean("sotaRecurringTask")).isTrue();
         assertThat(applicationContext.containsBean("noaaRecurringTask")).isTrue();
-        assertThat(applicationContext.containsBean("hamQslSolarRecurringTask")).isTrue();
-        assertThat(applicationContext.containsBean("hamQslBandRecurringTask")).isTrue();
+        // HamQSL solar+band consolidated into single hamQslRecurringTask
+        assertThat(applicationContext.containsBean("hamQslRecurringTask")).isTrue();
         assertThat(applicationContext.containsBean("contestRecurringTask")).isTrue();
         assertThat(applicationContext.containsBean("meteorRecurringTask")).isTrue();
     }
