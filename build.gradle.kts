@@ -109,6 +109,7 @@ dependencies {
     // Spring Boot starters (versions managed by Spring Boot BOM)
     implementation(libs.bundles.spring.boot.web)
     implementation(libs.spring.boot.starter.webflux)
+    implementation(libs.spring.boot.starter.oauth2.client)
 
     // Caching
     implementation(libs.caffeine)

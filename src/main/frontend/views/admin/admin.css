@@ -1,0 +1,114 @@
+/**
+ * Admin styles
+ *
+ * Provides styling for the admin area including:
+ * - Layout structure
+ * - Loading states
+ * - Header with user info
+ */
+
+/* Layout */
+.admin-layout {
+  min-height: 100vh;
+  background-color: var(--color-bg-primary);
+}
+
+/* Loading state */
+.admin-loading,
+.admin-redirecting {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.admin-loading-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  color: var(--color-text-secondary);
+}
+
+.admin-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--color-border);
+  border-top-color: var(--color-accent);
+  border-radius: 50%;
+  animation: admin-spin 1s linear infinite;
+}
+
+@keyframes admin-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.admin-loading-content p {
+  margin: 0;
+  font-size: 0.875rem;
+}
+
+/* Landing page */
+.admin-landing {
+  padding: 1.5rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.admin-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--color-border);
+  margin-bottom: 2rem;
+}
+
+.admin-header h1 {
+  margin: 0;
+  font-size: 1.5rem;
+  color: var(--color-text-primary);
+}
+
+.admin-user-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.admin-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+}
+
+.admin-user-name {
+  color: var(--color-text-secondary);
+  font-size: 0.875rem;
+}
+
+.admin-logout-btn {
+  padding: 0.375rem 0.75rem;
+  font-size: 0.75rem;
+  background-color: transparent;
+  color: var(--color-text-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.admin-logout-btn:hover {
+  background-color: var(--color-bg-secondary);
+  color: var(--color-text-primary);
+}
+
+.admin-content {
+  color: var(--color-text-primary);
+}
+
+.admin-content p {
+  margin: 0.5rem 0;
+  color: var(--color-text-secondary);
+}
