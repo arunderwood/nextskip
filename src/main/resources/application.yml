@@ -64,10 +64,13 @@ db-scheduler:
   heartbeat-interval: 5m  # Heartbeat for detecting dead executions
   shutdown-max-wait: 30s  # Max wait time on graceful shutdown
 
-# Data Refresh Scheduler Configuration (legacy - to be removed)
+# NextSkip Configuration
 nextskip:
   refresh:
     eager-load: true  # Warm all caches on application startup
+  contests:
+    series:
+      rate-limit-seconds: 5  # Seconds to wait between scrape requests
 
   # PSKReporter Spots Configuration
   spots:
@@ -123,6 +126,10 @@ resilience4j:
       contests:
         baseConfig: default
         waitDurationInOpenState: 120s  # Contests update less frequently
+      contest-series:
+        baseConfig: default
+        waitDurationInOpenState: 300s  # Contest series - longer wait during outages
+        minimumNumberOfCalls: 3        # Fewer calls before opening circuit
 
   retry:
     configs:
@@ -150,6 +157,10 @@ resilience4j:
       contests:
         baseConfig: default
         maxAttempts: 2  # Contests - fewer retries, data changes infrequently
+      contest-series:
+        baseConfig: default
+        maxAttempts: 2  # Contest series - fewer retries
+        waitDuration: 2s  # Longer wait between retries
 
 # Actuator Configuration
 management:

@@ -2,6 +2,7 @@ package io.nextskip.contests.persistence.repository;
 
 import io.nextskip.contests.persistence.entity.ContestEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.time.Instant;
@@ -55,4 +56,21 @@ public interface ContestRepository extends JpaRepository<ContestEntity, Long> {
      * @return list of contests by that sponsor
      */
     List<ContestEntity> findBySponsorOrderByStartTimeAsc(String sponsor);
+
+    /**
+     * Find all contests with a given WA7BNM reference.
+     *
+     * @param wa7bnmRef the WA7BNM reference identifier
+     * @return list of contests with this reference
+     */
+    List<ContestEntity> findByWa7bnmRef(String wa7bnmRef);
+
+    /**
+     * Find all distinct WA7BNM references for contests ending after a given time.
+     *
+     * @param endTime the minimum end time
+     * @return list of distinct references
+     */
+    @Query("SELECT DISTINCT c.wa7bnmRef FROM ContestEntity c WHERE c.endTime > :endTime AND c.wa7bnmRef IS NOT NULL")
+    List<String> findDistinctWa7bnmRefsByEndTimeAfter(Instant endTime);
 }

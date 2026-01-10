@@ -134,6 +134,79 @@ class ContestRefreshServiceTest {
         assertThat(captor.getValue()).isEmpty();
     }
 
+    @Test
+    void testExtractWa7bnmRef_ValidUrl_ReturnsRef() {
+        String url = "https://contestcalendar.com/contestdetails.php?ref=8";
+
+        String result = service.extractWa7bnmRef(url);
+
+        assertThat(result).isEqualTo("8");
+    }
+
+    @Test
+    void testExtractWa7bnmRef_UrlWithExtraParams_ReturnsRef() {
+        String url = "https://contestcalendar.com/contestdetails.php?ref=123&other=value";
+
+        String result = service.extractWa7bnmRef(url);
+
+        assertThat(result).isEqualTo("123");
+    }
+
+    @Test
+    void testExtractWa7bnmRef_UrlWithRefAfterAmpersand_ReturnsRef() {
+        String url = "https://contestcalendar.com/contestdetails.php?other=value&ref=456";
+
+        String result = service.extractWa7bnmRef(url);
+
+        assertThat(result).isEqualTo("456");
+    }
+
+    @Test
+    void testExtractWa7bnmRef_NullUrl_ReturnsNull() {
+        String result = service.extractWa7bnmRef(null);
+
+        assertThat(result).isNull();
+    }
+
+    @Test
+    void testExtractWa7bnmRef_BlankUrl_ReturnsNull() {
+        String result = service.extractWa7bnmRef("   ");
+
+        assertThat(result).isNull();
+    }
+
+    @Test
+    void testExtractWa7bnmRef_UrlWithoutRef_ReturnsNull() {
+        String url = "https://contestcalendar.com/contestdetails.php?other=value";
+
+        String result = service.extractWa7bnmRef(url);
+
+        assertThat(result).isNull();
+    }
+
+    @Test
+    void testExecuteRefresh_SetsWa7bnmRef() {
+        List<ContestICalDto> dtos = List.of(
+                new ContestICalDto(
+                        "Test Contest",
+                        Instant.now().plus(1, ChronoUnit.DAYS),
+                        Instant.now().plus(3, ChronoUnit.DAYS),
+                        "https://contestcalendar.com/contestdetails.php?ref=42"
+                )
+        );
+        when(contestClient.fetch()).thenReturn(dtos);
+
+        service.executeRefresh();
+
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<List<ContestEntity>> captor = ArgumentCaptor.forClass(List.class);
+        verify(repository).saveAll(captor.capture());
+
+        List<ContestEntity> saved = captor.getValue();
+        assertThat(saved).hasSize(1);
+        assertThat(saved.get(0).getWa7bnmRef()).isEqualTo("42");
+    }
+
     private List<ContestICalDto> createTestDtos() {
         Instant now = Instant.now();
         return List.of(
