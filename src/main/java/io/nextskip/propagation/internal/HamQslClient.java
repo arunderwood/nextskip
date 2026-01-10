@@ -12,25 +12,29 @@ import io.nextskip.propagation.internal.dto.HamQslDto.BandConditionEntry;
 import io.nextskip.propagation.internal.dto.HamQslDto.HamQslData;
 import io.nextskip.propagation.model.BandCondition;
 import io.nextskip.propagation.model.BandConditionRating;
+import io.nextskip.propagation.model.SolarIndices;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import javax.xml.stream.XMLInputFactory;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
 /**
- * Client for HamQSL.com band condition data.
+ * Unified client for HamQSL.com solar and band condition data.
  *
- * <p>Fetches HF band conditions from the HamQSL XML feed:
+ * <p>Fetches all data from the HamQSL XML feed in a single HTTP request:
  * <ul>
- *   <li>80m-40m conditions</li>
- *   <li>30m-20m conditions</li>
- *   <li>17m-15m conditions</li>
- *   <li>12m-10m conditions</li>
+ *   <li>Solar indices: SFI, K-index, A-index, sunspots</li>
+ *   <li>Band conditions: 80m-40m, 30m-20m, 17m-15m, 12m-10m ratings</li>
  * </ul>
+ *
+ * <p>This unified client eliminates duplicate HTTP fetches that occurred when
+ * separate clients ({@code HamQslSolarClient} and {@code HamQslBandClient})
+ * each fetched the same XML endpoint independently.
  *
  * <p>Extends {@link AbstractExternalDataClient} to inherit:
  * <ul>
@@ -43,19 +47,20 @@ import java.util.Locale;
  */
 @Component
 @SuppressWarnings("PMD.AvoidCatchingGenericException") // Intentional: wrap parsing exceptions
-public class HamQslBandClient extends AbstractExternalDataClient<List<BandCondition>> {
+public class HamQslClient extends AbstractExternalDataClient<HamQslFetchResult> {
 
-    private static final String CLIENT_NAME = "hamqsl-band";
+    private static final String CLIENT_NAME = "hamqsl";
     private static final String SOURCE_NAME = "HamQSL";
 
     /**
      * Refresh interval for data fetching.
      *
-     * <p>HamQSL data updates every 3 hours, with a minimum polling interval of 15 minutes.
+     * <p>HamQSL data updates every 3 hours. A 2-hour interval balances freshness
+     * with bandwidth efficiency.
      *
      * @see <a href="https://www.hamqsl.com/FAQ.html">HamQSL FAQ - Update Frequencies</a>
      */
-    private static final Duration REFRESH_INTERVAL = Duration.ofMinutes(30);
+    private static final Duration REFRESH_INTERVAL = Duration.ofHours(2);
     private static final String HAMQSL_URL = "https://www.hamqsl.com/solarxml.php";
 
     // Band condition time period (day vs night)
@@ -67,14 +72,14 @@ public class HamQslBandClient extends AbstractExternalDataClient<List<BandCondit
     private final XmlMapper xmlMapper;
 
     @org.springframework.beans.factory.annotation.Autowired
-    public HamQslBandClient(
+    public HamQslClient(
             WebClient.Builder webClientBuilder,
             CircuitBreakerRegistry circuitBreakerRegistry,
             RetryRegistry retryRegistry) {
         this(webClientBuilder, circuitBreakerRegistry, retryRegistry, HAMQSL_URL);
     }
 
-    protected HamQslBandClient(
+    protected HamQslClient(
             WebClient.Builder webClientBuilder,
             CircuitBreakerRegistry circuitBreakerRegistry,
             RetryRegistry retryRegistry,
@@ -101,8 +106,8 @@ public class HamQslBandClient extends AbstractExternalDataClient<List<BandCondit
     }
 
     @Override
-    protected List<BandCondition> doFetch() {
-        getLog().debug("Fetching band conditions from HamQSL");
+    protected HamQslFetchResult doFetch() {
+        getLog().debug("Fetching solar and band data from HamQSL");
 
         String xml = getWebClient().get()
                 .retrieve()
@@ -122,54 +127,86 @@ public class HamQslBandClient extends AbstractExternalDataClient<List<BandCondit
                 throw new InvalidApiResponseException(SOURCE_NAME, "Missing solardata element in XML response");
             }
 
-            List<BandCondition> conditions = new ArrayList<>();
+            // Validate the data
+            data.getSolardata().validate();
 
-            // Parse band conditions from the XML structure
-            var solarData = data.getSolardata();
-            if (solarData.getCalculatedConditions() != null
-                    && solarData.getCalculatedConditions().getBands() != null) {
+            // Extract solar indices
+            SolarIndices solarIndices = extractSolarIndices(data);
 
-                for (BandConditionEntry entry : solarData.getCalculatedConditions().getBands()) {
-                    // Use "day" conditions (could be enhanced to handle time-based selection)
-                    if (DAY_TIME_PERIOD.equals(entry.getTime())) {
-                        BandConditionRating rating = parseBandRating(entry.getValue());
+            // Extract band conditions
+            List<BandCondition> bandConditions = extractBandConditions(data);
 
-                        // Map band ranges to individual bands
-                        switch (entry.getName()) {
-                            case "80m-40m":
-                                conditions.add(new BandCondition(FrequencyBand.BAND_80M, rating));
-                                conditions.add(new BandCondition(FrequencyBand.BAND_40M, rating));
-                                break;
-                            case "30m-20m":
-                                conditions.add(new BandCondition(FrequencyBand.BAND_30M, rating));
-                                conditions.add(new BandCondition(FrequencyBand.BAND_20M, rating));
-                                break;
-                            case "17m-15m":
-                                conditions.add(new BandCondition(FrequencyBand.BAND_17M, rating));
-                                conditions.add(new BandCondition(FrequencyBand.BAND_15M, rating));
-                                break;
-                            case "12m-10m":
-                                conditions.add(new BandCondition(FrequencyBand.BAND_12M, rating));
-                                conditions.add(new BandCondition(FrequencyBand.BAND_10M, rating));
-                                break;
-                            default:
-                                // Unknown band range, skip
-                                break;
-                        }
-                    }
-                }
-            }
+            getLog().info("Successfully fetched from HamQSL: K={}, A={}, {} band conditions",
+                    solarIndices.kIndex(), solarIndices.aIndex(), bandConditions.size());
 
-            getLog().info("Successfully fetched {} band conditions from HamQSL", conditions.size());
-            return conditions;
+            return new HamQslFetchResult(solarIndices, bandConditions);
 
         } catch (InvalidApiResponseException e) {
             throw e;
         } catch (Exception e) {
-            getLog().error("Error parsing HamQSL band conditions", e);
+            getLog().error("Error parsing HamQSL data", e);
             throw new InvalidApiResponseException(SOURCE_NAME,
-                    "Failed to parse HamQSL band conditions: " + e.getMessage(), e);
+                    "Failed to parse HamQSL data: " + e.getMessage(), e);
         }
+    }
+
+    // ========== Data Extraction ==========
+
+    private SolarIndices extractSolarIndices(HamQslData data) {
+        Double solarFlux = data.getSolarFlux() != null ? data.getSolarFlux() : 0.0;
+        Integer aIndex = data.getAIndex() != null ? data.getAIndex() : 0;
+        Integer kIndex = data.getKIndex() != null ? data.getKIndex() : 0;
+        Integer sunspots = data.getSunspots() != null ? data.getSunspots() : 0;
+
+        return new SolarIndices(
+                solarFlux,
+                aIndex,
+                kIndex,
+                sunspots,
+                Instant.now(),
+                SOURCE_NAME
+        );
+    }
+
+    private List<BandCondition> extractBandConditions(HamQslData data) {
+        List<BandCondition> conditions = new ArrayList<>();
+
+        var solarData = data.getSolardata();
+        if (solarData.getCalculatedConditions() != null
+                && solarData.getCalculatedConditions().getBands() != null) {
+
+            for (BandConditionEntry entry : solarData.getCalculatedConditions().getBands()) {
+                // Use "day" conditions
+                if (DAY_TIME_PERIOD.equals(entry.getTime())) {
+                    BandConditionRating rating = parseBandRating(entry.getValue());
+
+                    // Map band ranges to individual bands
+                    switch (entry.getName()) {
+                        case "80m-40m":
+                            conditions.add(new BandCondition(FrequencyBand.BAND_80M, rating));
+                            conditions.add(new BandCondition(FrequencyBand.BAND_40M, rating));
+                            break;
+                        case "30m-20m":
+                            conditions.add(new BandCondition(FrequencyBand.BAND_30M, rating));
+                            conditions.add(new BandCondition(FrequencyBand.BAND_20M, rating));
+                            break;
+                        case "17m-15m":
+                            conditions.add(new BandCondition(FrequencyBand.BAND_17M, rating));
+                            conditions.add(new BandCondition(FrequencyBand.BAND_15M, rating));
+                            break;
+                        case "12m-10m":
+                            conditions.add(new BandCondition(FrequencyBand.BAND_12M, rating));
+                            conditions.add(new BandCondition(FrequencyBand.BAND_10M, rating));
+                            break;
+                        default:
+                            // Unknown band range, skip
+                            break;
+                    }
+                }
+            }
+        }
+
+        return conditions;
     }
 
     // ========== Band Rating Parsing ==========

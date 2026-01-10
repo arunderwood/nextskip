@@ -53,12 +53,12 @@ public class ContestCalendarClient extends AbstractExternalDataClient<List<Conte
     /**
      * Refresh interval for data fetching.
      *
-     * <p>Contest schedules are static and change infrequently. 6 hours is
-     * appropriate for catching schedule updates while minimizing load.
+     * <p>Contest schedules are typically published weekly and change infrequently.
+     * 12 hours balances data freshness with bandwidth efficiency.
      *
      * @see <a href="https://www.contestcalendar.com/terms.php">WA7BNM Terms of Use</a>
      */
-    private static final Duration REFRESH_INTERVAL = Duration.ofHours(6);
+    private static final Duration REFRESH_INTERVAL = Duration.ofHours(12);
     private static final String CALENDAR_URL = "https://www.contestcalendar.com/weeklycontcustom.php";
 
     @org.springframework.beans.factory.annotation.Autowired
