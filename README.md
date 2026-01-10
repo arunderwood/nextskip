@@ -91,7 +91,7 @@ The platform is actively expanding to cover more activities and data sources.
 ### Backend
 
 - Java 25
-- Spring Boot 3.5
+- Spring Boot 4.0
 - Vaadin Hilla 25.0 (React integration)
 - Resilience4j (circuit breakers, retry)
 - Caffeine (caching)
