@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/arunderwood/nextskip/actions/workflows/ci.yml/badge.svg)](https://github.com/arunderwood/nextskip/actions/workflows/ci.yml)
 ![Java 25](https://img.shields.io/badge/Java-25-orange)
-![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5-brightgreen)
+![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.0-brightgreen)
 ![Vaadin Hilla](https://img.shields.io/badge/Vaadin%20Hilla-25.0-blue)
 
 <p align="center">
