@@ -1,0 +1,240 @@
+/**
+ * Feed Manager View Styles
+ *
+ * Layout and styling for the admin feed manager page.
+ */
+
+.feed-manager {
+  padding: calc(var(--spacing-unit) * 3);
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* Header */
+.feed-manager-header {
+  margin-bottom: calc(var(--spacing-unit) * 4);
+}
+
+.feed-manager-header h1 {
+  margin: 0 0 calc(var(--spacing-unit) * 1) 0;
+  font-size: 1.5rem;
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+}
+
+.feed-manager-description {
+  margin: 0;
+  font-size: 0.9375rem;
+  color: var(--text-secondary);
+}
+
+.feed-manager-stats {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--spacing-unit) * 3);
+  margin-top: calc(var(--spacing-unit) * 2);
+  padding: calc(var(--spacing-unit) * 2);
+  background-color: var(--surface-color);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+}
+
+.feed-manager-stat {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--spacing-unit) * 0.5);
+}
+
+.feed-manager-stat-value {
+  font-size: 1.5rem;
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+}
+
+.feed-manager-stat-label {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.feed-manager-stat-value--healthy {
+  color: var(--success-color);
+}
+
+.feed-manager-stat-value--degraded {
+  color: var(--warning-color);
+}
+
+.feed-manager-stat-value--unhealthy {
+  color: var(--error-color);
+}
+
+/* Module Sections */
+.feed-manager-modules {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--spacing-unit) * 4);
+}
+
+.feed-manager-module {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--spacing-unit) * 2);
+}
+
+.feed-manager-module-header {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--spacing-unit) * 1.5);
+}
+
+.feed-manager-module-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+  color: white;
+  border-radius: 8px;
+}
+
+.feed-manager-module-icon .material-icons {
+  font-size: 1.125rem;
+}
+
+.feed-manager-module-title {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+  text-transform: capitalize;
+}
+
+.feed-manager-module-count {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  padding: calc(var(--spacing-unit) * 0.25) calc(var(--spacing-unit) * 1);
+  background-color: var(--background-color);
+  border-radius: 12px;
+}
+
+/* Feed Grid */
+.feed-manager-feeds {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: calc(var(--spacing-unit) * 2);
+}
+
+/* Loading State */
+.feed-manager-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+  gap: calc(var(--spacing-unit) * 2);
+  color: var(--text-secondary);
+}
+
+.feed-manager-loading .admin-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--border-color);
+  border-top-color: var(--primary-color);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Error State */
+.feed-manager-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+  gap: calc(var(--spacing-unit) * 2);
+  text-align: center;
+}
+
+.feed-manager-error .material-icons {
+  font-size: 3rem;
+  color: var(--error-color);
+}
+
+.feed-manager-error p {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+.feed-manager-error button {
+  margin-top: calc(var(--spacing-unit) * 1);
+  padding: calc(var(--spacing-unit) * 1) calc(var(--spacing-unit) * 2);
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition: background-color var(--transition-fast);
+}
+
+.feed-manager-error button:hover {
+  background-color: var(--primary-dark);
+}
+
+/* Empty State */
+.feed-manager-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  gap: calc(var(--spacing-unit) * 1);
+  color: var(--text-secondary);
+}
+
+.feed-manager-empty .material-icons {
+  font-size: 2.5rem;
+  opacity: 0.5;
+}
+
+/* Last Updated */
+.feed-manager-timestamp {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: calc(var(--spacing-unit) * 0.5);
+  margin-top: calc(var(--spacing-unit) * 3);
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.feed-manager-timestamp .material-icons {
+  font-size: 0.875rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .feed-manager {
+    padding: calc(var(--spacing-unit) * 2);
+  }
+
+  .feed-manager-stats {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: calc(var(--spacing-unit) * 1.5);
+  }
+
+  .feed-manager-feeds {
+    grid-template-columns: 1fr;
+  }
+}

@@ -261,6 +261,115 @@ public final class TestConstants {
     /** West coast NA grid square. */
     public static final String NA_WEST_GRID = "CM97";
 
+    // ==========================================================================
+    // Admin / OAuth2
+    // ==========================================================================
+
+    /** Default admin email for tests. */
+    public static final String ADMIN_EMAIL = "admin@example.com";
+
+    /** Default non-admin email for tests. */
+    public static final String NON_ADMIN_EMAIL = "user@example.com";
+
+    /** Default admin username. */
+    public static final String ADMIN_USERNAME = "adminuser";
+
+    /** Default admin display name. */
+    public static final String ADMIN_NAME = "Admin User";
+
+    /** Default avatar URL. */
+    public static final String ADMIN_AVATAR_URL = "https://github.com/avatar.png";
+
+    /** OAuth attribute key for email. */
+    public static final String ATTR_EMAIL = "email";
+
+    /** OAuth attribute key for name. */
+    public static final String ATTR_NAME = "name";
+
+    /** OAuth attribute key for login. */
+    public static final String ATTR_LOGIN = "login";
+
+    /** OAuth attribute key for avatar URL. */
+    public static final String ATTR_AVATAR_URL = "avatar_url";
+
+    /** Admin role authority. */
+    public static final String ROLE_ADMIN = "ROLE_ADMIN";
+
+    // ==========================================================================
+    // Admin Feed Status
+    // ==========================================================================
+
+    /** NOAA SWPC feed display name. */
+    public static final String FEED_NOAA_SWPC = "NOAA SWPC";
+
+    /** PSKReporter MQTT feed display name. */
+    public static final String FEED_PSKREPORTER_MQTT = "PSKReporter MQTT";
+
+    /** Band Activity feed display name. */
+    public static final String FEED_BAND_ACTIVITY = "Band Activity";
+
+    /** Meteor Showers feed display name. */
+    public static final String FEED_METEOR_SHOWERS = "Meteor Showers";
+
+    /** Contest Calendar feed display name. */
+    public static final String FEED_CONTEST_CALENDAR = "Contest Calendar";
+
+    /** POTA activations feed display name. */
+    public static final String FEED_POTA = "POTA";
+
+    /** SOTA activations feed display name. */
+    public static final String FEED_SOTA = "SOTA";
+
+    /** HamQSL Solar feed display name. */
+    public static final String FEED_HAMQSL_SOLAR = "HamQSL Solar";
+
+    /** HamQSL Band feed display name. */
+    public static final String FEED_HAMQSL_BAND = "HamQSL Band";
+
+    /** Unknown feed name for testing error scenarios. */
+    public static final String FEED_UNKNOWN = "Unknown";
+
+    // ==========================================================================
+    // Admin Module Names
+    // ==========================================================================
+
+    /** Propagation module name. */
+    public static final String MODULE_PROPAGATION = "propagation";
+
+    /** Activations module name. */
+    public static final String MODULE_ACTIVATIONS = "activations";
+
+    /** Spots module name. */
+    public static final String MODULE_SPOTS = "spots";
+
+    /** Contests module name. */
+    public static final String MODULE_CONTESTS = "contests";
+
+    /** Meteors module name. */
+    public static final String MODULE_METEORS = "meteors";
+
+    // ==========================================================================
+    // Admin Task Names
+    // ==========================================================================
+
+    /** NOAA refresh task name. */
+    public static final String TASK_NOAA_REFRESH = "noaa-refresh";
+
+    /** POTA refresh task name. */
+    public static final String TASK_POTA_REFRESH = "pota-refresh";
+
+    /** SOTA refresh task name. */
+    public static final String TASK_SOTA_REFRESH = "sota-refresh";
+
+    /** Meteor refresh task name. */
+    public static final String TASK_METEOR_REFRESH = "meteor-refresh";
+
+    /** Contest refresh task name. */
+    public static final String TASK_CONTEST_REFRESH = "contest-refresh";
+
+    /** Band activity refresh task name. */
+    public static final String TASK_BAND_ACTIVITY_REFRESH = "band-activity-refresh";
+
     private TestConstants() {
         // Prevent instantiation
     }
