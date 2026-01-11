@@ -69,6 +69,10 @@ public class SecurityConfig {
                         .invalidateHttpSession(true)
                         .deleteCookies("JSESSIONID")
                 )
+                // Enable CSRF for admin routes (session-based OAuth2 auth)
+                .csrf(csrf -> csrf
+                        .ignoringRequestMatchers("/connect/**")
+                )
                 .build();
     }
 
@@ -86,8 +90,10 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .anyRequest().permitAll()
                 )
-                // Disable CSRF for Vaadin Hilla (uses its own protection)
-                .csrf(csrf -> csrf.disable())
+                // Vaadin Hilla handles CSRF for its RPC endpoints internally
+                .csrf(csrf -> csrf
+                        .ignoringRequestMatchers("/connect/**")
+                )
                 .build();
     }
 }
