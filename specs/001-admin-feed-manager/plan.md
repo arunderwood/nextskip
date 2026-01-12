@@ -7,7 +7,10 @@
 
 Add an authenticated admin-only area to NextSkip using GitHub OAuth2 for authentication and Hilla's native security integration. The admin area provides a Feed Manager view showing status of all data feeds (scheduled and subscription types) with the ability to force-refresh scheduled feeds.
 
-**Key Design Choice**: Uses db-scheduler introspection for automatic feed discovery - new scheduled feeds are auto-detected without modifying any existing code (Open-Closed Principle compliant).
+**Key Design Choices**:
+- Admin depends on abstractions (`RefreshTaskCoordinator`, `SubscriptionLifecycleAware`) in `common/`, not on concrete activity modules
+- Combines db-scheduler's runtime API with coordinator metadata for display names
+- New feeds are auto-discovered via Spring DI - zero admin module changes required (Open-Closed Principle)
 
 ## Technical Context
 
@@ -31,7 +34,7 @@ Add an authenticated admin-only area to NextSkip using GitHub OAuth2 for authent
 | II. Multi-Activity Aggregation | N/A | Admin dashboard separate from main dashboard |
 | III. Activity-Centric Modularity | PASS | Admin is its own module with clean API boundary |
 | IV. Responsible Data Consumption | PASS | No new external feeds; monitoring existing |
-| V. SOLID Design | PASS | db-scheduler introspection preserves O/C principle |
+| V. SOLID Design | PASS | Admin depends on abstractions in `common/`, not concrete modules (DIP). New feeds auto-discovered (O/C). |
 | VI. Quality Gates | PASS | Standard coverage requirements apply |
 | VII. Resilience by Default | PASS | Circuit breakers already on feeds; admin reads status |
 
@@ -97,7 +100,7 @@ src/main/frontend/
         └── RefreshButton.tsx            # Manual refresh trigger
 ```
 
-**Structure Decision**: Extends existing modular monolith pattern. Admin module follows same `api/internal/model` structure as other activity modules. Uses db-scheduler introspection to automatically discover scheduled feeds without modifying existing modules.
+**Structure Decision**: Extends existing modular monolith pattern. Admin module follows same `api/internal/model` structure as other activity modules. Admin depends only on abstractions in `common/` (`RefreshTaskCoordinator`, `SubscriptionLifecycleAware`), not on concrete activity modules. Follows the same auto-discovery pattern as `DataRefreshStartupHandler`.
 
 ---
 
@@ -105,47 +108,100 @@ src/main/frontend/
 
 ### SOLID-Compliant Feed Discovery
 
-#### For Scheduled Feeds: db-scheduler Introspection
+#### For Scheduled Feeds: Abstraction-Based Discovery
 
-The existing scheduled feeds (NOAA, HamQSL, POTA, WA7BNM) all use db-scheduler. We introspect the scheduler directly:
+Admin depends on the `RefreshTaskCoordinator` interface (in `common/`), not on concrete activity modules. This follows the existing pattern used by `DataRefreshStartupHandler`.
+
+**Interface Enhancement** (add to existing interface):
+
+```java
+// In common/scheduler/RefreshTaskCoordinator.java - ADD getDisplayName()
+public interface RefreshTaskCoordinator {
+    String getTaskName();           // Already exists
+    String getDisplayName();        // NEW: Human-readable name for admin UI
+    RecurringTask<Void> getRecurringTask();  // Already exists
+    boolean needsInitialLoad();     // Already exists
+}
+```
+
+**Admin Discovery Service**:
 
 ```java
 @Component
 public class ScheduledFeedDiscovery {
     private final Scheduler scheduler;
-    private final ScheduledExecutionsRepository scheduledRepo;
+    private final Map<String, RefreshTaskCoordinator> coordinatorsByTaskName;
+
+    // Spring auto-wires ALL RefreshTaskCoordinator implementations
+    public ScheduledFeedDiscovery(
+            Scheduler scheduler,
+            List<RefreshTaskCoordinator> coordinators) {
+        this.scheduler = scheduler;
+        this.coordinatorsByTaskName = coordinators.stream()
+            .collect(Collectors.toMap(
+                RefreshTaskCoordinator::getTaskName,
+                coordinator -> coordinator));
+    }
 
     public List<FeedStatus> getScheduledFeedStatuses() {
-        // Query db-scheduler for all registered tasks
-        List<ScheduledExecution<Object>> executions = scheduler.getScheduledExecutions();
-
-        return executions.stream()
-            .map(exec -> new FeedStatus(
-                exec.getTaskInstance().getTaskName(),
-                extractDisplayName(exec),
-                FeedType.SCHEDULED,
-                getLastExecutionTime(exec),
-                exec.getExecutionTime(),  // next scheduled
-                null,  // no connection status for scheduled
-                isHealthy(exec)
-            ))
+        // Use db-scheduler API for runtime data (times, health)
+        return scheduler.getScheduledExecutions().stream()
+            .filter(exec -> coordinatorsByTaskName.containsKey(
+                exec.getTaskInstance().getTaskName()))
+            .map(exec -> {
+                String taskName = exec.getTaskInstance().getTaskName();
+                RefreshTaskCoordinator coordinator = coordinatorsByTaskName.get(taskName);
+                return new FeedStatus(
+                    taskName,
+                    coordinator.getDisplayName(),  // From coordinator, not hardcoded
+                    FeedType.SCHEDULED,
+                    exec.getLastSuccess(),         // db-scheduler API
+                    exec.getExecutionTime(),       // db-scheduler API
+                    null,
+                    exec.getConsecutiveFailures() == 0  // db-scheduler API
+                );
+            })
             .toList();
     }
 
     public void triggerRefresh(String taskName) {
-        // Reschedule task to run immediately
+        RefreshTaskCoordinator coordinator = coordinatorsByTaskName.get(taskName);
+        if (coordinator == null) {
+            throw new IllegalArgumentException("Unknown task: " + taskName);
+        }
         scheduler.reschedule(
-            taskInstanceOf(taskName),
+            coordinator.getRecurringTask().instance(RecurringTask.INSTANCE),
             Instant.now()
         );
     }
 }
 ```
 
+**Dependency Graph** (admin depends on abstractions only):
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                         common/                                  │
+│  ┌─────────────────────────┐  ┌──────────────────────────────┐  │
+│  │ RefreshTaskCoordinator  │  │ SubscriptionLifecycleAware   │  │
+│  │ (interface)             │  │ (interface)                  │  │
+│  └───────────▲─────────────┘  └──────────────▲───────────────┘  │
+└──────────────┼───────────────────────────────┼──────────────────┘
+               │                               │
+    ┌──────────┴──────────┐         ┌──────────┴──────────┐
+    │                     │         │                     │
+┌───┴───┐ ┌───────┐ ┌─────┴──┐  ┌───┴───┐            ┌────┴────┐
+│ noaa  │ │ pota  │ │contests│  │ spots │            │  admin  │
+│       │ │       │ │        │  │ (mqtt)│            │         │
+└───────┘ └───────┘ └────────┘  └───────┘            └─────────┘
+  implements                      implements           depends on
+  RefreshTaskCoordinator          SubscriptionLife...  both interfaces
+```
+
 **Open-Closed Compliance**:
-- Adding a new scheduled feed → Just register with db-scheduler (already required)
-- Admin automatically discovers it → Zero admin module changes
-- Existing feed modules → Zero changes
+- Adding a new scheduled feed → Implement `RefreshTaskCoordinator` (already required) with `getDisplayName()`
+- Admin automatically discovers it via Spring DI → Zero admin module changes
+- Admin depends on abstraction → No coupling to concrete activity modules
 
 #### For Subscription Feeds: Self-Registration Pattern
 
@@ -304,11 +360,13 @@ export const routes = protectRoutes([
 
 ## Key Implementation Decisions
 
-### 1. db-scheduler for Scheduled Feed Discovery
-Query the scheduler directly instead of requiring feeds to implement an interface. This means:
-- All existing scheduled feeds auto-discovered
-- New scheduled feeds auto-discovered
-- Zero changes to existing modules
+### 1. Abstraction-Based Feed Discovery
+Admin depends on abstractions in `common/`, not on concrete activity modules:
+- **Scheduled feeds**: `RefreshTaskCoordinator` interface (add `getDisplayName()` method)
+- **Subscription feeds**: `SubscriptionLifecycleAware` interface (new, 4 methods)
+- db-scheduler API provides runtime data (execution times, health status)
+- Coordinators provide metadata (display names, task references)
+- Spring auto-wires all implementations → zero admin module coupling
 
 ### 2. Minimal Interface for Subscriptions
 `SubscriptionLifecycleAware` has only 4 methods - the minimum needed. The existing MQTT client already tracks this state internally.
@@ -439,11 +497,25 @@ implementation("org.springframework.boot:spring-boot-starter-oauth2-client")
 
 ## Files Modified (Existing Code)
 
-Only one existing file needs modification:
-
 | File | Change | Reason |
 |------|--------|--------|
-| `MqttSpotClient.java` | Implement `SubscriptionLifecycleAware` | Expose existing connection state |
+| `common/scheduler/RefreshTaskCoordinator.java` | Add `getDisplayName()` method | Provide human-readable names for admin UI |
+| `propagation/.../NoaaRefreshTask.java` | Implement `getDisplayName()` | Return "NOAA Solar Indices" |
+| `propagation/.../HamQslSolarRefreshTask.java` | Implement `getDisplayName()` | Return "HamQSL Solar" |
+| `propagation/.../HamQslBandRefreshTask.java` | Implement `getDisplayName()` | Return "HamQSL Band Conditions" |
+| `activations/.../PotaRefreshTask.java` | Implement `getDisplayName()` | Return "POTA Activations" |
+| `activations/.../SotaRefreshTask.java` | Implement `getDisplayName()` | Return "SOTA Activations" |
+| `contests/.../ContestRefreshTask.java` | Implement `getDisplayName()` | Return "Contest Calendar" |
+| `meteors/.../MeteorRefreshTask.java` | Implement `getDisplayName()` | Return "Meteor Showers" |
+| `spots/.../PskReporterMqttSource.java` | Implement `SubscriptionLifecycleAware` | Expose existing connection state |
+
+**Note**: Each coordinator change is trivial - just add one method returning a string constant. The interface change is backward-compatible if we add a default method:
+
+```java
+default String getDisplayName() {
+    return getTaskName();  // Fallback to task name
+}
+```
 
 All other changes are new files in the `admin` module or configuration.
 
@@ -451,10 +523,18 @@ All other changes are new files in the `admin` module or configuration.
 
 ## Complexity Tracking
 
-No constitution violations. The `SubscriptionLifecycleAware` interface modification to `MqttSpotClient` is justified:
+No constitution violations. Interface modifications are justified:
 
 | Change | Justification |
 |--------|---------------|
-| Add interface to MqttSpotClient | Exposes existing state (isConnected, lastConnected) that client already tracks. No new behavior added. Interface is stable and minimal (4 methods). |
+| Add `getDisplayName()` to `RefreshTaskCoordinator` | Backward-compatible (default method). Each implementation adds 1 trivial method returning a string constant. Interface is in `common/`, not activity modules. |
+| Add `SubscriptionLifecycleAware` interface | New interface in `common/`. Minimal (4 methods). `PskReporterMqttSource` already tracks this state internally - just exposing it. |
+| Modify 7 RefreshTask implementations | Each adds 1 line: `return "Display Name";`. Trivial, no behavior change. |
+| Modify `PskReporterMqttSource` | Exposes existing state. No new behavior. 4 method implementations, all delegating to existing fields. |
 
-This maintains Open-Closed for future feeds - they implement the interface when created, and admin discovers them automatically.
+**SOLID Compliance**:
+- **Single Responsibility**: Admin aggregates; coordinators provide their own metadata
+- **Open-Closed**: New feeds implement interface → auto-discovered → zero admin changes
+- **Liskov Substitution**: All coordinators are interchangeable
+- **Interface Segregation**: `RefreshTaskCoordinator` remains minimal; `SubscriptionLifecycleAware` is separate
+- **Dependency Inversion**: Admin depends on abstractions (`common/`), not concretions (activity modules)
