@@ -21,13 +21,15 @@ spring:
     name: nextskip
 
   # OAuth2 Client Configuration (GitHub)
+  # Note: OAuth2 login is disabled when GITHUB_CLIENT_ID is not set.
+  # The "disabled" placeholder prevents Spring Security autoconfiguration errors.
   security:
     oauth2:
       client:
         registration:
           github:
-            client-id: ${GITHUB_CLIENT_ID:}
-            client-secret: ${GITHUB_CLIENT_SECRET:}
+            client-id: ${GITHUB_CLIENT_ID:disabled}
+            client-secret: ${GITHUB_CLIENT_SECRET:disabled}
             scope: user:email  # Required to access user's email for authorization
 
   # Static resource caching for PWA

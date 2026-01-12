@@ -58,7 +58,9 @@
   border-radius: 0.5rem;
   color: var(--color-text-secondary, #a0a0b0);
   text-decoration: none;
-  transition: background-color 0.15s, color 0.15s;
+  transition:
+    background-color 0.15s,
+    color 0.15s;
 }
 
 .admin-nav-link:hover {
@@ -163,7 +165,9 @@
   border: 1px solid var(--color-border, #1e1e2e);
   border-radius: 0.75rem;
   text-decoration: none;
-  transition: border-color 0.15s, box-shadow 0.15s;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
 }
 
 .admin-quick-link-card:hover {
