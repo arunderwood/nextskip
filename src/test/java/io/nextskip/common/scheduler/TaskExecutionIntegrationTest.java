@@ -104,8 +104,8 @@ class TaskExecutionIntegrationTest extends AbstractSchedulerTest {
 
     @Test
     void testCoordinators_DiscoveredViaSpring() {
-        // Verify all 7 coordinators are present
-        assertThat(coordinators).hasSize(7);
+        // Verify all 6 coordinators are present (HamQSL solar+band consolidated into one)
+        assertThat(coordinators).hasSize(6);
 
         // Verify each has required methods returning non-null
         for (RefreshTaskCoordinator coordinator : coordinators) {

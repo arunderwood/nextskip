@@ -20,7 +20,8 @@ import java.time.Instant;
  * <p>Configures the db-scheduler recurring task that delegates to
  * {@link ContestRefreshService} for the actual refresh logic.
  *
- * <p>Task runs every 6 hours (contest schedules change infrequently).
+ * <p>Task runs every 12 hours. Contest schedules are typically published
+ * weekly, so 12-hour polling balances freshness with bandwidth efficiency.
  *
  * <p>Implements {@link RefreshTaskCoordinator} to enable automatic discovery
  * by {@link io.nextskip.common.scheduler.DataRefreshStartupHandler}.
@@ -30,7 +31,7 @@ public class ContestRefreshTask implements RefreshTaskCoordinator {
 
     private static final String TASK_NAME = "contest-refresh";
     private static final String DISPLAY_NAME = "Contest";
-    private static final Duration REFRESH_INTERVAL = Duration.ofHours(6);
+    private static final Duration REFRESH_INTERVAL = Duration.ofHours(12);
 
     private final ContestRepository repository;
     private RecurringTask<Void> recurringTask;

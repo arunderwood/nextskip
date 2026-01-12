@@ -9,6 +9,7 @@ import io.nextskip.common.client.InvalidApiResponseException;
 import io.nextskip.common.model.FrequencyBand;
 import io.nextskip.propagation.model.BandCondition;
 import io.nextskip.propagation.model.BandConditionRating;
+import io.nextskip.propagation.model.SolarIndices;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -28,16 +29,20 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * Unit tests for HamQslBandClient using WireMock.
+ * Unit tests for unified HamQslClient using WireMock.
+ *
+ * <p>Tests that the unified client correctly extracts both solar indices
+ * and band conditions from a single HTTP request.
  */
-class HamQslBandClientTest {
+@SuppressWarnings("PMD.TooManyMethods") // Comprehensive test suite
+class HamQslClientTest {
 
     private static final String HAMQSL_SOURCE = "HamQSL";
     private static final String HEADER_CONTENT_TYPE = "Content-Type";
     private static final String CONTENT_TYPE_XML = "text/xml";
 
     private WireMockServer wireMockServer;
-    private HamQslBandClient client;
+    private HamQslClient client;
     private CircuitBreakerRegistry circuitBreakerRegistry;
     private RetryRegistry retryRegistry;
 
@@ -52,7 +57,7 @@ class HamQslBandClientTest {
         String baseUrl = wireMockServer.baseUrl();
         WebClient.Builder webClientBuilder = WebClient.builder();
 
-        client = new StubHamQslBandClient(webClientBuilder,
+        client = new StubHamQslClient(webClientBuilder,
                 circuitBreakerRegistry, retryRegistry, baseUrl);
     }
 
@@ -61,8 +66,10 @@ class HamQslBandClientTest {
         wireMockServer.stop();
     }
 
+    // ========== Solar Indices Tests ==========
+
     @Test
-    void shouldFetch_BandConditionsSuccessfully() {
+    void testFetch_ValidResponse_ExtractsSolarIndices() {
         String xmlResponse = createValidXmlResponse();
 
         wireMockServer.stubFor(get(urlEqualTo("/"))
@@ -71,111 +78,22 @@ class HamQslBandClientTest {
                         .withHeader(HEADER_CONTENT_TYPE, CONTENT_TYPE_XML)
                         .withBody(xmlResponse)));
 
-        List<BandCondition> result = client.fetch();
+        HamQslFetchResult result = client.fetch();
 
         assertNotNull(result);
-        assertEquals(8, result.size()); // 8 bands: 80m through 10m
-
-        // Check 20m is Good (from "30m-20m" range)
-        BandCondition band20m = result.stream()
-                .filter(bc -> bc.band() == FrequencyBand.BAND_20M)
-                .findFirst()
-                .orElseThrow();
-        assertEquals(BandConditionRating.GOOD, band20m.rating());
-
-        // Check 40m is Poor (from "80m-40m" range)
-        BandCondition band40m = result.stream()
-                .filter(bc -> bc.band() == FrequencyBand.BAND_40M)
-                .findFirst()
-                .orElseThrow();
-        assertEquals(BandConditionRating.POOR, band40m.rating());
-
-        // Check 15m is Fair (from "17m-15m" range)
-        BandCondition band15m = result.stream()
-                .filter(bc -> bc.band() == FrequencyBand.BAND_15M)
-                .findFirst()
-                .orElseThrow();
-        assertEquals(BandConditionRating.FAIR, band15m.rating());
+        SolarIndices solarIndices = result.solarIndices();
+        assertNotNull(solarIndices);
+        assertEquals(145.5, solarIndices.solarFluxIndex(), 0.01);
+        assertEquals(8, solarIndices.aIndex());
+        assertEquals(3, solarIndices.kIndex());
+        assertEquals(115, solarIndices.sunspotNumber());
+        assertEquals(HAMQSL_SOURCE, solarIndices.source());
 
         wireMockServer.verify(getRequestedFor(urlEqualTo("/")));
     }
 
     @Test
-    void shouldHandle_EmptyResponse() {
-        wireMockServer.stubFor(get(urlEqualTo("/"))
-                .willReturn(aResponse()
-                        .withStatus(200)
-                        .withHeader(HEADER_CONTENT_TYPE, CONTENT_TYPE_XML)
-                        .withBody("")));
-
-        // Empty response throws exception
-        assertThrows(InvalidApiResponseException.class, () -> client.fetch());
-    }
-
-    @Test
-    void shouldHandle_ServerError() {
-        wireMockServer.stubFor(get(urlEqualTo("/"))
-                .willReturn(aResponse()
-                        .withStatus(500)
-                        .withBody("Internal Server Error")));
-
-        // Server error throws exception
-        assertThrows(ExternalApiException.class, () -> client.fetch());
-    }
-
-    @Test
-    void shouldHandle_MalformedXml() {
-        wireMockServer.stubFor(get(urlEqualTo("/"))
-                .willReturn(aResponse()
-                        .withStatus(200)
-                        .withHeader(HEADER_CONTENT_TYPE, CONTENT_TYPE_XML)
-                        .withBody("<invalid>xml")));
-
-        // Malformed XML throws exception
-        assertThrows(InvalidApiResponseException.class, () -> client.fetch());
-    }
-
-    @Test
-    void shouldHandle_MissingSolarData() {
-        String xmlResponse = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><solar></solar>";
-
-        wireMockServer.stubFor(get(urlEqualTo("/"))
-                .willReturn(aResponse()
-                        .withStatus(200)
-                        .withHeader(HEADER_CONTENT_TYPE, CONTENT_TYPE_XML)
-                        .withBody(xmlResponse)));
-
-        // Missing solardata element throws exception
-        assertThrows(InvalidApiResponseException.class, () -> client.fetch());
-    }
-
-    @Test
-    void shouldHandle_MissingBandConditions() {
-        // Response with solardata but no calculatedconditions
-        String xmlResponse = """
-            <?xml version="1.0" encoding="UTF-8"?>
-            <solar>
-                <solardata>
-                    <solarflux>145.5</solarflux>
-                </solardata>
-            </solar>
-            """;
-
-        wireMockServer.stubFor(get(urlEqualTo("/"))
-                .willReturn(aResponse()
-                        .withStatus(200)
-                        .withHeader(HEADER_CONTENT_TYPE, CONTENT_TYPE_XML)
-                        .withBody(xmlResponse)));
-
-        List<BandCondition> result = client.fetch();
-
-        assertNotNull(result);
-        assertTrue(result.isEmpty());
-    }
-
-    @Test
-    void shouldHandle_PartialBandData() {
-        // Only one band range in response
+    void testFetch_NullValues_DefaultsToZero() {
         String xmlResponse = """
             <?xml version="1.0" encoding="UTF-8"?>
             <solar>
@@ -193,14 +111,107 @@ class HamQslBandClientTest {
                         .withHeader(HEADER_CONTENT_TYPE, CONTENT_TYPE_XML)
                         .withBody(xmlResponse)));
 
-        List<BandCondition> result = client.fetch();
+        HamQslFetchResult result = client.fetch();
 
         assertNotNull(result);
-        assertEquals(2, result.size()); // "30m-20m" expands to 2 bands
+        SolarIndices solarIndices = result.solarIndices();
+        assertEquals(0.0, solarIndices.solarFluxIndex(), 0.01);
+        assertEquals(0, solarIndices.aIndex());
+        assertEquals(0, solarIndices.kIndex());
+        assertEquals(0, solarIndices.sunspotNumber());
+    }
+
+    // ========== Band Conditions Tests ==========
+
+    @Test
+    void testFetch_ValidResponse_ExtractsBandConditions() {
+        String xmlResponse = createValidXmlResponse();
+
+        wireMockServer.stubFor(get(urlEqualTo("/"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader(HEADER_CONTENT_TYPE, CONTENT_TYPE_XML)
+                        .withBody(xmlResponse)));
+
+        HamQslFetchResult result = client.fetch();
+
+        assertNotNull(result);
+        List<BandCondition> bandConditions = result.bandConditions();
+        assertNotNull(bandConditions);
+        assertEquals(8, bandConditions.size()); // 8 bands: 80m through 10m
+
+        // Check 20m is Good (from "30m-20m" range)
+        BandCondition band20m = bandConditions.stream()
+                .filter(bc -> bc.band() == FrequencyBand.BAND_20M)
+                .findFirst()
+                .orElseThrow();
+        assertEquals(BandConditionRating.GOOD, band20m.rating());
+
+        // Check 40m is Poor (from "80m-40m" range)
+        BandCondition band40m = bandConditions.stream()
+                .filter(bc -> bc.band() == FrequencyBand.BAND_40M)
+                .findFirst()
+                .orElseThrow();
+        assertEquals(BandConditionRating.POOR, band40m.rating());
+
+        // Check 15m is Fair (from "17m-15m" range)
+        BandCondition band15m = bandConditions.stream()
+                .filter(bc -> bc.band() == FrequencyBand.BAND_15M)
+                .findFirst()
+                .orElseThrow();
+        assertEquals(BandConditionRating.FAIR, band15m.rating());
     }
 
     @Test
-    void shouldHandle_UnknownRating() {
+    void testFetch_MissingBandConditions_ReturnsEmptyList() {
+        String xmlResponse = """
+            <?xml version="1.0" encoding="UTF-8"?>
+            <solar>
+                <solardata>
+                    <solarflux>145.5</solarflux>
+                </solardata>
+            </solar>
+            """;
+
+        wireMockServer.stubFor(get(urlEqualTo("/"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader(HEADER_CONTENT_TYPE, CONTENT_TYPE_XML)
+                        .withBody(xmlResponse)));
+
+        HamQslFetchResult result = client.fetch();
+
+        assertNotNull(result);
+        assertTrue(result.bandConditions().isEmpty());
+    }
+
+    @Test
+    void testFetch_PartialBandData_ExtractsAvailableBands() {
+        String xmlResponse = """
+            <?xml version="1.0" encoding="UTF-8"?>
+            <solar>
+                <solardata>
+                    <calculatedconditions>
+                        <band name="30m-20m" time="day">Good</band>
+                    </calculatedconditions>
+                </solardata>
+            </solar>
+            """;
+
+        wireMockServer.stubFor(get(urlEqualTo("/"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader(HEADER_CONTENT_TYPE, CONTENT_TYPE_XML)
+                        .withBody(xmlResponse)));
+
+        HamQslFetchResult result = client.fetch();
+
+        assertNotNull(result);
+        assertEquals(2, result.bandConditions().size()); // "30m-20m" expands to 2 bands
+    }
+
+    @Test
+    void testFetch_UnknownRating_MapsToUnknown() {
         String xmlResponse = """
             <?xml version="1.0" encoding="UTF-8"?>
             <solar>
@@ -218,43 +229,16 @@ class HamQslBandClientTest {
                         .withHeader(HEADER_CONTENT_TYPE, CONTENT_TYPE_XML)
                         .withBody(xmlResponse)));
 
-        List<BandCondition> result = client.fetch();
+        HamQslFetchResult result = client.fetch();
 
         assertNotNull(result);
-        assertEquals(2, result.size());
-        // Unknown rating should map to UNKNOWN
-        assertTrue(result.stream().allMatch(bc -> bc.rating() == BandConditionRating.UNKNOWN));
+        assertEquals(2, result.bandConditions().size());
+        assertTrue(result.bandConditions().stream()
+                .allMatch(bc -> bc.rating() == BandConditionRating.UNKNOWN));
     }
 
     @Test
-    void shouldHandle_BlankRating() {
-        String xmlResponse = """
-            <?xml version="1.0" encoding="UTF-8"?>
-            <solar>
-                <solardata>
-                    <calculatedconditions>
-                        <band name="30m-20m" time="day">  </band>
-                    </calculatedconditions>
-                </solardata>
-            </solar>
-            """;
-
-        wireMockServer.stubFor(get(urlEqualTo("/"))
-                .willReturn(aResponse()
-                        .withStatus(200)
-                        .withHeader(HEADER_CONTENT_TYPE, CONTENT_TYPE_XML)
-                        .withBody(xmlResponse)));
-
-        List<BandCondition> result = client.fetch();
-
-        assertNotNull(result);
-        assertEquals(2, result.size());
-        assertTrue(result.stream().allMatch(bc -> bc.rating() == BandConditionRating.UNKNOWN));
-    }
-
-    @Test
-    void shouldFilter_ToOnlyDayConditions() {
-        // Response with both day and night conditions
+    void testFetch_DayAndNightConditions_FiltersToDayOnly() {
         String xmlResponse = """
             <?xml version="1.0" encoding="UTF-8"?>
             <solar>
@@ -273,15 +257,16 @@ class HamQslBandClientTest {
                         .withHeader(HEADER_CONTENT_TYPE, CONTENT_TYPE_XML)
                         .withBody(xmlResponse)));
 
-        List<BandCondition> result = client.fetch();
+        HamQslFetchResult result = client.fetch();
 
         assertNotNull(result);
-        assertEquals(2, result.size()); // Only day conditions
-        assertTrue(result.stream().allMatch(bc -> bc.rating() == BandConditionRating.GOOD));
+        assertEquals(2, result.bandConditions().size()); // Only day conditions
+        assertTrue(result.bandConditions().stream()
+                .allMatch(bc -> bc.rating() == BandConditionRating.GOOD));
     }
 
     @Test
-    void shouldHandle_UnknownBandRange() {
+    void testFetch_UnknownBandRange_Skipped() {
         String xmlResponse = """
             <?xml version="1.0" encoding="UTF-8"?>
             <solar>
@@ -299,19 +284,95 @@ class HamQslBandClientTest {
                         .withHeader(HEADER_CONTENT_TYPE, CONTENT_TYPE_XML)
                         .withBody(xmlResponse)));
 
-        List<BandCondition> result = client.fetch();
+        HamQslFetchResult result = client.fetch();
 
         assertNotNull(result);
-        assertTrue(result.isEmpty()); // Unknown band range is skipped
+        assertTrue(result.bandConditions().isEmpty());
+    }
+
+    // ========== Error Handling Tests ==========
+
+    @Test
+    void testFetch_EmptyResponse_ThrowsException() {
+        wireMockServer.stubFor(get(urlEqualTo("/"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader(HEADER_CONTENT_TYPE, CONTENT_TYPE_XML)
+                        .withBody("")));
+
+        assertThrows(InvalidApiResponseException.class, () -> client.fetch());
     }
 
     @Test
-    void shouldReturn_SourceName() {
+    void testFetch_ServerError_ThrowsException() {
+        wireMockServer.stubFor(get(urlEqualTo("/"))
+                .willReturn(aResponse()
+                        .withStatus(500)
+                        .withBody("Internal Server Error")));
+
+        assertThrows(ExternalApiException.class, () -> client.fetch());
+    }
+
+    @Test
+    void testFetch_MalformedXml_ThrowsException() {
+        wireMockServer.stubFor(get(urlEqualTo("/"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader(HEADER_CONTENT_TYPE, CONTENT_TYPE_XML)
+                        .withBody("<invalid>xml")));
+
+        assertThrows(InvalidApiResponseException.class, () -> client.fetch());
+    }
+
+    @Test
+    void testFetch_MissingSolarData_ThrowsException() {
+        String xmlResponse = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><solar></solar>";
+
+        wireMockServer.stubFor(get(urlEqualTo("/"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader(HEADER_CONTENT_TYPE, CONTENT_TYPE_XML)
+                        .withBody(xmlResponse)));
+
+        assertThrows(InvalidApiResponseException.class, () -> client.fetch());
+    }
+
+    @Test
+    void testFetch_DoctypeDeclaration_HandlesSafely() {
+        String xmlResponse = """
+            <?xml version="1.0" encoding="UTF-8"?>
+            <!DOCTYPE solar PUBLIC "-//hamqsl//DTD Solar//EN" "http://www.hamqsl.com/solar.dtd">
+            <solar>
+                <solardata>
+                    <solarflux>145.5</solarflux>
+                    <aindex>8</aindex>
+                    <kindex>3</kindex>
+                    <sunspots>115</sunspots>
+                </solardata>
+            </solar>
+            """;
+
+        wireMockServer.stubFor(get(urlEqualTo("/"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader(HEADER_CONTENT_TYPE, CONTENT_TYPE_XML)
+                        .withBody(xmlResponse)));
+
+        HamQslFetchResult result = client.fetch();
+
+        assertNotNull(result);
+        assertEquals(145.5, result.solarIndices().solarFluxIndex(), 0.01);
+    }
+
+    // ========== Metadata Tests ==========
+
+    @Test
+    void testGetSourceName_ReturnsHamQSL() {
         assertEquals(HAMQSL_SOURCE, client.getSourceName());
     }
 
     @Test
-    void shouldTrack_FreshnessAfterSuccessfulFetch() {
+    void testFreshness_TrackedAfterSuccessfulFetch() {
         String xmlResponse = createValidXmlResponse();
 
         wireMockServer.stubFor(get(urlEqualTo("/"))
@@ -327,26 +388,24 @@ class HamQslBandClientTest {
     }
 
     @Test
-    void shouldNotUpdate_FreshnessAfterFailedFetch() {
+    void testFreshness_NotUpdatedAfterFailedFetch() {
         wireMockServer.stubFor(get(urlEqualTo("/"))
                 .willReturn(aResponse()
                         .withStatus(500)
                         .withBody("Internal Server Error")));
 
-        // Fetch should throw exception
         assertThrows(ExternalApiException.class, () -> client.fetch());
 
-        // Freshness should not be updated (null since never succeeded)
         assertNull(client.getLastSuccessfulRefresh());
     }
 
     @Test
-    void shouldReturn_IsStale_WhenNeverRefreshed() {
+    void testIsStale_TrueWhenNeverRefreshed() {
         assertTrue(client.isStale());
     }
 
     @Test
-    void shouldReturn_NotStale_AfterSuccessfulFetch() {
+    void testIsStale_FalseAfterSuccessfulFetch() {
         String xmlResponse = createValidXmlResponse();
 
         wireMockServer.stubFor(get(urlEqualTo("/"))
@@ -383,8 +442,8 @@ class HamQslBandClientTest {
     /**
      * Stub subclass that allows URL override for testing.
      */
-    static class StubHamQslBandClient extends HamQslBandClient {
-        StubHamQslBandClient(
+    static class StubHamQslClient extends HamQslClient {
+        StubHamQslClient(
                 WebClient.Builder webClientBuilder,
                 CircuitBreakerRegistry circuitBreakerRegistry,
                 RetryRegistry retryRegistry,
