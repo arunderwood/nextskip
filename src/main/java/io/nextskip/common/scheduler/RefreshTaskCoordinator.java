@@ -42,4 +42,16 @@ public interface RefreshTaskCoordinator {
      * @return the task name (e.g., "POTA", "NOAA")
      */
     String getTaskName();
+
+    /**
+     * Returns a human-readable display name for the admin UI.
+     *
+     * <p>Override this method to provide a user-friendly name (e.g., "NOAA Solar Indices"
+     * instead of "noaa-refresh").
+     *
+     * @return the display name for admin UI, defaults to getTaskName()
+     */
+    default String getDisplayName() {
+        return getTaskName();
+    }
 }

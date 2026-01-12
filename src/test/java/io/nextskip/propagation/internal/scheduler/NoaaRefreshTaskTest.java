@@ -95,8 +95,13 @@ class NoaaRefreshTaskTest {
     }
 
     @Test
-    void testGetTaskName_ReturnsNoaa() {
-        assertThat(task.getTaskName()).isEqualTo("NOAA");
+    void testGetTaskName_ReturnsNoaaRefresh() {
+        assertThat(task.getTaskName()).isEqualTo("noaa-refresh");
+    }
+
+    @Test
+    void testGetDisplayName_ReturnsNoaa() {
+        assertThat(task.getDisplayName()).isEqualTo("NOAA");
     }
 
     @Test

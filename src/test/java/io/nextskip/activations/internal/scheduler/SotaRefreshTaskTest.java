@@ -87,8 +87,13 @@ class SotaRefreshTaskTest {
     }
 
     @Test
-    void testGetTaskName_ReturnsSota() {
-        assertThat(task.getTaskName()).isEqualTo("SOTA");
+    void testGetTaskName_ReturnsSotaRefresh() {
+        assertThat(task.getTaskName()).isEqualTo("sota-refresh");
+    }
+
+    @Test
+    void testGetDisplayName_ReturnsSota() {
+        assertThat(task.getDisplayName()).isEqualTo("SOTA");
     }
 
     @Test

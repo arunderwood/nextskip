@@ -87,8 +87,13 @@ class PotaRefreshTaskTest {
     }
 
     @Test
-    void testGetTaskName_ReturnsPota() {
-        assertThat(task.getTaskName()).isEqualTo("POTA");
+    void testGetTaskName_ReturnsPotaRefresh() {
+        assertThat(task.getTaskName()).isEqualTo("pota-refresh");
+    }
+
+    @Test
+    void testGetDisplayName_ReturnsPota() {
+        assertThat(task.getDisplayName()).isEqualTo("POTA");
     }
 
     @Test

@@ -1,0 +1,69 @@
+/**
+ * Refresh Button styles
+ */
+
+.refresh-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-text-primary, #ffffff);
+  background: rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: background-color 0.15s, border-color 0.15s;
+}
+
+.refresh-button:hover:not(:disabled) {
+  background: rgba(59, 130, 246, 0.2);
+  border-color: rgba(59, 130, 246, 0.5);
+}
+
+.refresh-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+/* Loading state */
+.refresh-button.loading {
+  background: rgba(59, 130, 246, 0.05);
+  color: var(--color-text-secondary, #a0a0b0);
+}
+
+/* Success state */
+.refresh-button.success {
+  background: rgba(34, 197, 94, 0.1);
+  border-color: rgba(34, 197, 94, 0.3);
+  color: var(--color-success, #22c55e);
+}
+
+/* Error state */
+.refresh-button.error {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.3);
+  color: var(--color-error, #ef4444);
+}
+
+/* Icon */
+.refresh-icon {
+  font-size: 1rem;
+}
+
+/* Spinner */
+.refresh-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--color-border, #1e1e2e);
+  border-top-color: var(--color-accent, #3b82f6);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

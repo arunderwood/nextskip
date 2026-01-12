@@ -103,8 +103,13 @@ class MeteorRefreshTaskTest {
     }
 
     @Test
-    void testGetTaskName_ReturnsMeteor() {
-        assertThat(task.getTaskName()).isEqualTo("Meteor");
+    void testGetTaskName_ReturnsMeteorRefresh() {
+        assertThat(task.getTaskName()).isEqualTo("meteor-refresh");
+    }
+
+    @Test
+    void testGetDisplayName_ReturnsMeteor() {
+        assertThat(task.getDisplayName()).isEqualTo("Meteor");
     }
 
     @Test

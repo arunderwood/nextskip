@@ -63,7 +63,7 @@ class DbSchedulerIntegrationTest extends AbstractSchedulerTest {
 
     @Test
     void testRefreshTaskCoordinators_AllRegistered() {
-        // Verify all 7 coordinators are discovered via Spring's component scanning
+        // Verify all 6 coordinators are discovered via Spring's component scanning
         assertThat(coordinators)
                 .hasSize(EXPECTED_COORDINATOR_COUNT)
                 .allSatisfy(coordinator -> {
@@ -74,13 +74,25 @@ class DbSchedulerIntegrationTest extends AbstractSchedulerTest {
 
     @Test
     void testRefreshTaskCoordinators_HaveExpectedNames() {
-        // Verify we have all expected task types registered
+        // Verify we have all expected task types registered (by task ID)
         List<String> taskNames = coordinators.stream()
                 .map(RefreshTaskCoordinator::getTaskName)
                 .toList();
 
-        // HamQSL solar+band consolidated into single "HamQSL" coordinator
-        assertThat(taskNames)
+        // HamQSL solar+band consolidated into single hamqsl-refresh task
+        assertThat(taskNames).contains(
+                "pota-refresh", "sota-refresh", "noaa-refresh",
+                "hamqsl-refresh", "contest-refresh", "meteor-refresh");
+    }
+
+    @Test
+    void testRefreshTaskCoordinators_HaveExpectedDisplayNames() {
+        // Verify display names are user-friendly (same as task names after consolidation)
+        List<String> displayNames = coordinators.stream()
+                .map(RefreshTaskCoordinator::getDisplayName)
+                .toList();
+
+        assertThat(displayNames)
                 .contains("POTA", "SOTA", "NOAA", "HamQSL", "Contest", "Meteor");
     }
 

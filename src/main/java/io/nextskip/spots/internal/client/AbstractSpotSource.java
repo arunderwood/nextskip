@@ -166,6 +166,15 @@ public abstract class AbstractSpotSource implements SpotSource {
     }
 
     /**
+     * Returns the timestamp of the last message received.
+     *
+     * @return the last message time, or null if no messages have been received
+     */
+    public Instant getLastMessageTime() {
+        return lastMessageTime.get();
+    }
+
+    /**
      * Called when the connection is lost unexpectedly.
      *
      * <p>Subclasses should call this from their connection-lost callbacks

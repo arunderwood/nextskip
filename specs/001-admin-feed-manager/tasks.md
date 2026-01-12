@@ -25,9 +25,9 @@
 
 **Purpose**: Project initialization and dependencies for admin functionality
 
-- [ ] T001 Add Spring Security OAuth2 Client dependency in build.gradle.kts
-- [ ] T002 [P] Add `@vaadin/hilla-react-auth` verification in package.json (confirm already included via Hilla)
-- [ ] T003 [P] Add admin configuration properties schema in src/main/resources/application.yml
+- [x] T001 Add Spring Security OAuth2 Client dependency in build.gradle.kts
+- [x] T002 [P] Add `@vaadin/hilla-react-auth` verification in package.json (confirm already included via Hilla)
+- [x] T003 [P] Add admin configuration properties schema in src/main/resources/application.yml
 
 ---
 
@@ -39,23 +39,23 @@
 
 ### Common Abstractions
 
-- [ ] T004 Add `getDisplayName()` default method to RefreshTaskCoordinator interface in src/main/java/io/nextskip/common/scheduler/RefreshTaskCoordinator.java
-- [ ] T005 [P] Create SubscriptionStatusProvider interface in src/main/java/io/nextskip/common/api/SubscriptionStatusProvider.java
-- [ ] T006 [P] Implement `getDisplayName()` in NoaaRefreshTask in src/main/java/io/nextskip/propagation/internal/NoaaRefreshTask.java
-- [ ] T007 [P] Implement `getDisplayName()` in HamQslSolarRefreshTask in src/main/java/io/nextskip/propagation/internal/HamQslSolarRefreshTask.java
-- [ ] T008 [P] Implement `getDisplayName()` in HamQslBandRefreshTask in src/main/java/io/nextskip/propagation/internal/HamQslBandRefreshTask.java
-- [ ] T009 [P] Implement `getDisplayName()` in PotaRefreshTask in src/main/java/io/nextskip/activations/internal/PotaRefreshTask.java
-- [ ] T010 [P] Implement `getDisplayName()` in SotaRefreshTask in src/main/java/io/nextskip/activations/internal/SotaRefreshTask.java
-- [ ] T011 [P] Implement `getDisplayName()` in ContestRefreshTask in src/main/java/io/nextskip/contests/internal/ContestRefreshTask.java
-- [ ] T012 [P] Implement `getDisplayName()` in MeteorRefreshTask in src/main/java/io/nextskip/meteors/internal/MeteorRefreshTask.java
-- [ ] T013 Implement SubscriptionStatusProvider in PskReporterMqttSource in src/main/java/io/nextskip/spots/internal/PskReporterMqttSource.java
+- [x] T004 Add `getDisplayName()` default method to RefreshTaskCoordinator interface in src/main/java/io/nextskip/common/scheduler/RefreshTaskCoordinator.java
+- [x] T005 [P] Create SubscriptionStatusProvider interface in src/main/java/io/nextskip/common/api/SubscriptionStatusProvider.java
+- [x] T006 [P] Implement `getDisplayName()` in NoaaRefreshTask in src/main/java/io/nextskip/propagation/internal/scheduler/NoaaRefreshTask.java
+- [x] T007 [P] Implement `getDisplayName()` in HamQslSolarRefreshTask in src/main/java/io/nextskip/propagation/internal/scheduler/HamQslSolarRefreshTask.java
+- [x] T008 [P] Implement `getDisplayName()` in HamQslBandRefreshTask in src/main/java/io/nextskip/propagation/internal/scheduler/HamQslBandRefreshTask.java
+- [x] T009 [P] Implement `getDisplayName()` in PotaRefreshTask in src/main/java/io/nextskip/activations/internal/scheduler/PotaRefreshTask.java
+- [x] T010 [P] Implement `getDisplayName()` in SotaRefreshTask in src/main/java/io/nextskip/activations/internal/scheduler/SotaRefreshTask.java
+- [x] T011 [P] Implement `getDisplayName()` in ContestRefreshTask in src/main/java/io/nextskip/contests/internal/scheduler/ContestRefreshTask.java
+- [x] T012 [P] Implement `getDisplayName()` in MeteorRefreshTask in src/main/java/io/nextskip/meteors/internal/scheduler/MeteorRefreshTask.java
+- [x] T013 Implement SubscriptionStatusProvider in PskReporterMqttSource in src/main/java/io/nextskip/spots/internal/client/PskReporterMqttSource.java
 
 ### Admin Module Structure
 
-- [ ] T014 [P] Create FeedType enum in src/main/java/io/nextskip/admin/model/FeedType.java
-- [ ] T015 [P] Create FeedStatus record in src/main/java/io/nextskip/admin/model/FeedStatus.java
-- [ ] T016 [P] Create UserInfo record in src/main/java/io/nextskip/admin/model/UserInfo.java
-- [ ] T017 Create FeedStatusService in src/main/java/io/nextskip/admin/internal/FeedStatusService.java
+- [x] T014 [P] Create FeedType enum in src/main/java/io/nextskip/admin/model/FeedType.java
+- [x] T015 [P] Create FeedStatus record in src/main/java/io/nextskip/admin/model/FeedStatus.java
+- [x] T016 [P] Create UserInfo record in src/main/java/io/nextskip/admin/model/UserInfo.java
+- [x] T017 Create FeedStatusService in src/main/java/io/nextskip/admin/internal/FeedStatusService.java
 
 **Checkpoint**: Foundation ready - user story implementation can now begin in parallel
 
@@ -69,14 +69,14 @@
 
 ### Implementation for User Story 1
 
-- [ ] T018 [US1] Create AdminProperties configuration class in src/main/java/io/nextskip/admin/config/AdminProperties.java
-- [ ] T019 [US1] Create GitHubAdminUserService in src/main/java/io/nextskip/admin/internal/GitHubAdminUserService.java
-- [ ] T020 [US1] Create SecurityConfig in src/main/java/io/nextskip/config/SecurityConfig.java
-- [ ] T021 [P] [US1] Create UserInfoService @BrowserCallable endpoint in src/main/java/io/nextskip/admin/api/UserInfoService.java
-- [ ] T022 [US1] Configure OAuth2 client settings in src/main/resources/application.yml
-- [ ] T023 [US1] Create auth.ts Hilla auth configuration in src/main/frontend/auth.ts
-- [ ] T024 [US1] Update App.tsx with AuthProvider wrapper in src/main/frontend/App.tsx
-- [ ] T025 [US1] Create routes.tsx with protected admin routes in src/main/frontend/routes.tsx
+- [x] T018 [US1] Create AdminProperties configuration class in src/main/java/io/nextskip/admin/config/AdminProperties.java
+- [x] T019 [US1] Create GitHubAdminUserService in src/main/java/io/nextskip/admin/internal/GitHubAdminUserService.java
+- [x] T020 [US1] Create SecurityConfig in src/main/java/io/nextskip/config/SecurityConfig.java
+- [x] T021 [P] [US1] Create UserInfoService @BrowserCallable endpoint in src/main/java/io/nextskip/admin/api/UserInfoService.java
+- [x] T022 [US1] Configure OAuth2 client settings in src/main/resources/application.yml
+- [x] T023 [US1] Create auth.ts Hilla auth configuration in src/main/frontend/auth.ts
+- [x] T024 [US1] Update App.tsx with AuthProvider wrapper in src/main/frontend/App.tsx
+- [x] T025 [US1] Create protected admin routes in src/main/frontend/App.tsx (integrated with routes)
 
 **Checkpoint**: At this point, User Story 1 should be fully functional - admin can authenticate via GitHub OAuth2 and access is restricted to allowed emails
 
@@ -90,10 +90,10 @@
 
 ### Implementation for User Story 2
 
-- [ ] T026 [US2] Create admin CSS variables and styles in src/main/frontend/styles/admin.css
-- [ ] T027 [US2] Create AdminLayout.tsx with sidebar navigation in src/main/frontend/views/admin/AdminLayout.tsx
-- [ ] T028 [US2] Create AdminLandingView.tsx in src/main/frontend/views/admin/AdminLandingView.tsx
-- [ ] T029 [US2] Update routes.tsx to include admin child routes in src/main/frontend/routes.tsx
+- [x] T026 [US2] Create admin CSS variables and styles in src/main/frontend/styles/admin.css
+- [x] T027 [US2] Create AdminLayout.tsx with sidebar navigation in src/main/frontend/views/admin/AdminLayout.tsx
+- [x] T028 [US2] Create AdminLandingView.tsx in src/main/frontend/views/admin/AdminLandingView.tsx
+- [x] T029 [US2] Admin child routes integrated in src/main/frontend/App.tsx
 
 **Checkpoint**: At this point, User Story 2 should be fully functional - admin sees landing page with navigation after login
 
@@ -107,11 +107,11 @@
 
 ### Implementation for User Story 3
 
-- [ ] T030 [US3] Create AdminEndpoint @BrowserCallable in src/main/java/io/nextskip/admin/api/AdminEndpoint.java
-- [ ] T031 [P] [US3] Create FeedStatusCard.tsx component in src/main/frontend/components/admin/FeedStatusCard.tsx
-- [ ] T032 [P] [US3] Create FeedStatusGrid.tsx component in src/main/frontend/components/admin/FeedStatusGrid.tsx
-- [ ] T033 [US3] Create FeedManagerView.tsx with 5-second polling interval for status updates in src/main/frontend/views/admin/FeedManagerView.tsx
-- [ ] T034 [US3] Add visual health indicators and styling for feed cards in src/main/frontend/components/admin/FeedStatusCard.tsx
+- [x] T030 [US3] Create AdminEndpoint @BrowserCallable in src/main/java/io/nextskip/admin/api/AdminEndpoint.java
+- [x] T031 [P] [US3] Create FeedStatusCard.tsx component in src/main/frontend/components/admin/FeedStatusCard.tsx
+- [x] T032 [P] [US3] Create FeedStatusGrid.tsx component in src/main/frontend/components/admin/FeedStatusGrid.tsx
+- [x] T033 [US3] Create FeedManagerView.tsx with 5-second polling interval for status updates in src/main/frontend/views/admin/FeedManagerView.tsx
+- [x] T034 [US3] Add visual health indicators and styling for feed cards in src/main/frontend/components/admin/FeedStatusCard.css
 
 **Checkpoint**: At this point, User Story 3 should be fully functional - admin can view all feeds with status information
 
@@ -125,10 +125,10 @@
 
 ### Implementation for User Story 4
 
-- [ ] T035 [US4] Add triggerRefresh method to AdminEndpoint in src/main/java/io/nextskip/admin/api/AdminEndpoint.java
-- [ ] T036 [US4] Create RefreshButton.tsx component in src/main/frontend/components/admin/RefreshButton.tsx
-- [ ] T037 [US4] Integrate RefreshButton into FeedStatusCard in src/main/frontend/components/admin/FeedStatusCard.tsx
-- [ ] T038 [US4] Add loading and success/error feedback states to refresh flow in src/main/frontend/components/admin/RefreshButton.tsx
+- [x] T035 [US4] Add triggerRefresh method to AdminEndpoint in src/main/java/io/nextskip/admin/api/AdminEndpoint.java
+- [x] T036 [US4] Create RefreshButton.tsx component in src/main/frontend/components/admin/RefreshButton.tsx
+- [x] T037 [US4] Integrate RefreshButton into FeedStatusCard in src/main/frontend/components/admin/FeedStatusCard.tsx
+- [x] T038 [US4] Add loading and success/error feedback states to refresh flow in src/main/frontend/components/admin/RefreshButton.tsx
 
 **Checkpoint**: At this point, User Story 4 should be fully functional - admin can trigger manual refresh of scheduled feeds
 

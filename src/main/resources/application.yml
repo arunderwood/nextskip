@@ -19,6 +19,17 @@ server:
 spring:
   application:
     name: nextskip
+
+  # OAuth2 Client Configuration (GitHub)
+  security:
+    oauth2:
+      client:
+        registration:
+          github:
+            client-id: ${GITHUB_CLIENT_ID:}
+            client-secret: ${GITHUB_CLIENT_SECRET:}
+            scope: user:email  # Required to access user's email for authorization
+
   # Static resource caching for PWA
   web:
     resources:
@@ -68,6 +79,10 @@ db-scheduler:
 nextskip:
   refresh:
     eager-load: true  # Warm all caches on application startup
+
+  # Admin Configuration
+  admin:
+    allowed-emails: ${ADMIN_ALLOWED_EMAILS:}  # Comma-separated list of admin emails
 
   # PSKReporter Spots Configuration
   spots:
