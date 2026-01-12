@@ -50,11 +50,6 @@ Add an authenticated admin-only area to NextSkip using GitHub OAuth2 for authent
 specs/001-admin-feed-manager/
 ├── plan.md              # This file
 ├── research.md          # Hilla security research (Phase 0)
-├── data-model.md        # Entity definitions
-├── quickstart.md        # Dev setup guide
-├── contracts/           # API contracts
-│   ├── AdminEndpoint.yaml
-│   └── UserInfoEndpoint.yaml
 └── tasks.md             # Implementation tasks (Phase 2)
 ```
 
