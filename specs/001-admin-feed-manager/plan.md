@@ -8,8 +8,8 @@
 Add an authenticated admin-only area to NextSkip using GitHub OAuth2 for authentication and Hilla's native security integration. The admin area provides a Feed Manager view showing status of all data feeds (scheduled and subscription types) with the ability to force-refresh scheduled feeds.
 
 **Key Design Choices**:
-- Admin depends on abstractions (`RefreshTaskCoordinator`, `SubscriptionLifecycleAware`) in `common/`, not on concrete activity modules
-- Combines db-scheduler's runtime API with coordinator metadata for display names
+- Admin depends on abstractions (`RefreshTaskCoordinator`, `SubscriptionStatusProvider`) in `common/`, not on concrete activity modules
+- Single `FeedStatusService` combines db-scheduler runtime API with coordinator/provider metadata
 - New feeds are auto-discovered via Spring DI - zero admin module changes required (Open-Closed Principle)
 
 ## Technical Context
@@ -67,19 +67,20 @@ src/main/java/io/nextskip/
 │   │   ├── AdminEndpoint.java           # @BrowserCallable for feed management
 │   │   └── UserInfoService.java         # @BrowserCallable for auth info
 │   ├── internal/                        # Implementation details
-│   │   ├── ScheduledFeedDiscovery.java  # Introspects db-scheduler
-│   │   ├── SubscriptionRegistry.java    # Tracks live connections
-│   │   └── FeedRefreshService.java      # Triggers manual refreshes
+│   │   └── FeedStatusService.java       # Unified feed status + refresh
 │   └── model/                           # DTOs
 │       ├── FeedStatus.java              # Feed status record
 │       ├── FeedType.java                # SCHEDULED | SUBSCRIPTION enum
 │       └── UserInfo.java                # User info for frontend
 ├── common/
-│   └── subscription/                    # NEW: Shared subscription tracking
-│       └── SubscriptionLifecycleAware.java  # Interface for self-registration
+│   ├── api/
+│   │   ├── Scoreable.java               # Existing
+│   │   └── SubscriptionStatusProvider.java  # NEW: Interface for subscription feeds
+│   └── scheduler/
+│       └── RefreshTaskCoordinator.java  # MODIFIED: Add getDisplayName()
 ├── spots/
 │   └── internal/
-│       └── MqttSpotClient.java          # MODIFIED: implements SubscriptionLifecycleAware
+│       └── PskReporterMqttSource.java   # MODIFIED: implements SubscriptionStatusProvider
 ├── config/
 │   └── SecurityConfig.java              # NEW: Spring Security configuration
 └── [other existing modules unchanged]
@@ -100,7 +101,7 @@ src/main/frontend/
         └── RefreshButton.tsx            # Manual refresh trigger
 ```
 
-**Structure Decision**: Extends existing modular monolith pattern. Admin module follows same `api/internal/model` structure as other activity modules. Admin depends only on abstractions in `common/` (`RefreshTaskCoordinator`, `SubscriptionLifecycleAware`), not on concrete activity modules. Follows the same auto-discovery pattern as `DataRefreshStartupHandler`.
+**Structure Decision**: Extends existing modular monolith pattern. Admin module follows same `api/internal/model` structure as other activity modules. Admin depends only on abstractions in `common/` (`RefreshTaskCoordinator`, `SubscriptionStatusProvider`), not on concrete activity modules. Follows the same auto-discovery pattern as `DataRefreshStartupHandler`.
 
 ---
 
@@ -124,50 +125,73 @@ public interface RefreshTaskCoordinator {
 }
 ```
 
-**Admin Discovery Service**:
+**Unified FeedStatusService** (single service handles both feed types):
 
 ```java
 @Component
-public class ScheduledFeedDiscovery {
+public class FeedStatusService {
     private final Scheduler scheduler;
-    private final Map<String, RefreshTaskCoordinator> coordinatorsByTaskName;
+    private final Map<String, RefreshTaskCoordinator> scheduledFeeds;
+    private final List<SubscriptionStatusProvider> subscriptionFeeds;
 
-    // Spring auto-wires ALL RefreshTaskCoordinator implementations
-    public ScheduledFeedDiscovery(
+    // Spring auto-wires ALL implementations of both interfaces
+    public FeedStatusService(
             Scheduler scheduler,
-            List<RefreshTaskCoordinator> coordinators) {
+            List<RefreshTaskCoordinator> coordinators,
+            List<SubscriptionStatusProvider> subscriptions) {
         this.scheduler = scheduler;
-        this.coordinatorsByTaskName = coordinators.stream()
+        this.scheduledFeeds = coordinators.stream()
             .collect(Collectors.toMap(
                 RefreshTaskCoordinator::getTaskName,
                 coordinator -> coordinator));
+        this.subscriptionFeeds = List.copyOf(subscriptions);
+    }
+
+    public List<FeedStatus> getAllFeedStatuses() {
+        List<FeedStatus> all = new ArrayList<>();
+        all.addAll(getScheduledFeedStatuses());
+        all.addAll(getSubscriptionFeedStatuses());
+        return all;
     }
 
     public List<FeedStatus> getScheduledFeedStatuses() {
-        // Use db-scheduler API for runtime data (times, health)
         return scheduler.getScheduledExecutions().stream()
-            .filter(exec -> coordinatorsByTaskName.containsKey(
+            .filter(exec -> scheduledFeeds.containsKey(
                 exec.getTaskInstance().getTaskName()))
             .map(exec -> {
                 String taskName = exec.getTaskInstance().getTaskName();
-                RefreshTaskCoordinator coordinator = coordinatorsByTaskName.get(taskName);
+                RefreshTaskCoordinator coordinator = scheduledFeeds.get(taskName);
                 return new FeedStatus(
                     taskName,
-                    coordinator.getDisplayName(),  // From coordinator, not hardcoded
+                    coordinator.getDisplayName(),
                     FeedType.SCHEDULED,
-                    exec.getLastSuccess(),         // db-scheduler API
-                    exec.getExecutionTime(),       // db-scheduler API
+                    exec.getLastSuccess(),
+                    exec.getExecutionTime(),
                     null,
-                    exec.getConsecutiveFailures() == 0  // db-scheduler API
+                    exec.getConsecutiveFailures() == 0
                 );
             })
             .toList();
     }
 
-    public void triggerRefresh(String taskName) {
-        RefreshTaskCoordinator coordinator = coordinatorsByTaskName.get(taskName);
+    public List<FeedStatus> getSubscriptionFeedStatuses() {
+        return subscriptionFeeds.stream()
+            .map(sub -> new FeedStatus(
+                sub.getSubscriptionId(),
+                sub.getDisplayName(),
+                FeedType.SUBSCRIPTION,
+                sub.getLastMessageTime(),
+                null,
+                sub.isConnected(),
+                sub.isConnected()
+            ))
+            .toList();
+    }
+
+    public void triggerRefresh(String feedId) {
+        RefreshTaskCoordinator coordinator = scheduledFeeds.get(feedId);
         if (coordinator == null) {
-            throw new IllegalArgumentException("Unknown task: " + taskName);
+            throw new IllegalArgumentException("Unknown scheduled feed: " + feedId);
         }
         scheduler.reschedule(
             coordinator.getRecurringTask().instance(RecurringTask.INSTANCE),
@@ -183,7 +207,7 @@ public class ScheduledFeedDiscovery {
 ┌─────────────────────────────────────────────────────────────────┐
 │                         common/                                  │
 │  ┌─────────────────────────┐  ┌──────────────────────────────┐  │
-│  │ RefreshTaskCoordinator  │  │ SubscriptionLifecycleAware   │  │
+│  │ RefreshTaskCoordinator  │  │ SubscriptionStatusProvider   │  │
 │  │ (interface)             │  │ (interface)                  │  │
 │  └───────────▲─────────────┘  └──────────────▲───────────────┘  │
 └──────────────┼───────────────────────────────┼──────────────────┘
@@ -195,7 +219,7 @@ public class ScheduledFeedDiscovery {
 │       │ │       │ │        │  │ (mqtt)│            │         │
 └───────┘ └───────┘ └────────┘  └───────┘            └─────────┘
   implements                      implements           depends on
-  RefreshTaskCoordinator          SubscriptionLife...  both interfaces
+  RefreshTaskCoordinator          SubscriptionStatus   both interfaces
 ```
 
 **Open-Closed Compliance**:
@@ -203,51 +227,26 @@ public class ScheduledFeedDiscovery {
 - Admin automatically discovers it via Spring DI → Zero admin module changes
 - Admin depends on abstraction → No coupling to concrete activity modules
 
-#### For Subscription Feeds: Self-Registration Pattern
+#### For Subscription Feeds: Provider Interface
 
-Subscription feeds (like MQTT) self-register their connection status:
+Subscription feeds (like MQTT) implement `SubscriptionStatusProvider` to expose their connection status:
 
 ```java
-// In common module - minimal interface
-public interface SubscriptionLifecycleAware {
+// In common/api/ - alongside Scoreable interface
+public interface SubscriptionStatusProvider {
     String getSubscriptionId();
     String getDisplayName();
     boolean isConnected();
-    Instant getLastConnectedTime();
-}
-
-// Registry in admin module collects self-registered subscriptions
-@Component
-public class SubscriptionRegistry {
-    private final List<SubscriptionLifecycleAware> subscriptions;
-
-    // Spring autowires all beans implementing the interface
-    public SubscriptionRegistry(List<SubscriptionLifecycleAware> subscriptions) {
-        this.subscriptions = subscriptions;
-    }
-
-    public List<FeedStatus> getSubscriptionStatuses() {
-        return subscriptions.stream()
-            .map(sub -> new FeedStatus(
-                sub.getSubscriptionId(),
-                sub.getDisplayName(),
-                FeedType.SUBSCRIPTION,
-                sub.getLastConnectedTime(),
-                null,  // no next refresh for subscriptions
-                sub.isConnected(),
-                sub.isConnected()  // healthy = connected
-            ))
-            .toList();
-    }
+    Instant getLastMessageTime();  // When last data was received
 }
 ```
 
 **Open-Closed Compliance**:
-- Adding a new subscription feed → Implement `SubscriptionLifecycleAware` (4 methods)
-- Admin automatically discovers it → Zero admin module changes
+- Adding a new subscription feed → Implement `SubscriptionStatusProvider` (4 methods)
+- `FeedStatusService` automatically discovers it via Spring DI → Zero admin module changes
 - Interface is minimal and stable
 
-**Note**: The existing `MqttSpotClient` already tracks connection status internally. Adding the interface requires only exposing existing state, not adding new functionality.
+**Note**: The existing `PskReporterMqttSource` already tracks connection status internally (`isConnected()`, `lastMessageTime`). Adding the interface requires only exposing existing state, not adding new functionality.
 
 ---
 
@@ -363,13 +362,13 @@ export const routes = protectRoutes([
 ### 1. Abstraction-Based Feed Discovery
 Admin depends on abstractions in `common/`, not on concrete activity modules:
 - **Scheduled feeds**: `RefreshTaskCoordinator` interface (add `getDisplayName()` method)
-- **Subscription feeds**: `SubscriptionLifecycleAware` interface (new, 4 methods)
+- **Subscription feeds**: `SubscriptionStatusProvider` interface (new, 4 methods)
 - db-scheduler API provides runtime data (execution times, health status)
 - Coordinators provide metadata (display names, task references)
 - Spring auto-wires all implementations → zero admin module coupling
 
 ### 2. Minimal Interface for Subscriptions
-`SubscriptionLifecycleAware` has only 4 methods - the minimum needed. The existing MQTT client already tracks this state internally.
+`SubscriptionStatusProvider` has only 4 methods - the minimum needed. The existing MQTT client already tracks this state internally.
 
 ### 3. No Login Button on Main Page
 Per user requirement: Direct OAuth2 redirect when accessing `/admin`. No visible login UI on the public dashboard.
@@ -434,9 +433,7 @@ public record UserInfo(
 ## Verification Plan
 
 ### Unit Tests
-- `ScheduledFeedDiscovery`: db-scheduler introspection, task name extraction
-- `SubscriptionRegistry`: Collects all registered subscriptions
-- `FeedRefreshService`: Reschedules task to immediate execution
+- `FeedStatusService`: db-scheduler introspection, subscription aggregation, task rescheduling
 - `CustomOAuth2UserService`: Email fetching, allowlist checking
 - `FeedStatusCard`: Render scheduled vs subscription types correctly
 
@@ -507,7 +504,7 @@ implementation("org.springframework.boot:spring-boot-starter-oauth2-client")
 | `activations/.../SotaRefreshTask.java` | Implement `getDisplayName()` | Return "SOTA Activations" |
 | `contests/.../ContestRefreshTask.java` | Implement `getDisplayName()` | Return "Contest Calendar" |
 | `meteors/.../MeteorRefreshTask.java` | Implement `getDisplayName()` | Return "Meteor Showers" |
-| `spots/.../PskReporterMqttSource.java` | Implement `SubscriptionLifecycleAware` | Expose existing connection state |
+| `spots/.../PskReporterMqttSource.java` | Implement `SubscriptionStatusProvider` | Expose existing connection state |
 
 **Note**: Each coordinator change is trivial - just add one method returning a string constant. The interface change is backward-compatible if we add a default method:
 
@@ -528,7 +525,7 @@ No constitution violations. Interface modifications are justified:
 | Change | Justification |
 |--------|---------------|
 | Add `getDisplayName()` to `RefreshTaskCoordinator` | Backward-compatible (default method). Each implementation adds 1 trivial method returning a string constant. Interface is in `common/`, not activity modules. |
-| Add `SubscriptionLifecycleAware` interface | New interface in `common/`. Minimal (4 methods). `PskReporterMqttSource` already tracks this state internally - just exposing it. |
+| Add `SubscriptionStatusProvider` interface | New interface in `common/`. Minimal (4 methods). `PskReporterMqttSource` already tracks this state internally - just exposing it. |
 | Modify 7 RefreshTask implementations | Each adds 1 line: `return "Display Name";`. Trivial, no behavior change. |
 | Modify `PskReporterMqttSource` | Exposes existing state. No new behavior. 4 method implementations, all delegating to existing fields. |
 
@@ -536,5 +533,5 @@ No constitution violations. Interface modifications are justified:
 - **Single Responsibility**: Admin aggregates; coordinators provide their own metadata
 - **Open-Closed**: New feeds implement interface → auto-discovered → zero admin changes
 - **Liskov Substitution**: All coordinators are interchangeable
-- **Interface Segregation**: `RefreshTaskCoordinator` remains minimal; `SubscriptionLifecycleAware` is separate
+- **Interface Segregation**: `RefreshTaskCoordinator` remains minimal; `SubscriptionStatusProvider` is separate
 - **Dependency Inversion**: Admin depends on abstractions (`common/`), not concretions (activity modules)
