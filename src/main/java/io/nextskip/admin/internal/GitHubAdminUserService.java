@@ -14,6 +14,7 @@ import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.user.DefaultOAuth2User;
 import org.springframework.security.oauth2.core.user.OAuth2User;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -43,6 +44,9 @@ public class GitHubAdminUserService extends DefaultOAuth2UserService {
     private static final Logger LOG = LoggerFactory.getLogger(GitHubAdminUserService.class);
     private static final String ROLE_ADMIN = "ROLE_ADMIN";
     private static final String GITHUB_EMAILS_URI = "https://api.github.com/user/emails";
+    private static final String ATTR_EMAIL = "email";
+    private static final String ATTR_PRIMARY = "primary";
+    private static final String ATTR_VERIFIED = "verified";
 
     private final AdminProperties adminProperties;
     private final RestTemplate restTemplate;
@@ -52,15 +56,28 @@ public class GitHubAdminUserService extends DefaultOAuth2UserService {
      *
      * @param adminProperties configuration containing the email allowlist
      */
+    @Autowired
     public GitHubAdminUserService(AdminProperties adminProperties) {
+        this(adminProperties, new RestTemplate());
+    }
+
+    /**
+     * Creates a new GitHubAdminUserService with a custom RestTemplate.
+     *
+     * <p>Package-private for testing.
+     *
+     * @param adminProperties configuration containing the email allowlist
+     * @param restTemplate the RestTemplate to use for API calls
+     */
+    GitHubAdminUserService(AdminProperties adminProperties, RestTemplate restTemplate) {
         this.adminProperties = adminProperties;
-        this.restTemplate = new RestTemplate();
+        this.restTemplate = restTemplate;
     }
 
     @Override
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
         OAuth2User user = super.loadUser(userRequest);
-        String email = user.getAttribute("email");
+        String email = user.getAttribute(ATTR_EMAIL);
 
         // If email is not public, fetch from GitHub emails API
         if (email == null) {
@@ -68,7 +85,7 @@ public class GitHubAdminUserService extends DefaultOAuth2UserService {
             if (email != null) {
                 // Create new user with email added to attributes
                 Map<String, Object> attributes = new HashMap<>(user.getAttributes());
-                attributes.put("email", email);
+                attributes.put(ATTR_EMAIL, email);
                 user = new DefaultOAuth2User(user.getAuthorities(), attributes, "login");
             }
         }
@@ -82,11 +99,13 @@ public class GitHubAdminUserService extends DefaultOAuth2UserService {
      * <p>This is needed when users have their email set to private.
      * The user:email scope grants access to this endpoint.
      *
+     * <p>Package-private for testing.
+     *
      * @param accessToken the OAuth2 access token
      * @return the primary email, or null if not found
      */
     @SuppressWarnings("PMD.AvoidCatchingGenericException") // RestTemplate can throw various runtime exceptions
-    private String fetchPrimaryEmail(String accessToken) {
+    String fetchPrimaryEmail(String accessToken) {
         try {
             RequestEntity<Void> request = RequestEntity
                     .get(URI.create(GITHUB_EMAILS_URI))
@@ -102,14 +121,14 @@ public class GitHubAdminUserService extends DefaultOAuth2UserService {
             if (emails != null) {
                 // Find primary email first, fall back to first verified email
                 for (Map<String, Object> emailEntry : emails) {
-                    if (Boolean.TRUE.equals(emailEntry.get("primary"))) {
-                        return (String) emailEntry.get("email");
+                    if (Boolean.TRUE.equals(emailEntry.get(ATTR_PRIMARY))) {
+                        return (String) emailEntry.get(ATTR_EMAIL);
                     }
                 }
                 // If no primary, return first verified
                 for (Map<String, Object> emailEntry : emails) {
-                    if (Boolean.TRUE.equals(emailEntry.get("verified"))) {
-                        return (String) emailEntry.get("email");
+                    if (Boolean.TRUE.equals(emailEntry.get(ATTR_VERIFIED))) {
+                        return (String) emailEntry.get(ATTR_EMAIL);
                     }
                 }
             }
@@ -130,7 +149,7 @@ public class GitHubAdminUserService extends DefaultOAuth2UserService {
      * @throws OAuth2AuthenticationException if email is missing or not in allowlist
      */
     protected OAuth2User processAndAuthorizeUser(OAuth2User user) throws OAuth2AuthenticationException {
-        String email = user.getAttribute("email");
+        String email = user.getAttribute(ATTR_EMAIL);
         String login = user.getAttribute("login");
 
         LOG.debug("Processing OAuth2 login for user: {} ({})", login, email);
