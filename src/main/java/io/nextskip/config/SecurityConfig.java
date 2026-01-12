@@ -108,6 +108,10 @@ public class SecurityConfig {
      * <p>Permits all requests to the public dashboard. Hilla's {@code @AnonymousAllowed}
      * annotation handles endpoint-level security for BrowserCallable endpoints.
      *
+     * <p>CSRF is disabled only for Hilla's RPC endpoints ({@code /connect/**}) because
+     * Vaadin Hilla implements its own CSRF protection mechanism using double-submit
+     * cookies. See: https://hilla.dev/docs/react/guides/security
+     *
      * @param http the HttpSecurity to configure
      * @return the configured SecurityFilterChain
      * @throws Exception if security configuration fails
@@ -119,8 +123,11 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .anyRequest().permitAll()
             )
-            // Disable CSRF for Hilla endpoints (they use their own protection)
-            .csrf(csrf -> csrf.disable());
+            // Disable Spring CSRF only for Hilla RPC endpoints - Hilla has its own CSRF protection
+            // using double-submit cookies. Other endpoints retain Spring CSRF protection.
+            .csrf(csrf -> csrf
+                .ignoringRequestMatchers("/connect/**")
+            );
 
         return http.build();
     }

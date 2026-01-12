@@ -3,6 +3,9 @@ package io.nextskip.admin.internal;
 import io.nextskip.admin.config.AdminProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.RequestEntity;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
@@ -12,8 +15,13 @@ import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.user.DefaultOAuth2User;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
+import java.net.URI;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -34,8 +42,10 @@ public class GitHubAdminUserService extends DefaultOAuth2UserService {
 
     private static final Logger LOG = LoggerFactory.getLogger(GitHubAdminUserService.class);
     private static final String ROLE_ADMIN = "ROLE_ADMIN";
+    private static final String GITHUB_EMAILS_URI = "https://api.github.com/user/emails";
 
     private final AdminProperties adminProperties;
+    private final RestTemplate restTemplate;
 
     /**
      * Creates a new GitHubAdminUserService.
@@ -44,12 +54,69 @@ public class GitHubAdminUserService extends DefaultOAuth2UserService {
      */
     public GitHubAdminUserService(AdminProperties adminProperties) {
         this.adminProperties = adminProperties;
+        this.restTemplate = new RestTemplate();
     }
 
     @Override
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
         OAuth2User user = super.loadUser(userRequest);
+        String email = user.getAttribute("email");
+
+        // If email is not public, fetch from GitHub emails API
+        if (email == null) {
+            email = fetchPrimaryEmail(userRequest.getAccessToken().getTokenValue());
+            if (email != null) {
+                // Create new user with email added to attributes
+                Map<String, Object> attributes = new HashMap<>(user.getAttributes());
+                attributes.put("email", email);
+                user = new DefaultOAuth2User(user.getAuthorities(), attributes, "login");
+            }
+        }
+
         return processAndAuthorizeUser(user);
+    }
+
+    /**
+     * Fetches the primary email from GitHub's /user/emails endpoint.
+     *
+     * <p>This is needed when users have their email set to private.
+     * The user:email scope grants access to this endpoint.
+     *
+     * @param accessToken the OAuth2 access token
+     * @return the primary email, or null if not found
+     */
+    @SuppressWarnings("PMD.AvoidCatchingGenericException") // RestTemplate can throw various runtime exceptions
+    private String fetchPrimaryEmail(String accessToken) {
+        try {
+            RequestEntity<Void> request = RequestEntity
+                    .get(URI.create(GITHUB_EMAILS_URI))
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
+                    .header(HttpHeaders.ACCEPT, "application/vnd.github+json")
+                    .build();
+
+            List<Map<String, Object>> emails = restTemplate.exchange(
+                    request,
+                    new ParameterizedTypeReference<List<Map<String, Object>>>() { }
+            ).getBody();
+
+            if (emails != null) {
+                // Find primary email first, fall back to first verified email
+                for (Map<String, Object> emailEntry : emails) {
+                    if (Boolean.TRUE.equals(emailEntry.get("primary"))) {
+                        return (String) emailEntry.get("email");
+                    }
+                }
+                // If no primary, return first verified
+                for (Map<String, Object> emailEntry : emails) {
+                    if (Boolean.TRUE.equals(emailEntry.get("verified"))) {
+                        return (String) emailEntry.get("email");
+                    }
+                }
+            }
+        } catch (Exception e) {
+            LOG.warn("Failed to fetch emails from GitHub API: {}", e.getMessage());
+        }
+        return null;
     }
 
     /**
