@@ -49,7 +49,20 @@ public class GitHubAdminUserService extends DefaultOAuth2UserService {
     @Override
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
         OAuth2User user = super.loadUser(userRequest);
+        return processAndAuthorizeUser(user);
+    }
 
+    /**
+     * Processes the OAuth2 user and authorizes based on email allowlist.
+     *
+     * <p>This method is extracted for testability - tests can call this directly
+     * with a mock OAuth2User without making HTTP calls to GitHub.
+     *
+     * @param user the OAuth2 user loaded from GitHub
+     * @return the user with ADMIN authority added if authorized
+     * @throws OAuth2AuthenticationException if email is missing or not in allowlist
+     */
+    protected OAuth2User processAndAuthorizeUser(OAuth2User user) throws OAuth2AuthenticationException {
         String email = user.getAttribute("email");
         String login = user.getAttribute("login");
 
