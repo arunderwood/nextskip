@@ -34,6 +34,7 @@ import org.springframework.security.web.SecurityFilterChain;
 @Configuration
 @EnableWebSecurity
 @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Spring-injected service is immutable singleton")
+@SuppressWarnings("PMD.SignatureDeclareThrowsException") // Spring Security HttpSecurity API requires throws Exception
 public class SecurityConfig {
 
     private static final String DISABLED_PLACEHOLDER = "disabled";
