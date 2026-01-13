@@ -70,6 +70,7 @@
         "vite",
         "typescript",
         "@vitejs/plugin-react",
+        "@types/node",
         "@types/react",
         "@types/react-dom",
         "@babel/preset-react",
