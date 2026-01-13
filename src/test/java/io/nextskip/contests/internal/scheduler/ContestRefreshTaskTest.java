@@ -86,8 +86,13 @@ class ContestRefreshTaskTest {
     }
 
     @Test
-    void testGetTaskName_ReturnsContest() {
-        assertThat(task.getTaskName()).isEqualTo("Contest");
+    void testGetTaskName_ReturnsContestRefresh() {
+        assertThat(task.getTaskName()).isEqualTo("contest-refresh");
+    }
+
+    @Test
+    void testGetDisplayName_ReturnsContest() {
+        assertThat(task.getDisplayName()).isEqualTo("Contest");
     }
 
     @Test

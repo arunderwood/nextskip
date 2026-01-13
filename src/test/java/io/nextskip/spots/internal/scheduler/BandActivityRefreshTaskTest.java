@@ -47,8 +47,13 @@ class BandActivityRefreshTaskTest {
     class TaskNameTests {
 
         @Test
-        void testGetTaskName_ReturnsBandActivity() {
-            assertThat(task.getTaskName()).isEqualTo("Band Activity");
+        void testGetTaskName_ReturnsBandActivityRefresh() {
+            assertThat(task.getTaskName()).isEqualTo("band-activity-refresh");
+        }
+
+        @Test
+        void testGetDisplayName_ReturnsBandActivity() {
+            assertThat(task.getDisplayName()).isEqualTo("Band Activity");
         }
     }
 

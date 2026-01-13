@@ -1,6 +1,7 @@
 package io.nextskip.spots.internal.client;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import io.nextskip.common.api.SubscriptionStatusProvider;
 import org.eclipse.paho.mqttv5.client.IMqttToken;
 import org.eclipse.paho.mqttv5.client.MqttCallback;
 import org.eclipse.paho.mqttv5.client.MqttClient;
@@ -44,10 +45,12 @@ import java.util.UUID;
 @Component
 @ConditionalOnProperty(prefix = "nextskip.spots", name = "enabled", havingValue = "true", matchIfMissing = true)
 @SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Spring-injected List is immutable from @Value")
-public class PskReporterMqttSource extends AbstractSpotSource implements MqttCallback {
+public class PskReporterMqttSource extends AbstractSpotSource
+        implements MqttCallback, SubscriptionStatusProvider {
 
     private static final Logger LOG = LoggerFactory.getLogger(PskReporterMqttSource.class);
-    private static final String SOURCE_NAME = "PSKReporter MQTT";
+    private static final String SUBSCRIPTION_ID = "pskreporter-mqtt";
+    private static final String DISPLAY_NAME = "PSKReporter MQTT";
 
     private final String brokerUrl;
     private final List<String> topics;
@@ -66,7 +69,17 @@ public class PskReporterMqttSource extends AbstractSpotSource implements MqttCal
 
     @Override
     public String getSourceName() {
-        return SOURCE_NAME;
+        return DISPLAY_NAME;
+    }
+
+    @Override
+    public String getSubscriptionId() {
+        return SUBSCRIPTION_ID;
+    }
+
+    @Override
+    public String getDisplayName() {
+        return DISPLAY_NAME;
     }
 
     @Override

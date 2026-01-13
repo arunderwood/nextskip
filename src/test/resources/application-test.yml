@@ -2,6 +2,16 @@
 # Testcontainers provides datasource config via @ServiceConnection
 
 spring:
+  # Provide mock OAuth2 credentials to satisfy Spring Security's validation.
+  # These are never used in tests but required for context loading.
+  security:
+    oauth2:
+      client:
+        registration:
+          github:
+            client-id: test-client-id
+            client-secret: test-client-secret
+
   jpa:
     hibernate:
       ddl-auto: none  # Liquibase handles schema creation

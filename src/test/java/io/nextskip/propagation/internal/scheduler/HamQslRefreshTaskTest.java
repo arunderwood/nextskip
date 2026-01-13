@@ -139,8 +139,13 @@ class HamQslRefreshTaskTest {
     }
 
     @Test
-    void testGetTaskName_ReturnsHamQSL() {
-        assertThat(task.getTaskName()).isEqualTo("HamQSL");
+    void testGetTaskName_ReturnsTaskId() {
+        assertThat(task.getTaskName()).isEqualTo("hamqsl-refresh");
+    }
+
+    @Test
+    void testGetDisplayName_ReturnsHamQSL() {
+        assertThat(task.getDisplayName()).isEqualTo("HamQSL");
     }
 
     @Test

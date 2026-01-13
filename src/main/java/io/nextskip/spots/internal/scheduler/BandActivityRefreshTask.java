@@ -93,6 +93,11 @@ public class BandActivityRefreshTask implements RefreshTaskCoordinator {
 
     @Override
     public String getTaskName() {
+        return TASK_NAME;
+    }
+
+    @Override
+    public String getDisplayName() {
         return DISPLAY_NAME;
     }
 }

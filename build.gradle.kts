@@ -110,6 +110,10 @@ dependencies {
     implementation(libs.bundles.spring.boot.web)
     implementation(libs.spring.boot.starter.webflux)
 
+    // Spring Security OAuth2 for admin authentication
+    implementation("org.springframework.boot:spring-boot-starter-security")
+    implementation("org.springframework.boot:spring-boot-starter-oauth2-client")
+
     // Caching
     implementation(libs.caffeine)
 

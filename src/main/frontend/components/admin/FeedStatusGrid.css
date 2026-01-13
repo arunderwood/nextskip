@@ -1,0 +1,38 @@
+/**
+ * Feed Status Grid styles
+ */
+
+.feed-status-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+}
+
+.feed-status-grid-loading,
+.feed-status-grid-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem;
+  background: var(--color-card-bg, #12121a);
+  border: 1px dashed var(--color-border, #1e1e2e);
+  border-radius: 0.75rem;
+  color: var(--color-text-secondary, #a0a0b0);
+}
+
+.feed-status-grid-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid var(--color-border, #1e1e2e);
+  border-top-color: var(--color-accent, #3b82f6);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

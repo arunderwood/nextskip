@@ -51,8 +51,8 @@ class TaskExecutionIntegrationTest extends AbstractSchedulerTest {
 
     @Test
     void testNeedsInitialLoad_EmptyRepository_ReturnsTrue() {
-        // Find NOAA coordinator
-        RefreshTaskCoordinator noaaCoordinator = findCoordinatorByName("NOAA");
+        // Find NOAA coordinator (by task ID, not display name)
+        RefreshTaskCoordinator noaaCoordinator = findCoordinatorByTaskName("noaa-refresh");
 
         // With empty repository, needsInitialLoad should return true
         assertThat(noaaCoordinator.needsInitialLoad()).isTrue();
@@ -60,8 +60,8 @@ class TaskExecutionIntegrationTest extends AbstractSchedulerTest {
 
     @Test
     void testNeedsInitialLoad_PopulatedRepository_ReturnsFalse() {
-        // Find NOAA coordinator
-        RefreshTaskCoordinator noaaCoordinator = findCoordinatorByName("NOAA");
+        // Find NOAA coordinator (by task ID, not display name)
+        RefreshTaskCoordinator noaaCoordinator = findCoordinatorByTaskName("noaa-refresh");
 
         // Insert test data - simulate data from NOAA source
         // Constructor: solarFluxIndex, aIndex, kIndex, sunspotNumber, timestamp, source
@@ -129,11 +129,11 @@ class TaskExecutionIntegrationTest extends AbstractSchedulerTest {
         }
     }
 
-    private RefreshTaskCoordinator findCoordinatorByName(String name) {
+    private RefreshTaskCoordinator findCoordinatorByTaskName(String taskName) {
         return coordinators.stream()
-                .filter(c -> c.getTaskName().equals(name))
+                .filter(c -> c.getTaskName().equals(taskName))
                 .findFirst()
                 .orElseThrow(() -> new IllegalStateException(
-                        "Coordinator not found: " + name));
+                        "Coordinator not found for task name: " + taskName));
     }
 }
