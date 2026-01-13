@@ -54,7 +54,7 @@ public class SpotEntity {
     @Column(name = "spotted_at", nullable = false)
     private Instant spottedAt;
 
-    @Column(name = "spotter_call", length = 20)
+    @Column(name = "spotter_call", length = 30)
     private String spotterCall;
 
     @Column(name = "spotter_grid", length = 6)
@@ -63,7 +63,7 @@ public class SpotEntity {
     @Column(name = "spotter_continent", length = 2)
     private String spotterContinent;
 
-    @Column(name = "spotted_call", length = 20)
+    @Column(name = "spotted_call", length = 30)
     private String spottedCall;
 
     @Column(name = "spotted_grid", length = 6)

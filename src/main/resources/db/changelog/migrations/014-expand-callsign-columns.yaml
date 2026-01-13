@@ -1,0 +1,14 @@
+databaseChangeLog:
+  - changeSet:
+      id: expand-callsign-columns
+      author: arunderwood
+      comment: Expand callsign columns to support portable suffixes (e.g., EA6/DL1ABC/P)
+      changes:
+        - modifyDataType:
+            tableName: spots
+            columnName: spotter_call
+            newDataType: varchar(30)
+        - modifyDataType:
+            tableName: spots
+            columnName: spotted_call
+            newDataType: varchar(30)
