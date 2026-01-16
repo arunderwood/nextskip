@@ -28,7 +28,7 @@ wiremock = "3.13.2"
 
 # Test dependencies (override for Java 25)
 mockito = "5.21.0"
-byte-buddy = "1.18.3"
+byte-buddy = "1.18.4"
 
 # Property-based testing
 jqwik = "1.9.3"
