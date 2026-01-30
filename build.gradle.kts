@@ -141,7 +141,7 @@ dependencies {
     implementation(libs.spring.boot.starter.liquibase)
 
     // Database observability
-    implementation("net.ttddyy.observation:datasource-micrometer-spring-boot:2.0.1")
+    implementation("net.ttddyy.observation:datasource-micrometer-spring-boot:2.1.0")
     implementation("org.hibernate.orm:hibernate-micrometer")
 
     // Scheduling
