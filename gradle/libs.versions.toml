@@ -5,7 +5,7 @@ spring-boot = "4.0.1"
 spring-dependency-management = "1.1.7"
 
 # Delta coverage for PR patch coverage analysis
-delta-coverage = "3.5.1"
+delta-coverage = "3.6.0"
 
 # Observability
 grafana-otel-agent = "2.23.1"
