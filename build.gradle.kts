@@ -234,7 +234,7 @@ checkstyle {
 }
 
 pmd {
-    toolVersion = "7.20.0"
+    toolVersion = "7.21.0"
     ruleSets = emptyList()  // Empty to use custom ruleset file
     ruleSetFiles = files("${rootDir}/config/pmd/ruleset.xml")
     isIgnoreFailures = false  // Quality violations fail the build
