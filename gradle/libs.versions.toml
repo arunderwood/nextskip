@@ -8,7 +8,7 @@ spring-dependency-management = "1.1.7"
 delta-coverage = "3.6.0"
 
 # Observability
-grafana-otel-agent = "2.23.1"
+grafana-otel-agent = "2.24.0"
 pyroscope-agent = "2.1.4"
 
 # Build utilities
