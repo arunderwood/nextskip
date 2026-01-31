@@ -56,7 +56,7 @@ public class ContestEntity {
             name = "contest_bands",
             joinColumns = @JoinColumn(name = "contest_id")
     )
-    @Column(name = "band", length = 20)
+    @Column(name = "band", nullable = false, length = 20)
     @Enumerated(EnumType.STRING)
     private Set<FrequencyBand> bands = EnumSet.noneOf(FrequencyBand.class);
 
@@ -65,7 +65,7 @@ public class ContestEntity {
             name = "contest_modes",
             joinColumns = @JoinColumn(name = "contest_id")
     )
-    @Column(name = "mode", length = 20)
+    @Column(name = "mode", nullable = false, length = 20)
     private Set<String> modes = new HashSet<>();
 
     @Column(name = "sponsor", length = 100)
