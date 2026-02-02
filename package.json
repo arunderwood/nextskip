@@ -88,7 +88,7 @@
     "fast-check": "^4.5.3",
     "glob": "^13.0.0",
     "jest-axe": "^10.0.0",
-    "jsdom": "^27.3.0",
+    "jsdom": "^28.0.0",
     "magic-string": "0.30.21",
     "playwright-core": "^1.57.0",
     "prettier": "^3.5.1",
