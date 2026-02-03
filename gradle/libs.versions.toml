@@ -12,7 +12,7 @@ grafana-otel-agent = "2.24.0"
 pyroscope-agent = "2.1.4"
 
 # Build utilities
-download-plugin = "5.6.0"
+download-plugin = "5.7.0"
 
 # Quality & testing tools
 # NOTE: checkstyle, pmd, spotbugs-tool, and jacoco versions moved to direct literals in build.gradle
