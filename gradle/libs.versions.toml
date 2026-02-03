@@ -9,7 +9,7 @@ delta-coverage = "3.6.0"
 
 # Observability
 grafana-otel-agent = "2.24.0"
-pyroscope-agent = "2.1.4"
+pyroscope-agent = "2.3.0"
 
 # Build utilities
 download-plugin = "5.6.0"
