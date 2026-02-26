@@ -38,22 +38,6 @@ dependencyLocking {
     lockAllConfigurations()
 }
 
-// Resolve and lock all configurations (including plugin-internal ones like pmdAuxClasspath)
-// The standard `dependencies --write-locks` misses some configurations.
-// See: https://docs.gradle.org/current/userguide/dependency_locking.html
-tasks.register("resolveAndLockAll") {
-    description = "Resolves all resolvable configurations and writes dependency locks"
-    notCompatibleWithConfigurationCache("Resolves all project configurations")
-    doFirst {
-        require(gradle.startParameter.isWriteDependencyLocks) {
-            "$name must be run with --write-locks"
-        }
-    }
-    doLast {
-        configurations.filter { it.isCanBeResolved }.forEach { it.resolve() }
-    }
-}
-
 // Disable plain JAR generation - we only need the Spring Boot executable JAR
 tasks.named<Jar>("jar") {
     enabled = false

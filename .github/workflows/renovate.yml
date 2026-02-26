@@ -33,7 +33,7 @@ jobs:
           token: ${{ secrets.RENOVATE_TOKEN }}
         env:
           LOG_LEVEL: info
-          RENOVATE_ALLOWED_COMMANDS: '["^install-tool java", "^\\./gradlew vaadinPrepareFrontend", "^\\./gradlew resolveAndLockAll", "^install-tool node", "^npm install --package-lock-only"]'
+          RENOVATE_ALLOWED_COMMANDS: '["^install-tool java", "^\\./gradlew vaadinPrepareFrontend", "^\\./gradlew dependencies", "^install-tool node", "^npm install --package-lock-only"]'
           RENOVATE_ALLOWED_UNSAFE_EXECUTIONS: '["gradleWrapper"]'
           RENOVATE_DRY_RUN: ${{ inputs.dryRun && 'full' || '' }}
           RENOVATE_AUTODISCOVER: true

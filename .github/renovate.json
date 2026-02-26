@@ -49,7 +49,7 @@
       "postUpgradeTasks": {
         "commands": [
           "install-tool java 25.0.1+8.0.LTS",
-          "./gradlew resolveAndLockAll --write-locks --no-daemon"
+          "./gradlew dependencies --write-locks --no-daemon"
         ],
         "fileFilters": ["gradle.lockfile"],
         "executionMode": "branch"
@@ -63,7 +63,7 @@
         "commands": [
           "install-tool java 25.0.1+8.0.LTS",
           "install-tool node 24.12.0",
-          "./gradlew resolveAndLockAll --write-locks --no-daemon",
+          "./gradlew dependencies --write-locks --no-daemon",
           "./gradlew vaadinPrepareFrontend --no-daemon",
           "npm install --package-lock-only"
         ],
