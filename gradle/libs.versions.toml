@@ -1,6 +1,6 @@
 [versions]
 # Core framework versions
-vaadin = "25.0.4"
+vaadin = "25.0.6"
 spring-boot = "4.0.2"
 spring-dependency-management = "1.1.7"
 
