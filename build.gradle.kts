@@ -45,6 +45,29 @@ configurations.matching { name.endsWith("PmdAuxClasspath") }.all {
     resolutionStrategy.deactivateDependencyLocking()
 }
 
+// Task to strip PMD auxiliary classpath entries from gradle.lockfile
+// Used by Renovate postUpgradeTasks after --write-locks generates the lockfile
+tasks.register("cleanPmdFromLockfile") {
+    description = "Remove PMD auxiliary classpath entries from gradle.lockfile"
+    val lockfilePath = layout.projectDirectory.file("gradle.lockfile")
+    doLast {
+        val lockfile = lockfilePath.asFile
+        if (lockfile.exists()) {
+            val cleaned = lockfile.readLines()
+                .map { line ->
+                    line.replace(",mainPmdAuxClasspath", "")
+                        .replace("mainPmdAuxClasspath,", "")
+                        .replace("mainPmdAuxClasspath", "")
+                        .replace(",testPmdAuxClasspath", "")
+                        .replace("testPmdAuxClasspath,", "")
+                        .replace("testPmdAuxClasspath", "")
+                }
+                .filter { !it.matches(Regex("^[^=]*=$")) }
+            lockfile.writeText(cleaned.joinToString("\n") + "\n")
+        }
+    }
+}
+
 // Disable plain JAR generation - we only need the Spring Boot executable JAR
 tasks.named<Jar>("jar") {
     enabled = false

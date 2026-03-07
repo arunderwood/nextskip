@@ -49,9 +49,7 @@
       "postUpgradeTasks": {
         "commands": [
           "install-tool java 25.0.1+8.0.LTS",
-          "./gradlew dependencies --write-locks --no-daemon",
-          "sed -i 's/,mainPmdAuxClasspath//g; s/mainPmdAuxClasspath,//g; s/mainPmdAuxClasspath//g; s/,testPmdAuxClasspath//g; s/testPmdAuxClasspath,//g; s/testPmdAuxClasspath//g' gradle.lockfile",
-          "sed -i '/^[^=]*=$/d' gradle.lockfile"
+          "./gradlew dependencies --write-locks cleanPmdFromLockfile --no-daemon"
         ],
         "fileFilters": ["gradle.lockfile"],
         "executionMode": "branch"
@@ -65,9 +63,7 @@
         "commands": [
           "install-tool java 25.0.1+8.0.LTS",
           "install-tool node 24.12.0",
-          "./gradlew dependencies --write-locks --no-daemon",
-          "sed -i 's/,mainPmdAuxClasspath//g; s/mainPmdAuxClasspath,//g; s/mainPmdAuxClasspath//g; s/,testPmdAuxClasspath//g; s/testPmdAuxClasspath,//g; s/testPmdAuxClasspath//g' gradle.lockfile",
-          "sed -i '/^[^=]*=$/d' gradle.lockfile",
+          "./gradlew dependencies --write-locks cleanPmdFromLockfile --no-daemon",
           "./gradlew vaadinPrepareFrontend --no-daemon",
           "npm install --package-lock-only"
         ],
