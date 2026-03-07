@@ -38,6 +38,13 @@ dependencyLocking {
     lockAllConfigurations()
 }
 
+// Exclude PMD auxiliary classpath from locking - these lazy configurations
+// cause lockfile conflicts when Renovate updates dependencies because
+// ./gradlew dependencies --write-locks doesn't trigger their creation
+configurations.matching { name.endsWith("PmdAuxClasspath") }.configureEach {
+    resolutionStrategy.deactivateDependencyLocking()
+}
+
 // Disable plain JAR generation - we only need the Spring Boot executable JAR
 tasks.named<Jar>("jar") {
     enabled = false
