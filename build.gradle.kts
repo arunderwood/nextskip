@@ -38,10 +38,10 @@ dependencyLocking {
     lockAllConfigurations()
 }
 
-// Exclude PMD auxiliary classpath from locking - these lazy configurations
-// cause lockfile conflicts when Renovate updates dependencies because
-// ./gradlew dependencies --write-locks doesn't trigger their creation
-configurations.matching { name.endsWith("PmdAuxClasspath") }.configureEach {
+// Exclude PMD auxiliary classpath from locking - these configurations mirror
+// the compile classpath and cause lockfile conflicts when Renovate updates
+// dependencies because --write-locks captures stale versions for them
+configurations.matching { name.endsWith("PmdAuxClasspath") }.all {
     resolutionStrategy.deactivateDependencyLocking()
 }
 
