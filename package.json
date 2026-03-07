@@ -83,7 +83,7 @@
     "@vitejs/plugin-react": "^5.1.2",
     "@vitest/coverage-v8": "^4.0.15",
     "@vitest/ui": "^4.0.15",
-    "eslint": "^9.17.0",
+    "eslint": "^10.0.0",
     "eslint-config-vaadin": "^1.0.0-beta.5",
     "fast-check": "^4.5.3",
     "glob": "^13.0.0",
