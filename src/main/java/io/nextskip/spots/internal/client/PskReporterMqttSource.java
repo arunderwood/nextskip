@@ -1,6 +1,5 @@
 package io.nextskip.spots.internal.client;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.nextskip.common.api.SubscriptionStatusProvider;
 import io.nextskip.spots.internal.MqttProperties;
 import org.eclipse.paho.mqttv5.client.IMqttToken;
@@ -43,7 +42,6 @@ import java.util.UUID;
  */
 @Component
 @ConditionalOnProperty(prefix = "nextskip.spots", name = "enabled", havingValue = "true", matchIfMissing = true)
-@SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Spring-managed MqttProperties bean is shared by design")
 public class PskReporterMqttSource extends AbstractSpotSource
         implements MqttCallback, SubscriptionStatusProvider {
 
