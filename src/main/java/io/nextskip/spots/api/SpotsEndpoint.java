@@ -3,6 +3,7 @@ package io.nextskip.spots.api;
 import com.vaadin.flow.server.auth.AnonymousAllowed;
 import com.vaadin.hilla.BrowserCallable;
 import io.nextskip.spots.model.BandActivity;
+import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -44,14 +45,14 @@ public class SpotsEndpoint {
     }
 
     /**
-     * Get activity for a specific band.
+     * Get activity for a specific band across all active modes.
      *
      * @param band the band name (e.g., "20m", "40m")
-     * @return activity data for the band, or null if no recent activity
+     * @return list of activity data per mode, empty if no recent activity
      */
-    public BandActivity getBandActivityForBand(String band) {
+    public List<BandActivity> getBandActivityForBand(String band) {
         LOG.debug("Fetching activity for band: {}", band);
-        return spotsService.getBandActivity(band).orElse(null);
+        return spotsService.getBandActivity(band);
     }
 
     /**

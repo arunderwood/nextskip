@@ -298,30 +298,30 @@ class SpotsServiceTest {
         @Test
         void testGetBandActivity_ExistingBand_ReturnsActivity() {
             BandActivity expected = createBandActivity(BAND_20M, 100);
-            Map<String, BandActivity> activities = Map.of(BAND_20M, expected);
+            Map<String, BandActivity> activities = Map.of(BAND_20M + "_FT8", expected);
             when(bandActivityCache.get(CacheConfig.CACHE_KEY)).thenReturn(activities);
 
-            Optional<BandActivity> result = spotsService.getBandActivity(BAND_20M);
+            List<BandActivity> result = spotsService.getBandActivity(BAND_20M);
 
-            assertThat(result).isPresent();
-            assertThat(result.get()).isEqualTo(expected);
+            assertThat(result).hasSize(1);
+            assertThat(result.getFirst()).isEqualTo(expected);
         }
 
         @Test
-        void testGetBandActivity_NonExistentBand_ReturnsEmpty() {
-            Map<String, BandActivity> activities = Map.of(BAND_20M, createBandActivity(BAND_20M, 100));
+        void testGetBandActivity_NonExistentBand_ReturnsEmptyList() {
+            Map<String, BandActivity> activities = Map.of(BAND_20M + "_FT8", createBandActivity(BAND_20M, 100));
             when(bandActivityCache.get(CacheConfig.CACHE_KEY)).thenReturn(activities);
 
-            Optional<BandActivity> result = spotsService.getBandActivity(BAND_160M);
+            List<BandActivity> result = spotsService.getBandActivity(BAND_160M);
 
             assertThat(result).isEmpty();
         }
 
         @Test
-        void testGetBandActivity_EmptyCache_ReturnsEmpty() {
+        void testGetBandActivity_EmptyCache_ReturnsEmptyList() {
             when(bandActivityCache.get(CacheConfig.CACHE_KEY)).thenReturn(Map.of());
 
-            Optional<BandActivity> result = spotsService.getBandActivity(BAND_20M);
+            List<BandActivity> result = spotsService.getBandActivity(BAND_20M);
 
             assertThat(result).isEmpty();
         }

@@ -53,6 +53,7 @@ const createMockBandActivity = (overrides: Partial<BandActivity> = {}): BandActi
   score: 85,
   favorable: true,
   windowMinutes: 15,
+  rarityMultiplier: 1.0,
   ...overrides,
 });
 

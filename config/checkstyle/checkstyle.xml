@@ -30,6 +30,12 @@
         <property name="checks" value="ParameterNumber"/>
     </module>
 
+    <!-- Java records have canonical constructors matching their field count -->
+    <module name="SuppressionSingleFilter">
+        <property name="files" value="BandActivity\.java"/>
+        <property name="checks" value="ParameterNumber"/>
+    </module>
+
     <!-- Size Violations -->
     <module name="FileLength">
         <property name="max" value="500"/>

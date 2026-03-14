@@ -95,12 +95,12 @@ public interface SpotsService {
     Map<String, BandActivity> getCurrentActivity();
 
     /**
-     * Returns activity for a specific band.
+     * Returns activity for a specific band across all active modes.
      *
      * @param band the band name (e.g., "20m")
-     * @return band activity, or empty if no recent activity
+     * @return list of band activities (one per active mode), empty if no recent activity
      */
-    Optional<BandActivity> getBandActivity(String band);
+    List<BandActivity> getBandActivity(String band);
 
     /**
      * Returns the full response DTO for the frontend.

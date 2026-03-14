@@ -9,9 +9,12 @@ import java.util.Map;
  * Response DTO for band activity data sent to the frontend.
  *
  * <p>This is the primary response from {@link SpotsEndpoint#getBandActivity()}.
- * Contains all band activities, a timestamp, and MQTT connection status.
+ * Contains all band+mode activities, a timestamp, and MQTT connection status.
  *
- * @param bandActivities map of band name to aggregated activity data
+ * <p>Map keys use composite format {@code "{band}_{mode}"} (e.g., "20m_FT8",
+ * "20m_FT4"). Each band can have multiple entries — one per active mode.
+ *
+ * @param bandActivities map of composite key to aggregated activity data
  * @param timestamp      when this response was generated
  * @param mqttConnected  whether the MQTT source is currently connected
  */

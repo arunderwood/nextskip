@@ -1,7 +1,7 @@
 package io.nextskip.spots.internal.client;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.nextskip.common.api.SubscriptionStatusProvider;
+import io.nextskip.spots.internal.MqttProperties;
 import org.eclipse.paho.mqttv5.client.IMqttToken;
 import org.eclipse.paho.mqttv5.client.MqttCallback;
 import org.eclipse.paho.mqttv5.client.MqttClient;
@@ -10,10 +10,8 @@ import org.eclipse.paho.mqttv5.client.MqttDisconnectResponse;
 import org.eclipse.paho.mqttv5.client.persist.MemoryPersistence;
 import org.eclipse.paho.mqttv5.common.MqttException;
 import org.eclipse.paho.mqttv5.common.MqttMessage;
-import org.eclipse.paho.mqttv5.common.packet.MqttProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
@@ -44,7 +42,6 @@ import java.util.UUID;
  */
 @Component
 @ConditionalOnProperty(prefix = "nextskip.spots", name = "enabled", havingValue = "true", matchIfMissing = true)
-@SuppressFBWarnings(value = "EI_EXPOSE_REP2", justification = "Spring-injected List is immutable from @Value")
 public class PskReporterMqttSource extends AbstractSpotSource
         implements MqttCallback, SubscriptionStatusProvider {
 
@@ -58,12 +55,10 @@ public class PskReporterMqttSource extends AbstractSpotSource
 
     private MqttClient client;
 
-    public PskReporterMqttSource(
-            @Value("${nextskip.spots.mqtt.broker:tcp://mqtt.pskreporter.info:1883}") String brokerUrl,
-            @Value("${nextskip.spots.mqtt.topics:pskr/filter/v2/+/FT8/#}") List<String> topics) {
+    public PskReporterMqttSource(MqttProperties mqttProperties) {
         super();
-        this.brokerUrl = brokerUrl;
-        this.topics = topics;
+        this.brokerUrl = mqttProperties.getBroker();
+        this.topics = mqttProperties.getTopics();
         this.clientId = "nextskip-" + UUID.randomUUID().toString().substring(0, 8);
     }
 
@@ -99,11 +94,12 @@ public class PskReporterMqttSource extends AbstractSpotSource
 
         client.connect(options);
 
-        // Subscribe to all configured topics
-        for (String topic : topics) {
-            client.subscribe(topic, 0);
-            LOG.info("Subscribed to topic: {}", topic);
-        }
+        // Subscribe to all configured topics in a single batch request
+        // to avoid the FT8 message flood disconnecting us before FT4/FT2 subscriptions complete
+        String[] topicArray = topics.toArray(String[]::new);
+        int[] qosArray = new int[topicArray.length];
+        client.subscribe(topicArray, qosArray);
+        LOG.info("Subscribed to {} topics: {}", topicArray.length, topics);
     }
 
     @Override
@@ -168,12 +164,13 @@ public class PskReporterMqttSource extends AbstractSpotSource
         } else {
             LOG.info("MQTT connected to {}", serverURI);
         }
-        // Subscribe (or re-subscribe after reconnection)
+        // Subscribe (or re-subscribe after reconnection) in a single batch
         try {
-            for (String topic : topics) {
-                client.subscribe(topic, 0);
-                LOG.info("{} to topic: {}", reconnect ? "Re-subscribed" : "Subscribed", topic);
-            }
+            String[] topicArray = topics.toArray(String[]::new);
+            int[] qosArray = new int[topicArray.length];
+            client.subscribe(topicArray, qosArray);
+            LOG.info("{} to {} topics: {}",
+                    reconnect ? "Re-subscribed" : "Subscribed", topicArray.length, topics);
         } catch (MqttException e) {
             LOG.error("Failed to subscribe after connect: {}. Disconnecting to trigger retry.",
                     e.getMessage());
@@ -186,7 +183,8 @@ public class PskReporterMqttSource extends AbstractSpotSource
     }
 
     @Override
-    public void authPacketArrived(int reasonCode, MqttProperties properties) {
+    public void authPacketArrived(int reasonCode,
+            org.eclipse.paho.mqttv5.common.packet.MqttProperties properties) {
         // Not used - PSKReporter doesn't require authentication
     }
 }

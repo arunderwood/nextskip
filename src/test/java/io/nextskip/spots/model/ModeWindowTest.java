@@ -25,10 +25,10 @@ class ModeWindowTest {
     class EnumValuesTests {
 
         @Test
-        void testEnumValues_HasFiveModeWindows() {
+        void testEnumValues_HasSixModeWindows() {
             assertThat(ModeWindow.values())
-                    .as("Should have 5 mode windows (FT8, FT4, CW, SSB, DEFAULT)")
-                    .hasSize(5);
+                    .as("Should have 6 mode windows (FT8, FT4, FT2, CW, SSB, DEFAULT)")
+                    .hasSize(6);
         }
     }
 
@@ -76,6 +76,25 @@ class ModeWindowTest {
 
             assertThat(ModeWindow.FT4.getBaselineWindow())
                     .as("FT4 should have same baseline window as FT8")
+                    .isEqualTo(ModeWindow.FT8.getBaselineWindow());
+        }
+    }
+
+    // =========================================================================
+    // FT2 Window Tests
+    // =========================================================================
+
+    @Nested
+    class Ft2WindowTests {
+
+        @Test
+        void testFT2_HasSameConfigAsFT8() {
+            assertThat(ModeWindow.FT2.getCurrentWindow())
+                    .as("FT2 should have same current window as FT8")
+                    .isEqualTo(ModeWindow.FT8.getCurrentWindow());
+
+            assertThat(ModeWindow.FT2.getBaselineWindow())
+                    .as("FT2 should have same baseline window as FT8")
                     .isEqualTo(ModeWindow.FT8.getBaselineWindow());
         }
     }
@@ -191,6 +210,14 @@ class ModeWindowTest {
         }
 
         @ParameterizedTest
+        @ValueSource(strings = {"FT2", "ft2", "Ft2"})
+        void testForMode_FT2_CaseInsensitive(String mode) {
+            assertThat(ModeWindow.forMode(mode))
+                    .as("forMode('%s') should return FT2", mode)
+                    .isEqualTo(ModeWindow.FT2);
+        }
+
+        @ParameterizedTest
         @ValueSource(strings = {"CW", "cw", "Cw"})
         void testForMode_CW_CaseInsensitive(String mode) {
             assertThat(ModeWindow.forMode(mode))
@@ -298,7 +325,7 @@ class ModeWindowTest {
             Duration ft8Window = ModeWindow.FT8.getCurrentWindow();
 
             for (ModeWindow mode : ModeWindow.values()) {
-                if (mode != ModeWindow.FT8 && mode != ModeWindow.FT4) {
+                if (mode != ModeWindow.FT8 && mode != ModeWindow.FT4 && mode != ModeWindow.FT2) {
                     assertThat(mode.getCurrentWindow())
                             .as("%s current window should be >= FT8", mode)
                             .isGreaterThanOrEqualTo(ft8Window);
@@ -328,6 +355,7 @@ class ModeWindowTest {
         @Test
         void testToString_ContainsModeName() {
             assertThat(ModeWindow.FT8.toString()).contains("FT8");
+            assertThat(ModeWindow.FT2.toString()).contains("FT2");
             assertThat(ModeWindow.CW.toString()).contains("CW");
             assertThat(ModeWindow.SSB.toString()).contains("SSB");
         }
@@ -368,6 +396,10 @@ class ModeWindowTest {
 
             assertThat(ModeWindow.FT4.getCurrentWindow())
                     .as("FT4 window should be shorter than SSB")
+                    .isLessThan(ssbWindow);
+
+            assertThat(ModeWindow.FT2.getCurrentWindow())
+                    .as("FT2 window should be shorter than SSB")
                     .isLessThan(ssbWindow);
         }
 

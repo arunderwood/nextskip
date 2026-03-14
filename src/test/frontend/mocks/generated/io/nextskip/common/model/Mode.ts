@@ -5,6 +5,7 @@
 enum Mode {
   FT8 = 'FT8',
   FT4 = 'FT4',
+  FT2 = 'FT2',
   CW = 'CW',
   SSB = 'SSB',
   RTTY = 'RTTY',

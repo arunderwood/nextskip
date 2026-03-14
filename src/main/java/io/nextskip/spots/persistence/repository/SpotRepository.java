@@ -122,6 +122,18 @@ public interface SpotRepository extends JpaRepository<SpotEntity, Long> {
     long countByBandAndSpottedAtAfter(String band, Instant since);
 
     /**
+     * Counts spots by band and mode within a time window.
+     *
+     * <p>Used for per-mode activity aggregation.
+     *
+     * @param band  the band (e.g., "20m")
+     * @param mode  the mode (e.g., "FT4")
+     * @param since minimum spotted_at time
+     * @return count of spots on the band for the specific mode
+     */
+    long countByBandAndModeAndSpottedAtAfter(String band, String mode, Instant since);
+
+    /**
      * Finds the maximum distance for a band within a time window.
      *
      * @param band  the band (e.g., "20m")
@@ -164,6 +176,31 @@ public interface SpotRepository extends JpaRepository<SpotEntity, Long> {
             @Param("since") Instant since);
 
     /**
+     * Finds the spot with maximum distance for a specific band and mode.
+     *
+     * @param band  the band (e.g., "20m")
+     * @param mode  the mode (e.g., "FT4")
+     * @param since minimum spotted_at time
+     * @return the spot with maximum distance, or empty if no spots
+     */
+    @Query("""
+            SELECT s FROM SpotEntity s
+            WHERE s.band = :band
+            AND s.mode = :mode
+            AND s.spottedAt > :since
+            AND s.distanceKm = (
+                SELECT MAX(s2.distanceKm) FROM SpotEntity s2
+                WHERE s2.band = :band AND s2.mode = :mode AND s2.spottedAt > :since
+            )
+            ORDER BY s.spottedAt DESC
+            LIMIT 1
+            """)
+    Optional<SpotEntity> findMaxDxSpotByBandAndModeAndSpottedAtAfter(
+            @Param("band") String band,
+            @Param("mode") String mode,
+            @Param("since") Instant since);
+
+    /**
      * Counts continent path occurrences for a band within a time window.
      *
      * <p>Returns rows of [spotterContinent, spottedContinent, count] for
@@ -188,6 +225,30 @@ public interface SpotRepository extends JpaRepository<SpotEntity, Long> {
             @Param("since") Instant since);
 
     /**
+     * Counts continent path occurrences for a band and mode within a time window.
+     *
+     * @param band  the band (e.g., "20m")
+     * @param mode  the mode (e.g., "FT4")
+     * @param since minimum spotted_at time
+     * @return list of [spotterContinent, spottedContinent, count] tuples
+     */
+    @Query("""
+            SELECT s.spotterContinent, s.spottedContinent, COUNT(s)
+            FROM SpotEntity s
+            WHERE s.band = :band
+            AND s.mode = :mode
+            AND s.spottedAt > :since
+            AND s.spotterContinent IS NOT NULL
+            AND s.spottedContinent IS NOT NULL
+            AND s.spotterContinent <> s.spottedContinent
+            GROUP BY s.spotterContinent, s.spottedContinent
+            """)
+    List<Object[]> countContinentPathsByBandAndModeAndSpottedAtAfter(
+            @Param("band") String band,
+            @Param("mode") String mode,
+            @Param("since") Instant since);
+
+    /**
      * Finds distinct bands with activity since the given time.
      *
      * <p>Used to determine which bands to aggregate.
@@ -197,6 +258,22 @@ public interface SpotRepository extends JpaRepository<SpotEntity, Long> {
      */
     @Query("SELECT DISTINCT s.band FROM SpotEntity s WHERE s.spottedAt > :since")
     List<String> findDistinctBandsWithActivitySince(@Param("since") Instant since);
+
+    /**
+     * Finds distinct band+mode combinations with activity since the given time.
+     *
+     * <p>Returns rows of [band, mode] for all active band+mode pairs.
+     * Used by the multi-mode aggregator to determine which combinations to aggregate.
+     *
+     * @param since minimum spotted_at time
+     * @return list of [band, mode] tuples
+     */
+    @Query("""
+            SELECT DISTINCT s.band, s.mode
+            FROM SpotEntity s
+            WHERE s.spottedAt > :since
+            """)
+    List<Object[]> findDistinctBandModePairsWithActivitySince(@Param("since") Instant since);
 
     /**
      * Finds mode distribution for a band to determine primary mode.
