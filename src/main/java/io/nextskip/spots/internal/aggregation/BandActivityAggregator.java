@@ -1,6 +1,7 @@
 package io.nextskip.spots.internal.aggregation;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import io.nextskip.spots.internal.ScoringProperties;
 import io.nextskip.spots.model.BandActivity;
 import io.nextskip.spots.model.ContinentPath;
 import io.nextskip.spots.model.ModeWindow;
@@ -33,8 +34,10 @@ import java.util.Set;
  *   <li>Active continent-to-continent propagation paths</li>
  * </ul>
  *
- * <p>The aggregation uses mode-specific windows (FT8=15m, CW=30m, SSB=60m)
+ * <p>The aggregation uses mode-specific windows (FT8/FT4/FT2=15m, CW=30m, SSB=60m)
  * to account for the different activity levels of each mode.
+ *
+ * <p>Each band can have multiple BandActivity records — one per active mode.
  */
 @Service
 @ConditionalOnProperty(prefix = "nextskip.spots", name = "enabled", havingValue = "true", matchIfMissing = true)
@@ -54,80 +57,72 @@ public class BandActivityAggregator {
     private static final Duration ACTIVITY_LOOKBACK = Duration.ofHours(2);
 
     /**
-     * Duration for determining primary mode on a band.
-     */
-    private static final Duration MODE_DETECTION_WINDOW = Duration.ofMinutes(30);
-
-    /**
      * Minimum window count required to calculate a baseline.
      */
     private static final int MIN_WINDOWS_FOR_BASELINE = 1;
 
-    /**
-     * Default mode if none detected.
-     */
-    private static final String DEFAULT_MODE = "FT8";
-
     private final SpotRepository repository;
     private final Clock clock;
+    private final ScoringProperties scoringProperties;
 
-    public BandActivityAggregator(SpotRepository repository, Clock clock) {
+    public BandActivityAggregator(SpotRepository repository, Clock clock,
+                                  ScoringProperties scoringProperties) {
         this.repository = repository;
         this.clock = clock;
+        this.scoringProperties = scoringProperties;
     }
 
     /**
-     * Aggregates activity data for a specific band.
+     * Aggregates activity data for a specific band and mode combination.
      *
      * <p>The aggregation process:
      * <ol>
-     *   <li>Determines primary mode (most common in last 30 minutes)</li>
      *   <li>Selects mode-appropriate time window</li>
-     *   <li>Counts spots in current window</li>
-     *   <li>Calculates rolling baseline average</li>
+     *   <li>Counts spots in current window for the specific mode</li>
+     *   <li>Calculates rolling baseline average for the specific mode</li>
      *   <li>Computes trend percentage</li>
-     *   <li>Finds maximum DX spot</li>
-     *   <li>Identifies active continent paths</li>
+     *   <li>Finds maximum DX spot for the specific mode</li>
+     *   <li>Identifies active continent paths for the specific mode</li>
      * </ol>
      *
      * @param band the band to aggregate (e.g., "20m")
-     * @return aggregated band activity data
+     * @param mode the mode to aggregate (e.g., "FT4")
+     * @return aggregated band activity data for the specific mode
      */
-    public BandActivity aggregateBand(String band) {
+    public BandActivity aggregateBandMode(String band, String mode) {
         Instant now = clock.instant();
-
-        // Determine primary mode and its window configuration
-        String primaryMode = determinePrimaryMode(band, now);
-        ModeWindow modeWindow = ModeWindow.forMode(primaryMode);
+        ModeWindow modeWindow = ModeWindow.forMode(mode);
 
         Instant windowStart = now.minus(modeWindow.getCurrentWindow());
 
-        LOG.debug("Aggregating band {} with mode {} window {} from {}",
-                band, primaryMode, modeWindow.getCurrentWindow(), windowStart);
+        LOG.debug("Aggregating band {} mode {} window {} from {}",
+                band, mode, modeWindow.getCurrentWindow(), windowStart);
 
-        // Current window spot count
-        int currentCount = (int) repository.countByBandAndSpottedAtAfter(band, windowStart);
+        // Current window spot count (mode-filtered)
+        int currentCount = (int) repository.countByBandAndModeAndSpottedAtAfter(band, mode, windowStart);
 
-        // Baseline calculation (rolling average of prior windows)
-        int baselineCount = calculateBaseline(band, modeWindow, now);
+        // Baseline calculation (mode-filtered)
+        int baselineCount = calculateBaseline(band, mode, modeWindow, now);
 
         // Trend percentage
         double trend = calculateTrend(currentCount, baselineCount);
 
-        // Max DX spot
+        // Max DX spot (mode-filtered)
         Optional<SpotEntity> maxDxSpot = repository
-                .findMaxDxSpotByBandAndSpottedAtAfter(band, windowStart);
+                .findMaxDxSpotByBandAndModeAndSpottedAtAfter(band, mode, windowStart);
         Integer maxDxKm = maxDxSpot.map(SpotEntity::getDistanceKm).orElse(null);
         String maxDxPath = maxDxSpot
                 .map(this::formatDxPath)
                 .orElse(null);
 
-        // Active continent paths
-        Set<ContinentPath> activePaths = findActivePaths(band, windowStart);
+        // Active continent paths (mode-filtered)
+        Set<ContinentPath> activePaths = findActivePaths(band, mode, windowStart);
+
+        double rarityMultiplier = scoringProperties.getMultiplierForMode(mode);
 
         BandActivity activity = new BandActivity(
                 band,
-                primaryMode,
+                mode,
                 currentCount,
                 baselineCount,
                 trend,
@@ -136,63 +131,51 @@ public class BandActivityAggregator {
                 activePaths,
                 windowStart,
                 now,
-                now
+                now,
+                rarityMultiplier
         );
 
-        LOG.debug("Band {} activity: {} spots (baseline: {}), trend: {}%, DX: {} km, paths: {}",
-                band, currentCount, baselineCount, String.format("%.1f", trend), maxDxKm, activePaths.size());
+        LOG.debug("Band {} {} activity: {} spots (baseline: {}), trend: {}%, DX: {} km, paths: {}",
+                band, mode, currentCount, baselineCount, String.format("%.1f", trend),
+                maxDxKm, activePaths.size());
 
         return activity;
     }
 
     /**
-     * Aggregates activity data for all bands with recent activity.
+     * Aggregates activity data for all band+mode combinations with recent activity.
      *
-     * <p>Returns a map of band name to activity data, ordered by band name.
-     * Only bands with spots in the last 2 hours are included.
+     * <p>Returns a map with composite {@code "{band}_{mode}"} keys (e.g., "20m_FT8",
+     * "20m_FT4") to activity data. Only band+mode pairs with spots in the last
+     * 2 hours are included.
      *
-     * @return map of band name to aggregated activity
+     * @return map of composite key to aggregated activity
      */
     public Map<String, BandActivity> aggregateAllBands() {
         Instant lookback = clock.instant().minus(ACTIVITY_LOOKBACK);
-        List<String> activeBands = repository.findDistinctBandsWithActivitySince(lookback);
+        List<Object[]> activePairs = repository.findDistinctBandModePairsWithActivitySince(lookback);
 
-        LOG.info("Aggregating activity for {} bands with recent activity", activeBands.size());
+        LOG.info("Aggregating activity for {} band+mode pairs with recent activity", activePairs.size());
 
         Map<String, BandActivity> result = new LinkedHashMap<>();
-        for (String band : activeBands) {
+        for (Object[] pair : activePairs) {
+            String band = (String) pair[0];
+            String mode = (String) pair[1];
+            String compositeKey = band + "_" + mode;
             try {
-                BandActivity activity = aggregateBand(band);
-                result.put(band, activity);
+                BandActivity activity = aggregateBandMode(band, mode);
+                result.put(compositeKey, activity);
             } catch (org.springframework.dao.DataAccessException e) {
-                LOG.warn("Failed to aggregate band {}: {}", band, e.getMessage());
+                LOG.warn("Failed to aggregate {} {}: {}", band, mode, e.getMessage());
             }
         }
 
-        LOG.info("Completed aggregation: {} bands processed", result.size());
+        LOG.info("Completed aggregation: {} band+mode pairs processed", result.size());
         return result;
     }
 
     /**
-     * Determines the primary (most common) mode on a band.
-     *
-     * <p>Looks at the last 30 minutes of spots and returns the mode with
-     * the highest count. Defaults to "FT8" if no spots found.
-     */
-    private String determinePrimaryMode(String band, Instant now) {
-        Instant lookback = now.minus(MODE_DETECTION_WINDOW);
-        List<Object[]> distribution = repository.findModeDistributionByBandSince(band, lookback);
-
-        if (distribution.isEmpty()) {
-            return DEFAULT_MODE;
-        }
-
-        // First row has highest count due to ORDER BY cnt DESC
-        return (String) distribution.get(0)[0];
-    }
-
-    /**
-     * Calculates the baseline spot count (rolling average of prior windows).
+     * Calculates the baseline spot count for a specific mode (rolling average of prior windows).
      *
      * <p>Divides the baseline period into current-window-sized chunks
      * and averages them, excluding the current window.
@@ -202,7 +185,7 @@ public class BandActivityAggregator {
      * - Averages windows: [-15m to -30m], [-30m to -45m], [-45m to -60m]
      * - Current window [0 to -15m] is excluded
      */
-    private int calculateBaseline(String band, ModeWindow modeWindow, Instant now) {
+    private int calculateBaseline(String band, String mode, ModeWindow modeWindow, Instant now) {
         Duration current = modeWindow.getCurrentWindow();
         int windowCount = modeWindow.getBaselineWindowCount();
 
@@ -218,8 +201,8 @@ public class BandActivityAggregator {
             Instant windowEnd = now.minus(current.multipliedBy(i));
             Instant windowStart = windowEnd.minus(current);
 
-            long count = repository.countByBandAndSpottedAtAfter(band, windowStart)
-                    - repository.countByBandAndSpottedAtAfter(band, windowEnd);
+            long count = repository.countByBandAndModeAndSpottedAtAfter(band, mode, windowStart)
+                    - repository.countByBandAndModeAndSpottedAtAfter(band, mode, windowEnd);
 
             // Only count if we got a valid result (count could be negative due to timing)
             if (count >= 0) {
@@ -249,13 +232,14 @@ public class BandActivityAggregator {
     }
 
     /**
-     * Finds which major continent paths are active on a band.
+     * Finds which major continent paths are active on a band for a specific mode.
      *
      * <p>A path is considered "active" if at least {@link #MIN_SPOTS_FOR_ACTIVE_PATH}
      * spots exist between the two continents in the time window.
      */
-    private Set<ContinentPath> findActivePaths(String band, Instant since) {
-        List<Object[]> pathCounts = repository.countContinentPathsByBandAndSpottedAtAfter(band, since);
+    private Set<ContinentPath> findActivePaths(String band, String mode, Instant since) {
+        List<Object[]> pathCounts = repository
+                .countContinentPathsByBandAndModeAndSpottedAtAfter(band, mode, since);
 
         Set<ContinentPath> active = EnumSet.noneOf(ContinentPath.class);
         for (Object[] row : pathCounts) {

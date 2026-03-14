@@ -400,7 +400,9 @@ export function createMockBandActivity(overrides?: Partial<BandActivity>): BandA
     maxDxPath: 'JA1ABC -> W6XYZ',
     activePaths: [ContinentPath.NA_EU, ContinentPath.NA_AS, ContinentPath.EU_AS],
     score: 75,
+    favorable: true,
     windowMinutes: 15,
+    rarityMultiplier: 1.0,
     ...overrides,
   };
 }

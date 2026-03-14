@@ -93,6 +93,13 @@ nextskip:
       broker: tcp://mqtt.pskreporter.info:1883
       topics:
         - pskr/filter/v2/+/FT8/#  # All FT8 spots across all bands
+        - pskr/filter/v2/+/FT4/#  # All FT4 spots across all bands
+        - pskr/filter/v2/+/FT2/#  # All FT2 spots across all bands
+    scoring:
+      rarity-multipliers:
+        FT8: 1.0   # Baseline (most popular mode)
+        FT4: 1.5   # ~5-10x fewer spots than FT8
+        FT2: 3.0   # ~50-100x fewer spots than FT8
     processing:
       batch-size: 100              # Spots per batch
       batch-timeout: 1s            # Max wait before flushing partial batch

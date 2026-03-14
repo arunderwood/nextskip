@@ -32,6 +32,7 @@ import java.util.Set;
  * @param windowStart start of the current aggregation window
  * @param windowEnd end of the current aggregation window
  * @param calculatedAt timestamp when this aggregation was computed
+ * @param rarityMultiplier multiplier applied to activity score for less popular modes (1.0 = no boost)
  */
 public record BandActivity(
         String band,
@@ -44,7 +45,8 @@ public record BandActivity(
         Set<ContinentPath> activePaths,
         Instant windowStart,
         Instant windowEnd,
-        Instant calculatedAt
+        Instant calculatedAt,
+        double rarityMultiplier
 ) implements Scoreable {
 
     // Scoring thresholds
@@ -67,10 +69,26 @@ public record BandActivity(
     private static final double PATH_WEIGHT = 0.10;
 
     /**
+     * Convenience constructor without rarity multiplier (defaults to 1.0).
+     */
+    public BandActivity(
+            String band, String mode, int spotCount, int baselineSpotCount,
+            double trendPercentage, Integer maxDxKm, String maxDxPath,
+            Set<ContinentPath> activePaths, Instant windowStart,
+            Instant windowEnd, Instant calculatedAt) {
+        this(band, mode, spotCount, baselineSpotCount, trendPercentage,
+                maxDxKm, maxDxPath, activePaths, windowStart, windowEnd,
+                calculatedAt, 1.0);
+    }
+
+    /**
      * Compact constructor with defensive copying for the paths set.
      */
     public BandActivity {
         activePaths = activePaths != null ? Set.copyOf(activePaths) : Set.of();
+        if (rarityMultiplier <= 0) {
+            rarityMultiplier = 1.0;
+        }
     }
 
     /**
@@ -106,7 +124,10 @@ public record BandActivity(
         int dxScore = normalizeDx();
         int pathScore = normalizePaths();
 
-        double weightedScore = activityScore * ACTIVITY_WEIGHT
+        // Apply rarity multiplier to activity component only, capped at 100
+        int boostedActivity = (int) Math.min(100, activityScore * rarityMultiplier);
+
+        double weightedScore = boostedActivity * ACTIVITY_WEIGHT
                 + trendScore * TREND_WEIGHT
                 + dxScore * DX_WEIGHT
                 + pathScore * PATH_WEIGHT;

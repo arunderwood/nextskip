@@ -10,9 +10,9 @@ import java.util.Locale;
  * different aggregation windows to produce meaningful statistics:
  *
  * <ul>
- *   <li><b>FT8/FT4</b>: High volume digital modes with 15-second cycles.
- *       A 15-minute window captures hundreds of spots, providing good statistical
- *       significance.</li>
+ *   <li><b>FT8/FT4/FT2</b>: Digital modes from the WSJT-X suite.
+ *       A 15-minute window captures sufficient spots for statistical
+ *       significance (FT2 has lower volume but benefits from a consistent window).</li>
  *   <li><b>CW</b>: Lower volume than digital modes. A 30-minute window ensures
  *       enough samples for meaningful trend analysis.</li>
  *   <li><b>SSB</b>: Typically the lowest volume on PSKReporter (since it relies on
@@ -39,6 +39,15 @@ public enum ModeWindow {
      * <p>Same window configuration as FT8.
      */
     FT4(Duration.ofMinutes(15), Duration.ofHours(1)),
+
+    /**
+     * FT2 - 6-second cycle variant of FT8 from WSJT-X.
+     *
+     * <p>Same window configuration as FT8/FT4. Although FT2 has a faster
+     * cycle time, the aggregation window serves trend analysis and needs
+     * sufficient samples — especially important given FT2's low popularity.
+     */
+    FT2(Duration.ofMinutes(15), Duration.ofHours(1)),
 
     /**
      * CW - Morse code, lower volume on PSKReporter.
@@ -115,6 +124,7 @@ public enum ModeWindow {
      * <ul>
      *   <li>FT8, ft8</li>
      *   <li>FT4, ft4</li>
+     *   <li>FT2, ft2</li>
      *   <li>CW, cw</li>
      *   <li>SSB, ssb, USB, LSB, usb, lsb</li>
      * </ul>

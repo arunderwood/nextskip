@@ -17,6 +17,9 @@ import FrequencyBand from 'Frontend/generated/io/nextskip/common/model/Frequency
 import BandConditionRating from 'Frontend/generated/io/nextskip/propagation/model/BandConditionRating';
 import { getRegisteredCards } from 'Frontend/components/cards/CardRegistry';
 import type { ActivityCardConfig } from 'Frontend/types/activity';
+import { axe, toHaveNoViolations } from 'jest-axe';
+
+expect.extend(toHaveNoViolations);
 
 // Ensure card registration is loaded
 import 'Frontend/components/cards/band-activity';
@@ -46,6 +49,7 @@ const createMockBandActivity = (overrides: Partial<BandActivity> = {}): BandActi
   score: 85,
   favorable: true,
   windowMinutes: 15,
+  rarityMultiplier: 1.0,
   ...overrides,
 });
 
@@ -360,6 +364,7 @@ describe('Band Activity Card Registration', () => {
             score: 0,
             favorable: false,
             windowMinutes: 15,
+            rarityMultiplier: 1.0,
           },
         }),
       };
@@ -457,6 +462,337 @@ describe('Band Activity Card Registration', () => {
       expect(indexOf80m).toBeGreaterThanOrEqual(0);
       expect(indexOf20m).toBeGreaterThanOrEqual(0);
       expect(indexOf10m).toBeGreaterThanOrEqual(0);
+    });
+  });
+
+  // ===========================================
+  // T015: FT4 Card Rendering
+  // ===========================================
+
+  describe('FT4 card rendering (T015)', () => {
+    it('should render FT4 card with correct title format', () => {
+      const data: DashboardData = {
+        spots: createMockBandActivityResponse({
+          '20m-FT4': createMockBandActivity({ band: '20m', mode: 'FT4' }),
+        }),
+      };
+
+      const cards = getRegisteredCards();
+      const bandActivityCard = cards.find((c) => c.canRender(data));
+
+      if (bandActivityCard) {
+        const configs = asConfigArray(bandActivityCard.createConfig(data));
+        const ft4Config = configs.find((c) => c.id === 'band-activity-20m-FT4');
+
+        if (ft4Config) {
+          const element = bandActivityCard.render(data, ft4Config);
+          render(element);
+          expect(screen.getByText('20m FT4')).toBeInTheDocument();
+        }
+      }
+    });
+
+    it('should show spot count, trend, and DX reach data for FT4', () => {
+      const data: DashboardData = {
+        spots: createMockBandActivityResponse({
+          '20m-FT4': createMockBandActivity({
+            band: '20m',
+            mode: 'FT4',
+            spotCount: 75,
+            trendPercentage: 15,
+            maxDxKm: 8000,
+            maxDxPath: 'NA-AS',
+          }),
+        }),
+      };
+
+      const cards = getRegisteredCards();
+      const bandActivityCard = cards.find((c) => c.canRender(data));
+
+      if (bandActivityCard) {
+        const configs = asConfigArray(bandActivityCard.createConfig(data));
+        const ft4Config = configs.find((c) => c.id === 'band-activity-20m-FT4');
+
+        if (ft4Config) {
+          const element = bandActivityCard.render(data, ft4Config);
+          render(element);
+
+          expect(screen.getByText(/75/)).toBeInTheDocument();
+          expect(screen.getByText(/15%/)).toBeInTheDocument();
+        }
+      }
+    });
+
+    it('should allow FT4 and FT8 cards to coexist on the same band', () => {
+      const data: DashboardData = {
+        spots: createMockBandActivityResponse({
+          '20m-FT8': createMockBandActivity({ band: '20m', mode: 'FT8', score: 90 }),
+          '20m-FT4': createMockBandActivity({ band: '20m', mode: 'FT4', score: 70 }),
+        }),
+      };
+
+      const { result } = renderHook(() => useDashboardCards(data));
+
+      const ft8Card = result.current.find((c) => c.id === 'band-activity-20m-FT8');
+      const ft4Card = result.current.find((c) => c.id === 'band-activity-20m-FT4');
+
+      expect(ft8Card).toBeDefined();
+      expect(ft4Card).toBeDefined();
+      expect(ft8Card?.id).not.toBe(ft4Card?.id);
+    });
+  });
+
+  // ===========================================
+  // T023: FT2 Card Rendering
+  // ===========================================
+
+  describe('FT2 card rendering (T023)', () => {
+    it('should render FT2 card with correct title format', () => {
+      const data: DashboardData = {
+        spots: createMockBandActivityResponse({
+          '20m-FT2': createMockBandActivity({ band: '20m', mode: 'FT2' }),
+        }),
+      };
+
+      const cards = getRegisteredCards();
+      const bandActivityCard = cards.find((c) => c.canRender(data));
+
+      if (bandActivityCard) {
+        const configs = asConfigArray(bandActivityCard.createConfig(data));
+        const ft2Config = configs.find((c) => c.id === 'band-activity-20m-FT2');
+
+        if (ft2Config) {
+          const element = bandActivityCard.render(data, ft2Config);
+          render(element);
+          expect(screen.getByText('20m FT2')).toBeInTheDocument();
+        }
+      }
+    });
+
+    it('should show all data fields for FT2 same as FT8', () => {
+      const data: DashboardData = {
+        spots: createMockBandActivityResponse({
+          '20m-FT2': createMockBandActivity({
+            band: '20m',
+            mode: 'FT2',
+            spotCount: 42,
+            trendPercentage: -10,
+            maxDxKm: 3000,
+            maxDxPath: 'EU-AF',
+            score: 60,
+          }),
+        }),
+      };
+
+      const cards = getRegisteredCards();
+      const bandActivityCard = cards.find((c) => c.canRender(data));
+
+      if (bandActivityCard) {
+        const configs = asConfigArray(bandActivityCard.createConfig(data));
+        const ft2Config = configs.find((c) => c.id === 'band-activity-20m-FT2');
+
+        if (ft2Config) {
+          const element = bandActivityCard.render(data, ft2Config);
+          render(element);
+
+          expect(screen.getByText(/42/)).toBeInTheDocument();
+          expect(screen.getByText(/-10%/)).toBeInTheDocument();
+        }
+      }
+    });
+  });
+
+  // ===========================================
+  // FR-010: Hotness Indicators for FT4 and FT2
+  // ===========================================
+
+  describe('hotness indicators (FR-010)', () => {
+    it('should assign correct hotness for FT4 card with high score', () => {
+      const data: DashboardData = {
+        spots: createMockBandActivityResponse({
+          '20m-FT4': createMockBandActivity({ band: '20m', mode: 'FT4', score: 85 }),
+        }),
+      };
+      const { result } = renderHook(() => useDashboardCards(data));
+      const ft4Card = result.current.find((c) => c.id === 'band-activity-20m-FT4');
+      expect(ft4Card?.hotness).toBe('hot');
+    });
+
+    it('should assign warm hotness for FT4 card with medium score', () => {
+      const data: DashboardData = {
+        spots: createMockBandActivityResponse({
+          '20m-FT4': createMockBandActivity({ band: '20m', mode: 'FT4', score: 55 }),
+        }),
+      };
+      const { result } = renderHook(() => useDashboardCards(data));
+      const ft4Card = result.current.find((c) => c.id === 'band-activity-20m-FT4');
+      expect(ft4Card?.hotness).toBe('warm');
+    });
+
+    it('should assign neutral hotness for FT4 card with low score', () => {
+      const data: DashboardData = {
+        spots: createMockBandActivityResponse({
+          '20m-FT4': createMockBandActivity({ band: '20m', mode: 'FT4', score: 30 }),
+        }),
+      };
+      const { result } = renderHook(() => useDashboardCards(data));
+      const ft4Card = result.current.find((c) => c.id === 'band-activity-20m-FT4');
+      expect(ft4Card?.hotness).toBe('neutral');
+    });
+
+    it('should assign cool hotness for FT4 card with very low score', () => {
+      const data: DashboardData = {
+        spots: createMockBandActivityResponse({
+          '20m-FT4': createMockBandActivity({ band: '20m', mode: 'FT4', score: 10 }),
+        }),
+      };
+      const { result } = renderHook(() => useDashboardCards(data));
+      const ft4Card = result.current.find((c) => c.id === 'band-activity-20m-FT4');
+      expect(ft4Card?.hotness).toBe('cool');
+    });
+
+    it('should assign correct hotness for FT2 card with high score', () => {
+      const data: DashboardData = {
+        spots: createMockBandActivityResponse({
+          '20m-FT2': createMockBandActivity({ band: '20m', mode: 'FT2', score: 75 }),
+        }),
+      };
+      const { result } = renderHook(() => useDashboardCards(data));
+      const ft2Card = result.current.find((c) => c.id === 'band-activity-20m-FT2');
+      expect(ft2Card?.hotness).toBe('hot');
+    });
+
+    it('should assign warm hotness for FT2 card with medium score', () => {
+      const data: DashboardData = {
+        spots: createMockBandActivityResponse({
+          '20m-FT2': createMockBandActivity({ band: '20m', mode: 'FT2', score: 50 }),
+        }),
+      };
+      const { result } = renderHook(() => useDashboardCards(data));
+      const ft2Card = result.current.find((c) => c.id === 'band-activity-20m-FT2');
+      expect(ft2Card?.hotness).toBe('warm');
+    });
+
+    it('should assign neutral hotness for FT2 card with low score', () => {
+      const data: DashboardData = {
+        spots: createMockBandActivityResponse({
+          '20m-FT2': createMockBandActivity({ band: '20m', mode: 'FT2', score: 25 }),
+        }),
+      };
+      const { result } = renderHook(() => useDashboardCards(data));
+      const ft2Card = result.current.find((c) => c.id === 'band-activity-20m-FT2');
+      expect(ft2Card?.hotness).toBe('neutral');
+    });
+
+    it('should assign cool hotness for FT2 card with very low score', () => {
+      const data: DashboardData = {
+        spots: createMockBandActivityResponse({
+          '20m-FT2': createMockBandActivity({ band: '20m', mode: 'FT2', score: 5 }),
+        }),
+      };
+      const { result } = renderHook(() => useDashboardCards(data));
+      const ft2Card = result.current.find((c) => c.id === 'band-activity-20m-FT2');
+      expect(ft2Card?.hotness).toBe('cool');
+    });
+  });
+
+  // ===========================================
+  // T024 / FR-011: Interleaved Sort Order
+  // ===========================================
+
+  describe('interleaved sort order (FR-011, T024)', () => {
+    it('should produce FT8, FT4, and FT2 cards that interleave by score when sorted', () => {
+      const data: DashboardData = {
+        spots: createMockBandActivityResponse({
+          '20m-FT8': createMockBandActivity({ band: '20m', mode: 'FT8', score: 90 }),
+          '20m-FT4': createMockBandActivity({ band: '20m', mode: 'FT4', score: 70 }),
+          '40m-FT8': createMockBandActivity({ band: '40m', mode: 'FT8', score: 60 }),
+          '20m-FT2': createMockBandActivity({ band: '20m', mode: 'FT2', score: 80 }),
+          '40m-FT4': createMockBandActivity({ band: '40m', mode: 'FT4', score: 50 }),
+          '40m-FT2': createMockBandActivity({ band: '40m', mode: 'FT2', score: 40 }),
+        }),
+      };
+
+      const { result } = renderHook(() => useDashboardCards(data));
+
+      const bandCards = result.current.filter((c) => c.type === 'band-mode-activity');
+
+      // All 6 cards should be created (3 modes x 2 bands)
+      expect(bandCards.length).toBe(6);
+
+      // All three modes should be represented
+      const modes = new Set(
+        bandCards.map((c) => {
+          const parts = c.id.replace('band-activity-', '').split('-');
+          return parts[1];
+        }),
+      );
+      expect(modes).toEqual(new Set(['FT8', 'FT4', 'FT2']));
+
+      // When sorted by priority (descending), modes should be interleaved, not grouped
+      const sorted = [...bandCards].sort((a, b) => b.priority - a.priority);
+      const sortedModes = sorted.map((c) => {
+        const parts = c.id.replace('band-activity-', '').split('-');
+        return parts[1];
+      });
+
+      // Expected order by score: FT8(90), FT2(80), FT4(70), FT8(60), FT4(50), FT2(40)
+      // Verify the sorted modes are NOT all-FT8-first-then-FT4-then-FT2
+      // i.e., cards are interleaved by score across modes
+      const firstThreeModes = new Set(sortedModes.slice(0, 3));
+      expect(firstThreeModes.size).toBeGreaterThanOrEqual(2);
+    });
+  });
+
+  // ===========================================
+  // SC-006: Accessibility for FT4 and FT2 Cards
+  // ===========================================
+
+  describe('accessibility (SC-006)', () => {
+    it('should pass axe accessibility checks for FT4 card', async () => {
+      const data: DashboardData = {
+        spots: createMockBandActivityResponse({
+          '20m-FT4': createMockBandActivity({ band: '20m', mode: 'FT4', spotCount: 50, trendPercentage: 10 }),
+        }),
+      };
+
+      const cards = getRegisteredCards();
+      const bandActivityCard = cards.find((c) => c.canRender(data));
+
+      if (bandActivityCard) {
+        const configs = asConfigArray(bandActivityCard.createConfig(data));
+        const ft4Config = configs.find((c) => c.id === 'band-activity-20m-FT4');
+
+        if (ft4Config) {
+          const element = bandActivityCard.render(data, ft4Config);
+          const { container } = render(element);
+          const results = await axe(container);
+          expect(results).toHaveNoViolations();
+        }
+      }
+    });
+
+    it('should pass axe accessibility checks for FT2 card', async () => {
+      const data: DashboardData = {
+        spots: createMockBandActivityResponse({
+          '20m-FT2': createMockBandActivity({ band: '20m', mode: 'FT2', spotCount: 30, trendPercentage: -5 }),
+        }),
+      };
+
+      const cards = getRegisteredCards();
+      const bandActivityCard = cards.find((c) => c.canRender(data));
+
+      if (bandActivityCard) {
+        const configs = asConfigArray(bandActivityCard.createConfig(data));
+        const ft2Config = configs.find((c) => c.id === 'band-activity-20m-FT2');
+
+        if (ft2Config) {
+          const element = bandActivityCard.render(data, ft2Config);
+          const { container } = render(element);
+          const results = await axe(container);
+          expect(results).toHaveNoViolations();
+        }
+      }
     });
   });
 });

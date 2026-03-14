@@ -14,7 +14,7 @@
  * Operating modes for amateur radio communications.
  * Matches backend Mode enum when it exists.
  */
-export type Mode = 'FT8' | 'FT4' | 'CW' | 'SSB' | 'RTTY' | 'PSK31' | 'JS8';
+export type Mode = 'FT8' | 'FT4' | 'FT2' | 'CW' | 'SSB' | 'RTTY' | 'PSK31' | 'JS8';
 
 /**
  * Configuration for a radio operating mode.
@@ -38,7 +38,8 @@ export interface ModeConfig {
 const MODE_REGISTRY: ModeConfig[] = [
   { mode: 'FT8', isSupported: true },
   { mode: 'CW', isSupported: true },
-  { mode: 'FT4', isSupported: false },
+  { mode: 'FT4', isSupported: true },
+  { mode: 'FT2', isSupported: true },
   { mode: 'SSB', isSupported: false },
   { mode: 'RTTY', isSupported: false },
   { mode: 'PSK31', isSupported: false },

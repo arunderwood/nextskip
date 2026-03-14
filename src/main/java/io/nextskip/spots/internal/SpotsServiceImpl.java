@@ -120,9 +120,12 @@ public class SpotsServiceImpl implements SpotsService {
     }
 
     @Override
-    public Optional<BandActivity> getBandActivity(String band) {
+    public List<BandActivity> getBandActivity(String band) {
         LOG.debug("Fetching activity for band: {}", band);
-        return Optional.ofNullable(getCurrentActivity().get(band));
+        return getCurrentActivity().entrySet().stream()
+                .filter(entry -> entry.getValue().band().equals(band))
+                .map(Map.Entry::getValue)
+                .toList();
     }
 
     @Override

@@ -685,6 +685,131 @@ class BandActivityTest {
     }
 
     // =========================================================================
+    // Rarity Multiplier Scoring Tests (T019)
+    // =========================================================================
+
+    @Nested
+    class RarityMultiplierScoringTests {
+
+        @Test
+        void testGetScore_FT4RarityMultiplier_BoostsActivityScore() {
+            // Same conditions, FT4 (1.5x) vs FT8 (1.0x)
+            Set<ContinentPath> paths = Set.of(ContinentPath.NA_EU);
+            BandActivity ft8 = createBandActivityWithMultiplier(50, 0.0, 5000, paths, 1.0);
+            BandActivity ft4 = createBandActivityWithMultiplier(50, 0.0, 5000, paths, 1.5);
+
+            assertThat(ft4.getScore())
+                    .as("FT4 (1.5x) should score higher than FT8 (1.0x) with same conditions")
+                    .isGreaterThan(ft8.getScore());
+        }
+
+        @Test
+        void testGetScore_FT2RarityMultiplier_BoostsActivityScore() {
+            // Same conditions, FT2 (3.0x) vs FT8 (1.0x)
+            Set<ContinentPath> paths = Set.of(ContinentPath.NA_EU);
+            BandActivity ft8 = createBandActivityWithMultiplier(50, 0.0, 5000, paths, 1.0);
+            BandActivity ft2 = createBandActivityWithMultiplier(50, 0.0, 5000, paths, 3.0);
+
+            assertThat(ft2.getScore())
+                    .as("FT2 (3.0x) should score higher than FT8 (1.0x) with same conditions")
+                    .isGreaterThan(ft8.getScore());
+        }
+
+        @Test
+        void testGetScore_FT2BoostsMoreThanFT4() {
+            Set<ContinentPath> paths = Set.of(ContinentPath.NA_EU);
+            BandActivity ft4 = createBandActivityWithMultiplier(50, 0.0, 5000, paths, 1.5);
+            BandActivity ft2 = createBandActivityWithMultiplier(50, 0.0, 5000, paths, 3.0);
+
+            assertThat(ft2.getScore())
+                    .as("FT2 (3.0x) should score higher than FT4 (1.5x)")
+                    .isGreaterThan(ft4.getScore());
+        }
+
+        @Test
+        void testGetScore_BoostedActivityCappedAt100() {
+            // High activity (100+ spots = 100 activity score) with 3.0x multiplier
+            // boostedActivity = min(100, 100 * 3.0) = 100 (capped)
+            Set<ContinentPath> paths = Set.of(ContinentPath.NA_EU, ContinentPath.NA_AS,
+                    ContinentPath.EU_AS, ContinentPath.NA_OC);
+            BandActivity ft2High = createBandActivityWithMultiplier(200, 60.0, 12000, paths, 3.0);
+
+            assertThat(ft2High.getScore())
+                    .as("Score should be capped at 100 even with high rarity multiplier")
+                    .isLessThanOrEqualTo(MAX_SCORE);
+        }
+
+        @Test
+        void testGetScore_LowQualityRareModeCannotOutrankHighQualityFT8() {
+            // FR-007 safety check: A low-quality FT4/FT2 card should NOT outrank
+            // a high-quality FT8 card
+            Set<ContinentPath> manyPaths = Set.of(ContinentPath.NA_EU, ContinentPath.NA_AS,
+                    ContinentPath.EU_AS, ContinentPath.NA_OC);
+
+            // High-quality FT8: 150 spots, strong trend, excellent DX, many paths
+            BandActivity highQualityFt8 = createBandActivityWithMultiplier(
+                    150, 60.0, 12000, manyPaths, 1.0);
+
+            // Low-quality FT2: 5 spots, negative trend, no DX, no paths (but 3.0x multiplier)
+            BandActivity lowQualityFt2 = createBandActivityWithMultiplier(
+                    5, -50.0, null, Set.of(), 3.0);
+
+            assertThat(highQualityFt8.getScore())
+                    .as("High-quality FT8 should always outrank low-quality FT2")
+                    .isGreaterThan(lowQualityFt2.getScore());
+        }
+
+        @Test
+        void testGetScore_DefaultMultiplier_NoBoost() {
+            // Using the convenience constructor (no multiplier param) should default to 1.0
+            Set<ContinentPath> paths = Set.of(ContinentPath.NA_EU);
+            BandActivity defaultMultiplier = createBandActivity(50, 0.0, 5000, paths);
+            BandActivity explicitOneX = createBandActivityWithMultiplier(50, 0.0, 5000, paths, 1.0);
+
+            assertThat(defaultMultiplier.getScore())
+                    .as("Default multiplier (1.0) should score same as explicit 1.0x")
+                    .isEqualTo(explicitOneX.getScore());
+        }
+
+        @Test
+        void testGetScore_ScoreWithinBounds_AllMultipliers() {
+            // Verify score stays in [0, 100] for various multipliers
+            double[] multipliers = {0.5, 1.0, 1.5, 2.0, 3.0, 5.0, 10.0};
+            int[] spotCounts = {0, 10, 50, 100, 500};
+
+            for (double multiplier : multipliers) {
+                for (int spots : spotCounts) {
+                    BandActivity activity = createBandActivityWithMultiplier(
+                            spots, 25.0, 5000, Set.of(ContinentPath.NA_EU), multiplier);
+
+                    assertThat(activity.getScore())
+                            .as("Score should be in [%d, %d] for multiplier=%.1f, spots=%d",
+                                    MIN_SCORE, MAX_SCORE, multiplier, spots)
+                            .isBetween(MIN_SCORE, MAX_SCORE);
+                }
+            }
+        }
+
+        @Test
+        void testRarityMultiplier_ZeroOrNegative_DefaultsToOne() {
+            // Compact constructor should enforce rarityMultiplier > 0
+            BandActivity zeroMultiplier = new BandActivity(
+                    "20m", "FT8", 50, 50, 0.0, null, null,
+                    Set.of(), WINDOW_START, NOW, NOW, 0.0);
+            BandActivity negativeMultiplier = new BandActivity(
+                    "20m", "FT8", 50, 50, 0.0, null, null,
+                    Set.of(), WINDOW_START, NOW, NOW, -1.0);
+
+            assertThat(zeroMultiplier.rarityMultiplier())
+                    .as("Zero multiplier should default to 1.0")
+                    .isEqualTo(1.0);
+            assertThat(negativeMultiplier.rarityMultiplier())
+                    .as("Negative multiplier should default to 1.0")
+                    .isEqualTo(1.0);
+        }
+    }
+
+    // =========================================================================
     // Helper Methods
     // =========================================================================
 
@@ -744,6 +869,19 @@ class BandActivityTest {
                 band, "FT8", 50, 50, 0.0, maxDxKm,
                 maxDxKm != null && maxDxKm > 0 ? "W1AW → G3ABC" : null,
                 Set.of(), WINDOW_START, NOW, NOW
+        );
+    }
+
+    /**
+     * Create BandActivity with a specific rarity multiplier (for testing rarity scoring).
+     */
+    private BandActivity createBandActivityWithMultiplier(int spotCount, double trend,
+                                                          Integer maxDxKm, Set<ContinentPath> paths,
+                                                          double rarityMultiplier) {
+        return new BandActivity(
+                "20m", "FT8", spotCount, 50, trend, maxDxKm,
+                maxDxKm != null && maxDxKm > 0 ? "W1AW → G3ABC" : null,
+                paths, WINDOW_START, NOW, NOW, rarityMultiplier
         );
     }
 }

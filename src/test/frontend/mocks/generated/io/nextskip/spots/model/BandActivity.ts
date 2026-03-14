@@ -5,14 +5,19 @@
 interface BandActivity {
   band?: string;
   mode?: string;
-  spotCount?: number;
-  baselineSpotCount?: number;
-  trendPercentage?: number;
+  spotCount: number;
+  baselineSpotCount: number;
+  trendPercentage: number;
   maxDxKm?: number;
   maxDxPath?: string;
-  activePaths?: string[];
-  score?: number;
-  windowMinutes?: number;
+  activePaths?: Array<string | undefined>;
+  windowStart?: string;
+  windowEnd?: string;
+  calculatedAt?: string;
+  rarityMultiplier: number;
+  score: number;
+  favorable: boolean;
+  windowMinutes: number;
 }
 
 export default BandActivity;

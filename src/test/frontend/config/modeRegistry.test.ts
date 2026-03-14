@@ -32,7 +32,7 @@ describe('modeRegistry', () => {
       const ft4Config = getModeConfig('FT4');
       expect(ft4Config).toBeDefined();
       expect(ft4Config?.mode).toBe('FT4');
-      expect(ft4Config?.isSupported).toBe(false);
+      expect(ft4Config?.isSupported).toBe(true);
     });
 
     it('should return undefined for unknown mode', () => {
@@ -65,11 +65,18 @@ describe('modeRegistry', () => {
       expect(modes).toContain('CW');
     });
 
-    it('should not include SSB or FT4', () => {
+    it('should include FT4 and FT2', () => {
+      const supported = getSupportedModes();
+      const modes = supported.map((m) => m.mode);
+      expect(modes).toContain('FT4');
+      expect(modes).toContain('FT2');
+    });
+
+    it('should not include unsupported modes', () => {
       const supported = getSupportedModes();
       const modes = supported.map((m) => m.mode);
       expect(modes).not.toContain('SSB');
-      expect(modes).not.toContain('FT4');
+      expect(modes).not.toContain('RTTY');
     });
   });
 
@@ -115,11 +122,13 @@ describe('modeRegistry', () => {
     it('should return true for supported modes', () => {
       expect(isModeSupported('FT8')).toBe(true);
       expect(isModeSupported('CW')).toBe(true);
+      expect(isModeSupported('FT4')).toBe(true);
+      expect(isModeSupported('FT2')).toBe(true);
     });
 
     it('should return false for unsupported modes', () => {
       expect(isModeSupported('SSB')).toBe(false);
-      expect(isModeSupported('FT4')).toBe(false);
+      expect(isModeSupported('RTTY')).toBe(false);
     });
 
     it('should return false for unknown modes', () => {

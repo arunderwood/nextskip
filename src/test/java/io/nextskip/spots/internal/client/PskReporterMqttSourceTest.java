@@ -1,5 +1,6 @@
 package io.nextskip.spots.internal.client;
 
+import io.nextskip.spots.internal.MqttProperties;
 import org.eclipse.paho.mqttv5.client.MqttClient;
 import org.eclipse.paho.mqttv5.client.MqttDisconnectResponse;
 import org.eclipse.paho.mqttv5.common.MqttException;
@@ -12,8 +13,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -40,7 +40,10 @@ class PskReporterMqttSourceTest {
 
     @BeforeEach
     void setUp() {
-        source = new PskReporterMqttSource(BROKER_URL, TOPICS);
+        MqttProperties mqttProperties = new MqttProperties();
+        mqttProperties.setBroker(BROKER_URL);
+        mqttProperties.setTopics(TOPICS);
+        source = new PskReporterMqttSource(mqttProperties);
     }
 
     // ===========================================
@@ -87,9 +90,10 @@ class PskReporterMqttSourceTest {
         // When: connectComplete is called with reconnect=true
         source.connectComplete(true, BROKER_URL);
 
-        // Then: all topics should be subscribed
-        verify(mockClient).subscribe("test/topic1", 0);
-        verify(mockClient).subscribe("test/topic2", 0);
+        // Then: all topics should be subscribed in a single batch call
+        String[] expectedTopics = {"test/topic1", "test/topic2"};
+        int[] expectedQos = {0, 0};
+        verify(mockClient).subscribe(expectedTopics, expectedQos);
     }
 
     @Test
@@ -100,9 +104,10 @@ class PskReporterMqttSourceTest {
         // When: connectComplete is called with reconnect=false
         source.connectComplete(false, BROKER_URL);
 
-        // Then: all topics should be subscribed
-        verify(mockClient).subscribe("test/topic1", 0);
-        verify(mockClient).subscribe("test/topic2", 0);
+        // Then: all topics should be subscribed in a single batch call
+        String[] expectedTopics = {"test/topic1", "test/topic2"};
+        int[] expectedQos = {0, 0};
+        verify(mockClient).subscribe(expectedTopics, expectedQos);
     }
 
     @Test
@@ -110,7 +115,7 @@ class PskReporterMqttSourceTest {
         // Given: a client that fails to subscribe
         injectMockClient();
         doThrow(new MqttException(MqttException.REASON_CODE_CLIENT_EXCEPTION))
-                .when(mockClient).subscribe(anyString(), anyInt());
+                .when(mockClient).subscribe(any(String[].class), any(int[].class));
 
         // When: connectComplete is called
         source.connectComplete(true, BROKER_URL);
@@ -124,7 +129,7 @@ class PskReporterMqttSourceTest {
         // Given: a client that fails to subscribe AND fails to disconnect
         injectMockClient();
         doThrow(new MqttException(MqttException.REASON_CODE_CLIENT_EXCEPTION))
-                .when(mockClient).subscribe(anyString(), anyInt());
+                .when(mockClient).subscribe(any(String[].class), any(int[].class));
         doThrow(new MqttException(MqttException.REASON_CODE_CLIENT_EXCEPTION))
                 .when(mockClient).disconnect();
 

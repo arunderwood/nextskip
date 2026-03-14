@@ -10,6 +10,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -50,7 +51,7 @@ class SpotsEndpointTest {
         void testGetBandActivity_ReturnsBandActivityResponse() {
             // Given
             BandActivityResponse expected = new BandActivityResponse(
-                    Map.of(BAND_20M, createBandActivity()),
+                    Map.of("20m_FT8", createBandActivity()),
                     NOW,
                     true
             );
@@ -81,6 +82,33 @@ class SpotsEndpointTest {
             assertThat(result.bandActivities()).isEmpty();
             assertThat(result.mqttConnected()).isFalse();
         }
+
+        @Test
+        void testGetBandActivity_CompositeKeys_ReturnsMultipleModes() {
+            // Given
+            BandActivity ft8 = createBandActivity();
+            BandActivity ft4 = new BandActivity(
+                    BAND_20M, "FT4", 25, 20, 25.0, 8000,
+                    "VK1ABC → W6XYZ",
+                    Set.of(ContinentPath.NA_OC),
+                    NOW.minusSeconds(900), NOW, NOW
+            );
+            BandActivityResponse expected = new BandActivityResponse(
+                    Map.of("20m_FT8", ft8, "20m_FT4", ft4),
+                    NOW,
+                    true
+            );
+            when(spotsService.getBandActivityResponse()).thenReturn(expected);
+
+            // When
+            BandActivityResponse result = endpoint.getBandActivity();
+
+            // Then
+            assertThat(result.bandActivities()).hasSize(2);
+            assertThat(result.bandActivities().keySet())
+                    .allMatch(key -> key.contains("_"));
+            assertThat(result.bandActivities()).containsKeys("20m_FT8", "20m_FT4");
+        }
     }
 
     // =========================================================================
@@ -94,26 +122,47 @@ class SpotsEndpointTest {
         void testGetBandActivityForBand_ExistingBand_ReturnsActivity() {
             // Given
             BandActivity expected = createBandActivity();
-            when(spotsService.getBandActivity(BAND_20M)).thenReturn(Optional.of(expected));
+            when(spotsService.getBandActivity(BAND_20M)).thenReturn(List.of(expected));
 
             // When
-            BandActivity result = endpoint.getBandActivityForBand(BAND_20M);
+            List<BandActivity> result = endpoint.getBandActivityForBand(BAND_20M);
 
             // Then
-            assertThat(result).isEqualTo(expected);
+            assertThat(result).containsExactly(expected);
             verify(spotsService).getBandActivity(BAND_20M);
         }
 
         @Test
-        void testGetBandActivityForBand_NonExistentBand_ReturnsNull() {
+        void testGetBandActivityForBand_NonExistentBand_ReturnsEmptyList() {
             // Given
-            when(spotsService.getBandActivity("160m")).thenReturn(Optional.empty());
+            when(spotsService.getBandActivity("160m")).thenReturn(List.of());
 
             // When
-            BandActivity result = endpoint.getBandActivityForBand("160m");
+            List<BandActivity> result = endpoint.getBandActivityForBand("160m");
 
             // Then
-            assertThat(result).isNull();
+            assertThat(result).isEmpty();
+        }
+
+        @Test
+        void testGetBandActivityForBand_MultipleModes_ReturnsAll() {
+            // Given
+            BandActivity ft8 = createBandActivity();
+            BandActivity ft4 = new BandActivity(
+                    BAND_20M, "FT4", 25, 20, 25.0, 8000,
+                    "VK1ABC → W6XYZ",
+                    Set.of(ContinentPath.NA_OC),
+                    NOW.minusSeconds(900), NOW, NOW
+            );
+            when(spotsService.getBandActivity(BAND_20M)).thenReturn(List.of(ft8, ft4));
+
+            // When
+            List<BandActivity> result = endpoint.getBandActivityForBand(BAND_20M);
+
+            // Then
+            assertThat(result).hasSize(2);
+            assertThat(result).extracting(BandActivity::mode)
+                    .containsExactlyInAnyOrder("FT8", "FT4");
         }
     }
 
