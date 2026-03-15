@@ -75,8 +75,12 @@ public class BandActivityRefreshService extends AbstractRefreshService {
                 .mapToInt(BandActivity::spotCount)
                 .sum();
 
-        // Store for createCacheRefreshEvent() to use after commit
-        this.lastAggregation = activities;
+        // Put directly into cache. Unlike other refresh services that persist to DB
+        // and rely on @TransactionalEventListener(AFTER_COMMIT) to refresh the cache,
+        // this service only aggregates in-memory — there are no DB writes to commit.
+        // The AFTER_COMMIT listener may not fire for read-only transactions, so we
+        // populate the cache here to ensure user requests never block on the loader.
+        bandActivityCache.put(CacheConfig.CACHE_KEY, activities);
 
         // Publish change event for inter-module notification
         eventPublisher.publishEvent(new BandActivityChangedEvent(activities));
@@ -84,10 +88,8 @@ public class BandActivityRefreshService extends AbstractRefreshService {
 
     @Override
     protected CacheRefreshEvent createCacheRefreshEvent() {
-        // Put the already-computed result into cache instead of re-aggregating
-        Map<String, BandActivity> activities = this.lastAggregation;
-        return new CacheRefreshEvent("bandActivity",
-                () -> bandActivityCache.put(CacheConfig.CACHE_KEY, activities));
+        // Cache is already populated in doRefresh() — no action needed after commit.
+        return new CacheRefreshEvent("bandActivity", () -> { });
     }
 
     @Override
