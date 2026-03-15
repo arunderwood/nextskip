@@ -19,7 +19,10 @@ import java.time.Instant;
 import java.util.Map;
 import java.util.Set;
 
+import io.nextskip.common.scheduler.CacheRefreshEvent;
+
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -32,6 +35,9 @@ import static org.mockito.Mockito.when;
 class BandActivityRefreshServiceTest {
 
     private static final Instant NOW = Instant.parse("2025-01-15T12:00:00Z");
+    private static final String BAND_20M = "20m";
+    private static final String BAND_40M = "40m";
+    private static final String BAND_15M = "15m";
 
     @Mock
     private BandActivityAggregator aggregator;
@@ -44,6 +50,9 @@ class BandActivityRefreshServiceTest {
 
     @Captor
     private ArgumentCaptor<BandActivityChangedEvent> eventCaptor;
+
+    @Captor
+    private ArgumentCaptor<CacheRefreshEvent> cacheEventCaptor;
 
     private BandActivityRefreshService refreshService;
 
@@ -84,8 +93,8 @@ class BandActivityRefreshServiceTest {
         void testRefresh_AggregatesAndPublishesEvent() {
             // Given
             Map<String, BandActivity> activities = Map.of(
-                    "20m", createBandActivity("20m", 100),
-                    "40m", createBandActivity("40m", 50)
+                    BAND_20M, createBandActivity(BAND_20M, 100),
+                    BAND_40M, createBandActivity(BAND_40M, 50)
             );
             when(aggregator.aggregateAllBands()).thenReturn(activities);
 
@@ -98,7 +107,28 @@ class BandActivityRefreshServiceTest {
 
             BandActivityChangedEvent event = eventCaptor.getValue();
             assertThat(event.bandActivities()).hasSize(2);
-            assertThat(event.bandActivities()).containsKeys("20m", "40m");
+            assertThat(event.bandActivities()).containsKeys(BAND_20M, BAND_40M);
+        }
+
+        @Test
+        void testRefresh_CacheRefreshEvent_PopulatesCacheWithAggregatedResult() {
+            // Given
+            Map<String, BandActivity> activities = Map.of(
+                    BAND_20M, createBandActivity(BAND_20M, 100)
+            );
+            when(aggregator.aggregateAllBands()).thenReturn(activities);
+
+            // When
+            refreshService.executeRefresh();
+
+            // Then: CacheRefreshEvent runnable puts the result into cache
+            verify(eventPublisher).publishEvent(cacheEventCaptor.capture());
+            CacheRefreshEvent cacheEvent = cacheEventCaptor.getValue();
+            assertThat(cacheEvent.cacheName()).isEqualTo("bandActivity");
+
+            // Simulate post-commit: run the refresh action
+            cacheEvent.refreshAction().run();
+            verify(bandActivityCache).put(eq("all"), eq(activities));
         }
 
         @Test
@@ -120,7 +150,7 @@ class BandActivityRefreshServiceTest {
         void testRefresh_SingleBand_PublishesEvent() {
             // Given
             Map<String, BandActivity> activities = Map.of(
-                    "15m", createBandActivity("15m", 200)
+                    BAND_15M, createBandActivity(BAND_15M, 200)
             );
             when(aggregator.aggregateAllBands()).thenReturn(activities);
 
@@ -132,7 +162,7 @@ class BandActivityRefreshServiceTest {
 
             BandActivityChangedEvent event = eventCaptor.getValue();
             assertThat(event.bandActivities()).hasSize(1);
-            assertThat(event.bandActivities().get("15m").spotCount()).isEqualTo(200);
+            assertThat(event.bandActivities().get(BAND_15M).spotCount()).isEqualTo(200);
         }
     }
 
