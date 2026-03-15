@@ -17,17 +17,18 @@ Disable agent: `OTEL_JAVAAGENT_ENABLED=false`
 
 Agent version: `gradle/libs.versions.toml` → `grafana-otel-agent`
 
-### Custom Method Tracing
+### Agent Configuration File
 
-The agent can create spans for application methods without code changes via [`otel.instrumentation.methods.include`](https://opentelemetry.io/docs/zero-code/java/agent/instrumentation/external-annotations/#creating-spans-around-methods-with-otelinstrumentationmethodsinclude):
+Non-secret agent config lives in `config/otel-agent.properties`, loaded via `-Dotel.javaagent.configuration-file` in the Dockerfile. Secrets (endpoints, auth) remain as Render env vars and override the file.
 
-```
-OTEL_INSTRUMENTATION_METHODS_INCLUDE=io.nextskip.spots.internal.SpotsServiceImpl[getCurrentActivity];io.nextskip.spots.internal.aggregation.BandActivityAggregator[aggregateAllBands,aggregateBandMode];io.nextskip.spots.internal.scheduler.BandActivityRefreshService[doRefresh]
-```
+Includes:
+- Export protocol and sampling config
+- Micrometer integration
+- Health endpoint exclusion from tracing
+- [Custom method spans](https://opentelemetry.io/docs/zero-code/java/agent/instrumentation/external-annotations/#creating-spans-around-methods-with-otelinstrumentationmethodsinclude) for the band activity pipeline
+- Pyroscope profiling config
 
-This creates trace spans for the band activity pipeline (cache get → aggregation → per-band queries), visible in Grafana Tempo correlated with frontend Faro traces. Add/remove methods as needed — no redeploy required if using Render env vars.
-
-Exclude noisy endpoints: `OTEL_INSTRUMENTATION_SPRING_WEBMVC_EXCLUDED_PATHS=/health`
+To trace additional methods, edit `config/otel-agent.properties` — no code changes or new dependencies needed.
 
 ## Continuous Profiling (Pyroscope)
 
