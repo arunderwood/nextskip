@@ -461,3 +461,16 @@ This repository includes specialized agents and commands in `.claude/`:
 2. Use design tokens from `src/main/frontend/styles/global.css`
 3. Write tests in `src/test/frontend/` directory
 4. Ensure WCAG 2.1 AA compliance with jest-axe
+
+<!-- speckit-managed sections below — updated automatically by update-agent-context.sh -->
+
+## Active Technologies
+
+- Java 25 (see `.tool-versions`) + Spring Boot, Vaadin Hilla 25.0, Resilience4j, Caffeine, React 19 + TypeScript (002-ft4-ft2-modes)
+
+## Recent Changes
+
+- 002-ft4-ft2-modes: Added Java 25 (see `.tool-versions`) + Spring Boot, Vaadin Hilla 25.0, Resilience4j, Caffeine, React 19 + TypeScript
+
+<!-- MANUAL ADDITIONS START -->
+<!-- MANUAL ADDITIONS END -->

@@ -10,7 +10,7 @@ Add FT4 and FT2 digital mode support to the spots module so operators can see re
 ## Technical Context
 
 **Language/Version**: Java 25 (see `.tool-versions`)
-**Primary Dependencies**: Spring Boot, Vaadin Hilla 24.9, Resilience4j, Caffeine, React 19 + TypeScript
+**Primary Dependencies**: Spring Boot, Vaadin Hilla 25.0, Resilience4j, Caffeine, React 19 + TypeScript
 **Storage**: PostgreSQL (spots table with indices on band+spotted_at, mode+spotted_at)
 **Testing**: JUnit 5, WireMock, Vitest, React Testing Library, Playwright
 **Target Platform**: Web application (server-side JVM + browser frontend)

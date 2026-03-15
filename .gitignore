@@ -104,3 +104,6 @@ logs/
 
 # PIT mutation testing history (for incremental analysis)
 .pitest-history
+
+# Speckit auto-generated root agent files (real config is in .claude/CLAUDE.md)
+/CLAUDE.md
