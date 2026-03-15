@@ -27,6 +27,7 @@ import java.time.Instant;
 @Table(name = "spots", indexes = {
         @Index(name = "idx_spots_band_time", columnList = "band, spotted_at DESC"),
         @Index(name = "idx_spots_mode_time", columnList = "mode, spotted_at DESC"),
+        @Index(name = "idx_spots_band_mode_time", columnList = "band, mode, spotted_at DESC"),
         @Index(name = "idx_spots_distance", columnList = "band, distance_km DESC"),
         @Index(name = "idx_spots_created_at", columnList = "created_at")
 })

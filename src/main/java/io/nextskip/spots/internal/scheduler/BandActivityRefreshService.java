@@ -46,6 +46,9 @@ public class BandActivityRefreshService extends AbstractRefreshService {
     private int bandsProcessed;
     private int totalSpots;
 
+    // Holds aggregation result from doRefresh() for use by createCacheRefreshEvent()
+    private Map<String, BandActivity> lastAggregation;
+
     public BandActivityRefreshService(
             ApplicationEventPublisher eventPublisher,
             BandActivityAggregator aggregator,
@@ -72,14 +75,19 @@ public class BandActivityRefreshService extends AbstractRefreshService {
                 .mapToInt(BandActivity::spotCount)
                 .sum();
 
+        // Store for createCacheRefreshEvent() to use after commit
+        this.lastAggregation = activities;
+
         // Publish change event for inter-module notification
         eventPublisher.publishEvent(new BandActivityChangedEvent(activities));
     }
 
     @Override
     protected CacheRefreshEvent createCacheRefreshEvent() {
+        // Put the already-computed result into cache instead of re-aggregating
+        Map<String, BandActivity> activities = this.lastAggregation;
         return new CacheRefreshEvent("bandActivity",
-                () -> bandActivityCache.refresh(CacheConfig.CACHE_KEY));
+                () -> bandActivityCache.put(CacheConfig.CACHE_KEY, activities));
     }
 
     @Override
