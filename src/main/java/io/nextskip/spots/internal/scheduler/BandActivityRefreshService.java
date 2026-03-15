@@ -81,6 +81,7 @@ public class BandActivityRefreshService extends AbstractRefreshService {
         // The AFTER_COMMIT listener may not fire for read-only transactions, so we
         // populate the cache here to ensure user requests never block on the loader.
         bandActivityCache.put(CacheConfig.CACHE_KEY, activities);
+        LOG.info("Populated bandActivityCache with {} entries", activities.size());
 
         // Publish change event for inter-module notification
         eventPublisher.publishEvent(new BandActivityChangedEvent(activities));

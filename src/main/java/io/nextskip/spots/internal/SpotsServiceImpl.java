@@ -110,12 +110,19 @@ public class SpotsServiceImpl implements SpotsService {
 
     @Override
     public Map<String, BandActivity> getCurrentActivity() {
-        LOG.debug("Fetching current band activity from cache");
         if (bandActivityCache == null) {
             LOG.warn("Band activity cache not available - aggregation feature disabled");
             return Map.of();
         }
+        long start = System.nanoTime();
         Map<String, BandActivity> activity = bandActivityCache.get(CacheConfig.CACHE_KEY);
+        long elapsedMs = (System.nanoTime() - start) / 1_000_000;
+        if (elapsedMs > 100) {
+            LOG.warn("bandActivityCache.get() took {}ms — likely triggered synchronous cache load", elapsedMs);
+        } else {
+            LOG.debug("bandActivityCache.get() returned {} entries in {}ms",
+                    activity != null ? activity.size() : 0, elapsedMs);
+        }
         return activity != null ? activity : Map.of();
     }
 
