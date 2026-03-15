@@ -40,8 +40,10 @@ import java.util.Optional;
  * {@code cache.refresh("all")} after writing to the database, ensuring
  * requests are always served from cache without blocking.
  *
- * <p>Cache TTLs serve as safety nets - normal cache updates happen via
- * scheduler-triggered refresh, not expiration.
+ * <p>Caches use {@code refreshAfterWrite} to serve stale data immediately
+ * while asynchronously refreshing in the background. This prevents any user
+ * request from blocking on a cache reload. A hard {@code expireAfterWrite}
+ * at 2x the refresh interval evicts truly abandoned entries.
  *
  * <p>Data flow:
  * <pre>
@@ -61,13 +63,22 @@ public class CacheConfig {
 
     private static final Logger LOG = LoggerFactory.getLogger(CacheConfig.class);
 
-    // Safety net TTLs - caches are refreshed by schedulers, not expiration
-    private static final Duration ACTIVATIONS_EXPIRY = Duration.ofMinutes(10);
-    private static final Duration SOLAR_INDICES_EXPIRY = Duration.ofMinutes(15);
-    private static final Duration BAND_CONDITIONS_EXPIRY = Duration.ofMinutes(45);
-    private static final Duration CONTESTS_EXPIRY = Duration.ofHours(12);
-    private static final Duration METEOR_SHOWERS_EXPIRY = Duration.ofHours(4);
-    private static final Duration BAND_ACTIVITY_EXPIRY = Duration.ofMinutes(2);
+    // Async refresh TTLs - serve stale data immediately while refreshing in background.
+    // Prevents request-path blocking when cache entries expire.
+    private static final Duration ACTIVATIONS_REFRESH = Duration.ofMinutes(10);
+    private static final Duration SOLAR_INDICES_REFRESH = Duration.ofMinutes(15);
+    private static final Duration BAND_CONDITIONS_REFRESH = Duration.ofMinutes(45);
+    private static final Duration CONTESTS_REFRESH = Duration.ofHours(12);
+    private static final Duration METEOR_SHOWERS_REFRESH = Duration.ofHours(4);
+    private static final Duration BAND_ACTIVITY_REFRESH = Duration.ofMinutes(2);
+
+    // Hard expiry safety nets at 2x refresh interval - evicts truly abandoned entries
+    private static final Duration ACTIVATIONS_EXPIRY = Duration.ofMinutes(20);
+    private static final Duration SOLAR_INDICES_EXPIRY = Duration.ofMinutes(30);
+    private static final Duration BAND_CONDITIONS_EXPIRY = Duration.ofMinutes(90);
+    private static final Duration CONTESTS_EXPIRY = Duration.ofHours(24);
+    private static final Duration METEOR_SHOWERS_EXPIRY = Duration.ofHours(8);
+    private static final Duration BAND_ACTIVITY_EXPIRY = Duration.ofMinutes(4);
 
     // Data retention periods for DB queries
     private static final Duration ACTIVATIONS_RETENTION = Duration.ofMinutes(30);
@@ -90,8 +101,10 @@ public class CacheConfig {
      */
     @Bean
     public LoadingCache<String, List<Activation>> activationsCache(ActivationRepository repository) {
-        LOG.info("Creating activations LoadingCache with {} expiry", ACTIVATIONS_EXPIRY);
+        LOG.info("Creating activations LoadingCache with {} refresh, {} expiry",
+                ACTIVATIONS_REFRESH, ACTIVATIONS_EXPIRY);
         return Caffeine.newBuilder()
+                .refreshAfterWrite(ACTIVATIONS_REFRESH)
                 .expireAfterWrite(ACTIVATIONS_EXPIRY)
                 .recordStats()
                 .build(key -> loadActivations(repository));
@@ -130,8 +143,10 @@ public class CacheConfig {
      */
     @Bean
     public LoadingCache<String, SolarIndices> solarIndicesCache(SolarIndicesRepository repository) {
-        LOG.info("Creating solarIndices LoadingCache with {} expiry", SOLAR_INDICES_EXPIRY);
+        LOG.info("Creating solarIndices LoadingCache with {} refresh, {} expiry",
+                SOLAR_INDICES_REFRESH, SOLAR_INDICES_EXPIRY);
         return Caffeine.newBuilder()
+                .refreshAfterWrite(SOLAR_INDICES_REFRESH)
                 .expireAfterWrite(SOLAR_INDICES_EXPIRY)
                 .recordStats()
                 .build(key -> {
@@ -185,8 +200,10 @@ public class CacheConfig {
      */
     @Bean
     public LoadingCache<String, List<BandCondition>> bandConditionsCache(BandConditionRepository repository) {
-        LOG.info("Creating bandConditions LoadingCache with {} expiry", BAND_CONDITIONS_EXPIRY);
+        LOG.info("Creating bandConditions LoadingCache with {} refresh, {} expiry",
+                BAND_CONDITIONS_REFRESH, BAND_CONDITIONS_EXPIRY);
         return Caffeine.newBuilder()
+                .refreshAfterWrite(BAND_CONDITIONS_REFRESH)
                 .expireAfterWrite(BAND_CONDITIONS_EXPIRY)
                 .recordStats()
                 .build(key -> loadBandConditions(repository));
@@ -218,8 +235,10 @@ public class CacheConfig {
      */
     @Bean
     public LoadingCache<String, List<Contest>> contestsCache(ContestRepository repository) {
-        LOG.info("Creating contests LoadingCache with {} expiry", CONTESTS_EXPIRY);
+        LOG.info("Creating contests LoadingCache with {} refresh, {} expiry",
+                CONTESTS_REFRESH, CONTESTS_EXPIRY);
         return Caffeine.newBuilder()
+                .refreshAfterWrite(CONTESTS_REFRESH)
                 .expireAfterWrite(CONTESTS_EXPIRY)
                 .recordStats()
                 .build(key -> loadContests(repository));
@@ -251,8 +270,10 @@ public class CacheConfig {
      */
     @Bean
     public LoadingCache<String, List<MeteorShower>> meteorShowersCache(MeteorShowerRepository repository) {
-        LOG.info("Creating meteorShowers LoadingCache with {} expiry", METEOR_SHOWERS_EXPIRY);
+        LOG.info("Creating meteorShowers LoadingCache with {} refresh, {} expiry",
+                METEOR_SHOWERS_REFRESH, METEOR_SHOWERS_EXPIRY);
         return Caffeine.newBuilder()
+                .refreshAfterWrite(METEOR_SHOWERS_REFRESH)
                 .expireAfterWrite(METEOR_SHOWERS_EXPIRY)
                 .recordStats()
                 .build(key -> loadMeteorShowers(repository));
@@ -292,8 +313,10 @@ public class CacheConfig {
     @ConditionalOnBean(BandActivityAggregator.class)
     public LoadingCache<String, Map<String, BandActivity>> bandActivityCache(
             BandActivityAggregator aggregator) {
-        LOG.info("Creating bandActivity LoadingCache with {} expiry", BAND_ACTIVITY_EXPIRY);
+        LOG.info("Creating bandActivity LoadingCache with {} refresh, {} expiry",
+                BAND_ACTIVITY_REFRESH, BAND_ACTIVITY_EXPIRY);
         return Caffeine.newBuilder()
+                .refreshAfterWrite(BAND_ACTIVITY_REFRESH)
                 .expireAfterWrite(BAND_ACTIVITY_EXPIRY)
                 .recordStats()
                 .build(key -> {

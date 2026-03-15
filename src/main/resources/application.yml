@@ -52,6 +52,7 @@ spring:
       connection-timeout: 30000
       idle-timeout: 600000
       max-lifetime: 1800000
+      keepalive-time: 120000  # Ping idle connections every 2 min to prevent stale connections
 
   # JPA Configuration
   jpa:
@@ -182,6 +183,9 @@ management:
     health:
       show-details: when-authorized
   metrics:
+    distribution:
+      slo:
+        db.client.connections.create.time: 10ms,50ms,100ms,250ms,500ms,1s,5s,10s,30s
     data:
       repository:
         autotime:
