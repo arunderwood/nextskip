@@ -209,7 +209,7 @@ Uses `@atakama/cover-diff` to compare coverage against `origin/main`.
 - Module-specific models in `model/` package
 - Isolated external dependencies
 
-**Modules**: common, propagation, activations, contests, meteors, spots
+**Modules**: common, propagation, activations, contests, meteors, spots, admin
 
 ### Package Structure
 
@@ -223,6 +223,7 @@ io.nextskip/
 │   ├── api/          # Public contracts (@BrowserCallable endpoints)
 │   ├── internal/     # Implementations (clients, services)
 │   └── model/        # Domain models
+├── admin/            # Admin panel and user info
 ├── config/           # Global configuration
 └── NextSkipApplication.java
 ```
@@ -242,7 +243,7 @@ All code should adhere to SOLID design principles:
 **Resilience Pattern**: All FeedClients use Circuit Breaker + Retry + Database Persistence
 
 - Configuration in `application.yml`
-- See `NoaaSwpcClient.java` and `HamQslSolarClient.java` for reference implementations
+- See `NoaaSwpcClient.java` and `HamQslClient.java` for reference implementations
 - On failure, exceptions propagate to the scheduler which logs and reschedules
 - LoadingCache continues serving last-known-good data from database
 
@@ -305,7 +306,10 @@ Weighted algorithm:
 src/main/frontend/         # Production frontend code
 ├── components/            # Reusable React components
 │   ├── activity/          # Activity grid system (priority-based masonry layout)
-│   └── cards/             # Activity card content components
+│   ├── admin/             # Admin panel components
+│   ├── cards/             # Activity card content components
+│   ├── help/              # Help/info components
+│   └── seo/               # SEO meta components
 ├── hooks/                 # Custom React hooks
 ├── types/                 # TypeScript type definitions
 ├── views/                 # Page-level components (routes)
@@ -347,21 +351,6 @@ See [docs/TESTING.md](docs/TESTING.md) for complete testing guidelines including
 | Naming | `testMethod_Scenario_ExpectedResult` | `testMethod()` |
 | Assertions | Invariant checks | Exact value comparisons |
 
-### Test Commands
-
-```bash
-# Backend
-./gradlew test                    # Run tests
-./gradlew test jacocoTestReport   # With coverage
-./gradlew deltaCoverage           # Delta coverage
-
-# Frontend
-npm run test:run                  # Run tests
-npm run test:coverage             # With coverage
-npm run test:delta                # Delta coverage
-npm run e2e                       # E2E tests
-```
-
 ### Base Classes
 
 | Class | Use Case |
@@ -370,33 +359,12 @@ npm run e2e                       # E2E tests
 | `AbstractPersistenceTest` | Entity/repository tests (includes cleanup) |
 | `AbstractSchedulerTest` | Scheduler tests |
 
-### Coverage Thresholds
-
-- **Overall**: 75% instruction, 65% branch
-- **Delta**: 80% line, 70% branch on changed code
-
-## External Data Sources
-
-### NOAA Space Weather Prediction Center
-
-- **Endpoint**: `https://services.swpc.noaa.gov/json/solar-cycle/observed-solar-cycle-indices.json`
-- **Data**: Solar Flux Index (SFI), Sunspot Number
-- **Cache TTL**: 5 minutes
-- **Known Issues**: Sometimes returns partial dates - client has fallback parsing
-
-### HamQSL Solar XML Feed
-
-- **Endpoint**: `http://www.hamqsl.com/solarxml.php`
-- **Data**: Solar indices + band-by-band conditions
-- **Cache TTL**: 30 minutes
-- **Known Issues**: Malformed DOCTYPE - client disables DTD processing
-
 ## Configuration
 
 - **Primary config**: `src/main/resources/application.yml`
 - **Development profile**: `src/main/resources/application-dev.yml` (create for local overrides)
 - **Circuit breakers**: 50% failure threshold, automatic half-open transition
-- **Retry**: 3 attempts, 500ms wait (2 attempts for HamQSL)
+- **Retry**: 3 attempts, 500ms wait (default); 2 attempts for HamQSL, POTA, SOTA, Contests
 - **Cache**: Caffeine with 500 entry max, 10m expiry
 
 ## Java Version Compatibility

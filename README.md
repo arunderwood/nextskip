@@ -26,11 +26,7 @@ Amateur radio has many activities—DX chasing, POTA/SOTA activations, contestin
 - [Features](#features)
 - [Tech Stack](#tech-stack)
 - [Quick Start](#quick-start)
-- [Testing](#testing)
-- [Architecture](#architecture)
-- [Configuration](#configuration)
 - [API Endpoints](#api-endpoints)
-- [Troubleshooting](#troubleshooting)
 - [Future Enhancements](#future-enhancements)
 - [Data Attribution](#data-attribution)
 
@@ -71,8 +67,8 @@ NextSkip focuses on activities with **machine-readable, computable, or predictab
 | POTA/SOTA      | POTA API, SOTA API      | Live        |
 | Contests       | Contest calendars       | Live        |
 | Meteor Showers | Astronomical data       | Live        |
+| Band Activity  | PSKReporter (MQTT)      | Live        |
 | Satellites     | Orbital prediction APIs | Coming soon |
-| Band Activity  | PSKReporter, RBN        | Coming soon |
 
 The platform is actively expanding to cover more activities and data sources.
 
@@ -95,7 +91,9 @@ The platform is actively expanding to cover more activities and data sources.
 - Vaadin Hilla 25.0 (React integration)
 - Resilience4j (circuit breakers, retry)
 - Caffeine (caching)
-- PostgreSQL (persistence)
+- PostgreSQL (persistence) with Liquibase migrations
+- db-scheduler (recurring task scheduling)
+- Eclipse Paho MQTT (real-time spot streaming)
 
 ### Frontend
 
@@ -149,133 +147,6 @@ Vaadin's development mode is enabled by default and provides:
 - Development tools overlay
 - Source maps for debugging
 
-## Testing
-
-<details>
-<summary><strong>View testing details</strong></summary>
-
-### Backend Tests
-
-Comprehensive JUnit test suite covering utilities, external API clients, services, and integration tests.
-
-```bash
-./gradlew test
-```
-
-**Test Reports**: `build/reports/tests/test/index.html`
-
-### Frontend Tests
-
-Comprehensive Vitest test suite covering components, accessibility (WCAG 2.1 AA), and user interactions.
-
-```bash
-# Watch mode
-npm test
-
-# Run once
-npm run test:run
-
-# With coverage
-npm run test:coverage
-```
-
-**Coverage Reports**: `coverage/index.html`
-
-### E2E Tests
-
-Playwright tests validating complete user workflows in the browser.
-
-```bash
-# Run E2E tests
-npm run e2e
-
-# Run with Playwright UI (for debugging)
-npm run e2e:ui
-
-# Run in headed mode (see browser)
-npm run e2e:headed
-```
-
-**Test Suite**: Tests in `src/test/e2e/` covering dashboard loading, rendering, and user interactions.
-
-**Configuration**: See `playwright.config.ts`
-
-</details>
-
-## Architecture
-
-NextSkip uses a modular monolith structure with clean module boundaries:
-
-- **common**: Shared domain models and utilities
-- **propagation**: Solar indices and HF band conditions
-  - `api`: Public endpoints (@BrowserCallable)
-  - `model`: Domain models
-  - `internal`: Service implementations and external clients
-
-### Resilience Patterns
-
-- Circuit Breakers: Fail fast when external services are down
-- Retry Logic: Automatic retries with exponential backoff
-- Caching: Reduce API calls and improve responsiveness
-
-## Configuration
-
-Edit `src/main/resources/application.yml` for configuration.
-
-Default settings:
-
-- Server port: 8080
-- Cache: 30 minute expiry
-- Circuit breakers: 50% failure threshold
-
-For development-specific settings, create `src/main/resources/application-dev.yml`:
-
-```bash
-./gradlew bootRun --args='--spring.profiles.active=dev'
-```
-
-## Production Build
-
-```bash
-# Set production mode in build.gradle
-vaadin {
-    productionMode = true
-}
-
-# Build
-./gradlew build
-
-# Run the JAR
-java -jar build/libs/nextskip-0.0.1-SNAPSHOT.jar
-```
-
-## Troubleshooting
-
-<details>
-<summary><strong>View troubleshooting tips</strong></summary>
-
-**Port 8080 Already in Use**
-
-```bash
-lsof -ti :8080 | xargs kill -9
-```
-
-**Frontend Build Fails**
-
-```bash
-./gradlew clean vaadinBuildFrontend
-```
-
-**Test Failures**
-
-Ensure you have the correct Java version:
-
-```bash
-java -version  # Should match version in .tool-versions
-```
-
-</details>
-
 ## API Endpoints
 
 ### Hilla TypeScript Endpoints
@@ -290,6 +161,8 @@ Hilla auto-generates type-safe TypeScript clients from Java `@BrowserCallable` e
 | `ActivationsEndpoint`  | POTA/SOTA activations              |
 | `ContestEndpoint`      | Contest calendar                   |
 | `MeteorEndpoint`       | Meteor shower predictions          |
+| `SpotsEndpoint`        | Real-time band activity (FT8/FT4/FT2) |
+| `AdminEndpoint`        | Admin and user info                |
 
 Generated clients: `src/main/frontend/generated/`
 
@@ -319,3 +192,4 @@ See GitHub issues for planned features.
 | SOTA API | Summits on the Air activations | [sota.org.uk](https://www.sota.org.uk/) |
 | WA7BNM | Contest calendar | [contestcalendar.com](https://www.contestcalendar.com/) |
 | IMO | Meteor shower data | [imo.net](https://www.imo.net/) |
+| PSKReporter | Real-time FT8/FT4/FT2 spots via MQTT | [pskreporter.info](https://pskreporter.info/) |
