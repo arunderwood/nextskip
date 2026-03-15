@@ -28,10 +28,11 @@ FROM gcr.io/distroless/java25-debian13
 
 WORKDIR /app
 
-# Copy the built JAR and agents from builder stage
+# Copy the built JAR, agents, and observability config from builder stage
 COPY --from=builder /app/build/libs/*.jar app.jar
 COPY --from=builder /app/build/otel-agent/grafana-opentelemetry-java.jar otel-agent.jar
 COPY --from=builder /app/build/pyroscope-agent/pyroscope.jar pyroscope-agent.jar
+COPY --from=builder /app/config/otel-agent.properties otel-agent.properties
 
 # Distroless runs as non-root by default (uid 65532)
 # JVM settings for 2GB container (distroless doesn't support JAVA_OPTS)
@@ -52,4 +53,6 @@ EXPOSE 8080
 # Distroless has no shell, so use exec form
 # OTEL: disable with OTEL_JAVAAGENT_ENABLED=false
 # Pyroscope: disable by not setting PYROSCOPE_SERVER_ADDRESS
-ENTRYPOINT ["java", "-javaagent:/app/otel-agent.jar", "-javaagent:/app/pyroscope-agent.jar", "-jar", "app.jar"]
+# OTEL: non-secret config in otel-agent.properties, secrets via Render env vars
+# Pyroscope: non-secret config in otel-agent.properties, secrets via Render env vars
+ENTRYPOINT ["java", "-javaagent:/app/otel-agent.jar", "-Dotel.javaagent.configuration-file=/app/otel-agent.properties", "-javaagent:/app/pyroscope-agent.jar", "-jar", "app.jar"]

@@ -17,6 +17,19 @@ Disable agent: `OTEL_JAVAAGENT_ENABLED=false`
 
 Agent version: `gradle/libs.versions.toml` → `grafana-otel-agent`
 
+### Agent Configuration File
+
+Non-secret agent config lives in `config/otel-agent.properties`, loaded via `-Dotel.javaagent.configuration-file` in the Dockerfile. Secrets (endpoints, auth) remain as Render env vars and override the file.
+
+Includes:
+- Export protocol and sampling config
+- Micrometer integration
+- Health endpoint exclusion from tracing
+- [Custom method spans](https://opentelemetry.io/docs/zero-code/java/agent/instrumentation/external-annotations/#creating-spans-around-methods-with-otelinstrumentationmethodsinclude) for the band activity pipeline
+- Pyroscope profiling config
+
+To trace additional methods, edit `config/otel-agent.properties` — no code changes or new dependencies needed.
+
 ## Continuous Profiling (Pyroscope)
 
 Continuous profiling via [Grafana Pyroscope Java agent](https://grafana.com/docs/pyroscope/latest/configure-client/language-sdks/java/).
