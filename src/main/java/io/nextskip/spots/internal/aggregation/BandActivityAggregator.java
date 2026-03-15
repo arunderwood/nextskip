@@ -152,7 +152,6 @@ public class BandActivityAggregator {
      * @return map of composite key to aggregated activity
      */
     public Map<String, BandActivity> aggregateAllBands() {
-        long totalStart = System.nanoTime();
         Instant lookback = clock.instant().minus(ACTIVITY_LOOKBACK);
         List<Object[]> activePairs = repository.findDistinctBandModePairsWithActivitySince(lookback);
 
@@ -164,20 +163,14 @@ public class BandActivityAggregator {
             String mode = (String) pair[1];
             String compositeKey = band + "_" + mode;
             try {
-                long pairStart = System.nanoTime();
                 BandActivity activity = aggregateBandMode(band, mode);
-                long pairMs = (System.nanoTime() - pairStart) / 1_000_000;
-                if (pairMs > 1000) {
-                    LOG.warn("Slow aggregation: {} took {}ms", compositeKey, pairMs);
-                }
                 result.put(compositeKey, activity);
             } catch (org.springframework.dao.DataAccessException e) {
                 LOG.warn("Failed to aggregate {} {}: {}", band, mode, e.getMessage());
             }
         }
 
-        long totalMs = (System.nanoTime() - totalStart) / 1_000_000;
-        LOG.info("Completed aggregation: {} band+mode pairs processed in {}ms", result.size(), totalMs);
+        LOG.info("Completed aggregation: {} band+mode pairs processed", result.size());
         return result;
     }
 

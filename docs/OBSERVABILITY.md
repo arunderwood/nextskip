@@ -17,6 +17,18 @@ Disable agent: `OTEL_JAVAAGENT_ENABLED=false`
 
 Agent version: `gradle/libs.versions.toml` → `grafana-otel-agent`
 
+### Custom Method Tracing
+
+The agent can create spans for application methods without code changes via [`otel.instrumentation.methods.include`](https://opentelemetry.io/docs/zero-code/java/agent/instrumentation/external-annotations/#creating-spans-around-methods-with-otelinstrumentationmethodsinclude):
+
+```
+OTEL_INSTRUMENTATION_METHODS_INCLUDE=io.nextskip.spots.internal.SpotsServiceImpl[getCurrentActivity];io.nextskip.spots.internal.aggregation.BandActivityAggregator[aggregateAllBands,aggregateBandMode];io.nextskip.spots.internal.scheduler.BandActivityRefreshService[doRefresh]
+```
+
+This creates trace spans for the band activity pipeline (cache get → aggregation → per-band queries), visible in Grafana Tempo correlated with frontend Faro traces. Add/remove methods as needed — no redeploy required if using Render env vars.
+
+Exclude noisy endpoints: `OTEL_INSTRUMENTATION_SPRING_WEBMVC_EXCLUDED_PATHS=/health`
+
 ## Continuous Profiling (Pyroscope)
 
 Continuous profiling via [Grafana Pyroscope Java agent](https://grafana.com/docs/pyroscope/latest/configure-client/language-sdks/java/).
