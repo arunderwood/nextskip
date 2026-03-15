@@ -72,14 +72,17 @@ public class BandActivityRefreshService extends AbstractRefreshService {
                 .mapToInt(BandActivity::spotCount)
                 .sum();
 
+        // Put directly into cache to avoid double aggregation
+        bandActivityCache.put(CacheConfig.CACHE_KEY, activities);
+
         // Publish change event for inter-module notification
         eventPublisher.publishEvent(new BandActivityChangedEvent(activities));
     }
 
     @Override
     protected CacheRefreshEvent createCacheRefreshEvent() {
-        return new CacheRefreshEvent("bandActivity",
-                () -> bandActivityCache.refresh(CacheConfig.CACHE_KEY));
+        // Cache is already populated in doRefresh() — no-op to avoid redundant aggregation
+        return new CacheRefreshEvent("bandActivity", () -> { });
     }
 
     @Override
