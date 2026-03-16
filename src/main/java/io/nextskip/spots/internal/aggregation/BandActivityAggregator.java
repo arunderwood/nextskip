@@ -195,26 +195,7 @@ public class BandActivityAggregator {
 
         Map<String, BandActivity> result = new LinkedHashMap<>();
         for (String key : activePairKeys) {
-            String[] parts = key.split("_", 2);
-            String band = parts[0];
-            String mode = parts[1];
-
-            ModeWindow modeWindow = ModeWindow.forMode(mode);
-            Instant windowStart = now.minus(modeWindow.getCurrentWindow());
-
-            // Current count: sum buckets within current window
-            Map<Instant, Long> buckets = bucketsByKey.getOrDefault(key, Map.of());
-            int currentCount = countSpotsInWindow(buckets, windowStart, now);
-
-            // Baseline: average of prior windows
-            int baselineCount = calculateBaselineFromBuckets(buckets, modeWindow, now);
-
-            // Trend
-            double trend = calculateTrend(currentCount, baselineCount);
-
-            result.put(key, buildBandActivity(band, mode, currentCount, baselineCount,
-                    trend, dxByKey.get(key), pathsByKey.getOrDefault(key, List.of()),
-                    windowStart, now));
+            result.put(key, assembleBandActivity(key, now, bucketsByKey, dxByKey, pathsByKey));
         }
 
         LOG.info("Completed aggregation: {} band+mode pairs processed", result.size());
@@ -362,13 +343,27 @@ public class BandActivityAggregator {
 
     // --- Bulk query result helpers (used by aggregateAllBands) ---
 
-    private BandActivity buildBandActivity(String band, String mode, int currentCount,
-            int baselineCount, double trend, Object[] dxRow, List<Object[]> pathRows,
-            Instant windowStart, Instant now) {
+    private BandActivity assembleBandActivity(String key, Instant now,
+            Map<String, Map<Instant, Long>> bucketsByKey,
+            Map<String, Object[]> dxByKey,
+            Map<String, List<Object[]>> pathsByKey) {
+        String[] parts = key.split("_", 2);
+        String band = parts[0];
+        String mode = parts[1];
+
+        ModeWindow modeWindow = ModeWindow.forMode(mode);
+        Instant windowStart = now.minus(modeWindow.getCurrentWindow());
+
+        Map<Instant, Long> buckets = bucketsByKey.getOrDefault(key, Map.of());
+        int currentCount = countSpotsInWindow(buckets, windowStart, now);
+        int baselineCount = calculateBaselineFromBuckets(buckets, modeWindow, now);
+        double trend = calculateTrend(currentCount, baselineCount);
+
+        Object[] dxRow = dxByKey.get(key);
         return new BandActivity(band, mode, currentCount, baselineCount, trend,
                 extractDxDistance(dxRow), extractDxPath(dxRow),
-                extractActivePaths(pathRows), windowStart, now, now,
-                scoringProperties.getMultiplierForMode(mode));
+                extractActivePaths(pathsByKey.getOrDefault(key, List.of())),
+                windowStart, now, now, scoringProperties.getMultiplierForMode(mode));
     }
 
     @SuppressWarnings("PMD.AvoidInstantiatingObjectsInLoops") // One list per unique key is intentional

@@ -27,6 +27,7 @@ public class SpotsEndpoint {
 
     private final SpotsService spotsService;
 
+    /** Creates a new SpotsEndpoint with the given service. */
     public SpotsEndpoint(SpotsService spotsService) {
         this.spotsService = spotsService;
     }
