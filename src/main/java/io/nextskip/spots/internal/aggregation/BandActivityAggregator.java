@@ -17,6 +17,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.EnumSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -145,33 +146,159 @@ public class BandActivityAggregator {
     /**
      * Aggregates activity data for all band+mode combinations with recent activity.
      *
-     * <p>Returns a map with composite {@code "{band}_{mode}"} keys (e.g., "20m_FT8",
-     * "20m_FT4") to activity data. Only band+mode pairs with spots in the last
-     * 2 hours are included.
+     * <p>Uses 3 bulk SQL queries instead of per-pair N+1 queries:
+     * <ol>
+     *   <li>Spot counts in 15-minute buckets (replaces ~271 COUNT queries)</li>
+     *   <li>Max DX per band+mode via window function (replaces ~38 correlated subqueries)</li>
+     *   <li>Continent paths per band+mode (replaces ~38 GROUP BY queries)</li>
+     * </ol>
+     *
+     * <p>Results are assembled into {@link BandActivity} records in Java.
      *
      * @return map of composite key to aggregated activity
      */
     public Map<String, BandActivity> aggregateAllBands() {
-        Instant lookback = clock.instant().minus(ACTIVITY_LOOKBACK);
-        List<Object[]> activePairs = repository.findDistinctBandModePairsWithActivitySince(lookback);
+        Instant now = clock.instant();
+        // 3h covers SSB's baseline window (the widest); 1h covers SSB's current window
+        Instant baselineLookback = now.minus(Duration.ofHours(3));
+        Instant currentLookback = now.minus(Duration.ofHours(1));
 
-        LOG.info("Aggregating activity for {} band+mode pairs with recent activity", activePairs.size());
+        LOG.info("Running bulk aggregation queries");
+
+        List<Object[]> bucketRows = repository.countSpotsByBandModeInBuckets(baselineLookback);
+        List<Object[]> dxRows = repository.findMaxDxSpotPerBandMode(currentLookback);
+        List<Object[]> pathRows = repository.countContinentPathsPerBandMode(currentLookback);
+
+        LOG.info("Bulk queries complete: {} bucket rows, {} DX rows, {} path rows",
+                bucketRows.size(), dxRows.size(), pathRows.size());
+
+        // Index all bulk results by composite "band_mode" key for O(1) lookup during assembly
+        Map<String, Object[]> dxByKey = new LinkedHashMap<>();
+        for (Object[] row : dxRows) {
+            dxByKey.put(row[0] + "_" + row[1], row);
+        }
+
+        Map<String, List<Object[]>> pathsByKey = new LinkedHashMap<>();
+        for (Object[] row : pathRows) {
+            String key = row[0] + "_" + row[1];
+            pathsByKey.computeIfAbsent(key, k -> new java.util.ArrayList<>()).add(row);
+        }
+
+        // 15-minute buckets are mode-agnostic; each mode's window config selects
+        // which buckets to sum in countSpotsInWindow() / calculateBaselineFromBuckets()
+        Map<String, Map<Instant, Long>> bucketsByKey = new LinkedHashMap<>();
+        Set<String> activePairKeys = new LinkedHashSet<>();
+        for (Object[] row : bucketRows) {
+            String key = row[0] + "_" + row[1];
+            Instant bucketStart = ((java.sql.Timestamp) row[2]).toInstant();
+            long count = ((Number) row[3]).longValue();
+            activePairKeys.add(key);
+            bucketsByKey.computeIfAbsent(key, k -> new LinkedHashMap<>())
+                    .put(bucketStart, count);
+        }
 
         Map<String, BandActivity> result = new LinkedHashMap<>();
-        for (Object[] pair : activePairs) {
-            String band = (String) pair[0];
-            String mode = (String) pair[1];
-            String compositeKey = band + "_" + mode;
-            try {
-                BandActivity activity = aggregateBandMode(band, mode);
-                result.put(compositeKey, activity);
-            } catch (org.springframework.dao.DataAccessException e) {
-                LOG.warn("Failed to aggregate {} {}: {}", band, mode, e.getMessage());
+        for (String key : activePairKeys) {
+            String[] parts = key.split("_", 2);
+            String band = parts[0];
+            String mode = parts[1];
+
+            ModeWindow modeWindow = ModeWindow.forMode(mode);
+            Instant windowStart = now.minus(modeWindow.getCurrentWindow());
+
+            // Current count: sum buckets within current window
+            Map<Instant, Long> buckets = bucketsByKey.getOrDefault(key, Map.of());
+            int currentCount = countSpotsInWindow(buckets, windowStart, now);
+
+            // Baseline: average of prior windows
+            int baselineCount = calculateBaselineFromBuckets(buckets, modeWindow, now);
+
+            // Trend
+            double trend = calculateTrend(currentCount, baselineCount);
+
+            // Max DX
+            Object[] dxRow = dxByKey.get(key);
+            Integer maxDxKm = null;
+            String maxDxPath = null;
+            if (dxRow != null) {
+                Number distance = (Number) dxRow[2];
+                if (distance != null) {
+                    maxDxKm = distance.intValue();
+                    String spottedCall = (String) dxRow[3];
+                    String spotterCall = (String) dxRow[4];
+                    if (spottedCall != null && spotterCall != null) {
+                        maxDxPath = spottedCall.toUpperCase(Locale.ROOT)
+                                + " → " + spotterCall.toUpperCase(Locale.ROOT);
+                    }
+                }
             }
+
+            // Active continent paths
+            Set<ContinentPath> activePaths = EnumSet.noneOf(ContinentPath.class);
+            List<Object[]> paths = pathsByKey.getOrDefault(key, List.of());
+            for (Object[] pathRow : paths) {
+                String c1 = (String) pathRow[2];
+                String c2 = (String) pathRow[3];
+                long pathCount = ((Number) pathRow[4]).longValue();
+                if (pathCount >= MIN_SPOTS_FOR_ACTIVE_PATH) {
+                    ContinentPath.fromContinents(c1, c2).ifPresent(activePaths::add);
+                }
+            }
+
+            double rarityMultiplier = scoringProperties.getMultiplierForMode(mode);
+
+            result.put(key, new BandActivity(
+                    band, mode, currentCount, baselineCount, trend,
+                    maxDxKm, maxDxPath, activePaths,
+                    windowStart, now, now, rarityMultiplier
+            ));
         }
 
         LOG.info("Completed aggregation: {} band+mode pairs processed", result.size());
         return result;
+    }
+
+    /**
+     * Counts spots within a time window by summing matching 15-minute buckets.
+     */
+    private int countSpotsInWindow(Map<Instant, Long> buckets, Instant windowStart, Instant windowEnd) {
+        long total = 0;
+        for (Map.Entry<Instant, Long> entry : buckets.entrySet()) {
+            Instant bucketStart = entry.getKey();
+            // Bucket is within window if it starts at or after windowStart and before windowEnd
+            if (!bucketStart.isBefore(windowStart) && bucketStart.isBefore(windowEnd)) {
+                total += entry.getValue();
+            }
+        }
+        return (int) total;
+    }
+
+    /**
+     * Calculates baseline from pre-bucketed data instead of individual DB queries.
+     */
+    private int calculateBaselineFromBuckets(Map<Instant, Long> buckets, ModeWindow modeWindow, Instant now) {
+        Duration current = modeWindow.getCurrentWindow();
+        int windowCount = modeWindow.getBaselineWindowCount();
+
+        if (windowCount <= MIN_WINDOWS_FOR_BASELINE) {
+            return 0;
+        }
+
+        long totalSpots = 0;
+        int validWindows = 0;
+
+        for (int i = 1; i < windowCount; i++) {
+            Instant windowEnd = now.minus(current.multipliedBy(i));
+            Instant windowStart = windowEnd.minus(current);
+
+            int count = countSpotsInWindow(buckets, windowStart, windowEnd);
+            if (count >= 0) {
+                totalSpots += count;
+                validWindows++;
+            }
+        }
+
+        return validWindows == 0 ? 0 : (int) (totalSpots / validWindows);
     }
 
     /**

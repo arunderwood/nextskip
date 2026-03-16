@@ -382,17 +382,15 @@ class BandActivityAggregatorTest {
 
         @Test
         void testAggregateAllBands_ReturnsAllActiveBands() {
-            // Given: Two band-mode pairs with activity
-            Instant lookback = FIXED_TIME.minus(Duration.ofHours(2));
-            when(repository.findDistinctBandModePairsWithActivitySince(lookback))
-                    .thenReturn(List.of(new Object[]{BAND_20M, MODE_FT8}, new Object[]{BAND_40M, MODE_CW}));
-
-            setupSpotCount(BAND_20M, MODE_FT8, 100);
-            setupSpotCount(BAND_40M, MODE_CW, 50);
-            setupNoDxData(BAND_20M, MODE_FT8);
-            setupNoDxData(BAND_40M, MODE_CW);
-            setupNoPaths(BAND_20M, MODE_FT8);
-            setupNoPaths(BAND_40M, MODE_CW);
+            // Given: Two band-mode pairs with spots in buckets
+            Instant bucket20m = FIXED_TIME.minus(Duration.ofMinutes(10)); // within FT8 15m window
+            Instant bucket40m = FIXED_TIME.minus(Duration.ofMinutes(20)); // within CW 30m window
+            setupBulkBuckets(List.of(
+                    new Object[]{BAND_20M, MODE_FT8, java.sql.Timestamp.from(bucket20m), 100L},
+                    new Object[]{BAND_40M, MODE_CW, java.sql.Timestamp.from(bucket40m), 50L}
+            ));
+            setupBulkDx(emptyBulkRows());
+            setupBulkPaths(emptyBulkRows());
 
             // When
             Map<String, BandActivity> result = aggregator.aggregateAllBands();
@@ -407,10 +405,10 @@ class BandActivityAggregatorTest {
 
         @Test
         void testAggregateAllBands_NoActiveBands_ReturnsEmptyMap() {
-            // Given: No active band-mode pairs
-            Instant lookback = FIXED_TIME.minus(Duration.ofHours(2));
-            when(repository.findDistinctBandModePairsWithActivitySince(lookback))
-                    .thenReturn(List.of());
+            // Given: No bucket data
+            setupBulkBuckets(emptyBulkRows());
+            setupBulkDx(emptyBulkRows());
+            setupBulkPaths(emptyBulkRows());
 
             // When
             Map<String, BandActivity> result = aggregator.aggregateAllBands();
@@ -422,48 +420,30 @@ class BandActivityAggregatorTest {
         }
 
         @Test
-        void testAggregateAllBands_BandAggregationFails_SkipsBandAndContinues() {
-            // Given: First band-mode pair fails, second succeeds
-            Instant lookback = FIXED_TIME.minus(Duration.ofHours(2));
-            when(repository.findDistinctBandModePairsWithActivitySince(lookback))
-                    .thenReturn(List.of(new Object[]{BAND_20M, MODE_FT8}, new Object[]{BAND_40M, MODE_CW}));
-
-            // 20m FT8 will fail with exception on mode-filtered count query
-            when(repository.countByBandAndModeAndSpottedAtAfter(eq(BAND_20M), eq(MODE_FT8), any()))
+        void testAggregateAllBands_BulkQueryFailure_PropagatesException() {
+            // Given: Bulk bucket query fails
+            when(repository.countSpotsByBandModeInBuckets(any()))
                     .thenThrow(new org.springframework.dao.DataAccessResourceFailureException("Database error"));
 
-            // 40m CW should succeed
-            setupSpotCount(BAND_40M, MODE_CW, 50);
-            setupNoDxData(BAND_40M, MODE_CW);
-            setupNoPaths(BAND_40M, MODE_CW);
-
-            // When
-            Map<String, BandActivity> result = aggregator.aggregateAllBands();
-
-            // Then
-            assertThat(result)
-                    .as("Should contain only successful band-mode pair")
-                    .containsKey("40m_CW")
-                    .doesNotContainKey("20m_FT8");
+            // When/Then
+            org.junit.jupiter.api.Assertions.assertThrows(
+                    org.springframework.dao.DataAccessResourceFailureException.class,
+                    () -> aggregator.aggregateAllBands());
         }
 
         @Test
         void testAggregateAllBands_OrderPreserved() {
-            // Given: Band-mode pairs returned in a specific order
-            Instant lookback = FIXED_TIME.minus(Duration.ofHours(2));
-            when(repository.findDistinctBandModePairsWithActivitySince(lookback))
-                    .thenReturn(List.of(
-                            new Object[]{"10m", MODE_FT8},
-                            new Object[]{"15m", MODE_FT8},
-                            new Object[]{"20m", MODE_FT8},
-                            new Object[]{"40m", MODE_FT8}
-                    ));
-
-            for (String band : List.of("10m", "15m", "20m", "40m")) {
-                setupSpotCount(band, MODE_FT8, 10);
-                setupNoDxData(band, MODE_FT8);
-                setupNoPaths(band, MODE_FT8);
-            }
+            // Given: Multiple bands in bucket data
+            Instant bucket = FIXED_TIME.minus(Duration.ofMinutes(5));
+            java.sql.Timestamp ts = java.sql.Timestamp.from(bucket);
+            setupBulkBuckets(List.of(
+                    new Object[]{"10m", MODE_FT8, ts, 10L},
+                    new Object[]{"15m", MODE_FT8, ts, 10L},
+                    new Object[]{"20m", MODE_FT8, ts, 10L},
+                    new Object[]{"40m", MODE_FT8, ts, 10L}
+            ));
+            setupBulkDx(emptyBulkRows());
+            setupBulkPaths(emptyBulkRows());
 
             // When
             Map<String, BandActivity> result = aggregator.aggregateAllBands();
@@ -477,16 +457,14 @@ class BandActivityAggregatorTest {
         @Test
         void testAggregateAllBands_MultipleModesSameBand_ReturnsSeparateEntries() {
             // Given: 20m with both FT8 and FT4 activity
-            Instant lookback = FIXED_TIME.minus(Duration.ofHours(2));
-            when(repository.findDistinctBandModePairsWithActivitySince(lookback))
-                    .thenReturn(List.of(new Object[]{BAND_20M, MODE_FT8}, new Object[]{BAND_20M, MODE_FT4}));
-
-            setupSpotCount(BAND_20M, MODE_FT8, 80);
-            setupSpotCount(BAND_20M, MODE_FT4, 30);
-            setupNoDxData(BAND_20M, MODE_FT8);
-            setupNoDxData(BAND_20M, MODE_FT4);
-            setupNoPaths(BAND_20M, MODE_FT8);
-            setupNoPaths(BAND_20M, MODE_FT4);
+            Instant bucket = FIXED_TIME.minus(Duration.ofMinutes(5));
+            java.sql.Timestamp ts = java.sql.Timestamp.from(bucket);
+            setupBulkBuckets(List.of(
+                    new Object[]{BAND_20M, MODE_FT8, ts, 80L},
+                    new Object[]{BAND_20M, MODE_FT4, ts, 30L}
+            ));
+            setupBulkDx(emptyBulkRows());
+            setupBulkPaths(emptyBulkRows());
 
             // When
             Map<String, BandActivity> result = aggregator.aggregateAllBands();
@@ -503,20 +481,18 @@ class BandActivityAggregatorTest {
 
         @Test
         void testAggregateAllBands_ZeroSpotModes_Excluded() {
-            // Given: Only modes with activity are returned by findDistinctBandModePairsWithActivitySince
-            Instant lookback = FIXED_TIME.minus(Duration.ofHours(2));
-            List<Object[]> pairs = java.util.Collections.singletonList(new Object[]{BAND_20M, MODE_FT8});
-            when(repository.findDistinctBandModePairsWithActivitySince(lookback))
-                    .thenReturn(pairs);
-
-            setupSpotCount(BAND_20M, MODE_FT8, 50);
-            setupNoDxData(BAND_20M, MODE_FT8);
-            setupNoPaths(BAND_20M, MODE_FT8);
+            // Given: Only FT8 has buckets, FT4 does not
+            Instant bucket = FIXED_TIME.minus(Duration.ofMinutes(5));
+            setupBulkBuckets(java.util.Collections.singletonList(
+                    new Object[]{BAND_20M, MODE_FT8, java.sql.Timestamp.from(bucket), 50L}
+            ));
+            setupBulkDx(emptyBulkRows());
+            setupBulkPaths(emptyBulkRows());
 
             // When
             Map<String, BandActivity> result = aggregator.aggregateAllBands();
 
-            // Then: Only the active mode appears; modes with zero spots are not returned
+            // Then
             assertThat(result)
                     .as("Should only contain modes with activity")
                     .hasSize(1)
@@ -626,5 +602,23 @@ class BandActivityAggregatorTest {
         List<Object[]> paths = Arrays.asList(pathData);
         lenient().when(repository.countContinentPathsByBandAndModeAndSpottedAtAfter(eq(band), eq(mode), any()))
                 .thenReturn(paths);
+    }
+
+    // Bulk query mocks for aggregateAllBands()
+
+    private void setupBulkBuckets(List<Object[]> rows) {
+        lenient().when(repository.countSpotsByBandModeInBuckets(any())).thenReturn(rows);
+    }
+
+    private void setupBulkDx(List<Object[]> rows) {
+        lenient().when(repository.findMaxDxSpotPerBandMode(any())).thenReturn(rows);
+    }
+
+    private void setupBulkPaths(List<Object[]> rows) {
+        lenient().when(repository.countContinentPathsPerBandMode(any())).thenReturn(rows);
+    }
+
+    private static List<Object[]> emptyBulkRows() {
+        return java.util.Collections.emptyList();
     }
 }

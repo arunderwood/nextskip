@@ -110,6 +110,78 @@ public interface SpotRepository extends JpaRepository<SpotEntity, Long> {
     // Phase 2: Band Activity Aggregation Queries
     // ========================================================================
 
+    // --- Bulk aggregation queries (replace N+1 per-pair queries) ---
+
+    /**
+     * Counts spots per band+mode in 15-minute time buckets.
+     *
+     * <p>Returns rows of [band, mode, bucket_start, count] where bucket_start
+     * is the start of each 15-minute interval. The caller aggregates these
+     * fine-grained buckets into mode-appropriate windows in Java.
+     *
+     * <p>Replaces ~271 individual COUNT queries per aggregation run.
+     *
+     * @param since earliest time to include (should cover widest baseline window)
+     * @return list of [band, mode, bucket_start, count] tuples
+     */
+    @Query(value = """
+            SELECT band, mode,
+                   date_trunc('hour', spotted_at)
+                     + INTERVAL '15 min' * FLOOR(EXTRACT(MINUTE FROM spotted_at) / 15) AS bucket_start,
+                   COUNT(*) AS cnt
+            FROM spots
+            WHERE spotted_at > :since
+            GROUP BY band, mode, bucket_start
+            ORDER BY band, mode, bucket_start
+            """, nativeQuery = true)
+    List<Object[]> countSpotsByBandModeInBuckets(@Param("since") Instant since);
+
+    /**
+     * Finds the max DX spot for each band+mode pair in one query.
+     *
+     * <p>Uses ROW_NUMBER() window function to find the spot with the highest
+     * distance per band+mode pair, avoiding the N correlated subqueries that
+     * previously took ~6 seconds each.
+     *
+     * <p>Replaces ~38 individual findMaxDxSpot queries per aggregation run.
+     *
+     * @param since minimum spotted_at time
+     * @return list of [band, mode, distance_km, spotted_call, spotter_call] tuples
+     */
+    @Query(value = """
+            SELECT band, mode, distance_km, spotted_call, spotter_call
+            FROM (
+              SELECT band, mode, distance_km, spotted_call, spotter_call,
+                     ROW_NUMBER() OVER (
+                       PARTITION BY band, mode
+                       ORDER BY distance_km DESC NULLS LAST, spotted_at DESC
+                     ) AS rn
+              FROM spots
+              WHERE spotted_at > :since AND distance_km IS NOT NULL
+            ) ranked
+            WHERE rn = 1
+            """, nativeQuery = true)
+    List<Object[]> findMaxDxSpotPerBandMode(@Param("since") Instant since);
+
+    /**
+     * Counts continent paths for all band+mode pairs in one query.
+     *
+     * <p>Replaces ~38 individual continent path queries per aggregation run.
+     *
+     * @param since minimum spotted_at time
+     * @return list of [band, mode, spotter_continent, spotted_continent, count] tuples
+     */
+    @Query(value = """
+            SELECT band, mode, spotter_continent, spotted_continent, COUNT(*) AS cnt
+            FROM spots
+            WHERE spotted_at > :since
+              AND spotter_continent IS NOT NULL
+              AND spotted_continent IS NOT NULL
+              AND spotter_continent <> spotted_continent
+            GROUP BY band, mode, spotter_continent, spotted_continent
+            """, nativeQuery = true)
+    List<Object[]> countContinentPathsPerBandMode(@Param("since") Instant since);
+
     /**
      * Counts spots by band within a time window.
      *
