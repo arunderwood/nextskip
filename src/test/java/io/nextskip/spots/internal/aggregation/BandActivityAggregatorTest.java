@@ -386,8 +386,8 @@ class BandActivityAggregatorTest {
             Instant bucket20m = FIXED_TIME.minus(Duration.ofMinutes(10)); // within FT8 15m window
             Instant bucket40m = FIXED_TIME.minus(Duration.ofMinutes(20)); // within CW 30m window
             setupBulkBuckets(List.of(
-                    new Object[]{BAND_20M, MODE_FT8, java.sql.Timestamp.from(bucket20m), 100L},
-                    new Object[]{BAND_40M, MODE_CW, java.sql.Timestamp.from(bucket40m), 50L}
+                    new Object[]{BAND_20M, MODE_FT8, toTimestamp(bucket20m), 100L},
+                    new Object[]{BAND_40M, MODE_CW, toTimestamp(bucket40m), 50L}
             ));
             setupBulkDx(emptyBulkRows());
             setupBulkPaths(emptyBulkRows());
@@ -434,8 +434,7 @@ class BandActivityAggregatorTest {
         @Test
         void testAggregateAllBands_OrderPreserved() {
             // Given: Multiple bands in bucket data
-            Instant bucket = FIXED_TIME.minus(Duration.ofMinutes(5));
-            java.sql.Timestamp ts = java.sql.Timestamp.from(bucket);
+            Object ts = toTimestamp(FIXED_TIME.minus(Duration.ofMinutes(5)));
             setupBulkBuckets(List.of(
                     new Object[]{"10m", MODE_FT8, ts, 10L},
                     new Object[]{"15m", MODE_FT8, ts, 10L},
@@ -457,8 +456,7 @@ class BandActivityAggregatorTest {
         @Test
         void testAggregateAllBands_MultipleModesSameBand_ReturnsSeparateEntries() {
             // Given: 20m with both FT8 and FT4 activity
-            Instant bucket = FIXED_TIME.minus(Duration.ofMinutes(5));
-            java.sql.Timestamp ts = java.sql.Timestamp.from(bucket);
+            Object ts = toTimestamp(FIXED_TIME.minus(Duration.ofMinutes(5)));
             setupBulkBuckets(List.of(
                     new Object[]{BAND_20M, MODE_FT8, ts, 80L},
                     new Object[]{BAND_20M, MODE_FT4, ts, 30L}
@@ -484,7 +482,7 @@ class BandActivityAggregatorTest {
             // Given: Only FT8 has buckets, FT4 does not
             Instant bucket = FIXED_TIME.minus(Duration.ofMinutes(5));
             setupBulkBuckets(java.util.Collections.singletonList(
-                    new Object[]{BAND_20M, MODE_FT8, java.sql.Timestamp.from(bucket), 50L}
+                    new Object[]{BAND_20M, MODE_FT8, toTimestamp(bucket), 50L}
             ));
             setupBulkDx(emptyBulkRows());
             setupBulkPaths(emptyBulkRows());
@@ -620,5 +618,10 @@ class BandActivityAggregatorTest {
 
     private static List<Object[]> emptyBulkRows() {
         return java.util.Collections.emptyList();
+    }
+
+    /** Native queries return java.sql.Timestamp; this mirrors that for mock data. */
+    private static java.sql.Timestamp toTimestamp(Instant instant) {
+        return java.sql.Timestamp.from(instant);
     }
 }

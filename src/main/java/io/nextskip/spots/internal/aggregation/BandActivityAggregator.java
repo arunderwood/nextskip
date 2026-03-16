@@ -178,11 +178,7 @@ public class BandActivityAggregator {
             dxByKey.put(row[0] + "_" + row[1], row);
         }
 
-        Map<String, List<Object[]>> pathsByKey = new LinkedHashMap<>();
-        for (Object[] row : pathRows) {
-            String key = row[0] + "_" + row[1];
-            pathsByKey.computeIfAbsent(key, k -> new java.util.ArrayList<>()).add(row);
-        }
+        Map<String, List<Object[]>> pathsByKey = indexByBandModeKey(pathRows);
 
         // 15-minute buckets are mode-agnostic; each mode's window config selects
         // which buckets to sum in countSpotsInWindow() / calculateBaselineFromBuckets()
@@ -193,7 +189,7 @@ public class BandActivityAggregator {
             Instant bucketStart = ((java.sql.Timestamp) row[2]).toInstant();
             long count = ((Number) row[3]).longValue();
             activePairKeys.add(key);
-            bucketsByKey.computeIfAbsent(key, k -> new LinkedHashMap<>())
+            bucketsByKey.computeIfAbsent(key, k -> new LinkedHashMap<>())  // NOPMD - one map per band_mode key
                     .put(bucketStart, count);
         }
 
@@ -216,42 +212,9 @@ public class BandActivityAggregator {
             // Trend
             double trend = calculateTrend(currentCount, baselineCount);
 
-            // Max DX
-            Object[] dxRow = dxByKey.get(key);
-            Integer maxDxKm = null;
-            String maxDxPath = null;
-            if (dxRow != null) {
-                Number distance = (Number) dxRow[2];
-                if (distance != null) {
-                    maxDxKm = distance.intValue();
-                    String spottedCall = (String) dxRow[3];
-                    String spotterCall = (String) dxRow[4];
-                    if (spottedCall != null && spotterCall != null) {
-                        maxDxPath = spottedCall.toUpperCase(Locale.ROOT)
-                                + " → " + spotterCall.toUpperCase(Locale.ROOT);
-                    }
-                }
-            }
-
-            // Active continent paths
-            Set<ContinentPath> activePaths = EnumSet.noneOf(ContinentPath.class);
-            List<Object[]> paths = pathsByKey.getOrDefault(key, List.of());
-            for (Object[] pathRow : paths) {
-                String c1 = (String) pathRow[2];
-                String c2 = (String) pathRow[3];
-                long pathCount = ((Number) pathRow[4]).longValue();
-                if (pathCount >= MIN_SPOTS_FOR_ACTIVE_PATH) {
-                    ContinentPath.fromContinents(c1, c2).ifPresent(activePaths::add);
-                }
-            }
-
-            double rarityMultiplier = scoringProperties.getMultiplierForMode(mode);
-
-            result.put(key, new BandActivity(
-                    band, mode, currentCount, baselineCount, trend,
-                    maxDxKm, maxDxPath, activePaths,
-                    windowStart, now, now, rarityMultiplier
-            ));
+            result.put(key, buildBandActivity(band, mode, currentCount, baselineCount,
+                    trend, dxByKey.get(key), pathsByKey.getOrDefault(key, List.of()),
+                    windowStart, now));
         }
 
         LOG.info("Completed aggregation: {} band+mode pairs processed", result.size());
@@ -395,5 +358,65 @@ public class BandActivityAggregator {
         }
 
         return spotted.toUpperCase(Locale.ROOT) + " → " + spotter.toUpperCase(Locale.ROOT);
+    }
+
+    // --- Bulk query result helpers (used by aggregateAllBands) ---
+
+    private BandActivity buildBandActivity(String band, String mode, int currentCount,
+            int baselineCount, double trend, Object[] dxRow, List<Object[]> pathRows,
+            Instant windowStart, Instant now) {
+        return new BandActivity(band, mode, currentCount, baselineCount, trend,
+                extractDxDistance(dxRow), extractDxPath(dxRow),
+                extractActivePaths(pathRows), windowStart, now, now,
+                scoringProperties.getMultiplierForMode(mode));
+    }
+
+    @SuppressWarnings("PMD.AvoidInstantiatingObjectsInLoops") // One list per unique key is intentional
+    private Map<String, List<Object[]>> indexByBandModeKey(List<Object[]> rows) {
+        Map<String, List<Object[]>> indexed = new LinkedHashMap<>();
+        for (Object[] row : rows) {
+            String key = row[0] + "_" + row[1];
+            indexed.computeIfAbsent(key, k -> new java.util.ArrayList<>()).add(row);
+        }
+        return indexed;
+    }
+
+    @SuppressWarnings("PMD.UseVarargs") // Array from native query result, not a varargs call site
+    private Integer extractDxDistance(Object[] dxRow) {
+        if (dxRow == null) {
+            return null;
+        }
+        Number distance = (Number) dxRow[2];
+        return distance != null ? distance.intValue() : null;
+    }
+
+    @SuppressWarnings("PMD.UseVarargs") // Array from native query result, not a varargs call site
+    private String extractDxPath(Object[] dxRow) {
+        if (dxRow == null) {
+            return null;
+        }
+        Number distance = (Number) dxRow[2];
+        if (distance == null) {
+            return null;
+        }
+        String spottedCall = (String) dxRow[3];
+        String spotterCall = (String) dxRow[4];
+        if (spottedCall == null || spotterCall == null) {
+            return null;
+        }
+        return spottedCall.toUpperCase(Locale.ROOT) + " → " + spotterCall.toUpperCase(Locale.ROOT);
+    }
+
+    private Set<ContinentPath> extractActivePaths(List<Object[]> pathRows) {
+        Set<ContinentPath> active = EnumSet.noneOf(ContinentPath.class);
+        for (Object[] row : pathRows) {
+            String c1 = (String) row[2];
+            String c2 = (String) row[3];
+            long count = ((Number) row[4]).longValue();
+            if (count >= MIN_SPOTS_FOR_ACTIVE_PATH) {
+                ContinentPath.fromContinents(c1, c2).ifPresent(active::add);
+            }
+        }
+        return active;
     }
 }
