@@ -478,6 +478,108 @@ class BandActivityAggregatorTest {
         }
 
         @Test
+        void testAggregateAllBands_WithDxData_PopulatesMaxDx() {
+            Object ts = toTimestamp(FIXED_TIME.minus(Duration.ofMinutes(5)));
+            setupBulkBuckets(java.util.Collections.singletonList(
+                    new Object[]{BAND_20M, MODE_FT8, ts, 100L}
+            ));
+            setupBulkDx(java.util.Collections.singletonList(
+                    new Object[]{BAND_20M, MODE_FT8, 8500, "JA1ABC", "W6XYZ"}
+            ));
+            setupBulkPaths(emptyBulkRows());
+
+            Map<String, BandActivity> result = aggregator.aggregateAllBands();
+
+            assertThat(result.get("20m_FT8").maxDxKm()).isEqualTo(8500);
+            assertThat(result.get("20m_FT8").maxDxPath()).isEqualTo("JA1ABC → W6XYZ");
+        }
+
+        @Test
+        void testAggregateAllBands_NullDxDistance_HasNullDxFields() {
+            Object ts = toTimestamp(FIXED_TIME.minus(Duration.ofMinutes(5)));
+            setupBulkBuckets(java.util.Collections.singletonList(
+                    new Object[]{BAND_20M, MODE_FT8, ts, 50L}
+            ));
+            setupBulkDx(java.util.Collections.singletonList(
+                    new Object[]{BAND_20M, MODE_FT8, null, null, null}
+            ));
+            setupBulkPaths(emptyBulkRows());
+
+            Map<String, BandActivity> result = aggregator.aggregateAllBands();
+
+            assertThat(result.get("20m_FT8").maxDxKm()).isNull();
+            assertThat(result.get("20m_FT8").maxDxPath()).isNull();
+        }
+
+        @Test
+        void testAggregateAllBands_WithPaths_PopulatesActivePaths() {
+            Object ts = toTimestamp(FIXED_TIME.minus(Duration.ofMinutes(5)));
+            setupBulkBuckets(java.util.Collections.singletonList(
+                    new Object[]{BAND_20M, MODE_FT8, ts, 100L}
+            ));
+            setupBulkDx(emptyBulkRows());
+            setupBulkPaths(java.util.Collections.singletonList(
+                    new Object[]{BAND_20M, MODE_FT8, "NA", "EU", 10L}
+            ));
+
+            Map<String, BandActivity> result = aggregator.aggregateAllBands();
+
+            assertThat(result.get("20m_FT8").activePaths())
+                    .containsExactly(ContinentPath.NA_EU);
+        }
+
+        @Test
+        void testAggregateAllBands_PathsBelowThreshold_Excluded() {
+            Object ts = toTimestamp(FIXED_TIME.minus(Duration.ofMinutes(5)));
+            setupBulkBuckets(java.util.Collections.singletonList(
+                    new Object[]{BAND_20M, MODE_FT8, ts, 100L}
+            ));
+            setupBulkDx(emptyBulkRows());
+            setupBulkPaths(java.util.Collections.singletonList(
+                    new Object[]{BAND_20M, MODE_FT8, "NA", "EU", 3L}
+            ));
+
+            Map<String, BandActivity> result = aggregator.aggregateAllBands();
+
+            assertThat(result.get("20m_FT8").activePaths()).isEmpty();
+        }
+
+        @Test
+        void testAggregateAllBands_DxWithNullCallsigns_PathIsNull() {
+            Object ts = toTimestamp(FIXED_TIME.minus(Duration.ofMinutes(5)));
+            setupBulkBuckets(java.util.Collections.singletonList(
+                    new Object[]{BAND_20M, MODE_FT8, ts, 50L}
+            ));
+            setupBulkDx(java.util.Collections.singletonList(
+                    new Object[]{BAND_20M, MODE_FT8, 5000, null, "W6XYZ"}
+            ));
+            setupBulkPaths(emptyBulkRows());
+
+            Map<String, BandActivity> result = aggregator.aggregateAllBands();
+
+            assertThat(result.get("20m_FT8").maxDxKm()).isEqualTo(5000);
+            assertThat(result.get("20m_FT8").maxDxPath()).isNull();
+        }
+
+        @Test
+        void testAggregateAllBands_BaselineFromOlderBuckets_CalculatesTrend() {
+            // Current bucket (within 15m window) and older baseline bucket
+            Object currentTs = toTimestamp(FIXED_TIME.minus(Duration.ofMinutes(5)));
+            Object baselineTs = toTimestamp(FIXED_TIME.minus(Duration.ofMinutes(20)));
+            setupBulkBuckets(List.of(
+                    new Object[]{BAND_20M, MODE_FT8, currentTs, 100L},
+                    new Object[]{BAND_20M, MODE_FT8, baselineTs, 50L}
+            ));
+            setupBulkDx(emptyBulkRows());
+            setupBulkPaths(emptyBulkRows());
+
+            Map<String, BandActivity> result = aggregator.aggregateAllBands();
+
+            assertThat(result.get("20m_FT8").spotCount()).isEqualTo(100);
+            assertThat(result.get("20m_FT8").baselineSpotCount()).isGreaterThanOrEqualTo(0);
+        }
+
+        @Test
         void testAggregateAllBands_ZeroSpotModes_Excluded() {
             // Given: Only FT8 has buckets, FT4 does not
             Instant bucket = FIXED_TIME.minus(Duration.ofMinutes(5));
