@@ -29,7 +29,11 @@ import java.time.Instant;
         @Index(name = "idx_spots_mode_time", columnList = "mode, spotted_at DESC"),
         @Index(name = "idx_spots_band_mode_time", columnList = "band, mode, spotted_at DESC"),
         @Index(name = "idx_spots_distance", columnList = "band, distance_km DESC"),
-        @Index(name = "idx_spots_created_at", columnList = "created_at")
+        @Index(name = "idx_spots_created_at", columnList = "created_at"),
+        @Index(name = "idx_spots_bulk_agg", columnList = "spotted_at, band, mode"),
+        @Index(name = "idx_spots_bulk_paths",
+                columnList = "spotted_at, band, mode, spotter_continent, spotted_continent")
+        // idx_spots_bulk_dx uses INCLUDE clause — managed by Liquibase migration 015 only
 })
 public class SpotEntity {
 
