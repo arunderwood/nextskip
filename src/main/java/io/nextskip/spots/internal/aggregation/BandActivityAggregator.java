@@ -17,6 +17,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.EnumSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -145,33 +146,103 @@ public class BandActivityAggregator {
     /**
      * Aggregates activity data for all band+mode combinations with recent activity.
      *
-     * <p>Returns a map with composite {@code "{band}_{mode}"} keys (e.g., "20m_FT8",
-     * "20m_FT4") to activity data. Only band+mode pairs with spots in the last
-     * 2 hours are included.
+     * <p>Uses 3 bulk SQL queries instead of per-pair N+1 queries:
+     * <ol>
+     *   <li>Spot counts in 15-minute buckets (replaces ~271 COUNT queries)</li>
+     *   <li>Max DX per band+mode via window function (replaces ~38 correlated subqueries)</li>
+     *   <li>Continent paths per band+mode (replaces ~38 GROUP BY queries)</li>
+     * </ol>
+     *
+     * <p>Results are assembled into {@link BandActivity} records in Java.
      *
      * @return map of composite key to aggregated activity
      */
     public Map<String, BandActivity> aggregateAllBands() {
-        Instant lookback = clock.instant().minus(ACTIVITY_LOOKBACK);
-        List<Object[]> activePairs = repository.findDistinctBandModePairsWithActivitySince(lookback);
+        Instant now = clock.instant();
+        // 3h covers SSB's baseline window (the widest); 1h covers SSB's current window
+        Instant baselineLookback = now.minus(Duration.ofHours(3));
+        Instant currentLookback = now.minus(Duration.ofHours(1));
 
-        LOG.info("Aggregating activity for {} band+mode pairs with recent activity", activePairs.size());
+        LOG.info("Running bulk aggregation queries");
+
+        List<Object[]> bucketRows = repository.countSpotsByBandModeInBuckets(baselineLookback);
+        List<Object[]> dxRows = repository.findMaxDxSpotPerBandMode(currentLookback);
+        List<Object[]> pathRows = repository.countContinentPathsPerBandMode(currentLookback);
+
+        LOG.info("Bulk queries complete: {} bucket rows, {} DX rows, {} path rows",
+                bucketRows.size(), dxRows.size(), pathRows.size());
+
+        // Index all bulk results by composite "band_mode" key for O(1) lookup during assembly
+        Map<String, Object[]> dxByKey = new LinkedHashMap<>();
+        for (Object[] row : dxRows) {
+            dxByKey.put(row[0] + "_" + row[1], row);
+        }
+
+        Map<String, List<Object[]>> pathsByKey = indexByBandModeKey(pathRows);
+
+        // 15-minute buckets are mode-agnostic; each mode's window config selects
+        // which buckets to sum in countSpotsInWindow() / calculateBaselineFromBuckets()
+        Map<String, Map<Instant, Long>> bucketsByKey = new LinkedHashMap<>();
+        Set<String> activePairKeys = new LinkedHashSet<>();
+        for (Object[] row : bucketRows) {
+            String key = row[0] + "_" + row[1];
+            Instant bucketStart = ((java.sql.Timestamp) row[2]).toInstant();
+            long count = ((Number) row[3]).longValue();
+            activePairKeys.add(key);
+            bucketsByKey.computeIfAbsent(key, k -> new LinkedHashMap<>())  // NOPMD - one map per band_mode key
+                    .put(bucketStart, count);
+        }
 
         Map<String, BandActivity> result = new LinkedHashMap<>();
-        for (Object[] pair : activePairs) {
-            String band = (String) pair[0];
-            String mode = (String) pair[1];
-            String compositeKey = band + "_" + mode;
-            try {
-                BandActivity activity = aggregateBandMode(band, mode);
-                result.put(compositeKey, activity);
-            } catch (org.springframework.dao.DataAccessException e) {
-                LOG.warn("Failed to aggregate {} {}: {}", band, mode, e.getMessage());
-            }
+        for (String key : activePairKeys) {
+            result.put(key, assembleBandActivity(key, now, bucketsByKey, dxByKey, pathsByKey));
         }
 
         LOG.info("Completed aggregation: {} band+mode pairs processed", result.size());
         return result;
+    }
+
+    /**
+     * Counts spots within a time window by summing matching 15-minute buckets.
+     */
+    private int countSpotsInWindow(Map<Instant, Long> buckets, Instant windowStart, Instant windowEnd) {
+        long total = 0;
+        for (Map.Entry<Instant, Long> entry : buckets.entrySet()) {
+            Instant bucketStart = entry.getKey();
+            // Bucket is within window if it starts at or after windowStart and before windowEnd
+            if (!bucketStart.isBefore(windowStart) && bucketStart.isBefore(windowEnd)) {
+                total += entry.getValue();
+            }
+        }
+        return (int) total;
+    }
+
+    /**
+     * Calculates baseline from pre-bucketed data instead of individual DB queries.
+     */
+    private int calculateBaselineFromBuckets(Map<Instant, Long> buckets, ModeWindow modeWindow, Instant now) {
+        Duration current = modeWindow.getCurrentWindow();
+        int windowCount = modeWindow.getBaselineWindowCount();
+
+        if (windowCount <= MIN_WINDOWS_FOR_BASELINE) {
+            return 0;
+        }
+
+        long totalSpots = 0;
+        int validWindows = 0;
+
+        for (int i = 1; i < windowCount; i++) {
+            Instant windowEnd = now.minus(current.multipliedBy(i));
+            Instant windowStart = windowEnd.minus(current);
+
+            int count = countSpotsInWindow(buckets, windowStart, windowEnd);
+            if (count >= 0) {
+                totalSpots += count;
+                validWindows++;
+            }
+        }
+
+        return validWindows == 0 ? 0 : (int) (totalSpots / validWindows);
     }
 
     /**
@@ -268,5 +339,79 @@ public class BandActivityAggregator {
         }
 
         return spotted.toUpperCase(Locale.ROOT) + " → " + spotter.toUpperCase(Locale.ROOT);
+    }
+
+    // --- Bulk query result helpers (used by aggregateAllBands) ---
+
+    private BandActivity assembleBandActivity(String key, Instant now,
+            Map<String, Map<Instant, Long>> bucketsByKey,
+            Map<String, Object[]> dxByKey,
+            Map<String, List<Object[]>> pathsByKey) {
+        String[] parts = key.split("_", 2);
+        String band = parts[0];
+        String mode = parts[1];
+
+        ModeWindow modeWindow = ModeWindow.forMode(mode);
+        Instant windowStart = now.minus(modeWindow.getCurrentWindow());
+
+        Map<Instant, Long> buckets = bucketsByKey.getOrDefault(key, Map.of());
+        int currentCount = countSpotsInWindow(buckets, windowStart, now);
+        int baselineCount = calculateBaselineFromBuckets(buckets, modeWindow, now);
+        double trend = calculateTrend(currentCount, baselineCount);
+
+        Object[] dxRow = dxByKey.get(key);
+        return new BandActivity(band, mode, currentCount, baselineCount, trend,
+                extractDxDistance(dxRow), extractDxPath(dxRow),
+                extractActivePaths(pathsByKey.getOrDefault(key, List.of())),
+                windowStart, now, now, scoringProperties.getMultiplierForMode(mode));
+    }
+
+    @SuppressWarnings("PMD.AvoidInstantiatingObjectsInLoops") // One list per unique key is intentional
+    private Map<String, List<Object[]>> indexByBandModeKey(List<Object[]> rows) {
+        Map<String, List<Object[]>> indexed = new LinkedHashMap<>();
+        for (Object[] row : rows) {
+            String key = row[0] + "_" + row[1];
+            indexed.computeIfAbsent(key, k -> new java.util.ArrayList<>()).add(row);
+        }
+        return indexed;
+    }
+
+    @SuppressWarnings("PMD.UseVarargs") // Array from native query result, not a varargs call site
+    private Integer extractDxDistance(Object[] dxRow) {
+        if (dxRow == null) {
+            return null;
+        }
+        Number distance = (Number) dxRow[2];
+        return distance != null ? distance.intValue() : null;
+    }
+
+    @SuppressWarnings("PMD.UseVarargs") // Array from native query result, not a varargs call site
+    private String extractDxPath(Object[] dxRow) {
+        if (dxRow == null) {
+            return null;
+        }
+        Number distance = (Number) dxRow[2];
+        if (distance == null) {
+            return null;
+        }
+        String spottedCall = (String) dxRow[3];
+        String spotterCall = (String) dxRow[4];
+        if (spottedCall == null || spotterCall == null) {
+            return null;
+        }
+        return spottedCall.toUpperCase(Locale.ROOT) + " → " + spotterCall.toUpperCase(Locale.ROOT);
+    }
+
+    private Set<ContinentPath> extractActivePaths(List<Object[]> pathRows) {
+        Set<ContinentPath> active = EnumSet.noneOf(ContinentPath.class);
+        for (Object[] row : pathRows) {
+            String c1 = (String) row[2];
+            String c2 = (String) row[3];
+            long count = ((Number) row[4]).longValue();
+            if (count >= MIN_SPOTS_FOR_ACTIVE_PATH) {
+                ContinentPath.fromContinents(c1, c2).ifPresent(active::add);
+            }
+        }
+        return active;
     }
 }
