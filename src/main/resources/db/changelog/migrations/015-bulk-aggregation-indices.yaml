@@ -1,0 +1,47 @@
+databaseChangeLog:
+  - changeSet:
+      id: 015-bulk-aggregation-indices
+      author: nextskip
+      comment: >
+        Covering indices for bulk aggregation queries that scan across all
+        band+mode pairs. The existing idx_spots_band_mode_time index only
+        helps per-pair lookups; these indices enable index-only scans for
+        the three bulk queries in BandActivityAggregator.aggregateAllBands().
+      changes:
+        # Covers countSpotsByBandModeInBuckets: GROUP BY band, mode, date_trunc(spotted_at)
+        # Leading with spotted_at enables range scan on the time filter
+        - createIndex:
+            indexName: idx_spots_bulk_agg
+            tableName: spots
+            columns:
+              - column:
+                  name: spotted_at
+              - column:
+                  name: band
+              - column:
+                  name: mode
+
+        # Covers countContinentPathsPerBandMode: GROUP BY band, mode, continents
+        # with WHERE spotted_at > :since AND continents NOT NULL
+        - createIndex:
+            indexName: idx_spots_bulk_paths
+            tableName: spots
+            columns:
+              - column:
+                  name: spotted_at
+              - column:
+                  name: band
+              - column:
+                  name: mode
+              - column:
+                  name: spotter_continent
+              - column:
+                  name: spotted_continent
+
+        # Covers findMaxDxSpotPerBandMode: ROW_NUMBER() OVER (PARTITION BY band, mode ORDER BY distance_km DESC)
+        # Enables index-only scan with INCLUDE for callsign columns in SELECT
+        - sql:
+            sql: >
+              CREATE INDEX idx_spots_bulk_dx
+              ON spots (spotted_at, band, mode, distance_km DESC NULLS LAST)
+              INCLUDE (spotted_call, spotter_call)
