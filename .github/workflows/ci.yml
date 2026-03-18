@@ -88,12 +88,11 @@ jobs:
             build/reports/pitest/
 
       - name: Test Report
-        uses: dorny/test-reporter@v2
+        uses: EnricoMi/publish-unit-test-result-action@v2
         if: always()
         with:
-          name: JUnit Tests
-          path: build/test-results/test/*.xml
-          reporter: java-junit
+          files: build/test-results/test/*.xml
+          check_name: JUnit Tests
 
       - name: Determine version
         id: version
