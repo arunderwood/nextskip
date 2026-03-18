@@ -1,0 +1,21 @@
+databaseChangeLog:
+  - changeSet:
+      id: 016-spots-autovacuum-tuning
+      author: arunderwood
+      comment: >
+        Configure aggressive autovacuum for the spots table to prevent index bloat.
+        The spots table has extremely high churn (continuous MQTT inserts + periodic
+        deletes) which causes massive index bloat under default autovacuum settings.
+        Default scale_factor of 0.2 means vacuum waits for ~1.7M dead rows on an
+        8.7M row table, allowing bloat to accumulate unchecked.
+      changes:
+        - sql:
+            comment: >
+              Tune autovacuum for high-churn spots table:
+              - vacuum_scale_factor 0.01 = vacuum at 1% dead rows (~87K rows vs default 1.7M)
+              - analyze_scale_factor 0.005 = analyze at 0.5% changes
+              - vacuum_cost_delay 2ms = faster vacuum execution (default 20ms)
+            sql: |
+              ALTER TABLE spots SET (autovacuum_vacuum_scale_factor = 0.01);
+              ALTER TABLE spots SET (autovacuum_analyze_scale_factor = 0.005);
+              ALTER TABLE spots SET (autovacuum_vacuum_cost_delay = 2);

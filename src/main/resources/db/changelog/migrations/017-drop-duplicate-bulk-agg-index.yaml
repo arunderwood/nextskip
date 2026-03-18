@@ -1,0 +1,13 @@
+databaseChangeLog:
+  - changeSet:
+      id: 017-drop-duplicate-bulk-agg-index
+      author: arunderwood
+      comment: >
+        Drop idx_spots_bulk_agg (spotted_at, band, mode) as it is fully covered
+        by idx_spots_bulk_paths (spotted_at, band, mode, spotter_continent,
+        spotted_continent). DB health analysis confirmed only 9 scans vs the
+        covering index. Removing it reduces INSERT/DELETE overhead and saves ~71MB.
+      changes:
+        - dropIndex:
+            indexName: idx_spots_bulk_agg
+            tableName: spots
