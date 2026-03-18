@@ -186,7 +186,7 @@ public class BandActivityAggregator {
         Set<String> activePairKeys = new LinkedHashSet<>();
         for (Object[] row : bucketRows) {
             String key = row[0] + "_" + row[1];
-            Instant bucketStart = ((java.sql.Timestamp) row[2]).toInstant();
+            Instant bucketStart = (Instant) row[2];
             long count = ((Number) row[3]).longValue();
             activePairKeys.add(key);
             bucketsByKey.computeIfAbsent(key, k -> new LinkedHashMap<>())  // NOPMD - one map per band_mode key
