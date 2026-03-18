@@ -90,7 +90,7 @@ jobs:
 
       - name: Test Report
         uses: EnricoMi/publish-unit-test-result-action@v2
-        if: always()
+        if: ${{ !cancelled() }}
         with:
           files: build/test-results/test/*.xml
           check_name: JUnit Tests
