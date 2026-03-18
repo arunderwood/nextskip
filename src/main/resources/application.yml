@@ -193,17 +193,6 @@ management:
         autotime:
           enabled: true  # Enable Spring Data repository method timing
 
-# JDBC Observability (datasource-micrometer)
-jdbc:
-  datasource-proxy:
-    enabled: true
-    query:
-      enable-logging: false  # Set true for debug query logging
-  includes:
-    - CONNECTION
-    - QUERY
-    - FETCH
-
 # Logging Configuration
 logging:
   level:

@@ -60,34 +60,7 @@ Agent version: `gradle/libs.versions.toml` → `pyroscope-agent`
 
 ## Database Observability
 
-JDBC and JPA metrics via [datasource-micrometer](https://jdbc-observations.github.io/datasource-micrometer/docs/current/docs/html/) and [hibernate-micrometer](https://docs.spring.io/spring-boot/reference/actuator/metrics.html).
-
-### Metrics Exposed
-
-| Metric | Type | Description |
-|--------|------|-------------|
-| `jdbc.query` | Timer | Query execution timing |
-| `jdbc.connection` | Timer | Connection lifecycle timing |
-| `jdbc.connection.commit` | Counter | Commit operations |
-| `jdbc.connection.rollback` | Counter | Rollback operations |
-| `jdbc.result-set` | Timer | ResultSet operation timing |
-| `hibernate.sessions.open` | Gauge | Open session count |
-| `hibernate.entities.loads` | Counter | Entity loads |
-| `hibernate.query.executions` | Counter | Query execution count |
-| `spring.data.repository.invocations` | Timer | Repository method timing |
-
-### HikariCP Connection Pool
-
-Already exposed via Spring Boot Actuator:
-
-| Metric | Description |
-|--------|-------------|
-| `hikaricp.connections.active` | Active connections |
-| `hikaricp.connections.idle` | Idle connections |
-| `hikaricp.connections.pending` | Threads waiting for connection |
-| `hikaricp.connections.timeout` | Connection acquisition timeouts |
-| `hikaricp.connections.acquire` | Connection acquisition timing |
-| `hikaricp.connections.usage` | Connection usage duration |
+JDBC tracing via the [Grafana OTEL Java agent](https://grafana.com/docs/opentelemetry/instrument/grafana-java/), connection pool metrics via [HikariCP](https://docs.spring.io/spring-boot/reference/actuator/metrics.html#actuator.metrics.supported.data-source), and JPA statistics via [hibernate-micrometer](https://docs.spring.io/spring-boot/reference/actuator/metrics.html#actuator.metrics.supported.hibernate).
 
 ### OTEL JDBC Tracing
 
@@ -98,24 +71,39 @@ The Grafana OTEL Java agent automatically traces JDBC calls with these span attr
 - `db.statement`: SQL query text
 - `db.operation`: SELECT/INSERT/UPDATE/DELETE
 
-View traces in Grafana Tempo.
+Per-query timing is visible in Grafana Tempo. Enabled via `otel.instrumentation.jdbc-datasource.enabled=true` in `config/otel-agent.properties`.
 
-### Configuration
+### HikariCP Connection Pool
 
-JDBC proxy configuration (application.yml):
+Exposed via Spring Boot Actuator (zero config):
 
-```yaml
-jdbc:
-  datasource-proxy:
-    enabled: true
-    query:
-      enable-logging: true  # Enable for debug query logging
-      log-level: DEBUG
-  includes:
-    - CONNECTION  # Connection lifecycle
-    - QUERY       # SQL query execution
-    - FETCH       # ResultSet operations
-```
+| Metric | Description |
+|--------|-------------|
+| `hikaricp.connections.active` | Active connections |
+| `hikaricp.connections.idle` | Idle connections |
+| `hikaricp.connections.pending` | Threads waiting for connection |
+| `hikaricp.connections.timeout` | Connection acquisition timeouts |
+| `hikaricp.connections.acquire` | Connection acquisition timing |
+| `hikaricp.connections.usage` | Connection usage duration |
+| `hikaricp.connections.creation` | Connection creation timing |
+
+### Hibernate / JPA Metrics
+
+Exposed via `hibernate-micrometer` (enabled by `hibernate.generate_statistics=true`):
+
+| Metric | Type | Description |
+|--------|------|-------------|
+| `hibernate.sessions.open` | Gauge | Open session count |
+| `hibernate.entities.loads` | Counter | Entity loads |
+| `hibernate.query.executions` | Counter | Query execution count |
+
+### Spring Data Repository Metrics
+
+| Metric | Type | Description |
+|--------|------|-------------|
+| `spring.data.repository.invocations` | Timer | Repository method timing |
+
+Enabled via `management.metrics.data.repository.autotime.enabled=true` in `application.yml`.
 
 ### Grafana Dashboard
 

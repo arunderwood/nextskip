@@ -170,8 +170,7 @@ dependencies {
     runtimeOnly(libs.postgresql)
     implementation(libs.spring.boot.starter.liquibase)
 
-    // Database observability
-    implementation("net.ttddyy.observation:datasource-micrometer-spring-boot:2.1.1")
+    // Database observability (JDBC tracing via OTEL agent; JPA stats via hibernate-micrometer)
     implementation("org.hibernate.orm:hibernate-micrometer")
 
     // Scheduling
