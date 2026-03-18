@@ -53,6 +53,8 @@ spring:
       idle-timeout: 600000
       max-lifetime: 1800000
       keepalive-time: 120000  # Ping idle connections every 2 min to prevent stale connections
+      data-source-properties:
+        statement_timeout: 15000  # 15s max per statement - prevents connection hogging
 
   # JPA Configuration
   jpa:
