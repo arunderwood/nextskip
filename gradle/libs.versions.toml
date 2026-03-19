@@ -34,7 +34,7 @@ byte-buddy = "1.18.7-jdk5"
 jqwik = "1.9.3"
 
 # Database testing
-testcontainers = "2.0.3"
+testcontainers = "2.0.4"
 
 # Scheduling
 db-scheduler = "16.7.1"
