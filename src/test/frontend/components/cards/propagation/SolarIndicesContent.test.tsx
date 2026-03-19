@@ -181,8 +181,10 @@ describe('SolarIndicesContent', () => {
   });
 
   describe('card definition render', () => {
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- partial mock for test
+    const dashboardData = { propagation: { solarIndices: createIndices() } } as DashboardData;
+
     it('should render solar indices card with data', () => {
-      const dashboardData = { propagation: { solarIndices: createIndices() } } as DashboardData;
       const cards = getRegisteredCards();
       const solarCard = cards.find((c) => {
         const result = c.createConfig(dashboardData);
@@ -196,7 +198,7 @@ describe('SolarIndicesContent', () => {
       const config = result as import('Frontend/types/activity').ActivityCardConfig;
       const element = solarCard!.render(dashboardData, config);
 
-      render(<>{element}</>);
+      render(element as React.ReactElement);
       expect(screen.getByText('Solar Indices')).toBeInTheDocument();
     });
   });
