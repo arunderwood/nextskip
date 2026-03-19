@@ -339,7 +339,7 @@ class BandActivityTest {
         }
 
         @Test
-        void testGetScore_WorstConditions_ApproachesMinScore() {
+        void testGetScore_WorstConditions_ReturnsZero() {
             // Worst: no activity, strong negative trend, no DX, no paths
             BandActivity worst = createBandActivity(
                     0,       // No activity
@@ -349,8 +349,35 @@ class BandActivityTest {
             );
 
             assertThat(worst.getScore())
-                    .as("Worst conditions should approach min score")
-                    .isLessThanOrEqualTo(10);
+                    .as("Zero spots should always score 0")
+                    .isZero();
+        }
+
+        @Test
+        void testGetScore_ZeroSpots_AlwaysReturnsZero() {
+            // Zero spots should return 0 regardless of trend, DX, or paths
+            BandActivity zeroSpotsWithGoodSignals = createBandActivity(
+                    0,       // No activity
+                    50.0,    // Strong positive trend
+                    12000,   // Excellent DX
+                    Set.of(ContinentPath.NA_EU, ContinentPath.NA_AS,
+                            ContinentPath.EU_AS, ContinentPath.NA_OC)
+            );
+
+            assertThat(zeroSpotsWithGoodSignals.getScore())
+                    .as("Zero spots should score 0 even with positive trend, DX, and paths")
+                    .isZero();
+        }
+
+        @Test
+        void testGetScore_OneSpot_AlwaysOutranksZeroSpots() {
+            // The specific bug: zero-spot card should never outrank a card with spots
+            BandActivity zeroSpotsFlatTrend = createBandActivity(0, 0.0, null, Set.of());
+            BandActivity oneSpotNegativeTrend = createBandActivity(1, -89.0, 11700, Set.of(ContinentPath.NA_SA));
+
+            assertThat(oneSpotNegativeTrend.getScore())
+                    .as("A band with 1 spot should always outrank a band with 0 spots")
+                    .isGreaterThan(zeroSpotsFlatTrend.getScore());
         }
 
         @Test
