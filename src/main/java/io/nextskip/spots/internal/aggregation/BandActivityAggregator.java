@@ -159,7 +159,7 @@ public class BandActivityAggregator {
      */
     public Map<String, BandActivity> aggregateAllBands() {
         Instant now = clock.instant();
-        // 3h covers SSB's baseline window (the widest); 1h covers SSB's current window
+        // 3h covers SSB's baseline window (the widest); 1h covers SSB's current window (the widest)
         Instant baselineLookback = now.minus(Duration.ofHours(3));
         Instant currentLookback = now.minus(Duration.ofHours(1));
 
@@ -167,18 +167,16 @@ public class BandActivityAggregator {
 
         List<Object[]> bucketRows = repository.countSpotsByBandModeInBuckets(baselineLookback);
         List<Object[]> dxRows = repository.findMaxDxSpotPerBandMode(currentLookback);
-        List<Object[]> pathRows = repository.countContinentPathsPerBandMode(currentLookback);
+        Map<Duration, Map<String, List<Object[]>>> pathsByDuration = queryPathsByWindowDuration(now);
 
-        LOG.info("Bulk queries complete: {} bucket rows, {} DX rows, {} path rows",
-                bucketRows.size(), dxRows.size(), pathRows.size());
+        LOG.info("Bulk queries complete: {} bucket rows, {} DX rows, {} path duration groups",
+                bucketRows.size(), dxRows.size(), pathsByDuration.size());
 
         // Index all bulk results by composite "band_mode" key for O(1) lookup during assembly
         Map<String, Object[]> dxByKey = new LinkedHashMap<>();
         for (Object[] row : dxRows) {
             dxByKey.put(row[0] + "_" + row[1], row);
         }
-
-        Map<String, List<Object[]>> pathsByKey = indexByBandModeKey(pathRows);
 
         // 15-minute buckets are mode-agnostic; each mode's window config selects
         // which buckets to sum in countSpotsInWindow() / calculateBaselineFromBuckets()
@@ -195,10 +193,30 @@ public class BandActivityAggregator {
 
         Map<String, BandActivity> result = new LinkedHashMap<>();
         for (String key : activePairKeys) {
-            result.put(key, assembleBandActivity(key, now, bucketsByKey, dxByKey, pathsByKey));
+            result.put(key, assembleBandActivity(key, now, bucketsByKey, dxByKey, pathsByDuration));
         }
 
         LOG.info("Completed aggregation: {} band+mode pairs processed", result.size());
+        return result;
+    }
+
+    /**
+     * Queries continent paths once per distinct mode window duration.
+     *
+     * <p>Instead of a single 1-hour lookback for all modes, this runs one query
+     * per unique window duration (15m, 30m, 60m) so that continent paths
+     * align with each mode's spot counting window.
+     *
+     * @param now current time
+     * @return map from window duration to indexed path results (keyed by band_mode)
+     */
+    private Map<Duration, Map<String, List<Object[]>>> queryPathsByWindowDuration(Instant now) {
+        Map<Duration, Map<String, List<Object[]>>> result = new LinkedHashMap<>();
+        for (Duration duration : ModeWindow.distinctCurrentWindows().keySet()) {
+            Instant since = now.minus(duration);
+            List<Object[]> rows = repository.countContinentPathsPerBandMode(since);
+            result.put(duration, indexByBandModeKey(rows));
+        }
         return result;
     }
 
@@ -346,7 +364,7 @@ public class BandActivityAggregator {
     private BandActivity assembleBandActivity(String key, Instant now,
             Map<String, Map<Instant, Long>> bucketsByKey,
             Map<String, Object[]> dxByKey,
-            Map<String, List<Object[]>> pathsByKey) {
+            Map<Duration, Map<String, List<Object[]>>> pathsByDuration) {
         String[] parts = key.split("_", 2);
         String band = parts[0];
         String mode = parts[1];
@@ -359,6 +377,8 @@ public class BandActivityAggregator {
         int baselineCount = calculateBaselineFromBuckets(buckets, modeWindow, now);
         double trend = calculateTrend(currentCount, baselineCount);
 
+        Map<String, List<Object[]>> pathsByKey =
+                pathsByDuration.getOrDefault(modeWindow.getCurrentWindow(), Map.of());
         Object[] dxRow = dxByKey.get(key);
         return new BandActivity(band, mode, currentCount, baselineCount, trend,
                 extractDxDistance(dxRow), extractDxPath(dxRow),

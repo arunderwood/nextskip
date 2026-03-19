@@ -598,6 +598,43 @@ class BandActivityAggregatorTest {
                     .hasSize(1)
                     .containsKey("20m_FT8");
         }
+
+        @Test
+        void testAggregateAllBands_PathsUsesModeSpecificWindow_NotGlobalLookback() {
+            // Given: FT4 spots only in older bucket (20 min ago, outside 15m FT4 window)
+            // but with path data in 1-hour lookback
+            Instant olderBucket = FIXED_TIME.minus(Duration.ofMinutes(20));
+            setupBulkBuckets(java.util.Collections.singletonList(
+                    new Object[]{BAND_20M, MODE_FT4, toInstant(olderBucket), 30L}
+            ));
+            setupBulkDx(emptyBulkRows());
+
+            // Path query for 15m window returns no paths (spots are older than 15m)
+            Instant ft4WindowStart = FIXED_TIME.minus(Duration.ofMinutes(15));
+            when(repository.countContinentPathsPerBandMode(eq(ft4WindowStart)))
+                    .thenReturn(emptyBulkRows());
+            // Path query for wider windows returns paths (stale data from the old approach)
+            Instant cwWindowStart = FIXED_TIME.minus(Duration.ofMinutes(30));
+            Instant ssbWindowStart = FIXED_TIME.minus(Duration.ofMinutes(60));
+            lenient().when(repository.countContinentPathsPerBandMode(eq(cwWindowStart)))
+                    .thenReturn(java.util.Collections.singletonList(
+                            new Object[]{BAND_20M, MODE_FT4, "NA", "EU", 10L}
+                    ));
+            lenient().when(repository.countContinentPathsPerBandMode(eq(ssbWindowStart)))
+                    .thenReturn(java.util.Collections.singletonList(
+                            new Object[]{BAND_20M, MODE_FT4, "NA", "EU", 10L}
+                    ));
+
+            // When
+            Map<String, BandActivity> result = aggregator.aggregateAllBands();
+
+            // Then: FT4 uses 15m window for paths, so no paths should be active
+            assertThat(result.get("20m_FT4").activePaths())
+                    .as("FT4 paths should use 15m window, not wider lookback")
+                    .isEmpty();
+            // Spot count is 0 because the bucket is outside the 15m window
+            assertThat(result.get("20m_FT4").spotCount()).isZero();
+        }
     }
 
     // =========================================================================

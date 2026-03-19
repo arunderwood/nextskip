@@ -1,7 +1,11 @@
 package io.nextskip.spots.model;
 
 import java.time.Duration;
+import java.util.EnumSet;
+import java.util.LinkedHashMap;
 import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Mode-specific time windows for band activity aggregation.
@@ -113,6 +117,24 @@ public enum ModeWindow {
      */
     public int getBaselineWindowCount() {
         return (int) (baselineWindow.toMinutes() / currentWindow.toMinutes());
+    }
+
+    /**
+     * Groups all ModeWindow values by their distinct current window durations.
+     *
+     * <p>This allows callers to run one query per duration group instead of
+     * one per mode, reducing database round-trips while still respecting
+     * mode-specific time windows. For example, FT8/FT4/FT2 share a 15-minute
+     * window and are grouped together.
+     *
+     * @return map from duration to the set of ModeWindow values sharing that duration
+     */
+    public static Map<Duration, Set<ModeWindow>> distinctCurrentWindows() {
+        Map<Duration, Set<ModeWindow>> result = new LinkedHashMap<>();
+        for (ModeWindow mw : values()) {
+            result.computeIfAbsent(mw.currentWindow, k -> EnumSet.noneOf(ModeWindow.class)).add(mw);
+        }
+        return result;
     }
 
     /**
