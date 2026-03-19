@@ -119,6 +119,12 @@ public record BandActivity(
      */
     @Override
     public int getScore() {
+        // No spots means no current activity — trend/DX/path data from prior
+        // windows should not inflate the score above bands with actual spots
+        if (spotCount == 0) {
+            return 0;
+        }
+
         int activityScore = normalizeActivity();
         int trendScore = normalizeTrend();
         int dxScore = normalizeDx();
