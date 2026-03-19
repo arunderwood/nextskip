@@ -2,8 +2,13 @@ import React from 'react';
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import SolarIndicesContent from 'Frontend/components/cards/propagation/SolarIndicesContent';
+import { getRegisteredCards } from 'Frontend/components/cards/CardRegistry';
+import type { DashboardData } from 'Frontend/components/cards/types';
 import type SolarIndices from 'Frontend/generated/io/nextskip/propagation/model/SolarIndices';
 import { createMockSolarIndices } from '../../../fixtures/mockFactories';
+
+// Ensure card registration is loaded
+import 'Frontend/components/cards/propagation';
 
 describe('SolarIndicesContent', () => {
   // Create a wrapper with test-specific defaults (SFI=150 to match existing tests)
@@ -172,6 +177,30 @@ describe('SolarIndicesContent', () => {
       render(<SolarIndicesContent solarIndices={indices} />);
 
       expect(screen.getByText('-10.0')).toBeInTheDocument();
+    });
+  });
+
+  describe('card definition render', () => {
+    it('should render solar indices card with data', () => {
+      const cards = getRegisteredCards();
+      const solarCard = cards.find((c) => {
+        const config = c.createConfig({
+          propagation: { solarIndices: createIndices() },
+        } as DashboardData);
+        return config?.id === 'solar-indices';
+      });
+      expect(solarCard).toBeDefined();
+
+      const config = solarCard!.createConfig({
+        propagation: { solarIndices: createIndices() },
+      } as DashboardData)!;
+      const element = solarCard!.render(
+        { propagation: { solarIndices: createIndices() } } as DashboardData,
+        config,
+      );
+
+      render(<>{element}</>);
+      expect(screen.getByText('Solar Indices')).toBeInTheDocument();
     });
   });
 });
