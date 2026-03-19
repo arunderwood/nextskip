@@ -22,7 +22,7 @@ frontend/
 ### Naming Conventions
 
 - **Files**: PascalCase with `.tsx` extension (`SolarIndicesCard.tsx`)
-- **CSS**: Same name as component (`SolarIndicesCard.css`)
+- **CSS**: Same name as component (`SolarIndicesContent.css`)
 - **Tests**: Same name with `.test.tsx` (`SolarIndicesCard.test.tsx`)
 - **Components**: Function name matches filename
 - **Props interface**: Named `Props` (local to file)
@@ -622,10 +622,10 @@ Adding new activity cards:
 Example:
 
 ```typescript
-case 'satellite-passes':
+case 'pota-activations':
   component = (
-    <ActivityCard config={config} title="Satellite Passes" icon="🛰️">
-      <SatellitePassesContent passes={data.satellitePasses} />
+    <ActivityCard config={config} title="POTA Activations" icon="🏕️">
+      <PotaActivationsContent activations={data.potaActivations} />
     </ActivityCard>
   );
   break;

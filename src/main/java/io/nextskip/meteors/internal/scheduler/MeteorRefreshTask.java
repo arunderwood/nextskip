@@ -91,19 +91,4 @@ public class MeteorRefreshTask implements RefreshTaskCoordinator {
     public String getDisplayName() {
         return DISPLAY_NAME;
     }
-
-    /**
-     * Checks if initial data load is needed.
-     *
-     * @param repository the meteor shower repository
-     * @return true if no meteor shower data exists
-     * @deprecated Use {@link #needsInitialLoad()} instead.
-     */
-    @Deprecated(forRemoval = true)
-    public boolean needsInitialLoad(MeteorShowerRepository repository) {
-        Instant now = Instant.now();
-        return repository.findByVisibilityStartBeforeAndVisibilityEndAfterOrderByPeakStartAsc(
-                now, now).isEmpty()
-                && repository.findByVisibilityStartAfterOrderByVisibilityStartAsc(now).isEmpty();
-    }
 }

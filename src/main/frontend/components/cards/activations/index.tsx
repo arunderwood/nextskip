@@ -63,18 +63,7 @@ const potaActivationsCard: CardDefinition = {
     const validActivations = potaActivations.filter((a) => a !== undefined);
 
     return (
-      <ActivityCard
-        config={config}
-        title="POTA Activations"
-        icon="🌲"
-        subtitle="Parks on the Air"
-        footer={
-          <div className="info-box">
-            <strong>About POTA:</strong> Parks on the Air (POTA) is an amateur radio activity encouraging portable
-            operations from parks and public lands. Higher activation counts indicate more opportunities for contacts.
-          </div>
-        }
-      >
+      <ActivityCard config={config} title="POTA Activations" icon="🌲" subtitle="Parks on the Air">
         <PotaActivationsContent activations={validActivations} />
       </ActivityCard>
     );
@@ -129,18 +118,7 @@ const sotaActivationsCard: CardDefinition = {
     const validActivations = sotaActivations.filter((a) => a !== undefined);
 
     return (
-      <ActivityCard
-        config={config}
-        title="SOTA Activations"
-        icon="⛰️"
-        subtitle="Summits on the Air"
-        footer={
-          <div className="info-box">
-            <strong>About SOTA:</strong> Summits on the Air (SOTA) is an amateur radio activity encouraging portable
-            operations from mountain summits. Higher activation counts indicate more opportunities for contacts.
-          </div>
-        }
-      >
+      <ActivityCard config={config} title="SOTA Activations" icon="⛰️" subtitle="Summits on the Air">
         <SotaActivationsContent activations={validActivations} />
       </ActivityCard>
     );

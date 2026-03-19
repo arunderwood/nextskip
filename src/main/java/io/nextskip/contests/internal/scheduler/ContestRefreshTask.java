@@ -89,17 +89,4 @@ public class ContestRefreshTask implements RefreshTaskCoordinator {
     public String getDisplayName() {
         return DISPLAY_NAME;
     }
-
-    /**
-     * Checks if initial data load is needed.
-     *
-     * @param repository the contest repository
-     * @return true if no recent contest data exists
-     * @deprecated Use {@link #needsInitialLoad()} instead.
-     */
-    @Deprecated(forRemoval = true)
-    public boolean needsInitialLoad(ContestRepository repository) {
-        Instant now = Instant.now();
-        return repository.findByEndTimeAfterOrderByStartTimeAsc(now).isEmpty();
-    }
 }

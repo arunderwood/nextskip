@@ -55,18 +55,8 @@ class DataRefreshStartupHandlerTest {
     private TaskInstance<Void> taskInstance;
 
     @Test
-    void testOnApplicationReady_EagerLoadDisabled_SkipsAllChecks() {
-        DataRefreshStartupHandler handler = createHandler(false, List.of(coordinator1));
-
-        handler.onApplicationReady(applicationReadyEvent);
-
-        verify(coordinator1, never()).needsInitialLoad();
-        verify(scheduler, never()).reschedule(any(), any(Instant.class));
-    }
-
-    @Test
     void testOnApplicationReady_NoCoordinators_NoReschedules() {
-        DataRefreshStartupHandler handler = createHandler(true, List.of());
+        DataRefreshStartupHandler handler = createHandler(List.of());
 
         handler.onApplicationReady(applicationReadyEvent);
 
@@ -78,7 +68,7 @@ class DataRefreshStartupHandlerTest {
         when(coordinator1.needsInitialLoad()).thenReturn(false);
         when(coordinator2.needsInitialLoad()).thenReturn(false);
 
-        DataRefreshStartupHandler handler = createHandler(true, List.of(coordinator1, coordinator2));
+        DataRefreshStartupHandler handler = createHandler(List.of(coordinator1, coordinator2));
 
         handler.onApplicationReady(applicationReadyEvent);
 
@@ -94,7 +84,7 @@ class DataRefreshStartupHandlerTest {
         when(coordinator1.getTaskName()).thenReturn("Test Task");
         when(recurringTask1.instance(RecurringTask.INSTANCE)).thenReturn(taskInstance);
 
-        DataRefreshStartupHandler handler = createHandler(true, List.of(coordinator1));
+        DataRefreshStartupHandler handler = createHandler(List.of(coordinator1));
 
         handler.onApplicationReady(applicationReadyEvent);
 
@@ -116,7 +106,7 @@ class DataRefreshStartupHandlerTest {
         when(recurringTask3.instance(RecurringTask.INSTANCE)).thenReturn(taskInstance);
 
         DataRefreshStartupHandler handler = createHandler(
-                true, List.of(coordinator1, coordinator2, coordinator3));
+                List.of(coordinator1, coordinator2, coordinator3));
 
         handler.onApplicationReady(applicationReadyEvent);
 
@@ -138,7 +128,7 @@ class DataRefreshStartupHandlerTest {
         when(coordinator2.getTaskName()).thenReturn("Second Task");
         when(recurringTask2.instance(RecurringTask.INSTANCE)).thenReturn(taskInstance);
 
-        DataRefreshStartupHandler handler = createHandler(true, List.of(coordinator1, coordinator2));
+        DataRefreshStartupHandler handler = createHandler(List.of(coordinator1, coordinator2));
 
         // Should not throw - exception is caught and logged, then continues to next coordinator
         handler.onApplicationReady(applicationReadyEvent);
@@ -162,7 +152,7 @@ class DataRefreshStartupHandlerTest {
         when(coordinator3.needsInitialLoad()).thenReturn(false);
 
         DataRefreshStartupHandler handler = createHandler(
-                true, List.of(coordinator1, coordinator2, coordinator3));
+                List.of(coordinator1, coordinator2, coordinator3));
 
         handler.onApplicationReady(applicationReadyEvent);
 
@@ -171,8 +161,7 @@ class DataRefreshStartupHandlerTest {
         verify(coordinator2).getRecurringTask();
     }
 
-    private DataRefreshStartupHandler createHandler(
-            boolean eagerLoadEnabled, List<RefreshTaskCoordinator> coordinators) {
-        return new DataRefreshStartupHandler(scheduler, eagerLoadEnabled, coordinators);
+    private DataRefreshStartupHandler createHandler(List<RefreshTaskCoordinator> coordinators) {
+        return new DataRefreshStartupHandler(scheduler, coordinators);
     }
 }

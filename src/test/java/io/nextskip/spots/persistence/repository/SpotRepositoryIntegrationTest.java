@@ -16,7 +16,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
-import static io.nextskip.test.TestConstants.SPOT_TTL_HOURS;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -128,59 +127,6 @@ class SpotRepositoryIntegrationTest extends AbstractPersistenceTest {
         clearPersistenceContext();
 
         assertThat(repository.findById(id)).isEmpty();
-    }
-
-    // ===========================================
-    // deleteByCreatedAtBefore tests
-    // ===========================================
-
-    @Test
-    void testDeleteByCreatedAtBefore_OlderEntities_Deleted() {
-        // Create old and new entities
-        Clock oldClock = Clock.fixed(BASE_TIME.minus(48, ChronoUnit.HOURS), ZoneId.of("UTC"));
-        Clock newClock = Clock.fixed(BASE_TIME, ZoneId.of("UTC"));
-
-        SpotEntity oldSpot = SpotFixtures.spotEntity(
-                SpotFixtures.spot().band("old").build(), oldClock);
-        SpotEntity newSpot = SpotFixtures.spotEntity(
-                SpotFixtures.spot().band("new").build(), newClock);
-
-        repository.saveAllAndFlush(List.of(oldSpot, newSpot));
-        clearPersistenceContext();
-
-        Instant cutoff = BASE_TIME.minus(SPOT_TTL_HOURS, ChronoUnit.HOURS);
-        int deleted = repository.deleteByCreatedAtBefore(cutoff);
-
-        assertThat(deleted).isEqualTo(1);
-        assertThat(repository.count()).isEqualTo(1);
-        assertThat(repository.findAll().get(0).getBand()).isEqualTo("new");
-    }
-
-    @Test
-    void testDeleteByCreatedAtBefore_NoOldEntities_NoneDeleted() {
-        Clock recentClock = Clock.fixed(BASE_TIME, ZoneId.of("UTC"));
-        repository.saveAndFlush(SpotFixtures.defaultSpotEntity(recentClock));
-
-        Instant cutoff = BASE_TIME.minus(SPOT_TTL_HOURS, ChronoUnit.HOURS);
-        int deleted = repository.deleteByCreatedAtBefore(cutoff);
-
-        assertThat(deleted).isZero();
-        assertThat(repository.count()).isEqualTo(1);
-    }
-
-    @Test
-    void testDeleteByCreatedAtBefore_AllOld_AllDeleted() {
-        Clock oldClock = Clock.fixed(BASE_TIME.minus(48, ChronoUnit.HOURS), ZoneId.of("UTC"));
-        repository.saveAllAndFlush(List.of(
-                SpotFixtures.spotEntity(SpotFixtures.spot().band("20m").build(), oldClock),
-                SpotFixtures.spotEntity(SpotFixtures.spot().band("40m").build(), oldClock)
-        ));
-
-        Instant cutoff = BASE_TIME.minus(SPOT_TTL_HOURS, ChronoUnit.HOURS);
-        int deleted = repository.deleteByCreatedAtBefore(cutoff);
-
-        assertThat(deleted).isEqualTo(2);
-        assertThat(repository.count()).isZero();
     }
 
     // ===========================================

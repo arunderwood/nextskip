@@ -90,18 +90,4 @@ public class SotaRefreshTask implements RefreshTaskCoordinator {
     public String getDisplayName() {
         return DISPLAY_NAME;
     }
-
-    /**
-     * Checks if initial data load is needed.
-     *
-     * @param repository the activation repository
-     * @return true if no recent SOTA data exists
-     * @deprecated Use {@link #needsInitialLoad()} instead.
-     */
-    @Deprecated(forRemoval = true)
-    public boolean needsInitialLoad(ActivationRepository repository) {
-        Instant recent = Instant.now().minus(STALE_THRESHOLD);
-        return repository.findByTypeAndSpottedAtAfterOrderBySpottedAtDesc(
-                ActivationType.SOTA, recent).isEmpty();
-    }
 }

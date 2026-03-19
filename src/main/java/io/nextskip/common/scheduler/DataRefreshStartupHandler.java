@@ -4,7 +4,6 @@ import com.github.kagkarlsson.scheduler.Scheduler;
 import com.github.kagkarlsson.scheduler.task.helper.RecurringTask;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
@@ -35,7 +34,6 @@ public class DataRefreshStartupHandler {
     private static final Logger LOG = LoggerFactory.getLogger(DataRefreshStartupHandler.class);
 
     private final Scheduler scheduler;
-    private final boolean eagerLoadEnabled;
     private final List<RefreshTaskCoordinator> coordinators;
 
     /**
@@ -44,17 +42,14 @@ public class DataRefreshStartupHandler {
      * <p>Coordinators are automatically discovered via Spring's component scanning.
      * Each coordinator encapsulates its task, repository check, and task name.
      *
-     * @param scheduler        the db-scheduler Scheduler
-     * @param eagerLoadEnabled whether eager loading is enabled
-     * @param coordinators     all registered refresh task coordinators
+     * @param scheduler    the db-scheduler Scheduler
+     * @param coordinators all registered refresh task coordinators
      */
     public DataRefreshStartupHandler(
             Scheduler scheduler,
-            @Value("${nextskip.refresh.eager-load:true}") boolean eagerLoadEnabled,
             List<RefreshTaskCoordinator> coordinators) {
 
         this.scheduler = scheduler;
-        this.eagerLoadEnabled = eagerLoadEnabled;
         this.coordinators = List.copyOf(coordinators);
     }
 
@@ -68,11 +63,6 @@ public class DataRefreshStartupHandler {
      */
     @EventListener
     public void onApplicationReady(ApplicationReadyEvent event) {
-        if (!eagerLoadEnabled) {
-            LOG.info("Eager loading disabled - skipping startup data refresh checks");
-            return;
-        }
-
         LOG.info("Checking for required startup data refreshes ({} coordinators)...",
                 coordinators.size());
 
