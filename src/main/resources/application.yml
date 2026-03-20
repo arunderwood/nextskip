@@ -80,11 +80,7 @@ db-scheduler:
   heartbeat-interval: 5m  # Heartbeat for detecting dead executions
   shutdown-max-wait: 30s  # Max wait time on graceful shutdown
 
-# Data Refresh Scheduler Configuration (legacy - to be removed)
 nextskip:
-  refresh:
-    eager-load: true  # Warm all caches on application startup
-
   # Admin Configuration
   admin:
     allowed-emails: ${ADMIN_ALLOWED_EMAILS:}  # Comma-separated list of admin emails

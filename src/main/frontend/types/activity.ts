@@ -40,12 +40,7 @@ export type ActivityType =
   | 'pota-activations'
   | 'sota-activations'
   | 'contests'
-  | 'event-contest'
-  | 'event-meteor-shower'
-  | 'event-field-day'
-  | 'satellite-passes'
-  | 'contest-calendar'
-  | 'real-time-spots';
+  | 'event-meteor-shower';
 
 /**
  * Configuration for a single activity card

@@ -17,25 +17,13 @@ import java.util.Optional;
  * <p>Provides methods for:
  * <ul>
  *   <li>Batch insert via inherited {@code saveAll()}</li>
- *   <li>TTL-based cleanup via {@code deleteByCreatedAtBefore()}</li>
+ *   <li>TTL-based cleanup via {@code deleteExpiredSpotsBatch()}</li>
  *   <li>Queries for Phase 2 API endpoints</li>
  * </ul>
  */
 @Repository
 @SuppressWarnings("PMD.AvoidDuplicateLiterals") // JPQL parameter names are intentionally repeated
 public interface SpotRepository extends JpaRepository<SpotEntity, Long> {
-
-    /**
-     * Deletes spots older than the specified cutoff time.
-     *
-     * <p>Used by the cleanup task for 24hr TTL expiration.
-     *
-     * @param cutoff delete spots created before this time
-     * @return number of spots deleted
-     * @deprecated Use {@link #deleteExpiredSpotsBatch(Instant, int)} for large-scale cleanup
-     */
-    @Deprecated
-    int deleteByCreatedAtBefore(Instant cutoff);
 
     /**
      * Deletes a batch of expired spots using native SQL for efficiency.

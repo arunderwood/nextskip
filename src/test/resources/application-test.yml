@@ -22,10 +22,7 @@ spring:
     enabled: true
     change-log: classpath:db/changelog/db.changelog-master.yaml
 
-# Disable eager cache loading in tests (faster startup)
 nextskip:
-  refresh:
-    eager-load: false
   # Disable MQTT ingestion during tests to prevent test pollution
   spots:
     enabled: false

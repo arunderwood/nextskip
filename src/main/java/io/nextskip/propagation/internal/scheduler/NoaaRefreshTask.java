@@ -94,19 +94,4 @@ public class NoaaRefreshTask implements RefreshTaskCoordinator {
     public String getDisplayName() {
         return DISPLAY_NAME;
     }
-
-    /**
-     * Checks if initial data load is needed.
-     *
-     * @param repository the solar indices repository
-     * @return true if no recent NOAA data exists
-     * @deprecated Use {@link #needsInitialLoad()} instead. This method is kept
-     *             for backward compatibility during migration.
-     */
-    @Deprecated(forRemoval = true)
-    public boolean needsInitialLoad(SolarIndicesRepository repository) {
-        Instant recent = Instant.now().minus(STALE_THRESHOLD);
-        return repository.findByTimestampAfterOrderByTimestampDesc(recent).stream()
-                .noneMatch(e -> NOAA_SOURCE.equals(e.getSource()));
-    }
 }

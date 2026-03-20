@@ -85,28 +85,7 @@ const solarIndicesCard: CardDefinition = {
     }
 
     return (
-      <ActivityCard
-        config={config}
-        title="Solar Indices"
-        icon={<Sun size={20} />}
-        subtitle={solarIndices.source}
-        footer={
-          <div className="info-box">
-            <strong>What this means:</strong>
-            <ul>
-              <li>
-                <strong>SFI:</strong> Higher values (150+) indicate better HF propagation
-              </li>
-              <li>
-                <strong>K-Index:</strong> Lower values (0-2) mean quieter, more stable conditions
-              </li>
-              <li>
-                <strong>A-Index:</strong> 24-hour average geomagnetic activity (lower is better)
-              </li>
-            </ul>
-          </div>
-        }
-      >
+      <ActivityCard config={config} title="Solar Indices" icon={<Sun size={20} />} subtitle={solarIndices.source}>
         <SolarIndicesContent solarIndices={solarIndices} />
       </ActivityCard>
     );

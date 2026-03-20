@@ -6,7 +6,6 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -143,27 +142,6 @@ class HamRadioUtilsTest {
         Long freq = HamRadioUtils.parseFrequency(null);
 
         assertNull(freq);
-    }
-
-    @Test
-    @SuppressWarnings("deprecation") // Testing deprecated method
-    void shouldValidate_Callsign_Valid() {
-        assertTrue(HamRadioUtils.isValidCallsign("W1AW"));
-        assertTrue(HamRadioUtils.isValidCallsign("K5ABC"));
-        assertTrue(HamRadioUtils.isValidCallsign("N2YO"));
-        assertTrue(HamRadioUtils.isValidCallsign("VK2ABC"));
-        assertTrue(HamRadioUtils.isValidCallsign("G4ABC"));
-    }
-
-    @Test
-    @SuppressWarnings("deprecation") // Testing deprecated method
-    void shouldValidate_Callsign_Invalid() {
-        assertFalse(HamRadioUtils.isValidCallsign("ABC")); // No number
-        assertFalse(HamRadioUtils.isValidCallsign("1")); // Too short
-        assertFalse(HamRadioUtils.isValidCallsign("")); // Empty
-        assertFalse(HamRadioUtils.isValidCallsign(null)); // Null
-        assertFalse(HamRadioUtils.isValidCallsign("Q1ABC")); // Q prefix reserved for Q-codes
-        // Note: W1AB1 is now valid (LAST_CHAR_NOT_LETTER check removed to support SWL callsigns)
     }
 
     @Test

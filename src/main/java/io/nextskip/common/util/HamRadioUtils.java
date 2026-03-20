@@ -1,6 +1,5 @@
 package io.nextskip.common.util;
 
-import io.nextskip.common.model.Callsign;
 import io.nextskip.common.model.Coordinates;
 import io.nextskip.common.model.GridSquare;
 
@@ -14,7 +13,7 @@ import java.util.Locale;
  *   <li><b>Grid Squares</b>: Convert coordinates to Maidenhead grid locators</li>
  *   <li><b>Bearing</b>: Calculate azimuth between two coordinates</li>
  *   <li><b>Frequency</b>: Format and parse frequency strings (Hz, kHz, MHz)</li>
- *   <li><b>Callsigns</b>: Basic validation of amateur radio callsign format</li>
+ *   <li><b>Callsigns</b>: See {@link io.nextskip.common.model.Callsign} for validation</li>
  * </ul>
  */
 public final class HamRadioUtils {
@@ -166,27 +165,6 @@ public final class HamRadioUtils {
             }
         } catch (NumberFormatException e) {
             return null;
-        }
-    }
-
-    /**
-     * Validate a callsign format (basic validation).
-     *
-     * @param callsign The callsign to validate
-     * @return true if the callsign appears valid
-     * @deprecated Use {@link Callsign#isValid()} instead for more detailed validation.
-     *             This method will be removed in a future release.
-     */
-    @Deprecated(forRemoval = true)
-    public static boolean isValidCallsign(String callsign) {
-        if (callsign == null || callsign.isBlank()) {
-            return false;
-        }
-
-        try {
-            return new Callsign(callsign).isValid();
-        } catch (IllegalArgumentException e) {
-            return false;
         }
     }
 }

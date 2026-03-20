@@ -12,11 +12,6 @@ spring:
     enabled: true
     change-log: classpath:db/changelog/db.changelog-master.yaml
 
-# Disable eager cache loading (faster startup)
-nextskip:
-  refresh:
-    eager-load: false
-
 # db-scheduler enabled for this profile
 db-scheduler:
   enabled: true

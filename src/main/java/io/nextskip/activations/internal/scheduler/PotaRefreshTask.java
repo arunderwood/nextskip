@@ -90,18 +90,4 @@ public class PotaRefreshTask implements RefreshTaskCoordinator {
     public String getDisplayName() {
         return DISPLAY_NAME;
     }
-
-    /**
-     * Checks if initial data load is needed.
-     *
-     * @param repository the activation repository
-     * @return true if no recent POTA data exists
-     * @deprecated Use {@link #needsInitialLoad()} instead.
-     */
-    @Deprecated(forRemoval = true)
-    public boolean needsInitialLoad(ActivationRepository repository) {
-        Instant recent = Instant.now().minus(STALE_THRESHOLD);
-        return repository.findByTypeAndSpottedAtAfterOrderBySpottedAtDesc(
-                ActivationType.POTA, recent).isEmpty();
-    }
 }

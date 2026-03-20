@@ -8,7 +8,7 @@
 import React from 'react';
 import type SolarIndices from 'Frontend/generated/io/nextskip/propagation/model/SolarIndices';
 import { getSolarFluxLevel, getGeomagneticLevel } from 'Frontend/utils/solarIndices';
-import '../../SolarIndicesCard.css'; // Reuse existing styles
+import '../../SolarIndicesContent.css';
 
 interface Props {
   solarIndices: SolarIndices;
