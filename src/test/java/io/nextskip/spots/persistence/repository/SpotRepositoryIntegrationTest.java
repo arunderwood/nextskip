@@ -41,13 +41,12 @@ class SpotRepositoryIntegrationTest extends AbstractPersistenceTest {
     // ===========================================
 
     @Test
-    void testSave_NewEntity_Persists() {
+    void testSave_NewEntity_AssignsId() {
         SpotEntity entity = SpotFixtures.defaultSpotEntity();
 
         SpotEntity saved = repository.saveAndFlush(entity);
 
-        assertThat(saved.getSpottedAt()).isNotNull();
-        assertThat(repository.count()).isEqualTo(1);
+        assertThat(saved.getId()).isNotNull();
     }
 
     @Test
@@ -69,11 +68,10 @@ class SpotRepositoryIntegrationTest extends AbstractPersistenceTest {
                 .build();
         SpotEntity entity = SpotFixtures.spotEntity(spot);
 
-        repository.saveAndFlush(entity);
+        SpotEntity saved = repository.saveAndFlush(entity);
         clearPersistenceContext();
 
-        // findById uses spottedAt (the @Id) — look up by the spotted timestamp
-        SpotEntity found = repository.findById(spottedAt).orElseThrow();
+        SpotEntity found = repository.findById(saved.getId()).orElseThrow();
         assertThat(found.getBand()).isEqualTo("40m");
         assertThat(found.getMode()).isEqualTo("CW");
         assertThat(found.getFrequencyHz()).isEqualTo(7025000L);
@@ -101,6 +99,7 @@ class SpotRepositoryIntegrationTest extends AbstractPersistenceTest {
         List<SpotEntity> saved = repository.saveAllAndFlush(entities);
 
         assertThat(saved).hasSize(3);
+        assertThat(saved).allMatch(e -> e.getId() != null);
         assertThat(repository.count()).isEqualTo(3);
     }
 
@@ -240,10 +239,10 @@ class SpotRepositoryIntegrationTest extends AbstractPersistenceTest {
                 .build();
 
         SpotEntity entity = SpotFixtures.spotEntity(original);
-        repository.saveAndFlush(entity);
+        SpotEntity saved = repository.saveAndFlush(entity);
         clearPersistenceContext();
 
-        SpotEntity reloaded = repository.findById(fixedSpottedAt).orElseThrow();
+        SpotEntity reloaded = repository.findById(saved.getId()).orElseThrow();
         Spot converted = reloaded.toDomain();
 
         assertThat(converted).isEqualTo(original);

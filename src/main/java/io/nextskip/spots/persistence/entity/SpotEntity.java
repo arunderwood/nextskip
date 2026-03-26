@@ -3,6 +3,8 @@ package io.nextskip.spots.persistence.entity;
 import io.nextskip.spots.model.Spot;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.Table;
@@ -13,9 +15,10 @@ import java.time.Instant;
  * JPA entity for persisting PSKReporter spots.
  *
  * <p>Stores enriched spot data in a TimescaleDB hypertable partitioned by
- * {@code spotted_at}. The {@code id} column is a plain auto-increment column
- * (not PK) kept for future addressability. JPA {@code @Id} is on
- * {@code spottedAt} since it's the hypertable partition column.
+ * {@code spotted_at}. The {@code id} column is database-generated via
+ * {@code GENERATED ALWAYS AS IDENTITY} and used as the JPA {@code @Id},
+ * but has no database-level PK constraint (TimescaleDB requires the
+ * partition column in any PK/UNIQUE constraint).
  */
 @Entity
 @Table(name = "spots", indexes = {
@@ -28,11 +31,13 @@ import java.time.Instant;
 public class SpotEntity {
 
     /**
-     * Auto-increment row identifier. Not a primary key — kept as a plain column
-     * for future addressability (spot detail views, bookmarks, alerts).
-     * TimescaleDB hypertables require the partition column in any PK, so we
-     * avoid a PK entirely and use {@code spottedAt} as the JPA {@code @Id}.
+     * Auto-increment row identifier used as JPA {@code @Id} for entity identity.
+     * Not a database-level primary key (TimescaleDB hypertables require the
+     * partition column in any PK/UNIQUE constraint). The database generates
+     * the value via {@code GENERATED ALWAYS AS IDENTITY}.
      */
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", insertable = false, updatable = false)
     private Long id;
 
@@ -51,7 +56,6 @@ public class SpotEntity {
     @Column(name = "snr")
     private Integer snr;
 
-    @Id
     @Column(name = "spotted_at", nullable = false)
     private Instant spottedAt;
 

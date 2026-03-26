@@ -25,7 +25,7 @@ import java.util.Optional;
  */
 @Repository
 @SuppressWarnings("PMD.AvoidDuplicateLiterals") // JPQL parameter names are intentionally repeated
-public interface SpotRepository extends JpaRepository<SpotEntity, Instant> {
+public interface SpotRepository extends JpaRepository<SpotEntity, Long> {
 
     /**
      * Finds recent spots by band, ordered by spotted time descending.
