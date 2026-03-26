@@ -101,7 +101,7 @@ public class SpotsServiceImpl implements SpotsService {
     @Override
     public long getSpotCountSince(int minutes) {
         Instant cutoff = clock.instant().minusSeconds(minutes * 60L);
-        return spotRepository.countByCreatedAtAfter(cutoff);
+        return spotRepository.countBySpottedAtAfter(cutoff);
     }
 
     // ========================================================================

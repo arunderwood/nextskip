@@ -1,0 +1,137 @@
+databaseChangeLog:
+  - changeSet:
+      id: 016-enable-timescaledb
+      author: nextskip
+      comment: Enable TimescaleDB extension for time-series optimizations
+      changes:
+        - sql:
+            sql: CREATE EXTENSION IF NOT EXISTS timescaledb;
+
+  - changeSet:
+      id: 016-recreate-spots-as-hypertable
+      author: nextskip
+      comment: >
+        Drop and recreate spots table as a TimescaleDB hypertable.
+        Data loss is acceptable (6h TTL, pre-customer, refills via MQTT).
+        Removes created_at (cleanup handled by retention policy).
+        Demotes id to plain auto-increment column (no PK).
+      changes:
+        - sql:
+            sql: DROP TABLE IF EXISTS spots CASCADE;
+        - createTable:
+            tableName: spots
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+              - column:
+                  name: source
+                  type: varchar(20)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: band
+                  type: varchar(10)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: mode
+                  type: varchar(10)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: frequency_hz
+                  type: bigint
+              - column:
+                  name: snr
+                  type: integer
+              - column:
+                  name: spotted_at
+                  type: timestamp with time zone
+                  constraints:
+                    nullable: false
+              - column:
+                  name: spotter_call
+                  type: varchar(30)
+              - column:
+                  name: spotter_grid
+                  type: varchar(6)
+              - column:
+                  name: spotter_continent
+                  type: varchar(2)
+              - column:
+                  name: spotted_call
+                  type: varchar(30)
+              - column:
+                  name: spotted_grid
+                  type: varchar(6)
+              - column:
+                  name: spotted_continent
+                  type: varchar(2)
+              - column:
+                  name: distance_km
+                  type: integer
+        - sql:
+            comment: Convert spots table to TimescaleDB hypertable with 1-hour chunks
+            sql: >
+              SELECT create_hypertable('spots', 'spotted_at',
+                chunk_time_interval => INTERVAL '1 hour');
+
+  - changeSet:
+      id: 016-spots-hypertable-retention
+      author: nextskip
+      comment: Automatic retention policy replaces SpotCleanupService batch DELETEs
+      changes:
+        - sql:
+            sql: SELECT add_retention_policy('spots', INTERVAL '6 hours');
+
+  - changeSet:
+      id: 016-spots-hypertable-indexes
+      author: nextskip
+      comment: >
+        Indexes for hypertable queries. Reduced from original 8 to 4
+        (dropped unused idx_spots_band_time, idx_spots_mode_time,
+        idx_spots_distance, idx_spots_created_at).
+      changes:
+        - createIndex:
+            indexName: idx_spots_band_mode_time
+            tableName: spots
+            columns:
+              - column:
+                  name: band
+              - column:
+                  name: mode
+              - column:
+                  name: spotted_at
+                  descending: true
+        - createIndex:
+            indexName: idx_spots_bulk_agg
+            tableName: spots
+            columns:
+              - column:
+                  name: spotted_at
+              - column:
+                  name: band
+              - column:
+                  name: mode
+        - createIndex:
+            indexName: idx_spots_bulk_paths
+            tableName: spots
+            columns:
+              - column:
+                  name: spotted_at
+              - column:
+                  name: band
+              - column:
+                  name: mode
+              - column:
+                  name: spotter_continent
+              - column:
+                  name: spotted_continent
+        - sql:
+            comment: Covering index with INCLUDE clause for DX queries
+            sql: >
+              CREATE INDEX idx_spots_bulk_dx ON spots
+              (spotted_at, band, mode, distance_km DESC NULLS LAST)
+              INCLUDE (spotted_call, spotter_call);

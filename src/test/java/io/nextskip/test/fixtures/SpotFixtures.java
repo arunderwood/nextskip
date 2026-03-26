@@ -3,7 +3,6 @@ package io.nextskip.test.fixtures;
 import io.nextskip.spots.model.Spot;
 import io.nextskip.spots.persistence.entity.SpotEntity;
 
-import java.time.Clock;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 
@@ -60,24 +59,13 @@ public final class SpotFixtures {
     }
 
     /**
-     * Creates a default SpotEntity with a custom clock.
+     * Creates a SpotEntity from a Spot.
      *
-     * @param clock the clock to use for createdAt timestamp
+     * @param spot the domain model
      * @return a spot entity ready for persistence testing
      */
-    public static SpotEntity defaultSpotEntity(Clock clock) {
-        return SpotEntity.fromDomain(defaultSpot(), clock);
-    }
-
-    /**
-     * Creates a SpotEntity from a Spot with a custom clock.
-     *
-     * @param spot  the domain model
-     * @param clock the clock to use for createdAt timestamp
-     * @return a spot entity ready for persistence testing
-     */
-    public static SpotEntity spotEntity(Spot spot, Clock clock) {
-        return SpotEntity.fromDomain(spot, clock);
+    public static SpotEntity spotEntity(Spot spot) {
+        return SpotEntity.fromDomain(spot);
     }
 
     /**

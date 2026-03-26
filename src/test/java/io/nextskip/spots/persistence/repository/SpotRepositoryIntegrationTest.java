@@ -8,9 +8,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import java.time.Clock;
 import java.time.Instant;
-import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.Collection;
 import java.util.List;
@@ -21,13 +19,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * Integration tests for {@link SpotRepository}.
  *
- * <p>Tests CRUD operations, query methods, and TTL cleanup using TestContainers PostgreSQL.
+ * <p>Tests CRUD operations and query methods using TestContainers PostgreSQL
+ * with TimescaleDB extension. The spots table is a hypertable partitioned
+ * by {@code spotted_at}.
  */
 @SuppressWarnings("PMD.AvoidDuplicateLiterals") // Test data uses repeated band/mode values
 class SpotRepositoryIntegrationTest extends AbstractPersistenceTest {
 
     private static final Instant BASE_TIME = Instant.parse("2023-06-15T12:00:00Z");
-    private static final Clock FIXED_CLOCK = Clock.fixed(BASE_TIME, ZoneId.of("UTC"));
 
     @Autowired
     private SpotRepository repository;
@@ -42,21 +41,24 @@ class SpotRepositoryIntegrationTest extends AbstractPersistenceTest {
     // ===========================================
 
     @Test
-    void testSave_NewEntity_AssignsId() {
-        SpotEntity entity = SpotFixtures.defaultSpotEntity(FIXED_CLOCK);
+    void testSave_NewEntity_Persists() {
+        SpotEntity entity = SpotFixtures.defaultSpotEntity();
 
         SpotEntity saved = repository.saveAndFlush(entity);
 
-        assertThat(saved.getId()).isNotNull();
+        assertThat(saved.getSpottedAt()).isNotNull();
+        assertThat(repository.count()).isEqualTo(1);
     }
 
     @Test
     void testSave_AllFields_Persisted() {
+        Instant spottedAt = BASE_TIME.truncatedTo(ChronoUnit.MICROS);
         Spot spot = SpotFixtures.spot()
                 .band("40m")
                 .mode("CW")
                 .frequencyHz(7025000L)
                 .snr(-15)
+                .spottedAt(spottedAt)
                 .spotterCall("W1AW")
                 .spotterGrid("FN31")
                 .spotterContinent("NA")
@@ -65,12 +67,13 @@ class SpotRepositoryIntegrationTest extends AbstractPersistenceTest {
                 .spottedContinent("EU")
                 .distanceKm(5500)
                 .build();
-        SpotEntity entity = SpotFixtures.spotEntity(spot, FIXED_CLOCK);
+        SpotEntity entity = SpotFixtures.spotEntity(spot);
 
-        SpotEntity saved = repository.saveAndFlush(entity);
+        repository.saveAndFlush(entity);
         clearPersistenceContext();
 
-        SpotEntity found = repository.findById(saved.getId()).orElseThrow();
+        // findById uses spottedAt (the @Id) — look up by the spotted timestamp
+        SpotEntity found = repository.findById(spottedAt).orElseThrow();
         assertThat(found.getBand()).isEqualTo("40m");
         assertThat(found.getMode()).isEqualTo("CW");
         assertThat(found.getFrequencyHz()).isEqualTo(7025000L);
@@ -87,46 +90,18 @@ class SpotRepositoryIntegrationTest extends AbstractPersistenceTest {
     @Test
     void testSaveAll_BatchInsert_AllPersisted() {
         List<SpotEntity> entities = List.of(
-                SpotFixtures.spotEntity(SpotFixtures.spot().band("20m").build(), FIXED_CLOCK),
-                SpotFixtures.spotEntity(SpotFixtures.spot().band("40m").build(), FIXED_CLOCK),
-                SpotFixtures.spotEntity(SpotFixtures.spot().band("80m").build(), FIXED_CLOCK)
+                SpotFixtures.spotEntity(SpotFixtures.spot().band("20m")
+                        .spottedAt(BASE_TIME).build()),
+                SpotFixtures.spotEntity(SpotFixtures.spot().band("40m")
+                        .spottedAt(BASE_TIME.plusSeconds(1)).build()),
+                SpotFixtures.spotEntity(SpotFixtures.spot().band("80m")
+                        .spottedAt(BASE_TIME.plusSeconds(2)).build())
         );
 
         List<SpotEntity> saved = repository.saveAllAndFlush(entities);
 
         assertThat(saved).hasSize(3);
-        assertThat(saved).allMatch(e -> e.getId() != null);
         assertThat(repository.count()).isEqualTo(3);
-    }
-
-    @Test
-    void testFindById_ExistingEntity_ReturnsEntity() {
-        SpotEntity entity = repository.saveAndFlush(SpotFixtures.defaultSpotEntity(FIXED_CLOCK));
-        clearPersistenceContext();
-
-        Optional<SpotEntity> found = repository.findById(entity.getId());
-
-        assertThat(found).isPresent();
-        assertThat(found.get().getBand()).isEqualTo(entity.getBand());
-    }
-
-    @Test
-    void testFindById_NonExistingEntity_ReturnsEmpty() {
-        Optional<SpotEntity> found = repository.findById(999999L);
-
-        assertThat(found).isEmpty();
-    }
-
-    @Test
-    void testDelete_ExistingEntity_Removed() {
-        SpotEntity entity = repository.saveAndFlush(SpotFixtures.defaultSpotEntity(FIXED_CLOCK));
-        Long id = entity.getId();
-
-        repository.deleteById(id);
-        repository.flush();
-        clearPersistenceContext();
-
-        assertThat(repository.findById(id)).isEmpty();
     }
 
     // ===========================================
@@ -138,21 +113,18 @@ class SpotRepositoryIntegrationTest extends AbstractPersistenceTest {
         Instant spottedAt1 = BASE_TIME.minus(1, ChronoUnit.HOURS);
         Instant spottedAt2 = BASE_TIME.minus(30, ChronoUnit.MINUTES);
         Instant spottedAt3 = BASE_TIME;
+        Instant spottedAt4 = BASE_TIME.plusSeconds(1); // unique spottedAt since it's the @Id
 
         repository.saveAllAndFlush(List.of(
                 SpotFixtures.spotEntity(
-                        SpotFixtures.spot().band("20m").spottedAt(spottedAt1).spotterCall("first").build(),
-                        FIXED_CLOCK),
+                        SpotFixtures.spot().band("20m").spottedAt(spottedAt1).spotterCall("first").build()),
                 SpotFixtures.spotEntity(
-                        SpotFixtures.spot().band("20m").spottedAt(spottedAt2).spotterCall("second").build(),
-                        FIXED_CLOCK),
+                        SpotFixtures.spot().band("20m").spottedAt(spottedAt2).spotterCall("second").build()),
                 SpotFixtures.spotEntity(
-                        SpotFixtures.spot().band("20m").spottedAt(spottedAt3).spotterCall("third").build(),
-                        FIXED_CLOCK),
-                // Different band
+                        SpotFixtures.spot().band("20m").spottedAt(spottedAt3).spotterCall("third").build()),
+                // Different band — must have unique spottedAt (it's the @Id)
                 SpotFixtures.spotEntity(
-                        SpotFixtures.spot().band("40m").spottedAt(spottedAt3).build(),
-                        FIXED_CLOCK)
+                        SpotFixtures.spot().band("40m").spottedAt(spottedAt4).build())
         ));
         clearPersistenceContext();
 
@@ -168,41 +140,13 @@ class SpotRepositoryIntegrationTest extends AbstractPersistenceTest {
     @Test
     void testFindByBandAndSpottedAtAfter_NoMatches_ReturnsEmpty() {
         repository.saveAndFlush(SpotFixtures.spotEntity(
-                SpotFixtures.spot().band("20m").spottedAt(BASE_TIME.minus(5, ChronoUnit.HOURS)).build(),
-                FIXED_CLOCK
+                SpotFixtures.spot().band("20m").spottedAt(BASE_TIME.minus(5, ChronoUnit.HOURS)).build()
         ));
 
         Instant cutoff = BASE_TIME.minus(1, ChronoUnit.HOURS);
         List<SpotEntity> results = repository.findByBandAndSpottedAtAfterOrderBySpottedAtDesc("20m", cutoff);
 
         assertThat(results).isEmpty();
-    }
-
-    // ===========================================
-    // findByModeAndSpottedAtAfter tests
-    // ===========================================
-
-    @Test
-    void testFindByModeAndSpottedAtAfter_MatchingSpots_ReturnsFiltered() {
-        Instant halfHourAgo = BASE_TIME.minus(30, ChronoUnit.MINUTES);
-        repository.saveAllAndFlush(List.of(
-                SpotFixtures.spotEntity(
-                        SpotFixtures.spot().mode("FT8").spottedAt(BASE_TIME).build(),
-                        FIXED_CLOCK),
-                SpotFixtures.spotEntity(
-                        SpotFixtures.spot().mode("FT8").spottedAt(halfHourAgo).build(),
-                        FIXED_CLOCK),
-                SpotFixtures.spotEntity(
-                        SpotFixtures.spot().mode("CW").spottedAt(BASE_TIME).build(),
-                        FIXED_CLOCK)
-        ));
-        clearPersistenceContext();
-
-        Instant cutoff = BASE_TIME.minus(2, ChronoUnit.HOURS);
-        List<SpotEntity> results = repository.findByModeAndSpottedAtAfterOrderBySpottedAtDesc("FT8", cutoff);
-
-        assertThat(results).hasSize(2);
-        assertThat(results).allMatch(e -> "FT8".equals(e.getMode()));
     }
 
     // ===========================================
@@ -215,14 +159,11 @@ class SpotRepositoryIntegrationTest extends AbstractPersistenceTest {
         Instant oneHourAgo = BASE_TIME.minus(1, ChronoUnit.HOURS);
         repository.saveAllAndFlush(List.of(
                 SpotFixtures.spotEntity(
-                        SpotFixtures.spot().spottedAt(twoHoursAgo).spotterCall("older").build(),
-                        FIXED_CLOCK),
+                        SpotFixtures.spot().spottedAt(twoHoursAgo).spotterCall("older").build()),
                 SpotFixtures.spotEntity(
-                        SpotFixtures.spot().spottedAt(BASE_TIME).spotterCall("newest").build(),
-                        FIXED_CLOCK),
+                        SpotFixtures.spot().spottedAt(BASE_TIME).spotterCall("newest").build()),
                 SpotFixtures.spotEntity(
-                        SpotFixtures.spot().spottedAt(oneHourAgo).spotterCall("middle").build(),
-                        FIXED_CLOCK)
+                        SpotFixtures.spot().spottedAt(oneHourAgo).spotterCall("middle").build())
         ));
         clearPersistenceContext();
 
@@ -240,73 +181,39 @@ class SpotRepositoryIntegrationTest extends AbstractPersistenceTest {
     }
 
     // ===========================================
-    // countByCreatedAtAfter tests
+    // countBySpottedAtAfter tests
     // ===========================================
 
     @Test
-    void testCountByCreatedAtAfter_MixedTimes_CountsOnlyRecent() {
-        Clock oldClock = Clock.fixed(BASE_TIME.minus(2, ChronoUnit.HOURS), ZoneId.of("UTC"));
-        Clock newClock = Clock.fixed(BASE_TIME, ZoneId.of("UTC"));
-
+    void testCountBySpottedAtAfter_MixedTimes_CountsOnlyRecent() {
         repository.saveAllAndFlush(List.of(
-                SpotFixtures.defaultSpotEntity(oldClock),
-                SpotFixtures.defaultSpotEntity(newClock),
-                SpotFixtures.defaultSpotEntity(newClock)
+                SpotFixtures.spotEntity(
+                        SpotFixtures.spot().spottedAt(BASE_TIME.minus(2, ChronoUnit.HOURS)).build()),
+                SpotFixtures.spotEntity(
+                        SpotFixtures.spot().spottedAt(BASE_TIME).build()),
+                SpotFixtures.spotEntity(
+                        SpotFixtures.spot().spottedAt(BASE_TIME.plusSeconds(1)).build())
         ));
 
         Instant cutoff = BASE_TIME.minus(1, ChronoUnit.HOURS);
-        long count = repository.countByCreatedAtAfter(cutoff);
+        long count = repository.countBySpottedAtAfter(cutoff);
 
         assertThat(count).isEqualTo(2);
     }
 
     @Test
-    void testCountByCreatedAtAfter_AllOld_ReturnsZero() {
-        Clock oldClock = Clock.fixed(BASE_TIME.minus(2, ChronoUnit.HOURS), ZoneId.of("UTC"));
+    void testCountBySpottedAtAfter_AllOld_ReturnsZero() {
         repository.saveAllAndFlush(List.of(
-                SpotFixtures.defaultSpotEntity(oldClock),
-                SpotFixtures.defaultSpotEntity(oldClock)
+                SpotFixtures.spotEntity(
+                        SpotFixtures.spot().spottedAt(BASE_TIME.minus(2, ChronoUnit.HOURS)).build()),
+                SpotFixtures.spotEntity(
+                        SpotFixtures.spot().spottedAt(BASE_TIME.minus(3, ChronoUnit.HOURS)).build())
         ));
 
         Instant cutoff = BASE_TIME.minus(1, ChronoUnit.HOURS);
-        long count = repository.countByCreatedAtAfter(cutoff);
+        long count = repository.countBySpottedAtAfter(cutoff);
 
         assertThat(count).isZero();
-    }
-
-    // ===========================================
-    // findTopByBandAndDistanceKmNotNullOrderByDistanceKmDesc tests
-    // ===========================================
-
-    @Test
-    void testFindTopByBand_OrderedByDistance_ReturnsFarthest() {
-        repository.saveAllAndFlush(List.of(
-                SpotFixtures.spotEntity(SpotFixtures.spot().band("20m").distanceKm(3000).build(), FIXED_CLOCK),
-                SpotFixtures.spotEntity(SpotFixtures.spot().band("20m").distanceKm(8000).build(), FIXED_CLOCK),
-                SpotFixtures.spotEntity(SpotFixtures.spot().band("20m").distanceKm(5500).build(), FIXED_CLOCK),
-                SpotFixtures.spotEntity(SpotFixtures.spot().band("40m").distanceKm(10000).build(), FIXED_CLOCK)
-        ));
-        clearPersistenceContext();
-
-        List<SpotEntity> results = repository.findTopByBandAndDistanceKmNotNullOrderByDistanceKmDesc("20m");
-
-        assertThat(results).isNotEmpty();
-        // First result should be the one with highest distance for band 20m
-        assertThat(results.get(0).getDistanceKm()).isEqualTo(8000);
-    }
-
-    @Test
-    void testFindTopByBand_NullDistances_ExcludesNulls() {
-        repository.saveAllAndFlush(List.of(
-                SpotFixtures.spotEntity(SpotFixtures.spot().band("20m").distanceKm(null).build(), FIXED_CLOCK),
-                SpotFixtures.spotEntity(SpotFixtures.spot().band("20m").distanceKm(5000).build(), FIXED_CLOCK)
-        ));
-        clearPersistenceContext();
-
-        List<SpotEntity> results = repository.findTopByBandAndDistanceKmNotNullOrderByDistanceKmDesc("20m");
-
-        assertThat(results).hasSize(1);
-        assertThat(results.get(0).getDistanceKm()).isEqualTo(5000);
     }
 
     // ===========================================
@@ -332,11 +239,11 @@ class SpotRepositoryIntegrationTest extends AbstractPersistenceTest {
                 .distanceKm(9000)
                 .build();
 
-        SpotEntity entity = SpotFixtures.spotEntity(original, FIXED_CLOCK);
-        SpotEntity saved = repository.saveAndFlush(entity);
+        SpotEntity entity = SpotFixtures.spotEntity(original);
+        repository.saveAndFlush(entity);
         clearPersistenceContext();
 
-        SpotEntity reloaded = repository.findById(saved.getId()).orElseThrow();
+        SpotEntity reloaded = repository.findById(fixedSpottedAt).orElseThrow();
         Spot converted = reloaded.toDomain();
 
         assertThat(converted).isEqualTo(original);

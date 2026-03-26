@@ -143,8 +143,7 @@ class SpotsServiceTest {
     @Test
     void testGetLastSpotTime_WithSpots_ReturnsMostRecentTime() {
         SpotEntity entity = SpotFixtures.spotEntity(
-                SpotFixtures.spot().spottedAt(BASE_TIME).build(),
-                FIXED_CLOCK
+                SpotFixtures.spot().spottedAt(BASE_TIME).build()
         );
         when(spotRepository.findTopByOrderBySpottedAtDesc()).thenReturn(Optional.of(entity));
 
@@ -206,17 +205,17 @@ class SpotsServiceTest {
 
     @Test
     void testGetSpotCountSince_ReturnsRepositoryCount() {
-        when(spotRepository.countByCreatedAtAfter(any(Instant.class))).thenReturn(42L);
+        when(spotRepository.countBySpottedAtAfter(any(Instant.class))).thenReturn(42L);
 
         long count = spotsService.getSpotCountSince(5);
 
         assertThat(count).isEqualTo(42L);
-        verify(spotRepository).countByCreatedAtAfter(any(Instant.class));
+        verify(spotRepository).countBySpottedAtAfter(any(Instant.class));
     }
 
     @Test
     void testGetSpotCountSince_NoRecentSpots_ReturnsZero() {
-        when(spotRepository.countByCreatedAtAfter(any(Instant.class))).thenReturn(0L);
+        when(spotRepository.countBySpottedAtAfter(any(Instant.class))).thenReturn(0L);
 
         long count = spotsService.getSpotCountSince(10);
 
@@ -225,7 +224,7 @@ class SpotsServiceTest {
 
     @Test
     void testGetSpotCountSince_ZeroMinutes_QueriesRecentSpots() {
-        when(spotRepository.countByCreatedAtAfter(any(Instant.class))).thenReturn(100L);
+        when(spotRepository.countBySpottedAtAfter(any(Instant.class))).thenReturn(100L);
 
         long count = spotsService.getSpotCountSince(0);
 
@@ -370,12 +369,10 @@ class SpotsServiceTest {
         @Test
         void testGetRecentSpots_WithSpots_ReturnsSpotList() {
             SpotEntity entity1 = SpotFixtures.spotEntity(
-                    SpotFixtures.spot().band(BAND_20M).spottedAt(BASE_TIME.minusSeconds(60)).build(),
-                    FIXED_CLOCK
+                    SpotFixtures.spot().band(BAND_20M).spottedAt(BASE_TIME.minusSeconds(60)).build()
             );
             SpotEntity entity2 = SpotFixtures.spotEntity(
-                    SpotFixtures.spot().band(BAND_20M).spottedAt(BASE_TIME.minusSeconds(120)).build(),
-                    FIXED_CLOCK
+                    SpotFixtures.spot().band(BAND_20M).spottedAt(BASE_TIME.minusSeconds(120)).build()
             );
             when(spotRepository.findByBandAndSpottedAtAfterOrderBySpottedAtDesc(
                     any(String.class), any(Instant.class)))

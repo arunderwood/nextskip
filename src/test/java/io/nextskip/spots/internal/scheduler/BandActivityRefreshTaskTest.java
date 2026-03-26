@@ -67,7 +67,7 @@ class BandActivityRefreshTaskTest {
         @Test
         void testNeedsInitialLoad_RecentSpots_ReturnsTrue() {
             // Given: spots exist in the last 5 minutes
-            when(spotRepository.countByCreatedAtAfter(any(Instant.class))).thenReturn(10L);
+            when(spotRepository.countBySpottedAtAfter(any(Instant.class))).thenReturn(10L);
 
             // When
             boolean result = task.needsInitialLoad();
@@ -79,7 +79,7 @@ class BandActivityRefreshTaskTest {
         @Test
         void testNeedsInitialLoad_NoRecentSpots_ReturnsFalse() {
             // Given: no spots in the last 5 minutes
-            when(spotRepository.countByCreatedAtAfter(any(Instant.class))).thenReturn(0L);
+            when(spotRepository.countBySpottedAtAfter(any(Instant.class))).thenReturn(0L);
 
             // When
             boolean result = task.needsInitialLoad();
@@ -91,7 +91,7 @@ class BandActivityRefreshTaskTest {
         @Test
         void testNeedsInitialLoad_ExactlyZeroSpots_ReturnsFalse() {
             // Given: exactly zero spots
-            when(spotRepository.countByCreatedAtAfter(any(Instant.class))).thenReturn(0L);
+            when(spotRepository.countBySpottedAtAfter(any(Instant.class))).thenReturn(0L);
 
             // When
             boolean result = task.needsInitialLoad();
@@ -105,7 +105,7 @@ class BandActivityRefreshTaskTest {
         @Test
         void testNeedsInitialLoad_OneSpot_ReturnsTrue() {
             // Given: at least one spot exists
-            when(spotRepository.countByCreatedAtAfter(any(Instant.class))).thenReturn(1L);
+            when(spotRepository.countBySpottedAtAfter(any(Instant.class))).thenReturn(1L);
 
             // When
             boolean result = task.needsInitialLoad();

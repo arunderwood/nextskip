@@ -105,9 +105,7 @@ nextskip:
       buffer-size: 10000           # Buffer size (drops oldest on overflow)
       persistence-threads: 2       # Thread pool size for DB writes (I/O-bound, safe for single-core)
       persistence-parallelism: 2   # Concurrent batches in mapAsyncUnordered
-    persistence:
-      ttl: 6h             # Time-to-live for spots (reduced from 24h for storage optimization)
-      cleanup-interval: 1h # How often to run cleanup
+    # Retention is handled by TimescaleDB retention policy (6h, configured in migration 016)
     aggregation:
       refresh-interval: 1m    # How often to recalculate band activity
       ft8-window: 15m         # Aggregation window for FT8/FT4
