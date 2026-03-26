@@ -1,5 +1,6 @@
 package io.nextskip.common.config;
 
+import com.vaadin.flow.spring.annotation.VaadinTaskExecutor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.EnableAsync;
@@ -19,7 +20,8 @@ import java.util.concurrent.Executor;
 @EnableAsync
 public class AsyncConfig {
 
-    @Bean(name = {"taskExecutor", "VaadinTaskExecutor"})
+    @Bean(name = "taskExecutor")
+    @VaadinTaskExecutor
     public Executor taskExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
         executor.setCorePoolSize(5);
