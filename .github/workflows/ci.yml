@@ -174,7 +174,7 @@ jobs:
       contents: read
     services:
       postgres:
-        image: timescale/timescaledb:latest-pg18
+        image: timescale/timescaledb:latest-pg18-oss
         env:
           POSTGRES_DB: nextskip
           POSTGRES_USER: nextskip

@@ -2,9 +2,11 @@ package io.nextskip.spots.persistence.repository;
 
 import io.nextskip.spots.persistence.entity.SpotEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.List;
@@ -14,7 +16,8 @@ import java.util.Optional;
  * Spring Data JPA repository for PSKReporter spots.
  *
  * <p>The spots table is a TimescaleDB hypertable partitioned by {@code spotted_at}.
- * Retention is handled by a TimescaleDB retention policy (no application-level cleanup).
+ * Retention is handled by application-level {@code drop_chunks()} calls
+ * (TimescaleDB's {@code add_retention_policy} requires a Timescale license).
  *
  * <p>Provides methods for:
  * <ul>
@@ -54,6 +57,26 @@ public interface SpotRepository extends JpaRepository<SpotEntity, Long> {
      * @return count of spots
      */
     long countBySpottedAtAfter(Instant spottedAt);
+
+    // ========================================================================
+    // Retention: drop old hypertable chunks (Apache-licensed alternative to
+    // add_retention_policy which requires Timescale license)
+    // ========================================================================
+
+    /**
+     * Drops hypertable chunks older than the specified interval.
+     *
+     * <p>Uses TimescaleDB's {@code drop_chunks()} which is available under
+     * the Apache license (unlike {@code add_retention_policy()}).
+     *
+     * <p>Called by {@code SpotChunkCleanupTask} on a recurring schedule.
+     *
+     * @param olderThan the interval expression (e.g., {@code 6 hours})
+     */
+    @Modifying
+    @Transactional
+    @Query(value = "SELECT drop_chunks('spots', INTERVAL :olderThan)", nativeQuery = true)
+    void dropOldChunks(@Param("olderThan") String olderThan);
 
     // ========================================================================
     // Bulk aggregation queries (replace N+1 per-pair queries)
