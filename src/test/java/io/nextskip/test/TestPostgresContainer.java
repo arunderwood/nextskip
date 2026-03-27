@@ -22,7 +22,7 @@ public final class TestPostgresContainer {
 
     static {
         INSTANCE = new PostgreSQLContainer(
-                DockerImageName.parse("timescale/timescaledb:latest-pg18")
+                DockerImageName.parse("timescale/timescaledb:latest-pg18-oss")
                         .asCompatibleSubstituteFor("postgres"))
                 .withDatabaseName("nextskip_test")
                 .withUsername("test")

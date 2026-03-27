@@ -4,7 +4,7 @@
 
 services:
   postgres:
-    image: timescale/timescaledb:latest-pg18
+    image: timescale/timescaledb:latest-pg18-oss
     container_name: nextskip-postgres
     environment:
       POSTGRES_DB: nextskip
