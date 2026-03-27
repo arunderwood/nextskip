@@ -219,6 +219,198 @@ class SpotRepositoryIntegrationTest extends AbstractPersistenceTest {
     // Domain conversion round-trip tests
     // ===========================================
 
+    // ===========================================
+    // countSpotsByBandModeInBuckets tests (TimescaleDB time_bucket)
+    // ===========================================
+
+    @Test
+    void testCountSpotsByBandModeInBuckets_MultipleSpots_ReturnsBucketedCounts() {
+        // Two spots in the same 15-minute bucket, one in a different bucket
+        Instant bucket1Start = Instant.parse("2023-06-15T12:00:00Z");
+        Instant bucket1Spot2 = Instant.parse("2023-06-15T12:05:00Z");
+        Instant bucket2Start = Instant.parse("2023-06-15T12:15:00Z");
+
+        repository.saveAllAndFlush(List.of(
+                SpotFixtures.spotEntity(SpotFixtures.spot()
+                        .band("20m").mode("FT8").spottedAt(bucket1Start).build()),
+                SpotFixtures.spotEntity(SpotFixtures.spot()
+                        .band("20m").mode("FT8").spottedAt(bucket1Spot2).build()),
+                SpotFixtures.spotEntity(SpotFixtures.spot()
+                        .band("20m").mode("FT8").spottedAt(bucket2Start).build())
+        ));
+        clearPersistenceContext();
+
+        Instant since = bucket1Start.minus(1, ChronoUnit.HOURS);
+        List<Object[]> results = repository.countSpotsByBandModeInBuckets(since);
+
+        assertThat(results).isNotEmpty();
+        // Should have 2 buckets for 20m/FT8
+        long totalCount = results.stream()
+                .mapToLong(row -> ((Number) row[3]).longValue())
+                .sum();
+        assertThat(totalCount).isEqualTo(3);
+    }
+
+    @Test
+    void testCountSpotsByBandModeInBuckets_MultipleBandModes_GroupsSeparately() {
+        Instant time1 = Instant.parse("2023-06-15T12:01:00Z");
+        Instant time2 = Instant.parse("2023-06-15T12:02:00Z");
+        Instant time3 = Instant.parse("2023-06-15T12:03:00Z");
+
+        repository.saveAllAndFlush(List.of(
+                SpotFixtures.spotEntity(SpotFixtures.spot()
+                        .band("20m").mode("FT8").spottedAt(time1).build()),
+                SpotFixtures.spotEntity(SpotFixtures.spot()
+                        .band("20m").mode("CW").spottedAt(time2).build()),
+                SpotFixtures.spotEntity(SpotFixtures.spot()
+                        .band("40m").mode("FT8").spottedAt(time3).build())
+        ));
+        clearPersistenceContext();
+
+        Instant since = time1.minus(1, ChronoUnit.HOURS);
+        List<Object[]> results = repository.countSpotsByBandModeInBuckets(since);
+
+        // Should have 3 separate groups (20m/FT8, 20m/CW, 40m/FT8)
+        assertThat(results).hasSize(3);
+    }
+
+    @Test
+    void testCountSpotsByBandModeInBuckets_NoSpots_ReturnsEmpty() {
+        List<Object[]> results = repository.countSpotsByBandModeInBuckets(BASE_TIME);
+
+        assertThat(results).isEmpty();
+    }
+
+    // ===========================================
+    // findMaxDxSpotPerBandMode tests (ROW_NUMBER window function)
+    // ===========================================
+
+    @Test
+    void testFindMaxDxSpotPerBandMode_MultipleDistances_ReturnsMaxPerPair() {
+        Instant time1 = Instant.parse("2023-06-15T12:01:00Z");
+        Instant time2 = Instant.parse("2023-06-15T12:02:00Z");
+        Instant time3 = Instant.parse("2023-06-15T12:03:00Z");
+
+        repository.saveAllAndFlush(List.of(
+                SpotFixtures.spotEntity(SpotFixtures.spot()
+                        .band("20m").mode("FT8").distanceKm(5000)
+                        .spottedCall("G3ABC").spotterCall("W1AW")
+                        .spottedAt(time1).build()),
+                SpotFixtures.spotEntity(SpotFixtures.spot()
+                        .band("20m").mode("FT8").distanceKm(9000)
+                        .spottedCall("JA1XYZ").spotterCall("W6ABC")
+                        .spottedAt(time2).build()),
+                SpotFixtures.spotEntity(SpotFixtures.spot()
+                        .band("40m").mode("CW").distanceKm(7000)
+                        .spottedCall("VK2ABC").spotterCall("K3XYZ")
+                        .spottedAt(time3).build())
+        ));
+        clearPersistenceContext();
+
+        Instant since = time1.minus(1, ChronoUnit.HOURS);
+        List<Object[]> results = repository.findMaxDxSpotPerBandMode(since);
+
+        // Should have 2 rows: one for 20m/FT8 (9000km) and one for 40m/CW (7000km)
+        assertThat(results).hasSize(2);
+
+        // Find the 20m/FT8 result and verify it picked the max distance
+        Object[] ft8Result = results.stream()
+                .filter(row -> "20m".equals(row[0]) && "FT8".equals(row[1]))
+                .findFirst().orElseThrow();
+        assertThat(((Number) ft8Result[2]).intValue()).isEqualTo(9000);
+    }
+
+    @Test
+    void testFindMaxDxSpotPerBandMode_NoSpots_ReturnsEmpty() {
+        List<Object[]> results = repository.findMaxDxSpotPerBandMode(BASE_TIME);
+
+        assertThat(results).isEmpty();
+    }
+
+    @Test
+    void testFindMaxDxSpotPerBandMode_NullDistance_Excluded() {
+        Instant time1 = Instant.parse("2023-06-15T12:01:00Z");
+
+        repository.saveAndFlush(SpotFixtures.spotEntity(SpotFixtures.spot()
+                .band("20m").mode("FT8").distanceKm(null)
+                .spottedAt(time1).build()));
+        clearPersistenceContext();
+
+        Instant since = time1.minus(1, ChronoUnit.HOURS);
+        List<Object[]> results = repository.findMaxDxSpotPerBandMode(since);
+
+        assertThat(results).isEmpty();
+    }
+
+    // ===========================================
+    // countContinentPathsPerBandMode tests
+    // ===========================================
+
+    @Test
+    void testCountContinentPathsPerBandMode_CrossContinent_CountsPaths() {
+        Instant time1 = Instant.parse("2023-06-15T12:01:00Z");
+        Instant time2 = Instant.parse("2023-06-15T12:02:00Z");
+
+        repository.saveAllAndFlush(List.of(
+                SpotFixtures.spotEntity(SpotFixtures.spot()
+                        .band("20m").mode("FT8").transAtlantic()
+                        .spottedAt(time1).build()),
+                SpotFixtures.spotEntity(SpotFixtures.spot()
+                        .band("20m").mode("FT8").transAtlantic()
+                        .spottedAt(time2).build())
+        ));
+        clearPersistenceContext();
+
+        Instant since = time1.minus(1, ChronoUnit.HOURS);
+        List<Object[]> results = repository.countContinentPathsPerBandMode(since);
+
+        assertThat(results).hasSize(1);
+        // [band, mode, spotter_continent, spotted_continent, count]
+        assertThat(((Number) results.get(0)[4]).longValue()).isEqualTo(2);
+    }
+
+    @Test
+    void testCountContinentPathsPerBandMode_SameContinent_Excluded() {
+        Instant time1 = Instant.parse("2023-06-15T12:01:00Z");
+
+        repository.saveAndFlush(SpotFixtures.spotEntity(SpotFixtures.spot()
+                .band("20m").mode("FT8").local()
+                .spottedAt(time1).build()));
+        clearPersistenceContext();
+
+        Instant since = time1.minus(1, ChronoUnit.HOURS);
+        List<Object[]> results = repository.countContinentPathsPerBandMode(since);
+
+        assertThat(results).isEmpty();
+    }
+
+    @Test
+    void testCountContinentPathsPerBandMode_NullContinent_Excluded() {
+        Instant time1 = Instant.parse("2023-06-15T12:01:00Z");
+
+        repository.saveAndFlush(SpotFixtures.spotEntity(SpotFixtures.spot()
+                .band("20m").mode("FT8")
+                .spotterContinent(null).spottedContinent("EU")
+                .spottedAt(time1).build()));
+        clearPersistenceContext();
+
+        Instant since = time1.minus(1, ChronoUnit.HOURS);
+        List<Object[]> results = repository.countContinentPathsPerBandMode(since);
+
+        assertThat(results).isEmpty();
+    }
+
+    @Test
+    void testCountContinentPathsPerBandMode_NoSpots_ReturnsEmpty() {
+        List<Object[]> results = repository.countContinentPathsPerBandMode(BASE_TIME);
+
+        assertThat(results).isEmpty();
+    }
+
+    // ===========================================
+    // Domain conversion round-trip tests
+    // ===========================================
+
     @Test
     void testDomainRoundTrip_SaveAndConvert_PreservesData() {
         // Use truncated timestamp to match PostgreSQL precision (microseconds)
