@@ -88,7 +88,7 @@ public class BandActivityRefreshTask implements RefreshTaskCoordinator {
     @Override
     public boolean needsInitialLoad() {
         Instant recent = Instant.now().minus(STALE_THRESHOLD);
-        return spotRepository.countByCreatedAtAfter(recent) > 0;
+        return spotRepository.countBySpottedAtAfter(recent) > 0;
     }
 
     @Override

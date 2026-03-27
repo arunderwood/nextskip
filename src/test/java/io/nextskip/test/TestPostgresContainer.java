@@ -1,6 +1,7 @@
 package io.nextskip.test;
 
 import org.testcontainers.postgresql.PostgreSQLContainer;
+import org.testcontainers.utility.DockerImageName;
 
 /**
  * Singleton PostgreSQL container shared across all integration tests.
@@ -20,7 +21,9 @@ public final class TestPostgresContainer {
     private static final PostgreSQLContainer INSTANCE;
 
     static {
-        INSTANCE = new PostgreSQLContainer("postgres:18")
+        INSTANCE = new PostgreSQLContainer(
+                DockerImageName.parse("timescale/timescaledb:latest-pg18")
+                        .asCompatibleSubstituteFor("postgres"))
                 .withDatabaseName("nextskip_test")
                 .withUsername("test")
                 .withPassword("test");

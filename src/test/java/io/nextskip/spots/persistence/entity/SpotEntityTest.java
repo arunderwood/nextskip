@@ -4,9 +4,7 @@ import io.nextskip.spots.model.Spot;
 import io.nextskip.test.fixtures.SpotFixtures;
 import org.junit.jupiter.api.Test;
 
-import java.time.Clock;
 import java.time.Instant;
-import java.time.ZoneId;
 
 import static io.nextskip.test.TestConstants.EU_GRID;
 import static io.nextskip.test.TestConstants.FT8_20M_FREQUENCY_HZ;
@@ -18,13 +16,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * Unit tests for {@link SpotEntity}.
  *
- * <p>Tests entity construction, domain conversion, and Clock injection.
+ * <p>Tests entity construction, domain conversion, and field mapping.
  */
 @SuppressWarnings("PMD.AvoidDuplicateLiterals") // Test data uses repeated band/mode/callsign values
 class SpotEntityTest {
-
-    private static final Instant FIXED_INSTANT = Instant.parse("2023-06-15T12:00:00Z");
-    private static final Clock FIXED_CLOCK = Clock.fixed(FIXED_INSTANT, ZoneId.of("UTC"));
 
     // ===========================================
     // fromDomain tests
@@ -49,7 +44,7 @@ class SpotEntityTest {
                 .distanceKm(TRANSATLANTIC_DISTANCE_KM)
                 .build();
 
-        SpotEntity entity = SpotEntity.fromDomain(spot, FIXED_CLOCK);
+        SpotEntity entity = SpotEntity.fromDomain(spot);
 
         assertThat(entity.getSource()).isEqualTo(PSKREPORTER_SOURCE);
         assertThat(entity.getBand()).isEqualTo("20m");
@@ -80,7 +75,7 @@ class SpotEntityTest {
                 .distanceKm(null)
                 .build();
 
-        SpotEntity entity = SpotEntity.fromDomain(spot, FIXED_CLOCK);
+        SpotEntity entity = SpotEntity.fromDomain(spot);
 
         assertThat(entity.getFrequencyHz()).isNull();
         assertThat(entity.getSnr()).isNull();
@@ -94,32 +89,10 @@ class SpotEntityTest {
     }
 
     @Test
-    void testFromDomain_WithClock_SetsCreatedAtFromClock() {
-        Spot spot = SpotFixtures.defaultSpot();
-
-        SpotEntity entity = SpotEntity.fromDomain(spot, FIXED_CLOCK);
-
-        assertThat(entity.getCreatedAt()).isEqualTo(FIXED_INSTANT);
-    }
-
-    @Test
-    void testFromDomain_WithoutClock_SetsCreatedAtNow() {
-        Spot spot = SpotFixtures.defaultSpot();
-        Instant before = Instant.now();
-
-        SpotEntity entity = SpotEntity.fromDomain(spot);
-
-        Instant after = Instant.now();
-        assertThat(entity.getCreatedAt())
-                .isAfterOrEqualTo(before)
-                .isBeforeOrEqualTo(after);
-    }
-
-    @Test
     void testFromDomain_IdIsNull() {
         Spot spot = SpotFixtures.defaultSpot();
 
-        SpotEntity entity = SpotEntity.fromDomain(spot, FIXED_CLOCK);
+        SpotEntity entity = SpotEntity.fromDomain(spot);
 
         assertThat(entity.getId()).isNull();
     }
@@ -131,7 +104,7 @@ class SpotEntityTest {
     @Test
     void testToDomain_AllFields_ConvertedCorrectly() {
         Spot original = SpotFixtures.defaultSpot();
-        SpotEntity entity = SpotEntity.fromDomain(original, FIXED_CLOCK);
+        SpotEntity entity = SpotEntity.fromDomain(original);
 
         Spot converted = entity.toDomain();
 
@@ -163,7 +136,7 @@ class SpotEntityTest {
                 .spottedContinent(null)
                 .distanceKm(null)
                 .build();
-        SpotEntity entity = SpotEntity.fromDomain(original, FIXED_CLOCK);
+        SpotEntity entity = SpotEntity.fromDomain(original);
 
         Spot converted = entity.toDomain();
 
@@ -180,15 +153,14 @@ class SpotEntityTest {
 
     @Test
     void testToDomain_DoesNotIncludeEntityFields() {
-        // createdAt and id are entity-specific, not part of domain model
+        // id is entity-specific, not part of domain model
         Spot original = SpotFixtures.defaultSpot();
-        SpotEntity entity = SpotEntity.fromDomain(original, FIXED_CLOCK);
-        entity.setId(123L);
+        SpotEntity entity = SpotEntity.fromDomain(original);
 
         Spot converted = entity.toDomain();
 
         // Verify the domain Spot doesn't expose entity-specific fields
-        // (Spot record has no id or createdAt fields)
+        // (Spot record has no id field)
         assertThat(converted).isEqualTo(original);
     }
 
@@ -213,7 +185,7 @@ class SpotEntityTest {
                 .distanceKm(8500)
                 .build();
 
-        SpotEntity entity = SpotEntity.fromDomain(original, FIXED_CLOCK);
+        SpotEntity entity = SpotEntity.fromDomain(original);
         Spot roundTripped = entity.toDomain();
 
         assertThat(roundTripped).isEqualTo(original);
@@ -223,7 +195,7 @@ class SpotEntityTest {
     void testRoundTrip_UnenrichedSpot_PreservesNulls() {
         Spot original = SpotFixtures.spot().unenriched().build();
 
-        SpotEntity entity = SpotEntity.fromDomain(original, FIXED_CLOCK);
+        SpotEntity entity = SpotEntity.fromDomain(original);
         Spot roundTripped = entity.toDomain();
 
         assertThat(roundTripped.spotterContinent()).isNull();
@@ -238,7 +210,6 @@ class SpotEntityTest {
     @Test
     void testConstructor_AllArgs_SetsAllFields() {
         Instant spottedAt = Instant.parse("2023-06-15T10:00:00Z");
-        Instant createdAt = Instant.parse("2023-06-15T10:01:00Z");
 
         SpotEntity entity = new SpotEntity(
                 PSKREPORTER_SOURCE,
@@ -253,8 +224,7 @@ class SpotEntityTest {
                 "G3ABC",
                 EU_GRID,
                 "EU",
-                TRANSATLANTIC_DISTANCE_KM,
-                createdAt
+                TRANSATLANTIC_DISTANCE_KM
         );
 
         assertThat(entity.getSource()).isEqualTo(PSKREPORTER_SOURCE);
@@ -270,7 +240,6 @@ class SpotEntityTest {
         assertThat(entity.getSpottedGrid()).isEqualTo(EU_GRID);
         assertThat(entity.getSpottedContinent()).isEqualTo("EU");
         assertThat(entity.getDistanceKm()).isEqualTo(TRANSATLANTIC_DISTANCE_KM);
-        assertThat(entity.getCreatedAt()).isEqualTo(createdAt);
         assertThat(entity.getId()).isNull();
     }
 
@@ -280,9 +249,8 @@ class SpotEntityTest {
 
     @Test
     void testSetters_ModifyEntity() {
-        SpotEntity entity = SpotFixtures.defaultSpotEntity(FIXED_CLOCK);
+        SpotEntity entity = SpotFixtures.defaultSpotEntity();
 
-        entity.setId(999L);
         entity.setSource("TestSource");
         entity.setBand("80m");
         entity.setMode("CW");
@@ -296,7 +264,6 @@ class SpotEntityTest {
         entity.setSpottedContinent("EU");
         entity.setDistanceKm(6500);
 
-        assertThat(entity.getId()).isEqualTo(999L);
         assertThat(entity.getSource()).isEqualTo("TestSource");
         assertThat(entity.getBand()).isEqualTo("80m");
         assertThat(entity.getMode()).isEqualTo("CW");
@@ -312,18 +279,8 @@ class SpotEntityTest {
     }
 
     @Test
-    void testSetCreatedAt_ModifiesCreatedAt() {
-        SpotEntity entity = SpotFixtures.defaultSpotEntity(FIXED_CLOCK);
-        Instant newCreatedAt = Instant.parse("2023-12-25T00:00:00Z");
-
-        entity.setCreatedAt(newCreatedAt);
-
-        assertThat(entity.getCreatedAt()).isEqualTo(newCreatedAt);
-    }
-
-    @Test
     void testSetSpottedAt_ModifiesSpottedAt() {
-        SpotEntity entity = SpotFixtures.defaultSpotEntity(FIXED_CLOCK);
+        SpotEntity entity = SpotFixtures.defaultSpotEntity();
         Instant newSpottedAt = Instant.parse("2023-07-04T12:00:00Z");
 
         entity.setSpottedAt(newSpottedAt);
@@ -337,21 +294,19 @@ class SpotEntityTest {
 
     @Test
     void testSpotFixtures_DefaultSpotEntity_HasExpectedValues() {
-        SpotEntity entity = SpotFixtures.defaultSpotEntity(FIXED_CLOCK);
+        SpotEntity entity = SpotFixtures.defaultSpotEntity();
 
         assertThat(entity.getSource()).isEqualTo(PSKREPORTER_SOURCE);
         assertThat(entity.getBand()).isEqualTo("20m");
         assertThat(entity.getMode()).isEqualTo("FT8");
-        assertThat(entity.getCreatedAt()).isEqualTo(FIXED_INSTANT);
     }
 
     @Test
-    void testSpotFixtures_SpotEntity_WithCustomClock() {
+    void testSpotFixtures_SpotEntity_FromCustomSpot() {
         Spot spot = SpotFixtures.spot().band("10m").build();
 
-        SpotEntity entity = SpotFixtures.spotEntity(spot, FIXED_CLOCK);
+        SpotEntity entity = SpotFixtures.spotEntity(spot);
 
         assertThat(entity.getBand()).isEqualTo("10m");
-        assertThat(entity.getCreatedAt()).isEqualTo(FIXED_INSTANT);
     }
 }

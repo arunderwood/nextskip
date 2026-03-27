@@ -25,6 +25,11 @@ NextSkip is a real-time amateur radio activity dashboard that helps operators fi
 # Build frontend only
 ./gradlew vaadinBuildFrontend
 
+# IMPORTANT: Vaadin manages parts of package.json (component versions,
+# overrides). After dependency upgrades or branch switches, run
+# vaadinBuildFrontend and check for package.json changes — these are
+# generated and should be committed alongside your other changes.
+
 # Clean build artifacts
 ./gradlew clean
 ```

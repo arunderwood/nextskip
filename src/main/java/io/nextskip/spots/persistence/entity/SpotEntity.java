@@ -9,36 +9,36 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 
-import java.time.Clock;
 import java.time.Instant;
 
 /**
  * JPA entity for persisting PSKReporter spots.
  *
- * <p>Stores enriched spot data with indices optimized for:
- * <ul>
- *   <li>Band + time queries (recent spots on a band)</li>
- *   <li>Mode + time queries (recent spots by mode)</li>
- *   <li>Band + distance queries (DX spots by band)</li>
- *   <li>TTL cleanup (created_at for 24hr expiration)</li>
- * </ul>
+ * <p>Stores enriched spot data in a TimescaleDB hypertable partitioned by
+ * {@code spotted_at}. The {@code id} column is database-generated via
+ * {@code GENERATED ALWAYS AS IDENTITY} and used as the JPA {@code @Id},
+ * but has no database-level PK constraint (TimescaleDB requires the
+ * partition column in any PK/UNIQUE constraint).
  */
 @Entity
 @Table(name = "spots", indexes = {
-        @Index(name = "idx_spots_band_time", columnList = "band, spotted_at DESC"),
-        @Index(name = "idx_spots_mode_time", columnList = "mode, spotted_at DESC"),
         @Index(name = "idx_spots_band_mode_time", columnList = "band, mode, spotted_at DESC"),
-        @Index(name = "idx_spots_distance", columnList = "band, distance_km DESC"),
-        @Index(name = "idx_spots_created_at", columnList = "created_at"),
         @Index(name = "idx_spots_bulk_agg", columnList = "spotted_at, band, mode"),
         @Index(name = "idx_spots_bulk_paths",
                 columnList = "spotted_at, band, mode, spotter_continent, spotted_continent")
-        // idx_spots_bulk_dx uses INCLUDE clause — managed by Liquibase migration 015 only
+        // idx_spots_bulk_dx uses INCLUDE clause — managed by Liquibase migration 016 only
 })
 public class SpotEntity {
 
+    /**
+     * Auto-increment row identifier used as JPA {@code @Id} for entity identity.
+     * Not a database-level primary key (TimescaleDB hypertables require the
+     * partition column in any PK/UNIQUE constraint). The database generates
+     * the value via {@code GENERATED ALWAYS AS IDENTITY}.
+     */
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id", insertable = false, updatable = false)
     private Long id;
 
     @Column(name = "source", nullable = false, length = 20)
@@ -80,9 +80,6 @@ public class SpotEntity {
     @Column(name = "distance_km")
     private Integer distanceKm;
 
-    @Column(name = "created_at", nullable = false)
-    private Instant createdAt;
-
     /**
      * Required by JPA.
      */
@@ -105,8 +102,7 @@ public class SpotEntity {
             String spottedCall,
             String spottedGrid,
             String spottedContinent,
-            Integer distanceKm,
-            Instant createdAt
+            Integer distanceKm
     ) {
         this.source = source;
         this.band = band;
@@ -121,31 +117,15 @@ public class SpotEntity {
         this.spottedGrid = spottedGrid;
         this.spottedContinent = spottedContinent;
         this.distanceKm = distanceKm;
-        this.createdAt = createdAt;
     }
 
     /**
      * Converts a domain Spot to a persistence entity.
      *
-     * <p>Sets createdAt to the current time using the system clock.
-     *
      * @param spot the domain model
      * @return a new entity ready for persistence
      */
     public static SpotEntity fromDomain(Spot spot) {
-        return fromDomain(spot, Clock.systemUTC());
-    }
-
-    /**
-     * Converts a domain Spot to a persistence entity with a custom clock.
-     *
-     * <p>Allows injection of a test clock for deterministic testing.
-     *
-     * @param spot  the domain model
-     * @param clock the clock to use for createdAt timestamp
-     * @return a new entity ready for persistence
-     */
-    public static SpotEntity fromDomain(Spot spot, Clock clock) {
         return new SpotEntity(
                 spot.source(),
                 spot.band(),
@@ -159,8 +139,7 @@ public class SpotEntity {
                 spot.spottedCall(),
                 spot.spottedGrid(),
                 spot.spottedContinent(),
-                spot.distanceKm(),
-                clock.instant()
+                spot.distanceKm()
         );
     }
 
@@ -245,15 +224,7 @@ public class SpotEntity {
         return distanceKm;
     }
 
-    public Instant getCreatedAt() {
-        return createdAt;
-    }
-
     // Setters (for JPA)
-
-    public void setId(Long id) {
-        this.id = id;
-    }
 
     public void setSource(String source) {
         this.source = source;
@@ -305,9 +276,5 @@ public class SpotEntity {
 
     public void setDistanceKm(Integer distanceKm) {
         this.distanceKm = distanceKm;
-    }
-
-    public void setCreatedAt(Instant createdAt) {
-        this.createdAt = createdAt;
     }
 }
