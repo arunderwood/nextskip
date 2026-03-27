@@ -79,14 +79,6 @@ databaseChangeLog:
                 chunk_time_interval => INTERVAL '1 hour');
 
   - changeSet:
-      id: 016-spots-hypertable-retention
-      author: nextskip
-      comment: Automatic retention policy replaces SpotCleanupService batch DELETEs
-      changes:
-        - sql:
-            sql: SELECT add_retention_policy('spots', INTERVAL '6 hours');
-
-  - changeSet:
       id: 016-spots-hypertable-indexes
       author: nextskip
       comment: >
