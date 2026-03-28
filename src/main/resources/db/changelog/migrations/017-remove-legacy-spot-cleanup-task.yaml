@@ -1,0 +1,13 @@
+databaseChangeLog:
+  - changeSet:
+      id: 017-remove-legacy-spot-cleanup-task
+      author: nextskip
+      comment: >
+        Remove orphaned db-scheduler row for the legacy spot-cleanup task.
+        The Java code (SpotCleanupTask/SpotCleanupService) was deleted in the
+        TimescaleDB migration, but the scheduler row persists and keeps failing.
+      changes:
+        - sql:
+            sql: DELETE FROM scheduled_tasks WHERE task_name = 'spot-cleanup'
+      rollback:
+        - empty:

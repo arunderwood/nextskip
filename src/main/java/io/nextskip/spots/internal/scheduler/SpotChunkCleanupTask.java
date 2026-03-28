@@ -42,7 +42,7 @@ public class SpotChunkCleanupTask {
         return Tasks.recurring(TASK_NAME, FixedDelay.of(CLEANUP_INTERVAL))
                 .execute((taskInstance, executionContext) -> {
                     LOG.info("Dropping spots chunks older than {}", RETENTION_INTERVAL);
-                    spotRepository.dropOldChunks(RETENTION_INTERVAL);
+                    spotRepository.dropOldChunks();
                     LOG.info("Spot chunk cleanup complete");
                 });
     }

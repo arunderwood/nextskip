@@ -64,19 +64,21 @@ public interface SpotRepository extends JpaRepository<SpotEntity, Long> {
     // ========================================================================
 
     /**
-     * Drops hypertable chunks older than the specified interval.
+     * Drops hypertable chunks older than 6 hours.
      *
      * <p>Uses TimescaleDB's {@code drop_chunks()} which is available under
      * the Apache license (unlike {@code add_retention_policy()}).
      *
-     * <p>Called by {@code SpotChunkCleanupTask} on a recurring schedule.
+     * <p>The interval is hardcoded because {@code INTERVAL} literals cannot
+     * be parameterized in PostgreSQL (Hibernate converts parameters to
+     * {@code $1}, producing invalid SQL {@code INTERVAL $1}).
      *
-     * @param olderThan the interval expression (e.g., {@code 6 hours})
+     * <p>Called by {@code SpotChunkCleanupTask} on a recurring schedule.
      */
     @Modifying
     @Transactional
-    @Query(value = "SELECT drop_chunks('spots', INTERVAL :olderThan)", nativeQuery = true)
-    void dropOldChunks(@Param("olderThan") String olderThan);
+    @Query(value = "SELECT drop_chunks('spots', INTERVAL '6 hours')", nativeQuery = true)
+    void dropOldChunks();
 
     // ========================================================================
     // Bulk aggregation queries (replace N+1 per-pair queries)

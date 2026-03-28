@@ -1,6 +1,6 @@
 # Database Configuration
 
-NextSkip uses PostgreSQL 18 for persistent data storage.
+NextSkip uses PostgreSQL 18 with TimescaleDB (Apache-licensed OSS) for persistent data storage.
 
 > **Adding a new data source?** See [PERSISTENCE_REFERENCE.md](PERSISTENCE_REFERENCE.md) for reference examples.
 
@@ -46,6 +46,51 @@ psql -c "GRANT ALL PRIVILEGES ON DATABASE nextskip TO nextskip;"
 | Username | nextskip                                  |
 | Password | nextskip                                  |
 | JDBC URL | jdbc:postgresql://localhost:5432/nextskip |
+
+## TimescaleDB
+
+NextSkip uses TimescaleDB for the `spots` table, which ingests high-volume amateur radio spot data (~20k spots/minute).
+
+### Docker Image
+
+All environments use the **Apache-licensed OSS** image:
+
+```
+timescale/timescaledb:latest-pg18-oss
+```
+
+This matches Render's managed PostgreSQL which bundles TimescaleDB under the Apache license.
+
+### Hypertable: `spots`
+
+| Setting | Value |
+| ------- | ----- |
+| Partition column | `spotted_at` |
+| Chunk interval | 1 hour |
+| Retention | 6 hours (app-managed) |
+
+### Retention
+
+Render's TimescaleDB runs under the **Apache license**, so `add_retention_policy()` is unavailable (requires Timescale Community license). Instead, `SpotChunkCleanupTask` calls `drop_chunks()` on a 1-hour schedule.
+
+### License Constraints (Render)
+
+| Function | Available | License |
+| -------- | --------- | ------- |
+| `create_hypertable()` | Yes | Apache |
+| `time_bucket()` | Yes | Apache |
+| `drop_chunks()` | Yes | Apache |
+| `add_retention_policy()` | **No** | Timescale |
+| `add_compression_policy()` | **No** | Timescale |
+| Continuous aggregates | **No** | Timescale |
+
+### Adding a New Hypertable
+
+1. Create the table with a `TIMESTAMPTZ` partition column
+2. Call `create_hypertable()` in the Liquibase migration
+3. Add a cleanup task using `drop_chunks()` (see `SpotChunkCleanupTask.java`)
+4. Use `time_bucket()` in queries for time-based aggregation
+5. See migration `016-timescaledb-spots-hypertable.yaml` for reference
 
 ## Running the Application
 

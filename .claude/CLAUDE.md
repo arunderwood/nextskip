@@ -47,14 +47,16 @@ See [docs/DATABASE.md](docs/DATABASE.md) for complete database documentation.
 **Quick Start**:
 
 ```bash
-# Start PostgreSQL
+# Start PostgreSQL + TimescaleDB
 docker-compose up -d
 
 # Start application
 ./gradlew bootRun
 ```
 
-**Prerequisites**: Docker (for local PostgreSQL via Docker Compose)
+**Prerequisites**: Docker (for local PostgreSQL + TimescaleDB via Docker Compose)
+
+**TimescaleDB**: The `spots` table is a TimescaleDB hypertable (1-hour chunks, 6-hour retention). Render runs TimescaleDB under the **Apache license** — `time_bucket()` and `drop_chunks()` work, but `add_retention_policy()`, compression policies, and continuous aggregates are NOT available. See DATABASE.md for details.
 
 ### PWA Icons
 
@@ -439,7 +441,7 @@ This repository includes specialized agents and commands in `.claude/`:
 
 ## Active Technologies
 
-- Java 25 (see `.tool-versions`) + Spring Boot, Vaadin Hilla 25.0, Resilience4j, Caffeine, React 19 + TypeScript (002-ft4-ft2-modes)
+- Java 25 (see `.tool-versions`) + Spring Boot, Vaadin Hilla 25.0, Resilience4j, Caffeine, TimescaleDB (Apache OSS), React 19 + TypeScript (002-ft4-ft2-modes)
 
 ## Recent Changes
 

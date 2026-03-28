@@ -29,6 +29,9 @@ serves as the single source of truth, with LoadingCache providing fast reads.
 | Refresh Task | `propagation/internal/scheduler/NoaaRefreshTask.java` | db-scheduler `RecurringTask` |
 | Cache Config | `common/config/CacheConfig.java` | Caffeine `LoadingCache` |
 | Endpoint | `propagation/api/PropagationEndpoint.java` | `@BrowserCallable` |
+| Entity (hypertable) | `spots/persistence/entity/SpotEntity.java` | No `@Id` generation, `spotted_at` partition column |
+| Migration (hypertable) | `db/changelog/migrations/016-timescaledb-spots-hypertable.yaml` | `create_hypertable()` + indexes |
+| Cleanup Task (chunks) | `spots/internal/scheduler/SpotChunkCleanupTask.java` | `drop_chunks()` instead of DELETE |
 
 All paths relative to `src/main/java/io/nextskip/` (or `src/main/resources/` for migrations).
 
