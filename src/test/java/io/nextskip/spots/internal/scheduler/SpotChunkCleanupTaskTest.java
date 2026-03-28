@@ -25,7 +25,6 @@ import static org.mockito.Mockito.verify;
 class SpotChunkCleanupTaskTest {
 
     private static final String EXPECTED_TASK_NAME = "spot-chunk-cleanup";
-    private static final String EXPECTED_RETENTION_INTERVAL = "6 hours";
 
     @Mock
     private SpotRepository spotRepository;
@@ -76,7 +75,7 @@ class SpotChunkCleanupTaskTest {
             recurringTask.execute(taskInstance, executionContext);
 
             // Then
-            verify(spotRepository).dropOldChunks(EXPECTED_RETENTION_INTERVAL);
+            verify(spotRepository).dropOldChunks();
         }
     }
 }
