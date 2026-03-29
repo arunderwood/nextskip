@@ -257,7 +257,7 @@ tasks.named<Test>("test") {
 // See: https://github.com/renovatebot/renovate/discussions/40147
 // Can be reverted to catalog accessors if Renovate adds native support.
 checkstyle {
-    toolVersion = "13.3.0"
+    toolVersion = "13.4.0"
     configFile = file("${rootDir}/config/checkstyle/checkstyle.xml")
     isIgnoreFailures = false  // Quality violations fail the build
 }
