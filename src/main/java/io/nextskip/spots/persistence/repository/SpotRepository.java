@@ -2,7 +2,6 @@ package io.nextskip.spots.persistence.repository;
 
 import io.nextskip.spots.persistence.entity.SpotEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -73,12 +72,15 @@ public interface SpotRepository extends JpaRepository<SpotEntity, Long> {
      * be parameterized in PostgreSQL (Hibernate converts parameters to
      * {@code $1}, producing invalid SQL {@code INTERVAL $1}).
      *
+     * <p>Returns the names of dropped chunks. Must not use {@code @Modifying}
+     * because {@code drop_chunks()} is a {@code SELECT} that returns a result
+     * set — Hibernate throws if a result is returned from a modifying query.
+     *
      * <p>Called by {@code SpotChunkCleanupTask} on a recurring schedule.
      */
-    @Modifying
     @Transactional
     @Query(value = "SELECT drop_chunks('spots', INTERVAL '6 hours')", nativeQuery = true)
-    void dropOldChunks();
+    List<Object> dropOldChunks();
 
     // ========================================================================
     // Bulk aggregation queries (replace N+1 per-pair queries)
