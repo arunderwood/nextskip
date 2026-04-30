@@ -363,7 +363,7 @@ pitest {
     threads = pitestThreads
     outputFormats = setOf("HTML", "XML")
     timestampedReports = false
-    junit5PluginVersion = "1.2.1"
+    junit5PluginVersion = "1.2.3"
     // Incremental analysis: reuse results for unchanged code
     historyInputLocation = file("${rootDir}/.pitest-history")
     historyOutputLocation = file("${rootDir}/.pitest-history")
