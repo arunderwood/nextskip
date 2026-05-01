@@ -196,6 +196,12 @@ dependencies {
 
     // Pekko Streams testkit
     testImplementation(libs.pekko.stream.testkit)
+
+    // JUnit Platform launcher: required by Gradle 8.8+. Declared explicitly so
+    // junit-bom (6.0.3) controls the version, instead of letting
+    // gradle-pitest-plugin's auto-injection pull in 1.13.1 from jqwik via a
+    // detached configuration that bypasses Spring Boot's BOM.
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
 // OpenTelemetry agent configuration
@@ -364,6 +370,12 @@ pitest {
     outputFormats = setOf("HTML", "XML")
     timestampedReports = false
     junit5PluginVersion = "1.2.3"
+    // Disable auto-injection of junit-platform-launcher into testRuntimeOnly:
+    // pitest 1.19.0 resolves the version via a detached config that lacks the
+    // Spring Boot BOM and picks 1.13.1 from jqwik, which then defeats the
+    // junit-bom 6.0.3 constraint and breaks Jupiter 6.x test discovery. The
+    // explicit testRuntimeOnly declaration above replaces this.
+    addJUnitPlatformLauncher = false
     // Incremental analysis: reuse results for unchanged code
     historyInputLocation = file("${rootDir}/.pitest-history")
     historyOutputLocation = file("${rootDir}/.pitest-history")
