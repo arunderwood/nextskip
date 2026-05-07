@@ -175,11 +175,6 @@ jobs:
     container:
       image: mcr.microsoft.com/playwright:v1.59.1-noble
       options: --cap-add=SYS_ADMIN
-      # /github/home (the default GH Actions HOME inside containers) is owned by
-      # the image's pwuser, so Firefox refuses to run as the container's root.
-      # Point HOME at root's actual home, which root owns.
-      env:
-        HOME: /root
     strategy:
       fail-fast: false
       matrix:
@@ -239,6 +234,11 @@ jobs:
           timeout 60 bash -c 'until curl -sf http://localhost:8080/actuator/health > /dev/null; do sleep 2; done'
 
       - name: Run E2E tests
+        # /github/home (default container HOME) is owned by the image's pwuser.
+        # Firefox refuses to run as root inside a session whose HOME is owned
+        # by another user, so override HOME to /root at the step level.
+        env:
+          HOME: /root
         run: npx playwright test --project=${{ matrix.browser }}
 
       - name: Stop application
