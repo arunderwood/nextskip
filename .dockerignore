@@ -6,13 +6,8 @@
 # CI/CD
 .github
 
-# Build output. We exclude the Gradle work tree but allow the artifacts the
-# Dockerfile actually consumes (produced by `./gradlew bootJar` or
-# downloaded from CI's application-jar artifact).
-build/*
-!build/libs/
-!build/otel-agent/
-!build/pyroscope-agent/
+# Build output (will be created during build)
+build/
 .gradle/
 target/
 

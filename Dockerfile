@@ -1,15 +1,38 @@
-# Runtime image. The JAR and observability agents are produced by the
-# `backend` CI job and pulled into the build context via download-artifact;
-# locally, run `./gradlew bootJar` (which depends on downloadOtelAgent and
-# downloadPyroscopeAgent) before `docker build .`.
+# Stage 1: Build the application
+FROM eclipse-temurin:25-jdk AS builder
+
+# Install Node.js 24.x (required for Vaadin Hilla frontend build)
+RUN apt-get update && apt-get install -y curl \
+    && curl -fsSL https://deb.nodesource.com/setup_24.x | bash - \
+    && apt-get install -y nodejs \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Copy Gradle wrapper and build files first (better layer caching)
+COPY gradlew gradlew.bat ./
+COPY gradle/ gradle/
+COPY build.gradle.kts settings.gradle.kts ./
+
+# Copy source code
+COPY src/ src/
+COPY package.json package-lock.json ./
+COPY tsconfig.json vite.config.ts types.d.ts .env.production ./
+COPY config/ config/
+
+# Build the application (includes frontend via vaadinBuildFrontend)
+RUN chmod +x gradlew && ./gradlew bootJar -Pvaadin.productionMode=true --no-daemon
+
+# Stage 2: Runtime image (distroless)
 FROM gcr.io/distroless/java25-debian13
 
 WORKDIR /app
 
-COPY build/libs/*.jar app.jar
-COPY build/otel-agent/grafana-opentelemetry-java.jar otel-agent.jar
-COPY build/pyroscope-agent/pyroscope.jar pyroscope-agent.jar
-COPY config/otel-agent.properties otel-agent.properties
+# Copy the built JAR, agents, and observability config from builder stage
+COPY --from=builder /app/build/libs/*.jar app.jar
+COPY --from=builder /app/build/otel-agent/grafana-opentelemetry-java.jar otel-agent.jar
+COPY --from=builder /app/build/pyroscope-agent/pyroscope.jar pyroscope-agent.jar
+COPY --from=builder /app/config/otel-agent.properties otel-agent.properties
 
 # Distroless runs as non-root by default (uid 65532)
 # JVM settings for 2GB container (distroless doesn't support JAVA_OPTS)
