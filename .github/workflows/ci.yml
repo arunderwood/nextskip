@@ -166,6 +166,10 @@ jobs:
     needs: [backend, frontend-test]
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    # Microsoft's official Playwright image: pre-installed browsers + system deps,
+    # version-pinned to match @playwright/test in package-lock.json.
+    container:
+      image: mcr.microsoft.com/playwright:v1.59.1-noble
     strategy:
       fail-fast: false
       matrix:
@@ -179,8 +183,6 @@ jobs:
           POSTGRES_DB: nextskip
           POSTGRES_USER: nextskip
           POSTGRES_PASSWORD: nextskip
-        ports:
-          - 5432:5432
         options: >-
           --health-cmd pg_isready
           --health-interval 5s
@@ -196,38 +198,29 @@ jobs:
           distribution: 'temurin'
           java-version: '25'
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version: '24'
-          cache: 'npm'
-
       - name: Download JAR artifact
         uses: actions/download-artifact@v8
         with:
           name: application-jar
           path: build/libs
 
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Cache Playwright browsers
+      - name: Cache npm
         uses: actions/cache@v5
         with:
-          path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ matrix.browser }}-${{ hashFiles('package-lock.json') }}
+          path: ~/.npm
+          key: npm-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
           restore-keys: |
-            playwright-${{ runner.os }}-${{ matrix.browser }}-
+            npm-${{ runner.os }}-
 
-      - name: Install Playwright browsers
-        run: npx playwright install ${{ matrix.browser }} --with-deps
+      - name: Install dependencies
+        run: npm ci
 
       - name: Start application in background
         run: |
           java -jar build/libs/*.jar \
             --server.port=8080 \
             --vaadin.launch-browser=false \
-            --spring.datasource.url=jdbc:postgresql://localhost:5432/nextskip \
+            --spring.datasource.url=jdbc:postgresql://postgres:5432/nextskip \
             --spring.datasource.username=nextskip \
             --spring.datasource.password=nextskip \
             > app.log 2>&1 &
