@@ -24,7 +24,6 @@ jobs:
         uses: gradle/actions/wrapper-validation@v6
 
   backend:
-    needs: validate
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -59,15 +58,6 @@ jobs:
             build/pyroscope-agent
           key: agents-${{ hashFiles('gradle/libs.versions.toml') }}
 
-      - name: Cache PIT mutation history
-        uses: actions/cache@v5
-        with:
-          path: .pitest-history
-          key: pitest-history-${{ github.ref_name }}
-          restore-keys: |
-            pitest-history-main
-            pitest-history-
-
       - name: Run tests with quality checks
         # TODO: Re-enable pitest once timeout issues are resolved
         run: ./gradlew check jacocoTestReport -x pitest
@@ -86,7 +76,6 @@ jobs:
             build/reports/checkstyle/
             build/reports/pmd/
             build/reports/spotbugs/
-            build/reports/pitest/
 
       - name: Test Report
         uses: EnricoMi/publish-unit-test-result-action@v2
@@ -107,15 +96,20 @@ jobs:
       - name: Build production JAR
         run: ./gradlew build -Pvaadin.productionMode=true -Pversion=${{ steps.version.outputs.version }} -x test -x check
 
-      - name: Upload JAR artifact
+      - name: Upload application artifacts
         uses: actions/upload-artifact@v7
         with:
           name: application-jar
-          path: build/libs/*.jar
+          # Common-prefix `build/` is stripped, so the artifact contains
+          # libs/, otel-agent/, pyroscope-agent/. Downstream jobs download
+          # with `path: build` to restore the original layout.
+          path: |
+            build/libs/*.jar
+            build/otel-agent/grafana-opentelemetry-java.jar
+            build/pyroscope-agent/pyroscope.jar
           retention-days: 7
 
   frontend-test:
-    needs: validate
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -208,11 +202,11 @@ jobs:
           distribution: 'temurin'
           java-version: '25'
 
-      - name: Download JAR artifact
+      - name: Download application artifacts
         uses: actions/download-artifact@v8
         with:
           name: application-jar
-          path: build/libs
+          path: build
 
       - name: Cache npm
         uses: actions/cache@v5
@@ -275,11 +269,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6
 
-      - name: Download JAR artifact
+      - name: Download application artifacts
         uses: actions/download-artifact@v8
         with:
           name: application-jar
-          path: build/libs
+          path: build
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
