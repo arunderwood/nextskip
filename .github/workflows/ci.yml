@@ -165,7 +165,7 @@ jobs:
   e2e-test:
     needs: [backend, frontend-test]
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     strategy:
       fail-fast: false
       matrix:
@@ -216,6 +216,8 @@ jobs:
         with:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ matrix.browser }}-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            playwright-${{ runner.os }}-${{ matrix.browser }}-
 
       - name: Install Playwright browsers
         run: npx playwright install ${{ matrix.browser }} --with-deps
