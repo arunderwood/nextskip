@@ -175,6 +175,11 @@ jobs:
     container:
       image: mcr.microsoft.com/playwright:v1.59.1-noble
       options: --cap-add=SYS_ADMIN
+      # /github/home (the default GH Actions HOME inside containers) is owned by
+      # the image's pwuser, so Firefox refuses to run as the container's root.
+      # Point HOME at root's actual home, which root owns.
+      env:
+        HOME: /root
     strategy:
       fail-fast: false
       matrix:
