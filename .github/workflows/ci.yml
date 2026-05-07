@@ -168,19 +168,24 @@ jobs:
     timeout-minutes: 15
     # Microsoft's official Playwright image: pre-installed browsers + system deps,
     # version-pinned to match @playwright/test in package-lock.json.
-    # --cap-add=SYS_ADMIN is required for Firefox's user-namespace sandbox.
-    # Docker's default seccomp profile blocks clone(CLONE_NEWUSER) unless the
-    # process holds CAP_SYS_ADMIN. Grants just that capability, leaving the
-    # seccomp syscall filter and the rest of the default profile intact.
+    # --ipc=host avoids Chromium memory-pressure crashes (recommended in
+    # Playwright's Docker docs); --init runs tini as PID 1 to reap browser
+    # child processes cleanly.
     container:
       image: mcr.microsoft.com/playwright:v1.59.1-noble
-      options: --cap-add=SYS_ADMIN
+      options: --ipc=host --init
     strategy:
       fail-fast: false
       matrix:
         browser: [chromium, firefox, webkit]
     permissions:
       contents: read
+    # Firefox refuses to run as the container's root if $HOME is owned by
+    # another user. GH Actions' default container HOME is /github/home (owned
+    # by pwuser, the image's UID 1001). Override at the job level so all steps
+    # see HOME=/root, which root owns in the container.
+    env:
+      HOME: /root
     services:
       postgres:
         image: timescale/timescaledb:latest-pg18-oss
@@ -234,11 +239,6 @@ jobs:
           timeout 60 bash -c 'until curl -sf http://localhost:8080/actuator/health > /dev/null; do sleep 2; done'
 
       - name: Run E2E tests
-        # /github/home (default container HOME) is owned by the image's pwuser.
-        # Firefox refuses to run as root inside a session whose HOME is owned
-        # by another user, so override HOME to /root at the step level.
-        env:
-          HOME: /root
         run: npx playwright test --project=${{ matrix.browser }}
 
       - name: Stop application
