@@ -389,7 +389,6 @@ class AbstractSpotSourceTest {
     }
 
     @Test
-    @SuppressWarnings("PMD.UnitTestShouldIncludeAssert") // Assertion via await().untilAsserted()
     void testForceReconnect_DisconnectThrows_StillReconnects() throws Exception {
         ThrowingReflectionTestSource source = new ThrowingReflectionTestSource();
         source.connect();

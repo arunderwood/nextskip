@@ -46,7 +46,6 @@ import static org.mockito.Mockito.when;
  * </ul>
  */
 @ExtendWith(MockitoExtension.class)
-@SuppressWarnings("PMD.UnitTestShouldIncludeAssert") // Tests use Awaitility and AssertJ assertions
 class SpotStreamProcessorTest {
 
     private static final int TEST_BATCH_SIZE = 5;
