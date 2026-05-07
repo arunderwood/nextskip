@@ -96,17 +96,11 @@ jobs:
       - name: Build production JAR
         run: ./gradlew build -Pvaadin.productionMode=true -Pversion=${{ steps.version.outputs.version }} -x test -x check
 
-      - name: Upload application artifacts
+      - name: Upload JAR artifact
         uses: actions/upload-artifact@v7
         with:
           name: application-jar
-          # Common-prefix `build/` is stripped, so the artifact contains
-          # libs/, otel-agent/, pyroscope-agent/. Downstream jobs download
-          # with `path: build` to restore the original layout.
-          path: |
-            build/libs/*.jar
-            build/otel-agent/grafana-opentelemetry-java.jar
-            build/pyroscope-agent/pyroscope.jar
+          path: build/libs/*.jar
           retention-days: 7
 
   frontend-test:
@@ -202,11 +196,11 @@ jobs:
           distribution: 'temurin'
           java-version: '25'
 
-      - name: Download application artifacts
+      - name: Download JAR artifact
         uses: actions/download-artifact@v8
         with:
           name: application-jar
-          path: build
+          path: build/libs
 
       - name: Cache npm
         uses: actions/cache@v5
@@ -269,11 +263,35 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6
 
-      - name: Download application artifacts
+      - name: Download JAR artifact
         uses: actions/download-artifact@v8
         with:
           name: application-jar
-          path: build
+          path: build/libs
+
+      # Observability agents are upstream Grafana releases, not artifacts we
+      # produce. Restore them from the same cache the backend job populates;
+      # if the cache misses (rare — backend writes it earlier in the same run),
+      # fetch them directly from GitHub releases.
+      - name: Restore observability agents from cache
+        id: agents-cache
+        uses: actions/cache/restore@v5
+        with:
+          path: |
+            build/otel-agent
+            build/pyroscope-agent
+          key: agents-${{ hashFiles('gradle/libs.versions.toml') }}
+
+      - name: Download observability agents (cache miss fallback)
+        if: steps.agents-cache.outputs.cache-hit != 'true'
+        run: |
+          OTEL_VERSION=$(grep -E '^grafana-otel-agent\s*=' gradle/libs.versions.toml | sed -E 's/.*"(.*)".*/\1/')
+          PYROSCOPE_VERSION=$(grep -E '^pyroscope-agent\s*=' gradle/libs.versions.toml | sed -E 's/.*"(.*)".*/\1/')
+          mkdir -p build/otel-agent build/pyroscope-agent
+          curl -fsSL -o build/otel-agent/grafana-opentelemetry-java.jar \
+            "https://github.com/grafana/grafana-opentelemetry-java/releases/download/v${OTEL_VERSION}/grafana-opentelemetry-java.jar"
+          curl -fsSL -o build/pyroscope-agent/pyroscope.jar \
+            "https://github.com/grafana/pyroscope-java/releases/download/v${PYROSCOPE_VERSION}/pyroscope.jar"
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
