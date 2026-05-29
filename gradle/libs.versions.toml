@@ -37,7 +37,7 @@ jqwik = "1.9.3"
 testcontainers = "2.0.5"
 
 # Scheduling
-db-scheduler = "16.8.1"
+db-scheduler = "16.12.0"
 
 # MQTT
 paho-mqtt = "1.2.5"
