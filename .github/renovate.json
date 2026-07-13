@@ -22,6 +22,15 @@
       "matchStrings": ["pyroscope-agent\\s*=\\s*\"(?<currentValue>[^\"]+)\""],
       "depNameTemplate": "grafana/pyroscope-java",
       "datasourceTemplate": "github-releases"
+    },
+    {
+      "customType": "regex",
+      "description": "Microsoft Playwright container image (must match @playwright/test version)",
+      "managerFilePatterns": ["/^\\.github/workflows/.*\\.ya?ml$/"],
+      "matchStrings": ["image:\\s*mcr\\.microsoft\\.com/playwright:v(?<currentValue>[0-9.]+)-noble"],
+      "depNameTemplate": "@playwright/test",
+      "datasourceTemplate": "npm",
+      "versioningTemplate": "npm"
     }
   ],
   "packageRules": [
@@ -88,6 +97,7 @@
         "@types/react",
         "@types/react-dom",
         "@babel/preset-react",
+        "@rollup/pluginutils",
         "vite-plugin-checker",
         "/^@vaadin//",
         "/^workbox-/"

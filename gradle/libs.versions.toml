@@ -1,6 +1,6 @@
 [versions]
 # Core framework versions
-vaadin = "25.1.4"
+vaadin = "25.1.5"
 spring-boot = "4.0.6"
 spring-dependency-management = "1.1.7"
 
@@ -8,7 +8,7 @@ spring-dependency-management = "1.1.7"
 delta-coverage = "3.6.0"
 
 # Observability
-grafana-otel-agent = "2.27.0"
+grafana-otel-agent = "2.29.0"
 pyroscope-agent = "2.5.2"
 
 # Build utilities
@@ -17,7 +17,7 @@ download-plugin = "5.7.0"
 # Quality & testing tools
 # NOTE: checkstyle, pmd, spotbugs-tool, and jacoco versions moved to direct literals in build.gradle
 # to enable Renovate detection. See: https://github.com/renovatebot/renovate/discussions/40147
-spotbugs-plugin = "6.5.4"
+spotbugs-plugin = "6.5.9"
 pitest = "1.19.0"
 
 # Dependencies (not managed by Spring Boot BOM)
@@ -28,7 +28,7 @@ wiremock = "3.13.2"
 
 # Test dependencies (override for Java 25)
 mockito = "5.23.0"
-byte-buddy = "1.18.8-jdk5"
+byte-buddy = "1.18.11-jdk5"
 
 # Property-based testing
 jqwik = "1.9.3"
@@ -37,7 +37,7 @@ jqwik = "1.9.3"
 testcontainers = "2.0.5"
 
 # Scheduling
-db-scheduler = "16.7.1"
+db-scheduler = "16.12.0"
 
 # MQTT
 paho-mqtt = "1.2.5"
