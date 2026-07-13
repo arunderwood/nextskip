@@ -97,6 +97,7 @@
         "@types/react",
         "@types/react-dom",
         "@babel/preset-react",
+        "@rollup/pluginutils",
         "vite-plugin-checker",
         "/^@vaadin//",
         "/^workbox-/"
