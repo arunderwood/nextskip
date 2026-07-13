@@ -263,20 +263,20 @@ tasks.named<Test>("test") {
 // See: https://github.com/renovatebot/renovate/discussions/40147
 // Can be reverted to catalog accessors if Renovate adds native support.
 checkstyle {
-    toolVersion = "13.4.2"
+    toolVersion = "13.8.0"
     configFile = file("${rootDir}/config/checkstyle/checkstyle.xml")
     isIgnoreFailures = false  // Quality violations fail the build
 }
 
 pmd {
-    toolVersion = "7.24.0"
+    toolVersion = "7.26.0"
     ruleSets = emptyList()  // Empty to use custom ruleset file
     ruleSetFiles = files("${rootDir}/config/pmd/ruleset.xml")
     isIgnoreFailures = false  // Quality violations fail the build
 }
 
 spotbugs {
-    toolVersion = "4.9.8"
+    toolVersion = "4.10.3"
     effort = com.github.spotbugs.snom.Effort.MAX
     reportLevel = com.github.spotbugs.snom.Confidence.MEDIUM
     ignoreFailures = false  // Quality violations fail the build
@@ -295,7 +295,7 @@ tasks.withType<SpotBugsTask>().configureEach {
 }
 
 jacoco {
-    toolVersion = "0.8.14"
+    toolVersion = "0.8.15"
 }
 
 tasks.named<JacocoReport>("jacocoTestReport") {
