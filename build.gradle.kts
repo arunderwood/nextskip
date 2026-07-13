@@ -177,7 +177,7 @@ dependencies {
     implementation(libs.db.scheduler.boot4.starter)
 
     // SpotBugs annotations (for @SuppressFBWarnings)
-    compileOnly("com.github.spotbugs:spotbugs-annotations:4.9.8")
+    compileOnly("com.github.spotbugs:spotbugs-annotations:4.10.3")
 
     // Testing
     testImplementation(libs.spring.boot.starter.test)
