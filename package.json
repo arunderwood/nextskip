@@ -18,8 +18,8 @@
     "format": "prettier --write \"src/**/*.{ts,tsx,json,css,md}\"",
     "format:check": "prettier --check \"src/**/*.{ts,tsx,json,css,md}\"",
     "typecheck": "tsc --noEmit -p tsconfig.eslint.json",
-    "validate": "npm run format:check && npm run lint && npm run test:delta",
-    "validate:quick": "npm run format:check && npm run lint && npm run test:run",
+    "validate": "npm run format:check && npm run lint && npm run typecheck && npm run test:delta",
+    "validate:quick": "npm run format:check && npm run lint && npm run typecheck && npm run test:run",
     "validate:full": "npm run validate && npm run e2e",
     "generate-pwa-icons": "pwa-asset-generator src/main/resources/static/favicon.svg src/main/resources/META-INF/resources/icons --icon-only --favicon --background '#0d1117' --type png --padding 0"
   },
