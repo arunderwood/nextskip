@@ -1,0 +1,19 @@
+// Lint/typecheck project. Extends the Vaadin-generated tsconfig.json and adds the
+// test sources, which that file omits.
+//
+// Kept separate on purpose: vaadinPrepareFrontend rewrites tsconfig.json wholesale on
+// Vaadin version bumps (25.2.6 dropped "src/test/frontend/**/*" from its "include"),
+// so any customization made there is silently lost on the next upgrade. Vaadin does not
+// touch this file, so ESLint's type-aware rules and `npm run typecheck` keep covering
+// tests across upgrades.
+{
+  "extends": "./tsconfig.json",
+  "include": [
+    "src/main/frontend/**/*",
+    "src/test/frontend/**/*",
+    "types.d.ts"
+  ],
+  "exclude": [
+    "src/main/frontend/generated/jar-resources/**"
+  ]
+}

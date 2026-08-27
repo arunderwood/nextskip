@@ -19,6 +19,15 @@ export default [
   ...testing,
   {
     files: ['src/main/frontend/**/*.{ts,tsx}', 'src/test/frontend/**/*.{ts,tsx}'],
+    languageOptions: {
+      parserOptions: {
+        // tsconfig.json omits src/test/frontend, so type-aware rules can't resolve test
+        // files from it. Point the project service at tsconfig.eslint.json instead.
+        projectService: false,
+        project: ['./tsconfig.eslint.json'],
+        tsconfigRootDir: import.meta.dirname,
+      },
+    },
     settings: {
       react: {
         version: 'detect',

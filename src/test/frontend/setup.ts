@@ -29,7 +29,7 @@ Object.defineProperty(window, 'matchMedia', {
 });
 
 // Mock ResizeObserver for masonry grid tests
-global.ResizeObserver = class ResizeObserver {
+globalThis.ResizeObserver = class ResizeObserver {
   /* eslint-disable @typescript-eslint/class-methods-use-this */
   observe() {}
   unobserve() {}
@@ -38,9 +38,10 @@ global.ResizeObserver = class ResizeObserver {
 };
 
 // Mock IntersectionObserver for scrollspy tests
-global.IntersectionObserver = class IntersectionObserver {
+globalThis.IntersectionObserver = class IntersectionObserver {
   readonly root: Element | null = null;
   readonly rootMargin: string = '';
+  readonly scrollMargin: string = '';
   readonly thresholds: readonly number[] = [];
 
   /* eslint-disable @typescript-eslint/class-methods-use-this */
