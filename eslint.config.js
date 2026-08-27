@@ -21,8 +21,8 @@ export default [
     files: ['src/main/frontend/**/*.{ts,tsx}', 'src/test/frontend/**/*.{ts,tsx}'],
     languageOptions: {
       parserOptions: {
-        // tsconfig.json omits src/test/frontend, so type-aware rules can't resolve test
-        // files from it. Point the project service at tsconfig.eslint.json instead.
+        // Type-aware rules need a project that covers the test sources; tsconfig.json
+        // is Vaadin-owned and covers src/main/frontend only.
         projectService: false,
         project: ['./tsconfig.eslint.json'],
         tsconfigRootDir: import.meta.dirname,
