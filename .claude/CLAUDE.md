@@ -25,10 +25,10 @@ NextSkip is a real-time amateur radio activity dashboard that helps operators fi
 # Build frontend only
 ./gradlew vaadinBuildFrontend
 
-# IMPORTANT: Vaadin manages parts of package.json (component versions,
-# overrides). After dependency upgrades or branch switches, run
-# vaadinBuildFrontend and check for package.json changes — these are
-# generated and should be committed alongside your other changes.
+# IMPORTANT: Vaadin regenerates package.json, tsconfig.json and types.d.ts.
+# After dependency upgrades or branch switches, run vaadinBuildFrontend and
+# commit the resulting diffs. See "Dependency Upgrades" below before editing
+# any of those files.
 
 # Clean build artifacts
 ./gradlew clean
@@ -192,8 +192,8 @@ npm run format
 #### Pre-Commit Validation
 
 ```bash
-npm run validate       # format, lint, delta coverage
-npm run validate:quick # format, lint, unit tests (no delta coverage)
+npm run validate       # format, lint, typecheck, delta coverage
+npm run validate:quick # format, lint, typecheck, unit tests (no delta coverage)
 npm run validate:full  # includes E2E tests
 ```
 
@@ -206,6 +206,55 @@ npm run test:delta     # Run tests + check delta coverage
 ```
 
 Uses `@atakama/cover-diff` to compare coverage against `origin/main`.
+
+## Dependency Upgrades
+
+### Vaadin owns several frontend config files
+
+Vaadin rewrites these during `vaadinPrepareFrontend` / `vaadinBuildFrontend`. Treat them as build output, not source:
+
+| File | What Vaadin does to it |
+|------|------------------------|
+| `package.json` | Rewrites managed dependency versions, the `overrides` block, and the `vaadin` block |
+| `tsconfig.json` | Replaces the file outright when its `_version` header predates the current Vaadin version — silently, leaving a `.bak` |
+| `types.d.ts` | Regenerates |
+| `vite.generated.ts` | Regenerates |
+
+**Never put customizations in them.** A version bump drops them without warning — Vaadin 25.2.6 removed `src/test/frontend/**/*` from the `tsconfig.json` `include`, which disabled type-aware ESLint across every test file. Customize in a file Vaadin does not manage:
+
+| Need | Put it in |
+|------|-----------|
+| Lint / typecheck project | `tsconfig.eslint.json` (Vaadin's `tsconfig.json` covers `src/main/frontend` only) |
+| Ambient TS declarations | hand-written files under `src/main/frontend/`, e.g. `vite-env.d.ts` |
+| Vite config | `vite.config.ts` via `overrideVaadinConfig` |
+
+**Commit what it regenerates.** After a version bump, run `vaadinBuildFrontend`, diff `package.json`, `tsconfig.json`, and `types.d.ts`, and look for a stray `.bak`. CI runs `npm ci`, which fails when `package.json` and `package-lock.json` drift apart.
+
+### Regenerating lockfiles by hand
+
+Use the commands Renovate uses, from `postUpgradeTasks` in `.github/renovate.json`:
+
+```bash
+./gradlew dependencies --write-locks cleanPmdFromLockfile --no-daemon
+./gradlew vaadinPrepareFrontend --no-daemon
+npm install --package-lock-only
+```
+
+A stale `package-lock.json` makes `npm install` fail with ERESOLVE even when `package.json` is already correct — delete the lockfile and let npm resolve from scratch.
+
+**Then re-check the Playwright pair.** `renovate.json` keeps the `mcr.microsoft.com/playwright:vX-noble` image in `ci.yml` matched to the `@playwright/test` npm version. Regenerating floats the npm package under its `^` range and leaves the image tag behind; every E2E job then fails with `Executable doesn't exist at /ms-playwright/...`. Nothing in the build enforces this pairing.
+
+### Green CI does not prove a frontend dependency bump works
+
+When a PR changes a version inside the Vaadin-managed block, `vaadinPrepareFrontend` resets it during the build, so CI exercises Vaadin's pinned version rather than the diff. To check, run `vaadinBuildFrontend` on the branch and diff `package.json` — if the pins revert, the PR cannot land as written no matter how green it looks.
+
+Frontend security advisories generally have to be resolved by upgrading Vaadin, which moves its whole managed set coherently, rather than by bumping `vite` or `react-router` directly.
+
+### Frontend typecheck runs in the `backend` CI job
+
+`npm run typecheck` uses `tsconfig.eslint.json` and needs the Hilla types in `src/main/frontend/generated/`, which are gitignored and exist only after a Gradle build. It cannot move to `frontend-test`, which is npm-only: without generated types it reports ~75 unresolved-module errors, and the vitest mocks are too partial to stand in (they cover far fewer modules than production imports).
+
+Production code is additionally typechecked during the Vaadin build by `vite-plugin-checker`, over `tsconfig.json` and so `src/main/frontend` only. The separate step exists to cover `src/test/frontend`, which nothing else checks.
 
 ## Architecture Guidelines
 

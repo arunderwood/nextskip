@@ -1,0 +1,16 @@
+// TypeScript project used by ESLint's type-aware rules and `npm run typecheck`.
+//
+// Extends the Vaadin-generated tsconfig.json and adds the test sources. Vaadin owns
+// tsconfig.json and rewrites it wholesale on version bumps, so test paths are kept here
+// instead — anything added to tsconfig.json is lost on the next upgrade.
+{
+  "extends": "./tsconfig.json",
+  "include": [
+    "src/main/frontend/**/*",
+    "src/test/frontend/**/*",
+    "types.d.ts"
+  ],
+  "exclude": [
+    "src/main/frontend/generated/jar-resources/**"
+  ]
+}

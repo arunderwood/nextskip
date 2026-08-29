@@ -96,6 +96,12 @@ jobs:
       - name: Build production JAR
         run: ./gradlew build -Pvaadin.productionMode=true -Pversion=${{ steps.version.outputs.version }} -x test -x check
 
+      # Runs here rather than in frontend-test: it needs the Hilla types under
+      # src/main/frontend/generated, which are gitignored and only exist once the
+      # Vaadin build above has run.
+      - name: Typecheck frontend and tests
+        run: npm run typecheck
+
       - name: Upload JAR artifact
         uses: actions/upload-artifact@v7
         with:
@@ -160,7 +166,7 @@ jobs:
     # Playwright's Docker docs); --init runs tini as PID 1 to reap browser
     # child processes cleanly.
     container:
-      image: mcr.microsoft.com/playwright:v1.59.1-noble
+      image: mcr.microsoft.com/playwright:v1.62.1-noble
       options: --ipc=host --init
     strategy:
       fail-fast: false

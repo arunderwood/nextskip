@@ -19,6 +19,15 @@ export default [
   ...testing,
   {
     files: ['src/main/frontend/**/*.{ts,tsx}', 'src/test/frontend/**/*.{ts,tsx}'],
+    languageOptions: {
+      parserOptions: {
+        // Type-aware rules need a project that covers the test sources; tsconfig.json
+        // is Vaadin-owned and covers src/main/frontend only.
+        projectService: false,
+        project: ['./tsconfig.eslint.json'],
+        tsconfigRootDir: import.meta.dirname,
+      },
+    },
     settings: {
       react: {
         version: 'detect',
