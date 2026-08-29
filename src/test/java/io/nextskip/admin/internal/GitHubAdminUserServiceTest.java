@@ -41,6 +41,8 @@ class GitHubAdminUserServiceTest {
     private static final String UNAUTHORIZED_EMAIL = "user@example.com";
     private static final String TEST_LOGIN = "testuser";
     private static final String TEST_ACCESS_TOKEN = "test-token-12345";
+    private static final String ROLE_ADMIN = "ROLE_ADMIN";
+    private static final String AUTHORITY_FIELD = "authority";
 
     // GitHub API response field names
     private static final String ATTR_EMAIL = "email";
@@ -72,8 +74,8 @@ class GitHubAdminUserServiceTest {
         // Then
         assertThat(result).isNotNull();
         assertThat(result.getAuthorities())
-                .extracting("authority")
-                .contains("ROLE_ADMIN");
+                .extracting(AUTHORITY_FIELD)
+                .contains(ROLE_ADMIN);
         assertThat((Object) result.getAttribute(ATTR_LOGIN)).isEqualTo(TEST_LOGIN);
         assertThat((Object) result.getAttribute(ATTR_EMAIL)).isEqualTo(ALLOWED_EMAIL);
     }
@@ -101,8 +103,8 @@ class GitHubAdminUserServiceTest {
         // Then
         assertThat(result).isNotNull();
         assertThat(result.getAuthorities())
-                .extracting("authority")
-                .contains("ROLE_ADMIN");
+                .extracting(AUTHORITY_FIELD)
+                .contains(ROLE_ADMIN);
         assertThat((Object) result.getAttribute(ATTR_EMAIL)).isEqualTo(ALLOWED_EMAIL);
     }
 
@@ -122,8 +124,8 @@ class GitHubAdminUserServiceTest {
         // Then
         assertThat(result).isNotNull();
         assertThat(result.getAuthorities())
-                .extracting("authority")
-                .contains("ROLE_ADMIN");
+                .extracting(AUTHORITY_FIELD)
+                .contains(ROLE_ADMIN);
         assertThat((Object) result.getAttribute(ATTR_EMAIL)).isEqualTo(ALLOWED_EMAIL);
         assertThat((Object) result.getAttribute(ATTR_LOGIN)).isEqualTo(TEST_LOGIN);
     }
@@ -161,8 +163,8 @@ class GitHubAdminUserServiceTest {
         // Then
         assertThat(result).isNotNull();
         assertThat(result.getAuthorities())
-                .extracting("authority")
-                .contains("ROLE_ADMIN");
+                .extracting(AUTHORITY_FIELD)
+                .contains(ROLE_ADMIN);
     }
 
     @Test
@@ -175,8 +177,8 @@ class GitHubAdminUserServiceTest {
 
         // Then - should have both original OAUTH2_USER and new ROLE_ADMIN
         assertThat(result.getAuthorities())
-                .extracting("authority")
-                .contains("OAUTH2_USER", "ROLE_ADMIN");
+                .extracting(AUTHORITY_FIELD)
+                .contains("OAUTH2_USER", ROLE_ADMIN);
     }
 
     @Test
