@@ -11,13 +11,18 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.oauth2.client.registration.ClientRegistration;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
+import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.user.DefaultOAuth2User;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestOperations;
 import org.springframework.web.client.RestTemplate;
+
+import java.time.Instant;
 
 import java.util.HashMap;
 import java.util.List;
@@ -43,6 +48,7 @@ class GitHubAdminUserServiceTest {
     private static final String TEST_ACCESS_TOKEN = "test-token-12345";
     private static final String ROLE_ADMIN = "ROLE_ADMIN";
     private static final String AUTHORITY_FIELD = "authority";
+    private static final long TOKEN_VALIDITY_SECONDS = 3600L;
 
     // GitHub API response field names
     private static final String ATTR_EMAIL = "email";
@@ -77,6 +83,26 @@ class GitHubAdminUserServiceTest {
                 .extracting(AUTHORITY_FIELD)
                 .contains(ROLE_ADMIN);
         assertThat((Object) result.getAttribute(ATTR_LOGIN)).isEqualTo(TEST_LOGIN);
+        assertThat((Object) result.getAttribute(ATTR_EMAIL)).isEqualTo(ALLOWED_EMAIL);
+    }
+
+    @Test
+    void testLoadUser_PublicEmail_DelegatesToUserInfoAndAuthorizes() {
+        // Given - stub the user info response that DefaultOAuth2UserService fetches
+        RestOperations userInfoRestOperations = mock(RestOperations.class);
+        Map<String, Object> userAttributes = Map.of(ATTR_LOGIN, TEST_LOGIN, ATTR_EMAIL, ALLOWED_EMAIL);
+        when(userInfoRestOperations.exchange(any(RequestEntity.class), any(ParameterizedTypeReference.class)))
+                .thenReturn(new ResponseEntity<>(userAttributes, HttpStatus.OK));
+        service.setRestOperations(userInfoRestOperations);
+
+        // When
+        OAuth2User result = service.loadUser(new OAuth2UserRequest(githubClientRegistration(), testAccessToken()));
+
+        // Then
+        assertThat(result).isNotNull();
+        assertThat(result.getAuthorities())
+                .extracting(AUTHORITY_FIELD)
+                .contains(ROLE_ADMIN);
         assertThat((Object) result.getAttribute(ATTR_EMAIL)).isEqualTo(ALLOWED_EMAIL);
     }
 
@@ -274,6 +300,27 @@ class GitHubAdminUserServiceTest {
 
         // Then
         assertThat(result).isNull();
+    }
+
+    private ClientRegistration githubClientRegistration() {
+        return ClientRegistration.withRegistrationId("github")
+                .clientId("test-client-id")
+                .clientSecret("test-client-secret")
+                .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
+                .redirectUri("{baseUrl}/login/oauth2/code/{registrationId}")
+                .authorizationUri("https://github.com/login/oauth/authorize")
+                .tokenUri("https://github.com/login/oauth/access_token")
+                .userInfoUri("https://api.github.com/user")
+                .userNameAttributeName(ATTR_LOGIN)
+                .build();
+    }
+
+    private OAuth2AccessToken testAccessToken() {
+        return new OAuth2AccessToken(
+                OAuth2AccessToken.TokenType.BEARER,
+                TEST_ACCESS_TOKEN,
+                Instant.now(),
+                Instant.now().plusSeconds(TOKEN_VALIDITY_SECONDS));
     }
 
     private OAuth2UserRequest mockUserRequestWithToken() {
