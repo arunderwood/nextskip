@@ -11,6 +11,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
+import org.springframework.security.oauth2.core.OAuth2AccessToken;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.user.DefaultOAuth2User;
 import org.springframework.security.oauth2.core.user.OAuth2User;
@@ -26,6 +28,7 @@ import java.util.Set;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 /**
@@ -73,6 +76,56 @@ class GitHubAdminUserServiceTest {
                 .contains("ROLE_ADMIN");
         assertThat((Object) result.getAttribute(ATTR_LOGIN)).isEqualTo(TEST_LOGIN);
         assertThat((Object) result.getAttribute(ATTR_EMAIL)).isEqualTo(ALLOWED_EMAIL);
+    }
+
+    @Test
+    void testResolveEmailAndAuthorize_NullUser_ThrowsException() {
+        // Given - OAuth2UserService.loadUser declares a nullable return type
+        OAuth2UserRequest userRequest = mock(OAuth2UserRequest.class);
+
+        // When/Then
+        assertThatThrownBy(() -> service.resolveEmailAndAuthorize(null, userRequest))
+                .isInstanceOf(OAuth2AuthenticationException.class)
+                .hasMessageContaining("No user information returned by GitHub");
+    }
+
+    @Test
+    void testResolveEmailAndAuthorize_PublicEmail_ReturnsUserWithAdminRole() {
+        // Given - email is public, so no call to the GitHub emails API is needed
+        OAuth2User mockUser = createMockOAuth2User(TEST_LOGIN, ALLOWED_EMAIL);
+        OAuth2UserRequest userRequest = mock(OAuth2UserRequest.class);
+
+        // When
+        OAuth2User result = service.resolveEmailAndAuthorize(mockUser, userRequest);
+
+        // Then
+        assertThat(result).isNotNull();
+        assertThat(result.getAuthorities())
+                .extracting("authority")
+                .contains("ROLE_ADMIN");
+        assertThat((Object) result.getAttribute(ATTR_EMAIL)).isEqualTo(ALLOWED_EMAIL);
+    }
+
+    @Test
+    void testResolveEmailAndAuthorize_PrivateEmail_FetchesEmailAndAuthorizes() {
+        // Given - email is private, so it must be fetched from the GitHub emails API
+        OAuth2User mockUser = createMockOAuth2User(TEST_LOGIN, null);
+        OAuth2UserRequest userRequest = mockUserRequestWithToken();
+        ResponseEntity<List<Map<String, Object>>> response =
+                new ResponseEntity<>(List.of(createEmailEntry(ALLOWED_EMAIL, true, true)), HttpStatus.OK);
+        when(mockRestTemplate.exchange(any(RequestEntity.class), any(ParameterizedTypeReference.class)))
+                .thenReturn(response);
+
+        // When
+        OAuth2User result = serviceWithMockRestTemplate.resolveEmailAndAuthorize(mockUser, userRequest);
+
+        // Then
+        assertThat(result).isNotNull();
+        assertThat(result.getAuthorities())
+                .extracting("authority")
+                .contains("ROLE_ADMIN");
+        assertThat((Object) result.getAttribute(ATTR_EMAIL)).isEqualTo(ALLOWED_EMAIL);
+        assertThat((Object) result.getAttribute(ATTR_LOGIN)).isEqualTo(TEST_LOGIN);
     }
 
     @Test
@@ -219,6 +272,14 @@ class GitHubAdminUserServiceTest {
 
         // Then
         assertThat(result).isNull();
+    }
+
+    private OAuth2UserRequest mockUserRequestWithToken() {
+        OAuth2AccessToken accessToken = mock(OAuth2AccessToken.class);
+        when(accessToken.getTokenValue()).thenReturn(TEST_ACCESS_TOKEN);
+        OAuth2UserRequest userRequest = mock(OAuth2UserRequest.class);
+        when(userRequest.getAccessToken()).thenReturn(accessToken);
+        return userRequest;
     }
 
     private Map<String, Object> createEmailEntry(String email, boolean primary, boolean verified) {

@@ -1,5 +1,6 @@
 package io.nextskip.admin.internal;
 
+import edu.umd.cs.findbugs.annotations.Nullable;
 import io.nextskip.admin.config.AdminProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -76,7 +77,32 @@ public class GitHubAdminUserService extends DefaultOAuth2UserService {
 
     @Override
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
-        OAuth2User user = super.loadUser(userRequest);
+        return resolveEmailAndAuthorize(super.loadUser(userRequest), userRequest);
+    }
+
+    /**
+     * Resolves the user's email and authorizes them against the allowlist.
+     *
+     * <p>{@link org.springframework.security.oauth2.client.userinfo.OAuth2UserService#loadUser}
+     * declares a nullable return type, so the loaded user is treated as optional here.
+     *
+     * <p>This method is extracted for testability - tests can call this directly
+     * with a mock OAuth2User without making HTTP calls to GitHub.
+     *
+     * @param loadedUser the user loaded by the delegate service, may be null
+     * @param userRequest the originating OAuth2 user request
+     * @return the authorized user
+     * @throws OAuth2AuthenticationException if no user was loaded, or the user is not authorized
+     */
+    OAuth2User resolveEmailAndAuthorize(@Nullable OAuth2User loadedUser, OAuth2UserRequest userRequest) {
+        if (loadedUser == null) {
+            LOG.warn("GitHub returned no user information for the OAuth2 login request");
+            throw new OAuth2AuthenticationException(
+                    new OAuth2Error("invalid_user_info_response"),
+                    "No user information returned by GitHub. Please try signing in again.");
+        }
+
+        OAuth2User user = loadedUser;
         String email = user.getAttribute(ATTR_EMAIL);
 
         // If email is not public, fetch from GitHub emails API
