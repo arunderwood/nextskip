@@ -39,7 +39,7 @@ jobs:
           fetch-depth: 0  # Full history required for delta coverage git diff
 
       - name: Setup Java
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@v6
         with:
           # Version and distribution both come from .tool-versions (single source of truth)
           java-version-file: .tool-versions
@@ -200,7 +200,7 @@ jobs:
         uses: actions/checkout@v7
 
       - name: Setup Java
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@v6
         with:
           # Version and distribution both come from .tool-versions (single source of truth)
           java-version-file: .tool-versions
