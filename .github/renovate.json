@@ -71,7 +71,7 @@
       "postUpgradeTasks": {
         "commands": [
           "install-tool java 25.0.1+8.0.LTS",
-          "install-tool node 24.12.0",
+          "install-tool node 24.18.0",
           "./gradlew dependencies --write-locks cleanPmdFromLockfile --no-daemon",
           "./gradlew vaadinPrepareFrontend --no-daemon",
           "npm install --package-lock-only"
@@ -103,6 +103,16 @@
         "/^workbox-/"
       ],
       "enabled": false
+    },
+    {
+      "description": "Toolchain (.tool-versions) - propagate the bump into files that cannot read it. Renovate's built-in asdf manager handles .tool-versions itself; no customManager is needed, and adding one would double-manage the file.",
+      "matchManagers": ["asdf"],
+      "groupName": "toolchain",
+      "postUpgradeTasks": {
+        "commands": ["./scripts/check-tool-versions.sh --fix"],
+        "fileFilters": ["Dockerfile", ".github/renovate.json", "build.gradle.kts", "README.md"],
+        "executionMode": "branch"
+      }
     },
     {
       "description": "Disable GitHub Actions - managed by Dependabot",

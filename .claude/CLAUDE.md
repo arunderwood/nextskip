@@ -230,6 +230,18 @@ Vaadin rewrites these during `vaadinPrepareFrontend` / `vaadinBuildFrontend`. Tr
 
 **Commit what it regenerates.** After a version bump, run `vaadinBuildFrontend`, diff `package.json`, `tsconfig.json`, and `types.d.ts`, and look for a stray `.bak`. CI runs `npm ci`, which fails when `package.json` and `package-lock.json` drift apart.
 
+### Toolchain (Java / Node) versions
+
+`.tool-versions` is the single source of truth; the workflows read it directly and
+Renovate's built-in `asdf` manager bumps it. To change it by hand, edit that file and run:
+
+```bash
+./scripts/check-tool-versions.sh --fix
+```
+
+See "Java Version Compatibility" below for what propagates where and the two footguns
+(no Corretto support in the asdf manager; the `.0.LTS` suffix is load-bearing).
+
 ### Regenerating lockfiles by hand
 
 Use the commands Renovate uses, from `postUpgradeTasks` in `.github/renovate.json`:
@@ -426,6 +438,38 @@ See [docs/TESTING.md](docs/TESTING.md) for complete testing guidelines including
 ## Java Version Compatibility
 
 **Critical**: This project uses Java 25 for both compilation and bytecode target.
+
+**`.tool-versions` is the single source of truth** for the JDK (and Node) version.
+`actions/setup-java` and `actions/setup-node` read it directly via `java-version-file` /
+`node-version-file`, so the workflows have no version pins of their own. Note that
+setup-java takes the **distribution** from the file's asdf vendor prefix too
+(`java temurin-25.0.1+8.0.LTS` -> Temurin), and that value *overrides* any
+`distribution:` input - so don't add one back.
+
+Four files cannot read `.tool-versions` and pin the version separately:
+`Dockerfile` (base images), `.github/renovate.json` (`install-tool` commands),
+`build.gradle.kts` (toolchain), and `README.md` (badge + Tech Stack).
+`scripts/check-tool-versions.sh` asserts they agree and runs in CI's `validate` job;
+`--fix` rewrites them from `.tool-versions`.
+
+**Bumping the JDK or Node**: edit `.tool-versions`, then run
+`./scripts/check-tool-versions.sh --fix`. Never edit the downstream pins directly.
+
+**Renovate handles this automatically.** Its *built-in* `asdf` manager already parses
+`.tool-versions` - do NOT add a `customManager` for it, which would double-manage the
+file. The `toolchain` packageRule runs `check-tool-versions.sh --fix` as a
+`postUpgradeTask` so the bump PR arrives with the downstream pins already updated.
+Any new file added to the script must also be listed in that rule's `fileFilters`, or
+Renovate discards the edit. The command must additionally match
+`RENOVATE_ALLOWED_COMMANDS` in `renovate.yml` or it is skipped silently.
+
+Two things make this work that are easy to break:
+
+- The asdf manager only recognizes `adoptopenjdk-` / `temurin-` prefixes. It has **no
+  Corretto support** - switching `.tool-versions` back to a `corretto-` identifier
+  silently stops all JDK updates.
+- asdf-java identifiers match the Adoptium API's `semver` field exactly, including the
+  trailing `.0.LTS` (`25.0.1+8.0.LTS`). Don't "tidy" that suffix away.
 
 **build.gradle configuration**:
 
