@@ -23,6 +23,9 @@ jobs:
       - name: Validate Gradle wrapper
         uses: gradle/actions/wrapper-validation@v6.3.0
 
+      - name: Check version pins match .tool-versions
+        run: ./scripts/check-tool-versions.sh
+
   backend:
     runs-on: ubuntu-latest
     permissions:
@@ -35,16 +38,16 @@ jobs:
         with:
           fetch-depth: 0  # Full history required for delta coverage git diff
 
-      - name: Setup Java (Temurin 25)
+      - name: Setup Java
         uses: actions/setup-java@v5
         with:
-          distribution: 'temurin'
-          java-version: '25'
+          # Version and distribution both come from .tool-versions (single source of truth)
+          java-version-file: .tool-versions
 
       - name: Setup Node.js
         uses: actions/setup-node@v7
         with:
-          node-version: '24'
+          node-version-file: .tool-versions
           cache: 'npm'
 
       - name: Setup Gradle
@@ -123,7 +126,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v7
         with:
-          node-version: '24'
+          node-version-file: .tool-versions
           cache: 'npm'
 
       - name: Install dependencies
@@ -196,11 +199,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v7
 
-      - name: Setup Java (Temurin 25)
+      - name: Setup Java
         uses: actions/setup-java@v5
         with:
-          distribution: 'temurin'
-          java-version: '25'
+          # Version and distribution both come from .tool-versions (single source of truth)
+          java-version-file: .tool-versions
 
       - name: Download JAR artifact
         uses: actions/download-artifact@v8
