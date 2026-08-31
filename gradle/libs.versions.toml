@@ -23,7 +23,7 @@ pitest = "1.19.0"
 # Dependencies (not managed by Spring Boot BOM)
 resilience4j = "2.4.0"
 ical4j = "4.3.0"
-jsoup = "1.22.2"
+jsoup = "1.23.2"
 wiremock = "3.13.2"
 
 # Test dependencies (override for Java 25)
