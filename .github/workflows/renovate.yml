@@ -27,7 +27,7 @@ jobs:
           java-version-file: .tool-versions
 
       - name: Self-hosted Renovate
-        uses: renovatebot/github-action@v46.2.4
+        uses: renovatebot/github-action@v46.2.5
         with:
           configurationFile: .github/renovate.json
           token: ${{ secrets.RENOVATE_TOKEN }}
