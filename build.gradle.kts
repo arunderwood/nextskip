@@ -81,6 +81,15 @@ tasks.register("generate") {
     description = "Alias for hillaGenerate (workaround for delta-coverage plugin compatibility)"
 }
 
+// vaadinBuildFrontend writes the Hilla TypeScript clients to src/main/frontend/generated,
+// outside the build directory and outside the task's declared outputs. Gradle therefore
+// neither stores nor restores them, so a cache hit skips the task and leaves the tree with
+// no generated types -- which the CI typecheck step then fails on. Declaring the directory
+// puts it under cache control.
+tasks.named("vaadinBuildFrontend") {
+    outputs.dir("src/main/frontend/generated")
+}
+
 // Ensure Vaadin production resources are included in bootJar
 // The vaadinBuildFrontend task writes to build/resources/main/ AFTER processResources,
 // so we need to explicitly include these files in the bootJar
