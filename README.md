@@ -1,6 +1,22 @@
+> [!NOTE]
+> **This project is archived.** It is no longer maintained, and the production
+> deployment at nextskip.io has been shut down.
+>
+> NextSkip reached what I set out to build: a live dashboard that aggregates
+> amateur radio activity feeds, scores current conditions, and ranks the results
+> so you can see where to spend your time on the air. Along the way I learned a
+> great deal about Spring Boot, stream processing, and generating a typed
+> frontend directly from backend model definitions.
+>
+> If you're looking for something like this to actually use, try
+> **[OpenHamClock](https://openhamclock.com/)** — it covers the same ground and
+> considerably more, and it's actively maintained.
+>
+> The code stays up as a reference. Everything below describes the project as it
+> stood when development stopped.
+
 # NextSkip
 
-[![CI](https://github.com/arunderwood/nextskip/actions/workflows/ci.yml/badge.svg)](https://github.com/arunderwood/nextskip/actions/workflows/ci.yml)
 ![Java 25](https://img.shields.io/badge/Java-25-orange)
 ![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.0-brightgreen)
 ![Vaadin Hilla](https://img.shields.io/badge/Vaadin%20Hilla-25.0-blue)
@@ -10,10 +26,6 @@
 </p>
 
 <h3 align="center">Find your next skip</h3>
-
-<p align="center">
-  <strong><a href="https://nextskip.io">Try NextSkip</a></strong>
-</p>
 
 ---
 
