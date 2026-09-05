@@ -1,0 +1,58 @@
+# Values live in Render, never here. `sync: false` declares that a variable must
+# exist without carrying its value: Render prompts for it once, then ignores it on
+# every later sync, so a push can't overwrite a secret set in the dashboard.
+#
+# Build-time frontend config is not here — Vite reads .env.production during the
+# image build, and those values ship inside the browser bundle.
+services:
+  - type: web
+    name: nextskip
+    runtime: docker
+    repo: https://github.com/arunderwood/nextskip
+    branch: main
+    region: oregon
+    plan: standard
+    numInstances: 1
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /health
+    autoDeployTrigger: checksPass
+    envVars:
+      - key: PORT
+        value: 8080
+
+      - key: GITHUB_CLIENT_ID
+        sync: false
+      - key: GITHUB_CLIENT_SECRET
+        sync: false
+      - key: ADMIN_ALLOWED_EMAILS
+        sync: false
+
+      - key: DATABASE_URL
+        sync: false
+      - key: DATABASE_USERNAME
+        value: nextskip_user
+      - key: DATABASE_PASSWORD
+        sync: false
+
+      - key: OTEL_EXPORTER_OTLP_ENDPOINT
+        value: https://otlp-gateway-prod-us-west-0.grafana.net/otlp
+      - key: OTEL_EXPORTER_OTLP_HEADERS
+        sync: false
+
+      - key: PYROSCOPE_APPLICATION_NAME
+        value: nextskip
+      - key: PYROSCOPE_SERVER_ADDRESS
+        value: https://profiles-prod-008.grafana.net
+      - key: PYROSCOPE_FORMAT
+        value: jfr
+      - key: PYROSCOPE_LABELS
+        value: production,service_name=nextskip
+      - key: PYROSCOPE_PROFILER_ALLOC
+        value: 512k
+      - key: PYROSCOPE_PROFILER_LOCK
+        value: 10ms
+      - key: PYROSCOPE_BASIC_AUTH_USER
+        sync: false
+      - key: PYROSCOPE_BASIC_AUTH_PASSWORD
+        sync: false
