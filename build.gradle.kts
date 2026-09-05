@@ -82,12 +82,12 @@ tasks.register("generate") {
 }
 
 // vaadinBuildFrontend writes the Hilla TypeScript clients to src/main/frontend/generated,
-// outside the build directory and outside the task's declared outputs. Gradle therefore
-// neither stores nor restores them, so a cache hit skips the task and leaves the tree with
-// no generated types -- which the CI typecheck step then fails on. Declaring the directory
-// puts it under cache control.
+// outside the build directory, and Gradle does not pack that directory into the build cache
+// even when it is declared as an output. A cache hit therefore skips the task and leaves the
+// tree with no generated types, which the CI typecheck step then fails on. The task has to
+// actually run, so it is excluded from the cache; every other task stays cacheable.
 tasks.named("vaadinBuildFrontend") {
-    outputs.dir("src/main/frontend/generated")
+    outputs.cacheIf { false }
 }
 
 // Ensure Vaadin production resources are included in bootJar
